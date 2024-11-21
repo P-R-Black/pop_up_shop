@@ -1,0 +1,318 @@
+* {
+    border: 0;
+    box-sizing: border-box;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+}
+
+:root {
+    /* ======== Colors ======== */
+    --body-color: #E4E9F7;
+    --sidebar-color: #fff;
+    --primary-color: #695CFE;
+    --primary-color-light: #F6F5FF;
+    --toggle-color: #DDD;
+    --text-color: #707070;
+
+    /* ======== Font ======== */
+    --logo-font: "Birthstone", cursive;
+    --header-font: "Inter", sans-serif;
+    --text-font: "Noto Sans", sans-serif;
+
+
+    /* ======== Transition ======== */
+    --tran-02: all 0.2s ease;
+    --tran-03: all 0.3s ease;
+    --tran-04: all 0.4s ease;
+    --tran-05: all 0.5s ease;
+
+}
+
+
+body {
+    height: 100vh;
+    background: var(--body-color);
+    transition: var(--tran-02);
+}
+
+body.dark {
+    --body-color: #18191A;
+    --sidebar-color: #242525;
+    --primary-color: #3A3B3C;
+    --primary-color-light: #3A3B3C;
+    --toggle-color: #fff;
+    --text-color: #ccc;
+
+}
+
+/*
+logo font: Birthstone
+title font: noto sans
+text font: inter
+
+.birthstone-regular {
+  font-family: "Birthstone", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.inter-<uniquifier> {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+}
+
+.noto-sans-<uniquifier> {
+  font-family: "Noto Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
+}
+*/
+
+
+/* ========= Navbar ========= */
+.sidebar {
+    background: var(--sidebar-color);
+    left: 0;
+    height: 100%;
+    padding: 10px 14px;
+    position: fixed;
+    top: 0;
+    transition: var(--tran-05);
+    width: 16rem;
+    z-index: 100;
+}
+
+.sidebar.close {
+    width: 5.5rem;
+}
+
+/* ====== Resuable CSS ====== */
+.sidebar .text {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-color);
+    transition: var(--tran-03);
+    white-space: nowrap;
+    opacity: 1;
+}
+
+
+.sidebar.close .text {
+    opacity: 0;
+}
+
+.sidebar .image {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-width: 4rem;
+}
+
+.sidebar li {
+    height: 50px;
+    margin-top: 10px;
+    list-style: none;
+    display: flex;
+    align-items: center;
+
+}
+
+.sidebar li .icon {
+    font-size: 20px;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.sidebar li .icon,
+.sidebar li .text {
+    color: var(--text-color);
+    transition: var(--tran-02)
+}
+
+.sidebar header {
+    position: relative;
+}
+
+.sidebar .logo-text {
+    font-family: var(--logo-font);
+    font-size: 2.25rem;
+    color: palevioletred;
+    width: 16rem;
+
+
+}
+
+.sidebar header .logo-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+header .logo-text .header-text {
+    display: flex;
+    flex-direction: column;
+
+}
+
+
+.sidebar header .toggle {
+    align-items: center;
+    background: var(--primary-color);
+    border-radius: 50%;
+    color: var(--sidebar-color);
+    cursor: pointer;
+    display: flex;
+    font-size: 1.25rem;
+    height: 25px;
+    justify-content: center;
+    position: absolute;
+    right: -25px;
+    top: 50%;
+    transform: translateY(-50%) rotate(180deg);
+    transition: var(--tran-03);
+    width: 25px;
+
+}
+
+.sidebar.close header .toggle {
+    transform: translateY(-50%);
+}
+
+.body.dark .sidebar header .toggle {
+    color: var(--text-color);
+}
+
+.sidebar .menu {
+    margin-top: 1.5rem;
+}
+
+.sidebar .search-box {
+    background: var(--primary-color-light);
+    border-radius: 6px;
+    transition: var(--tran-05);
+}
+
+.search-box input {
+    background: var(--primary-color-light);
+    border: none;
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 500;
+    height: 100%;
+    outline: none;
+    transition: var(--tran-05);
+    width: 100%;
+}
+
+.sidebar li a {
+    align-items: center;
+    border-radius: 6px;
+    display: flex;
+    height: 100%;
+    text-decoration: none;
+    transition: var(--tran-04);
+    width: 100%;
+}
+
+.sidebar li a:hover {
+    background: var(--primary-color);
+}
+
+.sidebar li a:hover .icon,
+.sidebar li a:hover .text {
+    color: var(--sidebar-color);
+}
+
+body.dark .sidebar li a:hover .icon,
+body.dark .sidebar li a:hover .text {
+    color: var(--sidebar-color);
+}
+
+.sidebar .menu-bar {
+    height: cacl(100% - 50px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+
+.menu-bar .mode {
+    background: var(--primary-color-light);
+    border-radius: 6px;
+    position: relative;
+
+}
+
+.menu-bar .mode .moon-sun {
+    height: 50px;
+    width: 60px;
+    display: flex;
+    align-items: center;
+}
+
+.menu-bar .mode i {
+    position: absolute;
+    transition: var(--tran-03);
+}
+
+.menu-bar .mode i.sun {
+    opacity: 0;
+}
+
+body.dark .menu-bar .mode i.sun {
+    opacity: 1
+}
+
+body.dark .menu-bar .mode i.moon {
+    opacity: 0
+}
+
+.menu-bar .mode .toggle-switch {
+    align-items: center;
+    background: var(--primary-color-light);
+    cursor: pointer;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    min-width: 60px;
+    position: absolute;
+    right: 0;
+    transition: var(--tran-05);
+}
+
+.toggle-switch .switch {
+    background: var(--toggle-color);
+    border-radius: 25px;
+    height: 22px;
+    position: relative;
+    width: 44px;
+}
+
+.switch::before {
+    background: var(--sidebar-color);
+    border-radius: 50%;
+    content: "";
+    height: 15px;
+    left: 5px;
+    position: absolute;
+    transform: translateY(-50%);
+    top: 50%;
+    width: 15px;
+    transition: var(--tran-03)
+}
+
+body.dark .switch::before {
+    left: 24px;
+
+}
