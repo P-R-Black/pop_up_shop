@@ -1,0 +1,159 @@
+.auction_section {
+    background: var(--body-color);
+    height: 100vh;
+
+}
+
+
+.page_title {
+    display: flex;
+    justify-content: center;
+}
+
+.page_title h2 {
+    font-family: 'noto sans';
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--text-color);
+    padding: 10px 40px;
+    text-shadow: 3px 0px 4px rgba(0, 0, 0, 0.45);
+}
+
+.auction_container {
+    align-items: center;
+    display: flex;
+    height: 80vh;
+    margin-top: 2rem;
+}
+
+.auction_container_left {
+    width: 50%;
+}
+
+.img_fluid {
+    aspect-ratio: 3/2;
+    width: 90%;
+
+}
+
+.auction_product_desc_container {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: .5rem;
+    width: 100%;
+}
+
+.auction_product_desc_container h3 {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+}
+
+.auction_product_links_container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.auction_container_right {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 68%;
+    justify-content: center;
+    gap: 2rem;
+    width: 50%;
+
+}
+
+
+.details_size_container,
+.details_condition_container,
+.details_buy_now_container {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .5rem;
+
+}
+
+.details_size_container p,
+.details_condition_container p,
+.details_buy_now_container p {
+    color: var(--text-color);
+    font-size: 1.15rem;
+}
+
+p.databox_assign_left {
+    width: 50%;
+    text-align: left;
+}
+
+
+.auction_auction_countdown_container {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.auction_auction_countdown_container p {
+    margin-bottom: .25rem;
+}
+
+.auction_auction_countdown_container p {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.auction_auction_countdown_container h2 {
+    font-size: 4.5rem;
+}
+
+.auction_auction_countdown_container h3 {
+    font-size: 2.25rem;
+    font-weight: 200;
+}
+
+.lower_auction_container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: calc(100% - 170px);
+}
+
+.prod_auct_desc_container {
+    background: var(--databox-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    padding: 1rem 2rem;
+    height: 7rem;
+    width: 100%;
+}
+
+.prod_auct_desc_container h3 {
+    margin-bottom: .5rem;
+}
+
+.verified_return_container {}
+
+.databox_medium_dark {
+    display: flex;
+    flex-direction: column;
+
+    background: orange;
+    margin-bottom: 2rem;
+}
+
+.databox_medium_dark_title_box {
+    display: flex;
+}
+
+
+
+.databox_medium_dark a {}
