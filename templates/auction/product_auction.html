@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Auction
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Open Auction</h2>
+        </div>
+        <div class="auction_container">
+            <div class="auction_container_left">
+                <div class="auction_product_image_container">
+                    <img class="img_fluid" alt="Responsive image" src="{% static 'img/sneakerThree.png' %}"
+                        alt="{{ image.image.alt_text}}" />
+                </div>
+                <div class="auction_product_desc_container">
+                    <h3>2003</h3>
+                    <h3>Nike SB Dunk Low Paris</h3>
+                </div>
+                <div class="auction_product_links_container">
+                    <a class="button_medium" href="/">Bid</a>
+                    <a class="button_medium" href="/">Buy</a>
+                    <button class="button_medium" href="/">Watch</button>
+                </div>
+            </div>
+            <div class="auction_container_right">
+                <div class="auction_product_details_container databox">
+                    <div class="details_size_container">
+                        <p>Size</p>
+                        <p class="databox_assign_left">US Men's 9</p>
+                    </div>
+                    <div class="details_condition_container">
+                        <p>Condition</p>
+                        <p class="databox_assign_left">New</p>
+                    </div>
+                    <div class="details_buy_now_container">
+                        <button class="button_small">Buy Now</button>
+                        <p class="databox_assign_left">$1,000</p>
+                    </div>
+                </div>
+                <div class="auction_auction_countdown_container databox">
+                    <p>Auction Closes In</p>
+                    <h2>10</h2>
+                    <h3>Days</h3>
+                </div>
+            </div>
+        </div>
+        <div class="lower_auction_container">
+            <div class="prod_auct_desc_container">
+                <h3>Product Description</h3>
+                <p>
+                    Released on November 9, 2024, the Jordan 4 Retro Fear retailed for $215.
+                    With its timeless design and connection to Jordan’s storied legacy, this sneaker is
+                    a must-have for collectors and fashion enthusiasts alike, making it one of the most
+                    sought-after releases of the year.
+                </p>
+            </div>
+            <div class="prod_auct_details_container">
+                <div class="auct_details_style_container">
+                    <h4>Style:</h4>
+                    <h4>BQ6806-0002</h4>
+                </div>
+                <div class="auct_details_colorway_container">
+                    <h4>Colorway:</h4>
+                    <h4>Blue/White/White</h4>
+                </div>
+                <div class="auct_details_release_container">
+                    <h4>Release Date:</h4>
+                    <h4>11/24/2024</h4>
+                </div>
+                <div class="auct_details_retail_container">
+                    <h4>Retail:</h4>
+                    <h4>$120</h4>
+                </div>
+
+            </div>
+            <div class="verified_return_container">
+                <div class="databox_medium_dark">
+                    <div class="databox_medium_dark_title_box">
+                        <i class='bx bx-award'></i>
+                        <h3>100% Guaranteed Authentic</h3>
+                    </div>
+                    <p>
+                        Always real. Really really real! If we don't use resellers. We buy it from the manufacturer and
+                        resell.
+                    </p>
+                    <a href="/">Learn More</a>
+                </div>
+                <div class="databox_medium_dark">
+                    <div class="databox_medium_dark_title_box">
+                        <i class="fa-solid fa-arrow-rotate-left"></i>
+                        <h3>Return Policy</h3>
+                    </div>
+                    <p>
+                        Learn more about our return policy by clicking on the link below.
+                    </p>
+                    <a href="/">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+{% endblock %}
