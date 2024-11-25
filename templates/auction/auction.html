@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Auction
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Current Auction</h2>
+        </div>
+        <div class="the_auction_container">
+            <a href="auction/open" class="item_container databox_long">
+
+                <div class="auct_img_container">
+                    <img class="min_img_fluid" src="{% static 'img/sneakerOne.png' %}" alt="{{ image.image.alt_text}}">
+                </div>
+                <div class="auct_prod_title_container">
+                    <h3>Product Name</h3>
+                    <h4>2003 Nike Dunk Low Paris</h4>
+                </div>
+                <div class="auct_high_bid_container">
+                    <h3>Hightest Bid</h3>
+                    <h4>$1,000</h4>
+                </div>
+            </a>
+            <a href="auction/open" class="item_container databox_long">
+                <div class="auct_img_container">
+                    <img class="min_img_fluid" src="{% static 'img/sneakerTwo.png' %}" alt="{{ image.image.alt_text}}">
+                </div>
+                <div class="auct_prod_title_container">
+                    <h3>Product Name</h3>
+                    <h4>2024 Air Jordan 1 Travis Scott</h4>
+                </div>
+                <div class="auct_high_bid_container">
+                    <h3>Hightest Bid</h3>
+                    <h4>$1,000</h4>
+                </div>
+            </a>
+            <a href="auction/open" class="item_container databox_long">
+                <div class="auct_img_container">
+                    <img class="min_img_fluid" src="{% static 'img/sneakerThree.png' %}"
+                        alt="{{ image.image.alt_text}}">
+                </div>
+                <div class="auct_prod_title_container">
+                    <h3>Product Name</h3>
+                    <h4>2024 Air Jordan 11 Light Blue</h4>
+                </div>
+                <div class="auct_high_bid_container">
+                    <h3>Hightest Bid</h3>
+                    <h4>$1,000</h4>
+                </div>
+            </a>
+            <a href="auction/open" class="item_container databox_long">
+                <div class="auct_img_container">
+                    <img class="min_img_fluid" src="{% static 'img/sneakerFour.png' %}" alt="{{ image.image.alt_text}}">
+                </div>
+                <div class="auct_prod_title_container">
+                    <h3>Product Name</h3>
+                    <h4>2024 Nike Dunk Wu</h4>
+                </div>
+                <div class="auct_high_bid_container">
+                    <h3>Hightest Bid</h3>
+                    <h4>$1,000</h4>
+                </div>
+            </a>
+            <a href="auction/open" class="item_container databox_long">
+                <div class="auct_img_container">
+                    <img class="min_img_fluid" src="{% static 'img/sneakerFive.png' %}" alt="{{ image.image.alt_text}}">
+                </div>
+                <div class="auct_prod_title_container">
+                    <h3>Product Name</h3>
+                    <h4>2022 Nike Dunk Ben & Jerry</h4>
+                </div>
+                <div class="auct_high_bid_container">
+                    <h3>Hightest Bid</h3>
+                    <h4>$1,000</h4>
+                </div>
+            </a>
+            <a href="auction/open" class="item_container databox_long">
+                <div class="auct_img_container">
+                    <img class="min_img_fluid" src="{% static 'img/supremeHood.png' %}" alt="{{ image.image.alt_text}}">
+                </div>
+                <div class="auct_prod_title_container">
+                    <h3>Product Name</h3>
+                    <h4>2012 Supreme Hoodie</h4>
+                </div>
+                <div class="auct_high_bid_container">
+                    <h3>Hightest Bid</h3>
+                    <h4>$1,000</h4>
+                </div>
+            </a>
+            <a href="auction/open" class="item_container databox_long">
+                <div class="auct_img_container">
+                    <img class="min_img_fluid" src="{% static 'img/bettsMem.png' %}" alt="{{ image.image.alt_text}}">
+                </div>
+                <div class="auct_prod_title_container">
+                    <h3>Product Name</h3>
+                    <h4>2024 Mookie Betts Worn & Signed WS Jersey</h4>
+                </div>
+                <div class="auct_high_bid_container">
+                    <h3>Hightest Bid</h3>
+                    <h4>$1,000</h4>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+</section>
+
+{% endblock %}

@@ -9,12 +9,13 @@
 
 :root {
     /* ======== Colors ======== */
-    --body-color: #E4E9F7;
+    --body-color: #ffffff;
     --sidebar-color: #fff;
-    --primary-color: #695CFE;
+    --primary-color: #CB3A60;
     --primary-color-light: #F6F5FF;
     --toggle-color: #DDD;
-    --text-color: #707070;
+    --text-color: #CB3A60;
+    --databox-color: #f0eded;
 
     /* ======== Font ======== */
     --logo-font: "Birthstone", cursive;
@@ -28,6 +29,11 @@
     --tran-04: all 0.4s ease;
     --tran-05: all 0.5s ease;
 
+    /* ======== Page Sizing ======== width: calc(100% - 250px);*/
+    --container-width-lg: calc(85% - 16rem);
+    --container-width-md: 90%;
+    --container-width-sm: 95%;
+
 }
 
 
@@ -40,12 +46,87 @@ body {
 body.dark {
     --body-color: #18191A;
     --sidebar-color: #242525;
-    --primary-color: #3A3B3C;
-    --primary-color-light: #3A3B3C;
+    --primary-color: #ffffff;
+    --primary-color-light: #F6F5FF;
     --toggle-color: #fff;
-    --text-color: #ccc;
+    --text-color: #CB3A60;
+    --databox-color: #5656567d;
 
 }
+
+.container {
+    left: 8rem;
+    width: var(--container-width-lg);
+    margin: 0 auto;
+    position: relative;
+    transition: var(--tran-05);
+}
+
+
+.sidebar.close~.container {
+    left: 88px;
+    width: calc(100% - 88px);
+}
+
+
+.databox {
+    background-color: var(--databox-color);
+    border-radius: 5px;
+    height: auto;
+    width: 16rem;
+    padding: 1rem 1rem;
+    box-shadow: 10px 10px 5px -6px rgba(0, 0, 0, 0.75);
+    -webkit-box-shadow: 10px 10px 5px -6px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 10px 10px 5px -6px rgba(0, 0, 0, 0.75);
+}
+
+.databox_long {
+    align-items: center;
+    background-color: var(--databox-color);
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    width: 85%;
+    padding: .5rem 1rem;
+    box-shadow: 10px 10px 5px -6px rgba(0, 0, 0, 0.75);
+    -webkit-box-shadow: 10px 10px 5px -6px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 10px 10px 5px -6px rgba(0, 0, 0, 0.75);
+}
+
+
+.button_small {
+    background: var(--text-color);
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--primary-color-light);
+    font-size: .90rem;
+    padding: .15rem .25rem;
+    text-align: center;
+    width: 5rem;
+
+}
+
+
+.button_medium {
+    align-items: center;
+    background: var(--text-color);
+    border: 1px solid black;
+    border-radius: 5px;
+    color: var(--primary-color-light);
+    cursor: pointer;
+    display: flex;
+    font-size: 1.25rem;
+    height: 2rem;
+    justify-content: center;
+    width: 8rem;
+}
+
+.button_small:active,
+.button_medium:active {
+    transform: scale(0.98);
+}
+
 
 /*
 logo font: Birthstone
@@ -79,6 +160,7 @@ text font: inter
 /* ========= Navbar ========= */
 .sidebar {
     background: var(--sidebar-color);
+    border-right: 1px solid var(--text-color);
     left: 0;
     height: 100%;
     padding: 10px 14px;
@@ -116,7 +198,7 @@ text font: inter
 }
 
 .sidebar li {
-    height: 50px;
+    height: 1.5rem;
     margin-top: 10px;
     list-style: none;
     display: flex;
@@ -144,15 +226,22 @@ text font: inter
 }
 
 .sidebar .logo-text {
+    color: var(--text-color);
     font-family: var(--logo-font);
-    font-size: 2.25rem;
-    color: palevioletred;
+    font-size: 3rem;
+    font-weight: 600;
+    text-align: left;
+    transition: var(--tran-03);
     width: 16rem;
-
-
 }
 
-.sidebar header .logo-text {
+.sidebar .logo-text.abbrev {
+
+    font-size: 2rem;
+}
+
+
+.sidebar .logo-text .sidebar header .logo-text {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -167,7 +256,7 @@ header .logo-text .header-text {
 
 .sidebar header .toggle {
     align-items: center;
-    background: var(--primary-color);
+    background: var(--text-color);
     border-radius: 50%;
     color: var(--sidebar-color);
     cursor: pointer;
@@ -227,6 +316,7 @@ header .logo-text .header-text {
 
 .sidebar li a:hover {
     background: var(--primary-color);
+    height: 2rem;
 }
 
 .sidebar li a:hover .icon,
@@ -237,6 +327,7 @@ header .logo-text .header-text {
 body.dark .sidebar li a:hover .icon,
 body.dark .sidebar li a:hover .text {
     color: var(--sidebar-color);
+
 }
 
 .sidebar .menu-bar {
@@ -314,5 +405,22 @@ body.dark .menu-bar .mode i.moon {
 
 body.dark .switch::before {
     left: 24px;
+
+}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) ===============*/
+@media screen and (max-width: 1024px) {
+    .container {
+        width: var(--container-width-md);
+    }
+
+}
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) ===============*/
+@media screen and (max-width: 600px) {
+    .container {
+        width: var(--container-width-sm);
+    }
 
 }
