@@ -4,6 +4,10 @@
 
 }
 
+.section_container {
+    margin-bottom: 5rem;
+}
+
 
 .page_title {
     display: flex;
@@ -120,15 +124,17 @@ p.databox_assign_left {
 }
 
 .lower_auction_container {
+    align-items: center;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    gap: 1rem;
     justify-content: center;
     width: calc(100% - 170px);
 }
 
 .prod_auct_desc_container {
     background: var(--databox-color);
+    border: 1px solid var(--text-color);
     border-radius: 5px;
     color: var(--text-color);
     padding: 1rem 2rem;
@@ -140,14 +146,52 @@ p.databox_assign_left {
     margin-bottom: .5rem;
 }
 
-.verified_return_container {}
+.prod_auct_details_container {
+    background: var(--databox-color);
+    border-radius: 5px;
+    border: 1px solid var(--text-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: space-between;
+    padding: .5rem 2rem;
+    width: 100%
+}
 
-.databox_medium_dark {
+.auct_details_style_container,
+.auct_details_colorway_container,
+.auct_details_release_container,
+.auct_details_retail_container {
+    align-items: center;
     display: flex;
     flex-direction: column;
+}
 
-    background: orange;
-    margin-bottom: 2rem;
+h4.prod_auct_details_title {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+h4.prod_auct_details_title {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.verified_return_container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.databox_medium_dark {
+    background: var(--databox-color);
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    padding: 1rem 2rem;
+    width: 45%;
 }
 
 .databox_medium_dark_title_box {
@@ -155,5 +199,49 @@ p.databox_assign_left {
 }
 
 
-
 .databox_medium_dark a {}
+
+
+/* Modal background */
+.modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black background with opacity */
+}
+
+/* Modal content */
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    /* Center it */
+    padding: 1rem 2rem;
+    border: 1px solid #888;
+    width: 50%;
+    /* Adjust width */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+/* Close button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+}
