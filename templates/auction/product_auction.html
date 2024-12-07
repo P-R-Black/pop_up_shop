@@ -26,9 +26,8 @@ Auction
                 <div class="auction_product_links_container">
                     <button type="button" class="button_medium btn btn-primary" id="bidButton">Bid
                     </button>
-                    <button type="button" class="button_medium btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target="#bidModal2" href="/">Buy</button>
-                    <button class="button_medium" href="/">Watch</button>
+                    <a class="button_medium" href="/auction/product-buy">Buy</a>
+                    <button class=" button_medium" href="/">Watch</button>
                 </div>
                 <!-- Bid Modal -->
                 <div class="modal fade" id="bidModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
@@ -41,7 +40,7 @@ Auction
                         <div class="modal_bid_shipping_days_left">
                             <div class="modal_bid_and_shipping">
                                 <h5>$500</h5>
-                                <h5> + Free Shipping</h5>
+                                <h5> + Shipping</h5>
                             </div>
                             <div class="modal_bid_numb_of_bids">
                                 <h5><span>25</span>bids</h5>
@@ -54,13 +53,13 @@ Auction
                             <form id="bidForm" method="post" action="">
                                 {% csrf_token %}
                                 <div id="predefined_bids" class="form-select">
-                                    <button class="button_long_small" value="10">$10</button>
-                                    <button class="button_long_small" value="20">$20</button>
-                                    <button class="button_long_small" value="50">$50</button>
+                                    <button class="button_long_small" value="10">Bid<span> $10</span></button>
+                                    <button class="button_long_small" value="20">Bid<span> $20</span></button>
+                                    <button class="button_long_small" value="50">Bid<span> $30</span></button>
                                 </div>
 
                                 <div class="bid_modal_input_container">
-                                    <label for="custom_bid">or enter your bid</label>
+                                    <label for="custom_bid"><span>or enter your bid</span></label>
                                     <div class="modal_bid_input_submit_btn">
                                         <div class="outer_input_container">
                                             <h4>$</h4>

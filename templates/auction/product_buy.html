@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Auction
+{% endblock %}
+
+{% block main %}
+<section class="product_byy_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2><span>The Pop Up</span> Checkout</h2>
+        </div>
+        <div class="buy_product_container">
+            <div class="auction_container_left">
+                <div class="checkbout_container">
+                    <div class="checkbout_container_title">
+                        <h3>Checkout</h3>
+                    </div>
+                    <div class="checkout_options_container">
+                        <button>Apple Pay</button>
+                        <button>Google Pay</button>
+                        <button>PayPal</button>
+                        <button>Venmo</button>
+                        <button>Visa, Mastercard, Discover</button>
+                    </div>
+                    <div class="checkout_shipping_container">
+                        <h3>Shipping to</h3>
+                        <h4 class="shipping_to_name">Juan John Smith</h4>
+                        <h4 class="shipping_street_address">430 Lexington Ave.</h4>
+                        <h4 class="shipping_city_state_zip">Brooklyn, NY 11221</h4>
+                        <h4 class="shipping_country">United States</h4>
+                        <h4 class="shipping_phone_number">718-809-5331</h4>
+                        <a href="/">Change</a>
+                    </div>
+                    <div class="checkout_shipping_options_container">
+                        <button>Standard Shipping</button>
+                        <button>Express Shipping</button>
+                    </div>
+                    <div class="checkout_details_container">
+                        <div class="checkout_subtotal_container">
+                            <p>Subtotal <span>$250</span></p>
+                            <div>^ | ˅</div>
+                        </div>
+                        <div class="purchase_details_container">
+                            <div class="purchase_details_item_price_container">
+                                <p>Item Price</p>
+                                <p>$245</p>
+                            </div>
+                            <div class="purchase_details_item_price_container">
+                                <p>Quantity</p>
+                                <p>1</p>
+                            </div>
+                            <div class="purchase_details_item_price_container">
+                                <p>Processing Fee</p>
+                                <p>$2.59</p>
+                            </div>
+                            <div class="purchase_details_item_price_container">
+                                <p>Shipping Cost</p>
+                                <p>$14.99</p>
+                            </div>
+                            <div class="purchase_details_item_price_container">
+                                <p>Tax</p>
+                                <p>$22.00</p>
+                            </div>
+                            <div class="purchase_details_item_price_container">
+                                <button>Confirm & Pay</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="auction_container_right">
+                <div class="auction_product_image_container">
+                    <img class="img_fluid" alt="Responsive image" src="{% static 'img/sneakerThree.png' %}"
+                        alt="{{ image.image.alt_text}}" />
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
