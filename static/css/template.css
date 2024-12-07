@@ -107,6 +107,20 @@ body.dark {
 
 }
 
+.button_long_small {
+    background: var(--text-color);
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--primary-color-light);
+    font-size: 1rem;
+    height: 1.75rem;
+    padding: .15rem .25rem;
+    text-align: center;
+    width: 8rem;
+
+}
+
 
 .button_medium {
     align-items: center;
@@ -123,7 +137,8 @@ body.dark {
 }
 
 .button_small:active,
-.button_medium:active {
+.button_medium:active,
+.button_long_small:active {
     transform: scale(0.98);
 }
 
