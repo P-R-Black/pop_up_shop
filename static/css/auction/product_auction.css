@@ -219,29 +219,213 @@ h4.prod_auct_details_title {
 }
 
 /* Modal content */
-.modal-content {
+.modal_content {
     background-color: #fff;
     margin: 15% auto;
     /* Center it */
-    padding: 1rem 2rem;
+    padding: 1rem 1rem;
     border: 1px solid #888;
-    width: 50%;
+    width: 35%;
     /* Adjust width */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
+    border-radius: 5px;
+
+    border: 2px solid var(--text-color);
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal_header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.modal_header h3 {
+    color: var(--text-color);
+    font-size: 1.25rem;
+    font-weight: 400;
 }
 
 /* Close button */
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
+
+.btn-close {
+    aspect-ratio: 1;
+    background-color: transparent;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
     cursor: pointer;
+    font-size: 1rem;
+
+    width: 1.5rem;
+
 }
 
-.close:hover,
-.close:focus {
-    color: black;
+.btn-close:hover,
+.btn-close:focus {
+    background-color: var(--text-color);
+    color: var(--body-color);
     text-decoration: none;
+}
+
+.close:active {
+    transform: scale(0.98);
+}
+
+
+
+.modal_bid_shipping_days_left {
+    display: flex;
+    justify-content: space-between;
+}
+
+.modal_bid_and_shipping {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    width: 33%;
+}
+
+.modal_bid_and_shipping h5:nth-child(2) {
+    font-weight: 200;
+    margin-left: .25rem;
+}
+
+.modal_bid_numb_of_bids {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    font-size: 1.10rem;
+    justify-content: space-around;
+    width: 33%;
+}
+
+.modal_bid_days_left {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    font-size: 1.10rem;
+    justify-content: space-around;
+    width: 33%;
+
+}
+
+.modal_bid_numb_of_bids span,
+.modal_bid_days_left span {
+    font-size: 1.10rem;
+    font-weight: 500;
+    margin-right: .25rem;
+}
+
+.modal_body {
+    display: flex;
+    flex-direction: column;
+
+}
+
+#predefined_bids {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+
+}
+
+.bid_modal_input_container {
+    display: flex;
+    flex-direction: column;
+
+}
+
+.bid_modal_input_container label {
+    font-weight: 400;
+    margin-bottom: .5rem;
+    text-align: center;
+}
+
+.bid_modal_input_container p {
+    color: #8c8989;
+    font-size: .80rem;
+    margin-top: .25rem;
+
+}
+
+
+
+.modal_bid_input_submit_btn {
+    display: flex;
+    justify-content: space-between;
+
+}
+
+.outer_input_container {
+    align-items: center;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    display: flex;
+    gap: .5rem;
+    height: 1.75rem;
+    justify-content: flex-start;
+    overflow: hidden;
+    width: 65%;
+    padding-left: .5rem;
+}
+
+.outer_input_container h4 {
+    font-size: 1.1rem;
+    margin-top: .20rem;
+
+}
+
+input#custom_bid {
+    background-color: transparent;
+    border: 0;
+    font-size: 1rem;
+    outline: 0;
+    border-radius: 5px;
+    margin-left: .05rem;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.modal_user_abbr_user_info {
+    display: flex;
+    justify-content: space-between;
+}
+
+.modal_user_card_img {
+    width: 4.5rem;
+}
+
+.modal_user_pay_email_shipping_container {
+    align-items: center;
+    display: flex;
+    gap: .75rem;
+    width: 75%;
+}
+
+.modal_user_pay_email_shipping_container p {
+    color: var(--text-color);
+    font-size: .85rem;
+
+}
+
+.modal_user_info_update_container a {
+    color: #8c8989;
+}
+
+.modal_purchase_disclaimer p {
+    color: #8c8989;
+    font-size: clamp(.60em, .75rem, 12vw);
 }
