@@ -259,7 +259,7 @@ h4.prod_auct_details_title {
     color: var(--text-color);
     cursor: pointer;
     font-size: 1rem;
-
+    transition: var(--tran-02);
     width: 1.5rem;
 
 }
@@ -269,6 +269,7 @@ h4.prod_auct_details_title {
     background-color: var(--text-color);
     color: var(--body-color);
     text-decoration: none;
+    transition: var(--tran-02);
 }
 
 .close:active {
@@ -339,11 +340,32 @@ h4.prod_auct_details_title {
 
 }
 
+
 .bid_modal_input_container label {
-    font-weight: 400;
-    margin-bottom: .5rem;
-    text-align: center;
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    font-size: 1rem;
+    font-weight: 300;
+    justify-content: center;
+    margin-bottom: 1rem;
+
 }
+
+.bid_modal_input_container label span {
+    background: #fff;
+    margin: 0 15px;
+}
+
+label:before,
+label:after {
+    background: var(--text-color);
+    height: 1px;
+    flex: 1;
+    content: '';
+}
+
+
 
 .bid_modal_input_container p {
     color: #8c8989;
@@ -400,8 +422,11 @@ input[type=number] {
 }
 
 .modal_user_abbr_user_info {
+    border-bottom: 1px solid var(--text-color);
+    border-top: 1px solid var(--text-color);
     display: flex;
     justify-content: space-between;
+    padding: .5rem 0 .5rem 0;
 }
 
 .modal_user_card_img {
@@ -422,10 +447,10 @@ input[type=number] {
 }
 
 .modal_user_info_update_container a {
-    color: #8c8989;
+    color: var(--primary-light-grey);
 }
 
 .modal_purchase_disclaimer p {
-    color: #8c8989;
+    color: var(--primary-light-grey);
     font-size: clamp(.60em, .75rem, 12vw);
 }
