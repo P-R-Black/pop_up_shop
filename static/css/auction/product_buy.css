@@ -1,4 +1,324 @@
+.product_buy_section {
+    background: var(--body-color);
+    min-height: 100vh;
+}
+
+
 .buy_product_container {
     display: flex;
     border: 2px solid red;
+    height: auto;
+    width: 95%;
+}
+
+.auction_container_left {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    width: 45%;
+}
+
+.checkbout_container {
+    border: 2px solid pink;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1rem 0 1rem;
+}
+
+.primary_payment_container {
+    display: flex;
+    justify-content: center;
+    gap: .50rem;
+}
+
+
+.expandButton {
+    border: none;
+    cursor: pointer;
+    outline: none;
+    transition: var(--tran-02);
+
+    font-size: 3rem;
+    font-weight: 300;
+    width: 2.5rem;
+
+}
+
+.active,
+.expandButton:active {
+    transform: rotate(180deg);
+    transition: var(--tran-05);
+}
+
+
+.checkout_options_container {
+    /* 
+        display: none;
+
+    overflow: hidden;
+    transition: var(--tran-04); */
+
+    padding: 0 18px;
+
+
+    max-height: 0;
+    /* Start collapsed */
+    opacity: 0;
+    /* Invisible by default */
+    overflow: hidden;
+    /* Hide overflowing content */
+    transition: var(--tran-05);
+    /* Smooth transition for height and opacity */
+
+    align-items: center;
+    background: var(--databox-color);
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+
+}
+
+.checkout_options_container.show {
+    max-height: 500px;
+    /* Adjust to the maximum height of your container */
+    opacity: 1;
+    /* Fully visible */
+
+    align-items: center;
+    background: var(--databox-color);
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: 1rem 0;
+    transition: var(--tran-05);
+
+}
+
+
+.payment_option_buttons i {
+    font-size: 1.5rem;
+}
+
+
+.g-logo {
+    height: 1.75rem;
+}
+
+.paypal-logo {
+    height: 5rem;
+    position: absolute;
+}
+
+.venmo-logo {
+    height: 3rem;
+    position: absolute;
+}
+
+.visa_mc_disc_card_logo_container {
+    display: flex;
+    gap: .25rem;
+    position: absolute;
+}
+
+.visa-logo,
+.mc-logo,
+.disc-logo {
+    height: 2rem;
+
+}
+
+.checkout_shipping_container {
+    background: var(--databox-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    padding: 1rem 1rem;
+}
+
+.checkout_shipping_container h3 {
+    border-bottom: 2px solid var(--text-color);
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    text-align: center;
+
+}
+
+.checkout_shipping_container h4 {
+    font-size: 1.10rem;
+    margin-bottom: .25rem;
+
+}
+
+.address_change_modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black background with opacity */
+}
+
+/* Modal content */
+.address_modal_content {
+    background-color: #fff;
+    margin: 15% auto;
+    /* Center it */
+    padding: 1rem 1rem;
+    border: 1px solid #888;
+    width: 50%;
+    /* Adjust width */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+
+    border: 2px solid var(--text-color);
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ship_to_name_update_modal_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    width: 100%;
+    height: 50%;
+}
+
+
+.ship_to_name_update_modal_container select {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    background-color: transparent;
+    height: 2rem;
+    padding-left: .5rem;
+    margin-top: -.5rem;
+    width: 20%;
+}
+
+.modal_name_inputs_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+
+.modal_name_inputs {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+}
+
+.modal_first_name_input,
+.modal_last_name_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 75%
+}
+
+.modal_middle_initial_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 15%
+}
+
+
+.ship_to_address_update_modal_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-top: 2rem;
+}
+
+
+.modal_street_address_one_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 75%;
+}
+
+.modal_street_address_two_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 75%;
+}
+
+.modal_address_city_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 75%;
+}
+
+.modal_name_inputs select {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    background-color: transparent;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 30%;
+}
+
+.modal_address_state_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 10%;
+}
+
+.modal_address_zip_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 15%;
+}
+
+.modal_addres_phone_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 25%;
+}
+
+
+.checkout_shipping_options_container {
+    background: var(--databox-color);
+    border-radius: 5px;
+}
+
+.checkout_details_container {
+    background: var(--databox-color);
+    border-radius: 5px;
+}
+
+.purchase_details_container {
+    background: var(--databox-color);
+    border-radius: 5px;
+}
+
+
+
+.auction_container_right {
+    border: 2px solid green;
+    width: 50%;
+
 }
