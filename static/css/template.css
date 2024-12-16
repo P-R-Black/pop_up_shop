@@ -152,6 +152,44 @@ body.dark {
     width: 12rem;
 }
 
+
+.payment_option_buttons {
+    align-items: center;
+    background-color: black;
+    border-radius: 5px;
+    box-sizing: border-box;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.5rem;
+    font-weight: 300;
+    justify-content: center;
+    min-height: 3.25rem;
+    max-height: 4rem;
+    padding: 0px;
+    position: relative;
+    width: clamp(14rem, 20rem, 30vw);
+}
+
+.payment_option_buttons_small {
+    align-items: center;
+    background-color: black;
+    border-radius: 5px;
+    box-sizing: border-box;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.5rem;
+    font-weight: 300;
+    justify-content: center;
+    min-height: 3.25rem;
+    max-height: 4rem;
+    padding: 0px;
+    position: relative;
+    width: clamp(11rem, 17rem, 30vw);
+
+}
+
 .button_long_small:hover {
     background: var(--body-color);
     color: var(--text-color);
@@ -160,7 +198,8 @@ body.dark {
 
 .button_small:active,
 .button_medium:active,
-.button_long_small:active {
+.button_long_small:active,
+.payment_option_buttons:active {
     transform: scale(0.98);
 }
 
@@ -383,10 +422,10 @@ body.dark .sidebar li a:hover .text {
 }
 
 .menu-bar .mode .moon-sun {
+    align-items: center;
+    display: flex;
     height: 50px;
     width: 60px;
-    display: flex;
-    align-items: center;
 }
 
 .menu-bar .mode i {
@@ -409,6 +448,7 @@ body.dark .menu-bar .mode i.moon {
 .menu-bar .mode .toggle-switch {
     align-items: center;
     background: var(--primary-color-light);
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     height: 100%;
