@@ -152,6 +152,26 @@ body.dark {
     width: 12rem;
 }
 
+.button_long_option {
+    align-items: center;
+    background: var(--primary-color-light);
+    border: 1px solid black;
+    border-radius: 5px;
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    font-size: 1rem;
+    height: 2.25rem;
+    justify-content: center;
+    width: 12rem;
+}
+
+.button_long_option.chosen {
+    background: var(--text-color);
+    color: var(--primary-color-light);
+
+}
+
 
 .payment_option_buttons {
     align-items: center;
@@ -168,7 +188,7 @@ body.dark {
     max-height: 4rem;
     padding: 0px;
     position: relative;
-    width: clamp(14rem, 20rem, 30vw);
+    width: 75%;
 }
 
 .payment_option_buttons_small {
@@ -186,7 +206,8 @@ body.dark {
     max-height: 4rem;
     padding: 0px;
     position: relative;
-    width: clamp(11rem, 17rem, 30vw);
+    /* width: clamp(8rem, 16rem, 30vw); */
+    width: 65%;
 
 }
 
