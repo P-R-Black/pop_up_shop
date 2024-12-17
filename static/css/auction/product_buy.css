@@ -26,12 +26,36 @@
     padding: 0 1rem 0 1rem;
 }
 
+
+.checkbout_container_title h3 {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    text-align: center;
+}
+
 .primary_payment_container {
+    background: var(--databox-color);
+
+
+    border-radius: 5px;
+    padding: 1rem 1rem;
+}
+
+.primary_payment_container h3 {
+    color: var(--text-color);
+    border-bottom: 2px solid var(--text-color);
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+
+.button_expand_container {
     display: flex;
     justify-content: center;
     gap: .50rem;
-}
 
+}
 
 .expandButton {
     border: none;
@@ -53,12 +77,6 @@
 
 
 .checkout_options_container {
-    /* 
-        display: none;
-
-    overflow: hidden;
-    transition: var(--tran-04); */
-
     padding: 0 18px;
 
 
@@ -76,6 +94,7 @@
     display: flex;
     flex-direction: column;
     gap: .5rem;
+    margin-top: 1rem;
 
 }
 
@@ -135,7 +154,8 @@
     padding: 1rem 1rem;
 }
 
-.checkout_shipping_container h3 {
+.checkout_shipping_container h3,
+.checkout_shipping_options_container h3 {
     border-bottom: 2px solid var(--text-color);
     font-size: 1.25rem;
     margin-bottom: 1rem;
@@ -147,6 +167,12 @@
     font-size: 1.10rem;
     margin-bottom: .25rem;
 
+}
+
+#addressChangeButton {
+    color: rgb(65, 125, 246);
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .address_change_modal {
@@ -303,18 +329,84 @@
 .checkout_shipping_options_container {
     background: var(--databox-color);
     border-radius: 5px;
+    color: var(--text-color);
+    padding: 1rem 1rem;
+}
+
+.checkout_shipping_options_button_container {
+    display: flex;
+    gap: 1rem;
 }
 
 .checkout_details_container {
     background: var(--databox-color);
     border-radius: 5px;
+    color: var(--text-color);
+    padding: 1rem 1rem;
 }
+
+.checkout_subtotal_container {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.checkout_subtotal_container p {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+
+.purchase_details_item_price_container {
+    border-bottom: 1px dotted var(--text-color);
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+
+.subtotalExpand {
+    border: none;
+    cursor: pointer;
+    outline: none;
+    transition: var(--tran-02);
+
+    font-size: 2rem;
+    font-weight: 300;
+    width: 2rem;
+
+}
+
+.subTotalactive,
+.subtotalExpand:active {
+    transform: rotate(180deg);
+    transition: var(--tran-05);
+}
+
 
 .purchase_details_container {
-    background: var(--databox-color);
-    border-radius: 5px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 18px;
+    transition: var(--tran-05);
+
+
 }
 
+.purchase_details_container.subTotalShow {
+
+    max-height: 500px;
+    opacity: 1;
+    padding: 1rem 0;
+    transition: var(--tran-05);
+}
+
+.purchase_details_confirm_pay {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
 
 
 .auction_container_right {

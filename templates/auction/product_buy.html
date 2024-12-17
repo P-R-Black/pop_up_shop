@@ -19,32 +19,35 @@ Auction
                         <h3>Checkout</h3>
                     </div>
                     <div class="primary_payment_container">
-                        <button class="payment_option_buttons_small">
-                            <i class='bx bxl-apple'></i>Pay
-                        </button>
-                        <i class='bx bxs-chevron-down expandButton' id="expandButton"></i>
-                    </div>
-                    <div class="checkout_options_container" id="checkoutOptions">
-                        <button class="payment_option_buttons">
-                            <i class='bx bxl-apple'></i>Pay
-                        </button>
-                        <button class="payment_option_buttons">
-                            <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
-                            Pay
-                        </button>
-                        <button class="payment_option_buttons">
-                            <img src="{% static 'img/paypal_icon.svg' %}" class='paypal-logo' />
-                        </button>
-                        <button class="payment_option_buttons">
-                            <img src="{% static 'img/venmo.svg' %}" class='venmo-logo' />
-                        </button>
-                        <button class="payment_option_buttons">
-                            <div class="visa_mc_disc_card_logo_container">
-                                <img src="{% static 'img/visa_icon.png' %}" class='visa-logo' />
-                                <img src="{% static 'img/mastercard_icon.png' %}" class='mc-logo' />
-                                <img src="{% static 'img/discover_icon.png' %}" class='disc-logo' />
-                            </div>
-                        </button>
+                        <h3>Payment Options</h3>
+                        <div class="button_expand_container">
+                            <button class="payment_option_buttons_small" id="selectedPaymentButton">
+                                <i class='bx bxl-apple'></i>Pay
+                            </button>
+                            <i class='bx bxs-chevron-down expandButton' id="expandButton"></i>
+                        </div>
+                        <div class="checkout_options_container" id="checkoutOptions">
+                            <button class="payment_option_buttons">
+                                <i class='bx bxl-apple'></i>Pay
+                            </button>
+                            <button class="payment_option_buttons">
+                                <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
+                                Pay
+                            </button>
+                            <button class="payment_option_buttons">
+                                <img src="{% static 'img/paypal_icon.svg' %}" class='paypal-logo' />
+                            </button>
+                            <button class="payment_option_buttons">
+                                <img src="{% static 'img/venmo.svg' %}" class='venmo-logo' />
+                            </button>
+                            <button class="payment_option_buttons">
+                                <div class="visa_mc_disc_card_logo_container">
+                                    <img src="{% static 'img/visa_icon.png' %}" class='visa-logo' />
+                                    <img src="{% static 'img/mastercard_icon.png' %}" class='mc-logo' />
+                                    <img src="{% static 'img/discover_icon.png' %}" class='disc-logo' />
+                                </div>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="checkout_shipping_container">
@@ -92,7 +95,17 @@ Auction
                                             <label name="last_name">Last Name</label>
                                             <input type="text" class="modal_last_name_input" />
                                         </div>
-
+                                        <label for="suffix">Suffix</label>
+                                        <select name="suffix" id="suffix">
+                                            <option value="Jr.">Jr.</option>
+                                            <option value="Sr.">Sr.</option>
+                                            <option value="I">I</option>
+                                            <option value="II">II</option>
+                                            <option value="III">III</option>
+                                            <option value="CPA">CPA</option>
+                                            <option value="M.D.">M.D.</option>
+                                            <option value="PhD">PhD</option>
+                                        </select>
                                     </div>
                                     <div class="ship_to_address_update_modal_container">
                                         <div class="modal_name_inputs">
@@ -182,37 +195,42 @@ Auction
                         <!-- End Address Update Modal -->
                     </div>
                     <div class="checkout_shipping_options_container">
-                        <button>Standard Shipping</button>
-                        <button>Express Shipping</button>
+                        <h3>Shipping Choice</h3>
+                        <div class="checkout_shipping_options_button_container">
+                            <button class="button_long_option chosen">Standard Shipping</button>
+                            <button class="button_long_option">Express Shipping</button>
+                        </div>
                     </div>
                     <div class="checkout_details_container">
                         <div class="checkout_subtotal_container">
-                            <p>Subtotal <span>$250</span></p>
-                            <div>^ | ˅</div>
+                            <p>Subtotal <span id="purchaseSubtotal"></span></p>
+                            <i class='bx bxs-chevron-down subtotalExpand' id="subtotalExpand"></i>
                         </div>
                         <div class="purchase_details_container">
                             <div class="purchase_details_item_price_container">
                                 <p>Item Price</p>
-                                <p>$245</p>
+                                <p id="purchasePrice">$245</p>
                             </div>
                             <div class="purchase_details_item_price_container">
                                 <p>Quantity</p>
-                                <p>1</p>
+                                <p id="purchaseQuantity">1</p>
                             </div>
                             <div class="purchase_details_item_price_container">
                                 <p>Processing Fee</p>
-                                <p>$2.59</p>
+                                <p id="processingFee">$2.59</p>
                             </div>
                             <div class="purchase_details_item_price_container">
                                 <p>Shipping Cost</p>
-                                <p>$14.99</p>
+                                <p id="shippingCost">$14.99</p>
                             </div>
                             <div class="purchase_details_item_price_container">
                                 <p>Tax</p>
-                                <p>$22.00</p>
+                                <p id="purchaseTax">$22.00</p>
                             </div>
-                            <div class="purchase_details_item_price_container">
-                                <button>Confirm & Pay</button>
+                            <div class="purchase_details_confirm_pay">
+                                <button class="payment_option_buttons" id="selectedPaymentButtonTwo">
+                                    <i class='bx bxl-apple'></i>Pay
+                                </button>
                             </div>
 
                         </div>
