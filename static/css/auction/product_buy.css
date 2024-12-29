@@ -6,20 +6,20 @@
 
 .buy_product_container {
     display: flex;
-    border: 2px solid red;
     height: auto;
-    width: 95%;
+    margin-top: 4rem;
+    width: 100%;
 }
 
-.auction_container_left {
+.checkout_container_left {
     display: flex;
     flex-direction: column;
     height: auto;
-    width: 45%;
+    width: 50%;
 }
 
 .checkbout_container {
-    border: 2px solid pink;
+    border-right: 2px solid pink;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -59,6 +59,7 @@
 
 .expandButton {
     border: none;
+    color: var(--chevron-color);
     cursor: pointer;
     outline: none;
     transition: var(--tran-02);
@@ -144,6 +145,18 @@
 .mc-logo,
 .disc-logo {
     height: 2rem;
+
+}
+
+.dai_usdc_logo_container {
+    display: flex;
+    gap: .5rem;
+    position: absolute;
+}
+
+.dai-logo,
+.usdc-logo {
+    height: 1.5rem;
 
 }
 
@@ -335,6 +348,7 @@
 
 .checkout_shipping_options_button_container {
     display: flex;
+    justify-content: center;
     gap: 1rem;
 }
 
@@ -409,8 +423,74 @@
 }
 
 
-.auction_container_right {
-    border: 2px solid green;
+.checkout_container_right {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 68%;
+    justify-content: center;
+    gap: 2rem;
     width: 50%;
 
+}
+
+.checkout_product_container {
+    align-items: center;
+    background-color: var(--databox-color);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    margin: -1rem 1rem;
+    padding: 1rem 1rem;
+}
+
+.checkout_img_title_container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+
+.checkout_img_fluid {
+    aspect-ratio: 3/2;
+    width: 30%;
+
+}
+
+.checkout_product_desc_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.checkout_product_desc_container h3 {
+    color: var(--text-color);
+    font-size: 1.2rem;
+    font-weight: 300;
+    text-shadow: .25px .25px 0px rgba(0, 0, 0, 0.6);
+}
+
+.checkout_product_details_container {
+    color: var(--text-color);
+    margin-top: .25rem;
+    width: 100%;
+
+}
+
+.checkout_details_size_container,
+.checkout_details_condition_container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.checkout_details_condition_button_container {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: .5rem;
+}
+
+.checkout_details_condition_button_container button {
+    cursor: pointer;
 }

@@ -9,20 +9,6 @@
 }
 
 
-.page_title {
-    display: flex;
-    justify-content: center;
-}
-
-.page_title h2 {
-    font-family: 'noto sans';
-    font-size: 4rem;
-    font-weight: 900;
-    color: var(--text-color);
-    padding: 10px 40px;
-    text-shadow: 3px 0px 4px rgba(0, 0, 0, 0.45);
-}
-
 .auction_container {
     align-items: center;
     display: flex;
