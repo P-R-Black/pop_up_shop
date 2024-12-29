@@ -42,6 +42,8 @@
 
     <!-- CSS Files -->
     <link rel="stylesheet" href="{% static 'css/template.css' %}">
+    <link rel="stylesheet" href="{% static 'css/template_mobile.css' %}">
+
     <link rel="stylesheet" href="{% static 'css/home/home.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/auction.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_auction.css' %}">
@@ -55,7 +57,6 @@
 </head>
 
 <body>
-
     <nav class="sidebar close">
         <header>
             <div class="image-text">
@@ -72,7 +73,13 @@
                     <i class='bx bx-search icon'></i>
                     <input type="text" placeholder="Search...">
                 </li>
+                <li class="mobile-search-box hide-mobile-search-box">
+                    <input type="text" placeholder="Search...">
+                </li>
                 <ul class="menu-links">
+                    <li class="nav-link nav-link-mobile">
+                        <i class='bx bx-search icon' id="mobile-search-icon"></i>
+                    </li>
                     <li class="nav-link">
                         <a href="/">
                             <i class='bx bx-home-alt icon'></i>
@@ -115,8 +122,36 @@
                             <span class="text nav-text">Invite a Friend</span>
                         </a>
                     </li>
+                    <li class="">
+                        <a href="#">
+                            <i class='bx bx-log-in icon'></i>
+                            <span class="text nav-text">Log in</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="#">
+                            <i class='bx bx-log-out icon'></i>
+                            <span class="text nav-text">Log out</span>
+                        </a>
+                    </li>
+                    <li class="mode">
+                        <div class="moon-sun">
+                            <i class='bx bx-moon icon moon'></i>
+                            <i class='bx bx-sun icon sun'></i>
+                        </div>
+                        <span class="mode-text text">Dark Mode</span>
+                        <div class="toggle-switch">
+                            <span class="switch"></span>
+                        </div>
+                    </li>
+                    <li class="mobile-mode" id="mobile-moon-sun">
+                        <i class='bx bx-moon icon mobile-moon'></i>
+                        <i class='bx bx-sun icon mobile-sun'></i>
+                    </li>
+
                 </ul>
             </div>
+            {% comment %}
             <div class="bottom-content">
                 <li class="">
                     <a href="#">
@@ -143,6 +178,7 @@
                 </li>
 
             </div>
+            {% endcomment %}
         </div>
     </nav>
 
