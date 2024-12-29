@@ -13,7 +13,7 @@ Auction
             <h2><span>The Pop Up</span> Checkout</h2>
         </div>
         <div class="buy_product_container">
-            <div class="auction_container_left">
+            <div class="checkout_container_left">
                 <div class="checkbout_container">
                     <div class="checkbout_container_title">
                         <h3>Checkout</h3>
@@ -45,6 +45,12 @@ Auction
                                     <img src="{% static 'img/visa_icon.png' %}" class='visa-logo' />
                                     <img src="{% static 'img/mastercard_icon.png' %}" class='mc-logo' />
                                     <img src="{% static 'img/discover_icon.png' %}" class='disc-logo' />
+                                </div>
+                            </button>
+                            <button class="payment_option_buttons">
+                                <div class="dai_usdc_logo_container">
+                                    <img src="{% static 'img/dia-logo.png' %}" class='dai-logo' />
+                                    <img src="{% static 'img/usdc-logo.png' %}" class='usdc-logo' />
                                 </div>
                             </button>
                         </div>
@@ -236,17 +242,44 @@ Auction
                         </div>
                     </div>
                 </div>
-
-
             </div>
-            <div class="auction_container_right">
-                <div class="auction_product_image_container">
-                    <img class="img_fluid" alt="Responsive image" src="{% static 'img/sneakerThree.png' %}"
-                        alt="{{ image.image.alt_text}}" />
-                </div>
 
+            <div class="checkout_container_right">
+                <div class="checkbout_container_title">
+                    <h3>Cart</h3>
+                </div>
+                <div class="checkout_product_container">
+                    <div class="checkout_img_title_container">
+                        <img class="checkout_img_fluid" alt="Responsive image" src="{% static 'img/sneakerThree.png' %}"
+                            alt="{{ image.image.alt_text}}" />
+                        <div class="checkout_product_desc_container">
+                            <h3>2003</h3>
+                            <h3>Nike SB Dunk Low Paris</h3>
+                        </div>
+
+                    </div>
+
+                    <div class="checkout_product_details_container">
+                        <div class="checkout_details_size_container">
+                            <p>Size</p>
+                            <p class="checkout_databox_assign_left">US Men's 9</p>
+                        </div>
+                        <div class="checkout_details_condition_container">
+                            <p>Condition</p>
+                            <p class="checkout_databox_assign_left">New</p>
+                        </div>
+                        <div class="checkout_details_condition_container">
+                            <p>Quantity</p>
+                            <p class="checkout_databox_assign_left">1</p>
+                        </div>
+                        <div class="checkout_details_condition_button_container">
+                            <button class="button_small">Remove</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
     </div>
 </section>
 

@@ -5,6 +5,13 @@ const searchBtn = body.querySelector('.search-box')
 const modeSwitch = body.querySelector('.toggle-switch')
 const modeText = body.querySelector('.mode-text')
 const navLogoText = body.querySelector('.logo-text')
+console.log('navLogoText', navLogoText)
+
+const mobileMoon = body.querySelector('.mobile-moon')
+const mobileSun = body.querySelector('.mobile-sun')
+const mobileSearchBox = body.querySelector('.mobile-search-box')
+const mobileSearchIcon = body.querySelector('#mobile-search-icon')
+
 
 
 toggle.addEventListener('click', () => {
@@ -22,15 +29,59 @@ searchBtn.addEventListener('click', () => {
     sidebar.classList.remove('close');
 })
 
-modeSwitch.addEventListener('click', () => {
+
+
+mobileSearchIcon.addEventListener('click', () => {
+    console.log('mobile search clicked!')
+    mobileSearchBox.classList.toggle('hide-mobile-search-box')
+    navLogoText.classList.toggle('hide-logo-text')
+})
+
+const darkLighModeToggle = () => {
+    modeSwitch.addEventListener('click', () => {
+        body.classList.toggle('dark');
+
+        if (body.classList.contains("dark")) {
+            modeText.innerText = "Light Mode";
+            localStorage.setItem('darkMode', 'enabled');
+        } else {
+            modeText.innerText = "Dark Mode";
+            localStorage.setItem('darkMode', 'disabled'); // Save preference
+        }
+    })
+}
+
+
+
+mobileMoon.addEventListener('click', () => {
+    body.classList.toggle('dark');
+})
+
+mobileSun.addEventListener('click', () => {
     body.classList.toggle('dark');
 
-    if (body.classList.contains("dark")) {
-        modeText.innerText = "Light Mode"
-    } else {
-        modeText.innerText = "Dark Mode"
-    }
+    console.log('sun clicked')
+
 })
+
+
+darkLighModeToggle()
+
+// Check localStorage for saved mode preference
+const savedMode = localStorage.getItem('darkMode');
+if (savedMode === 'enabled') {
+    body.classList.add('dark');
+    modeText.innerText = "Light Mode";
+}
+
+
+if (!localStorage.getItem('darkMode')) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        body.classList.add('dark');
+        modeText.innerText = "Light Mode";
+        localStorage.setItem('darkMode', 'enabled');
+    }
+}
 
 
 // bid modal

@@ -17,6 +17,7 @@
     --toggle-color: #DDD;
     --text-color: #CB3A60;
     --databox-color: #f0eded;
+    --chevron-color: #18191A;
 
     /* ======== Font ======== */
     --logo-font: "Birthstone", cursive;
@@ -31,9 +32,9 @@
     --tran-05: all 0.5s ease;
 
     /* ======== Page Sizing ======== width: calc(100% - 250px);*/
-    --container-width-lg: calc(85% - 16rem);
-    --container-width-md: 90%;
-    --container-width-sm: 95%;
+    --container-width-lg: calc(85% - 4rem);
+    --container-width-md: calc(90% - 4rem)%;
+    --container-width-sm: calc(95% - 4rem);
 
 }
 
@@ -52,21 +53,49 @@ body.dark {
     --toggle-color: #fff;
     --text-color: #CB3A60;
     --databox-color: #5656567d;
+    --chevron-color: #ffffff;
 
 }
 
-.container {
+/* .container {
     left: 8rem;
     width: var(--container-width-lg);
     margin: 0 auto;
     position: relative;
     transition: var(--tran-05);
+} */
+
+.container {
+    left: 16rem;
+    padding: 0 .5rem;
+    position: relative;
+    transition: var(--tran-05);
+    width: var(--container-width-lg);
+
+
 }
+
 
 
 .sidebar.close~.container {
     left: 88px;
     width: calc(100% - 88px);
+}
+
+
+.page_title {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.page_title h2 {
+    font-family: 'noto sans';
+    font-size: clamp(1rem, 4rem, 10vw);
+    font-weight: 900;
+    color: var(--text-color);
+    padding: 10px 40px;
+    text-shadow: 3px 0px 4px rgba(0, 0, 0, 0.45);
 }
 
 
@@ -211,8 +240,10 @@ body.dark {
 
 }
 
-.button_long_small:hover {
+.button_long_small:hover,
+.button_small:hover {
     background: var(--body-color);
+    border: 1px solid var(--text-color);
     color: var(--text-color);
     transition: var(--tran-03);
 }
@@ -401,6 +432,16 @@ header .logo-text .header-text {
     width: 100%;
 }
 
+.menu-links .nav-link-mobile {
+    display: none;
+}
+
+.sidebar .mobile-search-box {
+    display: none;
+}
+
+
+
 .sidebar li a {
     align-items: center;
     border-radius: 6px;
@@ -501,24 +542,12 @@ body.dark .menu-bar .mode i.moon {
     transition: var(--tran-03)
 }
 
+
 body.dark .switch::before {
     left: 24px;
-
 }
 
-
-/* =============== MEDIA QUERIES (MEDIUM DEVICES) ===============*/
-@media screen and (max-width: 1024px) {
-    .container {
-        width: var(--container-width-md);
-    }
-
-}
-
-/* =============== MEDIA QUERIES (SMALL DEVICES) ===============*/
-@media screen and (max-width: 600px) {
-    .container {
-        width: var(--container-width-sm);
-    }
-
+.mobile-mode {
+    opacity: 0;
+    visibility: hidden;
 }
