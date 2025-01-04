@@ -1,0 +1,131 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {
+
+    /* ===== BID MODAL ===== */
+    .modal_content {
+        width: 55%;
+    }
+
+    /* ===== BID MODAL ===== */
+}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+    .auction_container {
+        flex-direction: column;
+        gap: 2rem;
+        height: auto;
+    }
+
+    .auction_product_desc_container {
+        flex-direction: column;
+    }
+
+    .auction_container_left {
+        width: 90%;
+    }
+
+    .auction_container_right {
+        align-items: flex-start;
+        flex-direction: row;
+        margin-bottom: 1rem;
+        width: 90%;
+    }
+
+    .auction_product_details_container {
+        justify-content: center;
+        height: 12rem;
+    }
+
+    .lower_auction_container {
+        margin-top: 1rem;
+
+    }
+
+    /* ===== BID MODAL ===== */
+    .modal_content {
+        width: 60%;
+    }
+
+    /* ===== BID MODAL ===== */
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+
+    .details_size_container,
+    .details_condition_container,
+    .details_buy_now_container {
+        flex-direction: column;
+        gap: .25rem;
+    }
+
+    .details_buy_now_container a {
+        margin-bottom: .25rem;
+    }
+
+    .details_size_container p,
+    .details_condition_container p,
+    .details_buy_now_container p {
+        text-align: center;
+    }
+
+    .details_size_container p:nth-child(1),
+    .details_condition_container p:nth-child(1) {
+        text-decoration: underline;
+        font-weight: 800;
+
+        width: 6rem;
+    }
+
+    .details_size_container p:nth-child(2),
+    .details_condition_container p:nth-child(2) {
+        font-weight: 300;
+
+        width: 6rem;
+    }
+
+    /* ===== BID MODAL ===== */
+    .modal_content {
+        width: 60%;
+    }
+
+    /* ===== BID MODAL ===== */
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {
+    .section_container {
+        margin-bottom: 12rem;
+    }
+
+    /* ===== BID MODAL ===== */
+    .modal_content {
+        width: 75%;
+    }
+
+    /* ===== BID MODAL ===== */
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+    .prod_auct_details_container {
+        display: grid;
+        gap: .5rem;
+        grid-template-columns: repeat(2, 45%);
+    }
+
+    /* ===== BID MODAL ===== */
+    .modal_content {
+        width: 90%;
+    }
+
+    /* ===== BID MODAL ===== */
+}

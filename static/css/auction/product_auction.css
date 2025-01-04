@@ -38,6 +38,7 @@
 .auction_product_desc_container h3 {
     color: var(--text-color);
     font-size: 1.5rem;
+    text-align: center;
     text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
 }
 
@@ -66,7 +67,8 @@
     align-items: center;
     display: flex;
     justify-content: space-between;
-    margin-bottom: .5rem;
+    margin-bottom: .75rem;
+    width: 90%;
 
 }
 
@@ -75,11 +77,18 @@
 .details_buy_now_container p {
     color: var(--text-color);
     font-size: 1.15rem;
+
 }
 
 p.databox_assign_left {
     width: 50%;
     text-align: left;
+}
+
+.auction_product_details_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
 }
 
 
@@ -88,34 +97,35 @@ p.databox_assign_left {
     color: var(--text-color);
     display: flex;
     flex-direction: column;
+    height: 12rem;
     justify-content: center;
-}
-
-.auction_auction_countdown_container p {
-    margin-bottom: .25rem;
 }
 
 .auction_auction_countdown_container p {
     font-size: 1.25rem;
     font-weight: 600;
+    margin-bottom: .25rem;
+    text-align: center;
 }
 
 .auction_auction_countdown_container h2 {
     font-size: 4.5rem;
+    text-align: center;
 }
 
 .auction_auction_countdown_container h3 {
     font-size: 2.25rem;
     font-weight: 200;
+    text-align: center;
 }
 
 .lower_auction_container {
     align-items: center;
     display: flex;
     flex-direction: column;
+
     gap: 1rem;
     justify-content: center;
-    width: calc(100% - 170px);
 }
 
 .prod_auct_desc_container {
@@ -124,7 +134,7 @@ p.databox_assign_left {
     border-radius: 5px;
     color: var(--text-color);
     padding: 1rem 2rem;
-    height: 7rem;
+    height: auto;
     width: 100%;
 }
 
@@ -180,10 +190,13 @@ h4.prod_auct_details_title {
     width: 45%;
 }
 
+.databox_medium_dark a {
+    color: #069cfa;
+}
+
 .databox_medium_dark_title_box {
     display: flex;
 }
-
 
 
 

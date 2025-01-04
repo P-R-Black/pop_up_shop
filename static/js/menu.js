@@ -5,7 +5,6 @@ const searchBtn = body.querySelector('.search-box')
 const modeSwitch = body.querySelector('.toggle-switch')
 const modeText = body.querySelector('.mode-text')
 const navLogoText = body.querySelector('.logo-text')
-console.log('navLogoText', navLogoText)
 
 const mobileMoon = body.querySelector('.mobile-moon')
 const mobileSun = body.querySelector('.mobile-sun')
@@ -32,7 +31,6 @@ searchBtn.addEventListener('click', () => {
 
 
 mobileSearchIcon.addEventListener('click', () => {
-    console.log('mobile search clicked!')
     mobileSearchBox.classList.toggle('hide-mobile-search-box')
     navLogoText.classList.toggle('hide-logo-text')
 })
