@@ -10,7 +10,8 @@
 @media screen and (max-width: 1245px) {
     .container {
         border: 2px solid red;
-
+        width: calc(100% - 16rem);
+        height: auto;
     }
 
 }
@@ -20,7 +21,7 @@
 @media screen and (max-width: 1000px) {
     .container {
         border: 2px solid green;
-
+        height: auto;
     }
 }
 
@@ -29,7 +30,7 @@
 @media screen and (max-width: 800px) {
     .container {
         border: 2px solid blue;
-        width: var(--container-width-md);
+
     }
 
 }
@@ -41,16 +42,14 @@
 @media screen and (max-width: 640px) {
     .container {
         border: 2px solid pink;
-        /* width: var(--container-width-sm); */
-    }
-
-    .page_title {
-        border: 2px solid white;
+        width: 100%;
+        margin-left: -16rem;
 
     }
+
+
 
     .page_title h2 {
-        border: 2px solid green;
         text-align: center;
     }
 
@@ -60,18 +59,20 @@
         opacity: 0;
     }
 
-    .sidebar.close {
+    .sidebar.close,
+    .sidebar {
         border-top: 1px solid var(--text-color);
+
         bottom: 0;
+        top: unset;
+        position: fixed;
         height: 10.5rem;
         width: 100%;
         border-right: none;
-        position: fixed;
-        top: unset;
         display: flex;
         flex-direction: column;
-
     }
+
 
     .sidebar ul {
         display: flex;
@@ -229,6 +230,7 @@
     }
 
     /* ========== END OF NAVIGATION ==========*/
+
 }
 
 
@@ -236,6 +238,10 @@
 @media screen and (max-width: 450px) {
     .container {
         border: 2px solid #28f1c9;
-        width: var(--container-width-sm);
+        /* width: 100%; */
     }
+
+
+
+
 }
