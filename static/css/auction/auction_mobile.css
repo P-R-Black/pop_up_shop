@@ -1,0 +1,76 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+
+    .item_container_two {
+
+        flex-direction: column;
+    }
+
+    .auction_product_detail_container {
+        width: 80%;
+    }
+
+    .auct_prod_title_container_two {
+        width: 100%;
+
+    }
+
+    .auct_prod_title_container_two h4 {
+        text-align: center;
+    }
+
+    .auction_product_auction_details {
+        margin: 1.5rem 0 1rem;
+        order: 2;
+        width: 80%;
+    }
+
+    .auction_product_auction_details h2 {
+        margin-top: .25rem;
+    }
+
+    .auction_product_auction_details h3 {
+        margin-top: -1rem;
+    }
+
+
+
+    .auction_prod_links_container {
+        flex-direction: row;
+        justify-content: center;
+        margin-top: .5rem;
+        order: 3;
+        padding-bottom: 1rem;
+        width: 80%;
+    }
+
+
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+    .sub_auction_product_detail_container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .sub_auction_product_detail_container h4 {
+        text-align: center;
+    }
+}

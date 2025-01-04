@@ -33,7 +33,7 @@
 
     /* ======== Page Sizing ======== width: calc(100% - 250px);*/
     --container-width-lg: calc(85% - 4rem);
-    --container-width-md: calc(90% - 4rem)%;
+    --container-width-md: calc(90% - 4rem);
     --container-width-sm: calc(95% - 4rem);
 
 }
@@ -91,10 +91,11 @@ body.dark {
 
 .page_title h2 {
     font-family: 'noto sans';
-    font-size: clamp(1rem, 4rem, 10vw);
+    font-size: clamp(2.5rem, 4rem, 10vw);
     font-weight: 900;
     color: var(--text-color);
     padding: 10px 40px;
+    text-align: center;
     text-shadow: 3px 0px 4px rgba(0, 0, 0, 0.45);
 }
 
@@ -144,11 +145,11 @@ body.dark {
     border-radius: 5px;
     cursor: pointer;
     color: var(--primary-color-light);
-    font-size: .90rem;
+    font-size: clamp(.75rem, .90rem, 2vw);
     height: 1.75rem;
     padding: .15rem .25rem;
     text-align: center;
-    width: 8rem;
+    width: clamp(5rem, 8rem, 25vw);
 
 }
 
@@ -161,10 +162,10 @@ body.dark {
     color: var(--primary-color-light);
     cursor: pointer;
     display: flex;
-    font-size: 1rem;
+    font-size: clamp(.85rem, 1rem, 2vw);
     height: 2rem;
     justify-content: center;
-    width: 8rem;
+    width: clamp(5rem, 8rem, 25vw);
 }
 
 .button_long {
@@ -175,10 +176,12 @@ body.dark {
     color: var(--primary-color-light);
     cursor: pointer;
     display: flex;
-    font-size: 1rem;
+    font-size: clamp(.70rem, 1rem, 2vw);
     height: 2.25rem;
     justify-content: center;
-    width: 12rem;
+    padding: 0 .5rem 0 .5rem;
+    text-align: center;
+    width: clamp(7rem, 12rem, 15vw)
 }
 
 .button_long_option {
