@@ -6,6 +6,10 @@ urlpatterns = [
     path('', views.all_auction_view, name="auction"),
     path('open', views.product_auction_view, name='product_auction'), # map to product id
     path('product-buy', views.product_buy_view, name='product_buy'), # map to product id
+    path('products', views.products, name='products'),
+    path('coming-soon', views.coming_soon, name='coming_soon'),
+    path('future-releases', views.future_releases, name='future_releases'),
+
 
 
 ]

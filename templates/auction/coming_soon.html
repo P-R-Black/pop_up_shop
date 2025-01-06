@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Auction
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Coming Soon</h2>
+        </div>
+        <div class="cs_container">
+            <div class="cs_display_container">
+                <div class="rectangle_image_container">
+                    <div class="background_rectangle"></div>
+                    <img class="img_fluid_cs" alt="Responsive image" src="{% static 'img/sneakerThree.png' %}"
+                        alt="{{ image.image.alt_text}}" />
+                </div>
+
+                <div class="cs_desc_container">
+                    <h3>2024</h3>
+                    <h3>Jordan 11 Retro</h3>
+                    <h3>Legend Blue</h3>
+                </div>
+                <div class="cs_button_container">
+                    <button class="button_medium" href="/">Notify Me</button>
+                </div>
+            </div>
+            <div class="cs_display_container">
+                <div class="rectangle_image_container">
+                    <div class="background_rectangle"></div>
+                    <img class="img_fluid_cs" alt="Responsive image" src="{% static 'img/sneakerOne.png' %}"
+                        alt="{{ image.image.alt_text}}" />
+                </div>
+
+                <div class="cs_desc_container">
+                    <h3>2003</h3>
+                    <h3>Nike SB Dunk Low</h3>
+                    <h3>Paris</h3>
+                </div>
+                <div class="cs_button_container">
+                    <button class="button_medium" href="/">Notify Me</button>
+                </div>
+            </div>
+            <div class="cs_display_container">
+                <div class="rectangle_image_container">
+                    <div class="background_rectangle"></div>
+                    <img class="img_fluid_cs" alt="Responsive image" src="{% static 'img/sneakerFive.png' %}"
+                        alt="{{ image.image.alt_text}}" />
+                </div>
+
+                <div class="cs_desc_container">
+                    <h3>2020</h3>
+                    <h3>Nike SB Dunk Low</h3>
+                    <h3>Ben & Jerry Chunky Dunky</h3>
+                </div>
+                <div class="cs_button_container">
+                    <button class="button_medium" href="/">Notify Me</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

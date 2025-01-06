@@ -26,3 +26,14 @@ def product_buy_view(request):
     # product title  |  # product size  |  # product buy now price  |  # quantity
     # estimated delivery info  |  # delivery address
     return render(request, 'auction/product_buy.html')
+
+
+def products(request):
+    return render(request, ('auction/products.html'))
+
+
+def coming_soon(request):
+    return render(request, ('auction/coming_soon.html'))
+
+def future_releases(request):
+    return render(request, ('auction/future_releases.html'))

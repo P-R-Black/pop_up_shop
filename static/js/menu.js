@@ -90,6 +90,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const span = document.querySelector('.closeModal');
 
 
+
+
     if (btn) {
         // Show the modal when the button is clicked
         btn.addEventListener('click', function () {
@@ -98,6 +100,23 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         console.warn('bidButton not found in the DOM.');
     }
+
+
+    const bidButton = document.querySelectorAll('.bidButtonClass')
+    bidButton.forEach((bidBtn) => {
+        bidBtn.addEventListener('click', function () {
+            if (bidBtn) {
+                // Show the modal when the button is clicked
+                bidBtn.addEventListener('click', function () {
+                    modal.style.display = 'block';
+                });
+            } else {
+                console.warn('bidButton not found in the DOM.');
+            }
+        })
+    })
+
+
 
     if (span) {
         // Close the modal when the close span is clicked
