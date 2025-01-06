@@ -440,7 +440,7 @@
     border-radius: 5px;
     display: flex;
     flex-direction: column;
-    margin: -1rem 1rem;
+    margin: -1rem 0 1rem 1rem;
     padding: 1rem 1rem;
 }
 
@@ -454,7 +454,7 @@
 
 .checkout_img_fluid {
     aspect-ratio: 3/2;
-    width: 30%;
+    width: 40%;
 
 }
 
@@ -467,8 +467,9 @@
 
 .checkout_product_desc_container h3 {
     color: var(--text-color);
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 1.2rem, 2vw);
     font-weight: 300;
+    text-align: center;
     text-shadow: .25px .25px 0px rgba(0, 0, 0, 0.6);
 }
 
@@ -484,6 +485,8 @@
     display: flex;
     justify-content: space-between;
 }
+
+
 
 .checkout_details_condition_button_container {
     display: flex;

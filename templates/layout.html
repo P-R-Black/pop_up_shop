@@ -50,6 +50,13 @@
     <link rel="stylesheet" href="{% static 'css/auction/product_auction.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_auction_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_buy.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/product_buy_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/products.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/products_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/coming_soon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/coming_soon_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/future_releases.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/future_releases_mobile.css' %}">
 
 
     <!-- <link rel="stylesheet" href="{% static 'css/index/index.css' %}">
@@ -95,7 +102,7 @@
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="#">
+                        <a href="{% url 'auction:products' %}">
                             <i class='bx bx-package icon'></i>
                             <span class="text nav-text">Products</span>
                         </a>
@@ -107,13 +114,13 @@
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="#">
+                        <a href="{% url 'auction:coming_soon' %}">
                             <i class="fa-solid fa-bullhorn icon"></i>
                             <span class="text nav-text">Coming Soon</span>
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="#">
+                        <a href="{% url 'auction:future_releases' %}">
                             <i class='bx bxs-calendar icon'></i>
                             <span class="text nav-text">Future Releases</span>
                         </a>
