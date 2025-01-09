@@ -1,0 +1,140 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {
+
+
+    .product_details_container_left {
+        width: 60%;
+    }
+
+
+    .pd_container_right {
+        width: 40%;
+
+    }
+}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+
+    .product_details_container {
+        flex-direction: column;
+        gap: 2rem;
+        height: auto;
+    }
+
+    .pd_background_circle {
+        width: 35%;
+
+    }
+
+    .img_fluid_product_details {
+        width: 70%;
+    }
+
+    .pd_container_right {
+
+        align-items: center;
+        width: auto;
+
+    }
+
+
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+
+    .pd_background_circle {
+        width: 38%;
+
+    }
+
+    .img_fluid_product_details {
+        width: 75%;
+    }
+
+    .pd_container_right {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .pd_details_size_container,
+    .pd_details_condition_container,
+    .pd_details_buy_now_container {
+        flex-direction: column;
+    }
+
+    .pd_details_size_container p,
+    .pd_details_condition_container p,
+    .pd_details_buy_now_container p {
+        text-align: center;
+    }
+
+    .pd_details_size_container p:nth-child(1),
+    .pd_details_condition_container p:nth-child(1),
+    .pd_details_buy_now_container p:nth-child(1) {
+        text-decoration: underline;
+        font-weight: 800;
+
+        width: 6rem;
+    }
+
+    .pd_details_size_container p:nth-child(2),
+    .pd_details_condition_container p:nth-child(2) {
+        font-weight: 300;
+        width: 6rem;
+    }
+
+    .pd_buttons_container {
+        justify-content: space-between;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {
+    .pd_container_right {
+        align-items: center;
+        flex-direction: column;
+        width: 90%;
+    }
+
+    .pd_buttons_container {
+        justify-content: space-between;
+        gap: 1rem;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+    .pd_background_circle {
+        width: 35%;
+
+    }
+
+    .img_fluid_product_details {
+        width: 70%;
+    }
+
+    .pd_container_right {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: auto;
+    }
+
+    .pd_buttons_container {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+}
