@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'auction.apps.AuctionConfig',
     'home.apps.HomeConfig',
+    'pop_accounts.apps.PopAccountsConfig'
 ]
 
 MIDDLEWARE = [

@@ -37,3 +37,6 @@ def coming_soon(request):
 
 def future_releases(request):
     return render(request, ('auction/future_releases.html'))
+
+def product_details(request):
+    return render(request, ('auction/product_details.html'))

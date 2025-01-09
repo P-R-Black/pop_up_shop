@@ -57,6 +57,10 @@
     <link rel="stylesheet" href="{% static 'css/auction/coming_soon_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/future_releases.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/future_releases_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/product_details.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/product_details_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard_mobile.css' %}">
 
 
     <!-- <link rel="stylesheet" href="{% static 'css/index/index.css' %}">
@@ -96,7 +100,7 @@
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="#">
+                        <a href="{% url 'pop_accounts:dashboard' %}">
                             <i class='bx bxs-dashboard icon'></i>
                             <span class="text nav-text">Dashboard</span>
                         </a>
