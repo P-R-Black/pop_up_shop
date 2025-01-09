@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Auction
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Dashboard</h2>
+        </div>
+        <div class="the_dashboard_container">
+            <div class="personal_interest_notice_container">
+                <div class="dashboard_databox_small">
+                    <div class="dashboard_databox_title">
+                        <h3>Personal</h3>
+                    </div>
+                    <div class="dashboard_size_container">
+                        <p>Size</p>
+                        <p class="dashboard_databox_assign_left">US Men's 9</p>
+                        <a href="#">Edit</a>
+                    </div>
+                    <div class="dashboard_location_container">
+                        <p>Location</p>
+                        <p class="dashboard_databox_assign_left">St. Petersburg, 33711</p>
+                        <a href="#">Edit</a>
+                    </div>
+                    <div class="dashboard_payment_container">
+                        <p>Payment</p>
+                        <p class="dashboard_databox_assign_left">Mastercard ...5404</p>
+                        <a href="#">Edit</a>
+                    </div>
+
+                </div>
+                <div class="dashboard_databox_small">
+                    <div class="dashboard_databox_title">
+                        <h3>Interest In</h3>
+                    </div>
+                    <div class="dashboard_interest_container">
+                        <ul>
+                            <li><a href="#">2024 Jordan 1 Retro Low OG SP</a><input type="checkbox"></li>
+                            <li><a href="#">2024 Travis Scott Medium Olive</a><input type="checkbox"></li>
+                        </ul>
+                    </div>
+
+                </div>
+                <div class="dashboard_databox_small">
+                    <div class="dashboard_databox_title">
+                        <h3>On Notice</h3>
+                    </div>
+                    <div class="dashboard_interest_container">
+                        <ul>
+                            <li>
+                                <a href="">2024 Air Force 3 Low x Nigo Blue Void and Tour Yellow</a>
+                                <input type="checkbox">
+                            </li>
+                            <li>
+                                <a href="">2024 Nike SB Dunk Low Pro Light Carbon and Monarch</a>
+                                <input type="checkbox">
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+{% endblock %}
