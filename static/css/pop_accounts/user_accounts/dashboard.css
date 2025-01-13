@@ -10,7 +10,6 @@
 }
 
 .personal_interest_notice_container {
-    border: 2px solid blueviolet;
     display: grid;
     grid-template-columns: repeat(2, 45%);
     justify-content: space-between;
@@ -22,17 +21,64 @@
     background-color: var(--text-color);
     color: var(--body-color);
     border-radius: 5px;
-    height: 10rem;
+    height: 15rem;
     padding: 1rem 1rem;
 
 }
 
-.dashboard_databox_title h3 {
-    font-size: 1.5rem;
+.dashboard_databox_title {
+    /* align-items: center; */
+    display: flex;
+    justify-content: space-between;
+}
+
+.dashboard_databox_title h2 {
+    font-size: 1.75rem;
     font-weight: 800;
     margin-bottom: 1rem;
     text-align: center;
 }
+
+.dashboard_databox_title i {
+    font-size: 1.25rem;
+}
+
+.info-icon {
+    position: relative;
+    cursor: pointer;
+}
+
+.tooltip-text {
+    background-color: #f3e8c4;
+    border-radius: 5px;
+    color: #333;
+    font-family: var(--text-font);
+    font-size: .65rem;
+    font-weight: 500;
+    opacity: 0;
+    padding: 10px 15px;
+    position: absolute;
+    right: 50%;
+    /* transform: translateX(-50%); */
+    text-align: center;
+    top: 60%;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    visibility: hidden;
+    white-space: wrap;
+    width: 12rem;
+    z-index: 10;
+}
+
+.info-icon:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.dashboard_more_container {
+    margin-top: 3.5rem;
+    text-align: right;
+}
+
 
 .dashboard_size_container,
 .dashboard_location_container,
@@ -81,9 +127,130 @@
 
 .dashboard_interest_container ul li a {
     color: var(--body-color);
+    margin-right: 1rem;
 }
 
 
 .dashboard_interest_container ul li a:hover {
+    color: var(--chevron-color);
+}
+
+.bids_purchases_container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.dashboard_databox_large {
+    background-color: var(--text-color);
+    color: var(--body-color);
+    border-radius: 5px;
+    height: auto;
+    padding: 1rem 1rem;
+}
+
+
+.dashboard_databox_headers {
+    display: grid;
+
+    grid-template-columns: 25% 25% 25% 25%;
+    text-align: center;
+    text-decoration: underline;
+}
+
+.dashboard_databox_headers h3,
+.dashboard_databox_past_bids_headers h3 {
+    font-size: 1.5rem;
+
+}
+
+.dashboard_open_bids {
+    margin-top: .5rem;
+}
+
+.indi_bids {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 25% 25% 25% 25%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
+
+.indi_bids_item p,
+.indi_bids_last_bid p,
+.indi_bids_bid_status p {
+    font-size: 1.15rem;
+
+}
+
+.indi_bids_item a p {
+    color: var(--body-color);
+}
+
+.indi_bids_item a p:hover {
+    color: var(--chevron-color);
+}
+
+.indi_bids_action {
+    display: flex;
+    justify-content: center;
+}
+
+
+.dashboard_databox_past_bids_headers {
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    text-align: center;
+    text-decoration: underline;
+}
+
+
+.indi_past_bids {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
+
+.indi_past_bid_items p,
+.indi_past_bid_last_bid p,
+.indi_past_bid_bid_status p {
+    font-size: 1.15rem;
+}
+
+.indi_past_bid_items a p {
+    color: var(--body-color);
+}
+
+.indi_past_bid_items a p:hover {
+    color: var(--chevron-color);
+}
+
+
+.indi_past_purchases {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
+
+
+.indi_past_purchases_items p,
+.indi_past_bid_last_bid p,
+.indi_past_bid_bid_status p {
+    font-size: 1.15rem;
+}
+
+.indi_past_purchases_items a p {
+    color: var(--body-color);
+}
+
+.indi_past_purchases_items a p:hover {
     color: var(--chevron-color);
 }
