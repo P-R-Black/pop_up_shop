@@ -254,3 +254,26 @@
 .indi_past_purchases_items a p:hover {
     color: var(--chevron-color);
 }
+
+/* ====== Size Modal ====== */
+.size_gender_container {
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-around;
+    padding: .5rem .5rem;
+}
+
+.size_options_container {
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    display: grid;
+    grid-template-columns: repeat(4, 27.5%);
+    margin-top: 1rem;
+    padding: .5rem .5rem;
+}
+
+.size_options_container button {
+
+    margin-bottom: .5rem;
+}
