@@ -24,7 +24,7 @@ Auction
                     <div class="dashboard_size_container">
                         <p>Size</p>
                         <p class="dashboard_databox_assign_left">US Men's 9</p>
-                        <a href="#">Edit</a>
+                        <a href="#" id="dashboardSizeEditBtn">Edit</a>
                     </div>
                     <div class="dashboard_location_container">
                         <p>Location</p>
@@ -230,10 +230,50 @@ Auction
                 </div>
             </div>
         </div>
-
     </div>
+    <!-- Bid Modal -->
+    <div class="modal fade" id="sizeEditModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3 class="modal-title" id="bidModalLabel">Size Selection</h3>
+                <button type="button" class="btn-close closeSizeEditModal" aria-label="Close">X</button>
+            </div>
+            <div class="size_option_gender_container">
+                <div class="size_gender_container">
+                    <button class="button_small_white">Boys</button>
+                    <button class="button_small_white">Mens</button>
+                    <button class="button_small_white">Girls</button>
+                    <button class="button_small_white">Womens</button>
+                </div>
+                <div class="size_options_container">
+                    <button class="button_smaller_white">7 US</button>
+                    <button class="button_smaller_white">7.5 US</button>
+                    <button class="button_smaller_white">8 US</button>
+                    <button class="button_smaller_white">8.5 US</button>
+                    <button class="button_smaller_white">9 US</button>
+                    <button class="button_smaller_white">9.5 US</button>
+                    <button class="button_smaller_white">10 US</button>
+                    <button class="button_smaller_white">10.5 US</button>
+                    <button class="button_smaller_white">11 US</button>
+                    <button class="button_smaller_white">11.5 US</button>
+                    <button class="button_smaller_white">12 US</button>
+                    <button class="button_smaller_white">12.5 US</button>
+                    <button class="button_smaller_white">13 US</button>
+                    <button class="button_smaller_white">13.5 US</button>
+                    <button class="button_smaller_white">14 US</button>
+                    <button class="button_smaller_white">14.5 US</button>
+                    <button class="button_smaller_white">15 US</button>
+                    <button class="button_smaller_white">15.5 US</button>
+                    <button class="button_smaller_white">16 US</button>
+                    <button class="button_smaller_white">16.5 US</button>
+                    <button class="button_smaller_white">17 US</button>
+                    <button class="button_smaller_white">17.5 US</button>
+                    <button class="button_smaller_white">18 US</button>
+                </div>
+            </div>
+        </div>
     </div>
-
+    <!-- End of Bid Modal -->
 </section>
 
 {% endblock %}
