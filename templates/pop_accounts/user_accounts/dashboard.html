@@ -29,12 +29,12 @@ Auction
                     <div class="dashboard_location_container">
                         <p>Location</p>
                         <p class="dashboard_databox_assign_left">St. Petersburg, 33711</p>
-                        <a href="#">Edit</a>
+                        <a href="#" id="dashboardLocationEditBtn">Edit</a>
                     </div>
                     <div class="dashboard_payment_container">
                         <p>Payment</p>
                         <p class="dashboard_databox_assign_left">Mastercard ...5404</p>
-                        <a href="#">Edit</a>
+                        <a href="#" id="dashboardPaymentEditBtn">Edit</a>
                     </div>
                     <div class="dashboard_more_container">
                         <a href="#">More</a>
@@ -239,41 +239,181 @@ Auction
                 <button type="button" class="btn-close closeSizeEditModal" aria-label="Close">X</button>
             </div>
             <div class="size_option_gender_container">
-                <div class="size_gender_container">
-                    <button class="button_small_white">Boys</button>
-                    <button class="button_small_white">Mens</button>
-                    <button class="button_small_white">Girls</button>
-                    <button class="button_small_white">Womens</button>
-                </div>
-                <div class="size_options_container">
-                    <button class="button_smaller_white">7 US</button>
-                    <button class="button_smaller_white">7.5 US</button>
-                    <button class="button_smaller_white">8 US</button>
-                    <button class="button_smaller_white">8.5 US</button>
-                    <button class="button_smaller_white">9 US</button>
-                    <button class="button_smaller_white">9.5 US</button>
-                    <button class="button_smaller_white">10 US</button>
-                    <button class="button_smaller_white">10.5 US</button>
-                    <button class="button_smaller_white">11 US</button>
-                    <button class="button_smaller_white">11.5 US</button>
-                    <button class="button_smaller_white">12 US</button>
-                    <button class="button_smaller_white">12.5 US</button>
-                    <button class="button_smaller_white">13 US</button>
-                    <button class="button_smaller_white">13.5 US</button>
-                    <button class="button_smaller_white">14 US</button>
-                    <button class="button_smaller_white">14.5 US</button>
-                    <button class="button_smaller_white">15 US</button>
-                    <button class="button_smaller_white">15.5 US</button>
-                    <button class="button_smaller_white">16 US</button>
-                    <button class="button_smaller_white">16.5 US</button>
-                    <button class="button_smaller_white">17 US</button>
-                    <button class="button_smaller_white">17.5 US</button>
-                    <button class="button_smaller_white">18 US</button>
-                </div>
+                <form action="">
+                    <div class="size_gender_container">
+                        <button class="button_small_white">Mens</button>
+                        <button class="button_small_white">Womens</button>
+                    </div>
+                </form>
+                <form action="">
+                    <div class="size_options_container">
+                        <button class="button_smaller_white">5 US</button>
+                        <button class="button_smaller_white">5.5 US</button>
+                        <button class="button_smaller_white">6 US</button>
+                        <button class="button_smaller_white">6.5 US</button>
+                        <button class="button_smaller_white">7 US</button>
+                        <button class="button_smaller_white">7.5 US</button>
+                        <button class="button_smaller_white">8 US</button>
+                        <button class="button_smaller_white">8.5 US</button>
+                        <button class="button_smaller_white">9 US</button>
+                        <button class="button_smaller_white">9.5 US</button>
+                        <button class="button_smaller_white">10 US</button>
+                        <button class="button_smaller_white">10.5 US</button>
+                        <button class="button_smaller_white">11 US</button>
+                        <button class="button_smaller_white">11.5 US</button>
+                        <button class="button_smaller_white">12 US</button>
+                        <button class="button_smaller_white">12.5 US</button>
+                        <button class="button_smaller_white">13 US</button>
+                        <button class="button_smaller_white">13.5 US</button>
+                        <button class="button_smaller_white">14 US</button>
+                        <button class="button_smaller_white">14.5 US</button>
+                        <button class="button_smaller_white">15 US</button>
+                        <button class="button_smaller_white">15.5 US</button>
+                        <button class="button_smaller_white">16 US</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
     <!-- End of Bid Modal -->
+
+    <!-- Address Modal -->
+    <div class="modal fade" id="locationEditModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3 class="modal-title" id="bidModalLabel">Location</h3>
+                <button type="button" class="btn-close closeLocationEditModal" aria-label="Close">X</button>
+            </div>
+            <div class="dashbaord_location_update_container">
+                <form action="" method="post">
+                    <div class="modal_name_inputs">
+                        <label>Street Address 1</label>
+                        <input type="text" class="modal_street_address_one_input" />
+                    </div>
+                    <div class="modal_name_inputs">
+                        <label>Street Address 2</label>
+                        <input type="text" class="modal_street_address_two_input" />
+                    </div>
+                    <div class="modal_name_inputs">
+                        <label>Apt/Ste</label>
+                        <input type="text" class="modal_address_zip_input" />
+                    </div>
+                    <div class="modal_name_inputs">
+                        <label>City</label>
+                        <input type="text" class="modal_address_city_input" />
+                    </div>
+                    <div class="modal_name_inputs">
+                        <label for="state">State</label>
+                        <select name="state" id="state">
+                            <option value="AL">Alabama</option>
+                            <option value="AK">Alaska</option>
+                            <option value="AZ">Arizona</option>
+                            <option value="AR">Arkansas</option>
+                            <option value="CA">California</option>
+                            <option value="CO">Colorado</option>
+                            <option value="CT">Connecticut</option>
+                            <option value="DE">Delaware</option>
+                            <option value="DC">District Of Columbia</option>
+                            <option value="FL">Florida</option>
+                            <option value="GA">Georgia</option>
+                            <option value="HI">Hawaii</option>
+                            <option value="ID">Idaho</option>
+                            <option value="IL">Illinois</option>
+                            <option value="IN">Indiana</option>
+                            <option value="IA">Iowa</option>
+                            <option value="KS">Kansas</option>
+                            <option value="KY">Kentucky</option>
+                            <option value="LA">Louisiana</option>
+                            <option value="ME">Maine</option>
+                            <option value="MD">Maryland</option>
+                            <option value="MA">Massachusetts</option>
+                            <option value="MI">Michigan</option>
+                            <option value="MN">Minnesota</option>
+                            <option value="MS">Mississippi</option>
+                            <option value="MO">Missouri</option>
+                            <option value="MT">Montana</option>
+                            <option value="NE">Nebraska</option>
+                            <option value="NV">Nevada</option>
+                            <option value="NH">New Hampshire</option>
+                            <option value="NJ">New Jersey</option>
+                            <option value="NM">New Mexico</option>
+                            <option value="NY">New York</option>
+                            <option value="NC">North Carolina</option>
+                            <option value="ND">North Dakota</option>
+                            <option value="OH">Ohio</option>
+                            <option value="OK">Oklahoma</option>
+                            <option value="OR">Oregon</option>
+                            <option value="PA">Pennsylvania</option>
+                            <option value="RI">Rhode Island</option>
+                            <option value="SC">South Carolina</option>
+                            <option value="SD">South Dakota</option>
+                            <option value="TN">Tennessee</option>
+                            <option value="TX">Texas</option>
+                            <option value="UT">Utah</option>
+                            <option value="VT">Vermont</option>
+                            <option value="VA">Virginia</option>
+                            <option value="WA">Washington</option>
+                            <option value="WV">West Virginia</option>
+                            <option value="WI">Wisconsin</option>
+                            <option value="WY">Wyoming</option>
+                        </select>
+                    </div>
+                    <div class="modal_name_inputs">
+                        <label>Zip Code</label>
+                        <input type="text" class="modal_address_zip_input" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- End of Address Modal -->
+
+    <!-- Payment Modal -->
+    <div class="modal fade" id="paymentEdittModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3 class="modal-title" id="bidModalLabel">Payment</h3>
+                <button type="button" class="btn-close closePaymentEditModal" aria-label="Close">X</button>
+            </div>
+            <div class="dashbaord_location_update_container">
+                <form action="" method="post">
+                    <div class="modal_name_inputs">
+                        <select name="dashboardPaymentEdit" id="dashboardPaymentEdit">
+                            <option value="Mastercard">Mastercard</option>
+                            <option value="Visa">Visa</option>
+                            <option value="Discover">Discover</option>
+                            <option value="PayPal">PayPal</option>
+                            <option value="Venmo">Venmo</option>
+                            <option value="DAI / USDC">DAI / USDC</option>
+                            <option value="Apple Pay">Apple Pay</option>
+                            <option value="Google Pay">Google Pay</option>
+                        </select>
+                    </div>
+                    <div class="modal_name_inputs">
+                        <label>Card No.</label>
+                        <input type="number" class="modal_street_address_two_input" />
+                    </div>
+
+                    <div class="modal_name_inputs">
+                        <label>Expiration Date</label>
+                        <input type="text" class="modal_address_zip_input" />
+                    </div>
+
+                    <div class="modal_name_inputs">
+                        <label>CVV</label>
+                        <input type="number" class="modal_address_zip_input" />
+                    </div>
+
+                    <div class="payment_edit_button_container">
+                        <button class="button_medium">Cancel</button>
+                        <button class="button_medium">Submit</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- End of Payment Modal -->
 </section>
 
 {% endblock %}
