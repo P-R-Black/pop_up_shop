@@ -277,3 +277,39 @@
 
     margin-bottom: .5rem;
 }
+
+/* ====== End of Size Modal ====== */
+
+
+/* ====== Location Modal ====== */
+.dashbaord_location_update_container {
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    padding: .5rem .5rem;
+}
+
+.dashbaord_location_update_container form .modal_name_inputs {
+    color: var(--text-color);
+    margin-bottom: .5rem;
+}
+
+
+/* ====== End of Location Modal ====== */
+
+
+/* ====== Payment Modal ====== */
+#dashboardPaymentEdit {
+    color: var(--text-color);
+    font-size: 1rem;
+    width: 40%;
+}
+
+
+.payment_edit_button_container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* ====== End of Payment Modal ====== */
