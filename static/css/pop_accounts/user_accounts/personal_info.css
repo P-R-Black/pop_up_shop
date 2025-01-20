@@ -1,0 +1,298 @@
+.personal_info_title_container h3 {
+    color: var(--text-color);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+
+
+
+.personal_info_name_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    width: 100%;
+    height: 50%;
+}
+
+.personal_info_name_container label {
+    color: var(--text-color);
+}
+
+select#prefix,
+select#suffix {
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+
+.personal_info_name_container select {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    background-color: transparent;
+    height: 2rem;
+    padding-left: .5rem;
+    margin-top: -.5rem;
+    width: 10%;
+}
+
+
+.personal_info_name_inputs {
+    display: flex;
+    justify-content: flex-start;
+
+}
+
+.personal_info_name_inputs input {
+    background-color: transparent;
+}
+
+
+.personal_info_first_name_container,
+.personal_info_middle_name_container,
+.personal_info_last_name_container {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+}
+
+.personal_info_middle_name_container {
+    width: 15%;
+}
+
+.personal_info_first_name_container,
+.personal_info_middle_name_container {
+    margin-right: 5rem;
+}
+
+
+.personal_info_first_name_input,
+.personal_info_last_name_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 100%
+}
+
+.personal_middle_initial_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 100%
+}
+
+
+.personal_info_shoe_size_container {
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.shoe_sizes_container,
+.shoe_gen_options_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.shoe_sizes_container {
+    margin-right: 2rem;
+}
+
+
+select#shoe_size,
+select#gen_option {
+    color: var(--text-color);
+    font-size: 1rem;
+    width: 100%;
+}
+
+
+
+.ship_to_address_update_personal_info_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-top: 2rem;
+}
+
+
+.personal_info_address_inputs {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.personal_info_address_inputs label {
+    color: var(--text-color);
+}
+
+
+.personal_info_address_inputs select {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    background-color: transparent;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 30%;
+}
+
+.personal_info_street_address_one_input,
+.personal_info_street_address_two_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 60%;
+}
+
+.personal_info_apt_inputs {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 30%;
+}
+
+.personal_info_address_zip_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 60%;
+}
+
+.personal_info_city_state_zip_container {
+    display: flex;
+}
+
+.personal_info_city_state_zip_container .personal_info_address_inputs {
+    margin-right: 2rem;
+    width: 25%;
+}
+
+.personal_info_city_state_zip_container .personal_info_state_inputs {
+    margin-right: 2rem;
+    width: 20%;
+}
+
+.personal_info_address_city_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+
+    padding-left: .5rem;
+    width: 100%;
+
+}
+
+
+
+.personal_info_state_inputs {
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.personal_info_state_inputs select {
+    background-color: transparent;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 100%;
+}
+
+.personal_info_addres_phone_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 25%;
+}
+
+
+/* ======== Saved Address Containers ======== */
+.account_addresses_container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+
+.account_addresses_default_notice h3 {
+    font-weight: 200;
+    text-align: left;
+
+}
+
+.account_addresses_data {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+    width: 15rem;
+}
+
+.account_addresses_data_city_state_zip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.account_addresses_data .account_addresses_data_delivery_info {
+    margin-top: .5rem;
+}
+
+.account_addresses_data .account_addresses_data_delivery_info a {
+    color: var(--body-color);
+    font-size: 1rem;
+    margin-top: 1rem;
+    transition: var(--tran-03);
+}
+
+.account_addresses_data .account_addresses_data_update_option {
+    margin-top: .5rem;
+    width: 100%;
+
+}
+
+.account_addresses_data .account_addresses_data_update_option a {
+    color: var(--body-color);
+    font-size: .9rem;
+    margin-top: 1.5rem;
+    transition: var(--tran-03);
+
+}
+
+.account_addresses_data_update_option {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.account_addresses_data_update_option a:hover,
+.account_addresses_data_delivery_info a:hover {
+    color: lightblue;
+}
