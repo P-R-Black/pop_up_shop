@@ -1,0 +1,326 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Auction
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Personal Data</h2>
+        </div>
+        <div class="the_dashboard_container">
+            <div class="personal_info_title_container">
+                <h3>Account Holder</h3>
+            </div>
+            <form action="" method="post">
+                <div class="personal_info_name_container">
+                    <label for="prefix">Prefix</label>
+                    <select name="prefix" id="prefix">
+                        <option value=""></option>
+                        <option value="Mr.">Mr.</option>
+                        <option value="Mrs.">Mrs.</option>
+                        <option value="Ms.">Ms.</option>
+                        <option value="Miss.">Miss.</option>
+                        <option value="Dr.">Dr.</option>
+                        <option value="Rev">Rev.</option>
+                        <option value="Atty">Atty.</option>
+                        <option value="Hon">Hon.</option>
+                        <option value="Prof">Prof.</option>
+                    </select>
+
+                    <div class="personal_info_name_inputs">
+                        <div class="personal_info_first_name_container">
+                            <label name="first_name">First Name</label>
+                            <input type="text" class="personal_info_first_name_input" />
+                        </div>
+                        <div class="personal_info_middle_name_container">
+                            <label name="middle">Middle</label>
+                            <input type="text" class="personal_middle_initial_input" />
+                        </div>
+
+                        <div class="personal_info_last_name_container">
+                            <label name="last_name">Last Name</label>
+                            <input type="text" class="personal_info_last_name_input" />
+                        </div>
+                    </div>
+                    <label for="suffix">Suffix</label>
+                    <select name="suffix" id="suffix">
+                        <option value=""></option>
+                        <option value="Jr.">Jr.</option>
+                        <option value="Sr.">Sr.</option>
+                        <option value="I">I</option>
+                        <option value="II">II</option>
+                        <option value="III">III</option>
+                        <option value="CPA">CPA</option>
+                        <option value="M.D.">M.D.</option>
+                        <option value="PhD">PhD</option>
+                    </select>
+                    <div class="personal_info_shoe_size_container">
+                        <div class="shoe_sizes_container">
+                            <label for="shoe_size">Size</label>
+                            <select name="shoe_size" id="shoe_size">
+                                <option class="button_smaller_white">5 US</option>
+                                <option class="button_smaller_white">5.5 US</option>
+                                <option class="button_smaller_white">6 US</option>
+                                <option class="button_smaller_white">6.5 US</option>
+                                <option class="button_smaller_white">7 US</option>
+                                <option class="button_smaller_white">7.5 US</option>
+                                <option class="button_smaller_white">8 US</option>
+                                <option class="button_smaller_white">8.5 US</option>
+                                <option class="button_smaller_white">9 US</option>
+                                <option class="button_smaller_white">9.5 US</option>
+                                <option class="button_smaller_white">10 US</option>
+                                <option class="button_smaller_white">10.5 US</option>
+                                <option class="button_smaller_white">11 US</option>
+                                <option class="button_smaller_white">11.5 US</option>
+                                <option class="button_smaller_white">12 US</option>
+                                <option class="button_smaller_white">12.5 US</option>
+                                <option class="button_smaller_white">13 US</option>
+                                <option class="button_smaller_white">13.5 US</option>
+                                <option class="button_smaller_white">14 US</option>
+                                <option class="button_smaller_white">14.5 US</option>
+                                <option class="button_smaller_white">15 US</option>
+                                <option class="button_smaller_white">15.5 US</option>
+                                <option class="button_smaller_white">16 US</option>
+                            </select>
+                        </div>
+                        <div class="shoe_gen_options_container">
+                            <label for="gen_option">Male/Female</label>
+                            <select name="gen_option" id="gen_option">
+                                <option class="button_smaller_white">Male</option>
+                                <option class="button_smaller_white">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input class="button_medium" type="submit" value="Update"></input>
+                </div>
+            </form>
+
+            <form action="" method="post">
+                <div class="ship_to_address_update_personal_info_container">
+                    <div class="personal_info_address_inputs">
+                        <label>Street Address 1</label>
+                        <input type="text" class="personal_info_street_address_one_input" />
+                    </div>
+                    <div class="personal_info_address_inputs">
+                        <label>Street Address 2</label>
+                        <input type="text" class="personal_info_street_address_two_input" />
+                    </div>
+                    <div class="personal_info_address_inputs">
+                        <label>Apt/Ste</label>
+                        <input type="text" class="personal_info_apt_inputs" />
+                    </div>
+                    <div class="personal_info_city_state_zip_container">
+                        <div class="personal_info_address_inputs">
+                            <label>City</label>
+                            <input type="text" class="personal_info_address_city_input" />
+                        </div>
+                        <div class="personal_info_state_inputs">
+                            <label for="state">State</label>
+                            <select name="state" id="state">
+                                <option value="AL">Alabama</option>
+                                <option value="AK">Alaska</option>
+                                <option value="AZ">Arizona</option>
+                                <option value="AR">Arkansas</option>
+                                <option value="CA">California</option>
+                                <option value="CO">Colorado</option>
+                                <option value="CT">Connecticut</option>
+                                <option value="DE">Delaware</option>
+                                <option value="DC">District Of Columbia</option>
+                                <option value="FL">Florida</option>
+                                <option value="GA">Georgia</option>
+                                <option value="HI">Hawaii</option>
+                                <option value="ID">Idaho</option>
+                                <option value="IL">Illinois</option>
+                                <option value="IN">Indiana</option>
+                                <option value="IA">Iowa</option>
+                                <option value="KS">Kansas</option>
+                                <option value="KY">Kentucky</option>
+                                <option value="LA">Louisiana</option>
+                                <option value="ME">Maine</option>
+                                <option value="MD">Maryland</option>
+                                <option value="MA">Massachusetts</option>
+                                <option value="MI">Michigan</option>
+                                <option value="MN">Minnesota</option>
+                                <option value="MS">Mississippi</option>
+                                <option value="MO">Missouri</option>
+                                <option value="MT">Montana</option>
+                                <option value="NE">Nebraska</option>
+                                <option value="NV">Nevada</option>
+                                <option value="NH">New Hampshire</option>
+                                <option value="NJ">New Jersey</option>
+                                <option value="NM">New Mexico</option>
+                                <option value="NY">New York</option>
+                                <option value="NC">North Carolina</option>
+                                <option value="ND">North Dakota</option>
+                                <option value="OH">Ohio</option>
+                                <option value="OK">Oklahoma</option>
+                                <option value="OR">Oregon</option>
+                                <option value="PA">Pennsylvania</option>
+                                <option value="RI">Rhode Island</option>
+                                <option value="SC">South Carolina</option>
+                                <option value="SD">South Dakota</option>
+                                <option value="TN">Tennessee</option>
+                                <option value="TX">Texas</option>
+                                <option value="UT">Utah</option>
+                                <option value="VT">Vermont</option>
+                                <option value="VA">Virginia</option>
+                                <option value="WA">Washington</option>
+                                <option value="WV">West Virginia</option>
+                                <option value="WI">Wisconsin</option>
+                                <option value="WY">Wyoming</option>
+                            </select>
+                        </div>
+                        <div class="personal_info_address_inputs">
+                            <label>Zip Code</label>
+                            <input type="text" class="personal_info_address_zip_input" />
+                        </div>
+                    </div>
+
+                    <div class="personal_info_address_inputs">
+                        <label>Phone</label>
+                        <input type="text" class="personal_info_addres_phone_input" />
+                    </div>
+                    <input class="button_medium" type="submit" value="Update"></input>
+
+                </div>
+            </form>
+            <div class="account_addresses_container">
+                <div class="dashboard_databox_small">
+                    <div class="account_addresses_default_notice">
+                        <p>Default</p>
+                    </div>
+                    <div class="account_addresses_data">
+                        <div class="account_addresses_data_street">
+                            <p>PO Box 220085</p>
+                        </div>
+                        <div class="account_addresses_data_apt">
+                            <p>Apt.<span></span></p>
+                        </div>
+                        <div class="account_addresses_data_city_state_zip">
+                            <p>Rosedale</p>
+                            <p>NY</p>
+                            <p>11422-0085</p>
+                        </div>
+                        <div class="account_addresses_data_countr">
+                            <p>United States</p>
+                        </div>
+                        <div class="account_addresses_data_phone">
+                            <p>718-809-5331</p>
+                        </div>
+                        <div class="account_addresses_data_delivery_info">
+                            <a href="#">Add Delivery Instructions</a>
+                        </div>
+                        <div class="account_addresses_data_update_option">
+                            <a href="#">Remove</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard_databox_small">
+                    <div class="account_addresses_default_notice">
+                        <p>""</p>
+                    </div>
+                    <div class="account_addresses_data">
+                        <div class="account_addresses_data_street">
+                            <p>430 Lexington Ave</p>
+                        </div>
+                        <div class="account_addresses_data_apt">
+                            <p>Apt. <span>4A</span></p>
+                        </div>
+                        <div class="account_addresses_data_city_state_zip">
+                            <p>Brooklyn Ny</p>
+                            <p>NY</p>
+                            <p>11221-0022</p>
+                        </div>
+                        <div class="account_addresses_data_countr">
+                            <p>United States</p>
+                        </div>
+                        <div class="account_addresses_data_phone">
+                            <p>718-809-5331</p>
+                        </div>
+                        <div class="account_addresses_data_delivery_info">
+                            <a href="#">Add Delivery Instructions</a>
+                        </div>
+                        <div class="account_addresses_data_update_option">
+                            <a href="#">Edit</a>
+                            <a href="#">Remove</a>
+                            <a href="#">Set as Default</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard_databox_small">
+                    <div class="account_addresses_default_notice">
+                        <p>""</p>
+                    </div>
+                    <div class="account_addresses_data">
+                        <div class="account_addresses_data_street">
+                            <p>357 Las Palmas St</p>
+                        </div>
+                        <div class="account_addresses_data_apt">
+                            <p>Apt <span></span></p>
+                        </div>
+                        <div class="account_addresses_data_city_state_zip">
+                            <p>Royal Palm Beach</p>
+                            <p>FL</p>
+                            <p>33411-0081</p>
+                        </div>
+                        <div class="account_addresses_data_countr">
+                            <p>United States</p>
+                        </div>
+                        <div class="account_addresses_data_phone">
+                            <p>718-809-5331</p>
+                        </div>
+                        <div class="account_addresses_data_delivery_info">
+                            <a href="#">Add Delivery Instructions</a>
+                        </div>
+                        <div class="account_addresses_data_update_option">
+                            <a href="#">Edit</a>
+                            <a href="#">Remove</a>
+                            <a href="#">Set as Default</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard_databox_small">
+                    <div class="account_addresses_default_notice">
+                        <p>""</p>
+                    </div>
+                    <div class="account_addresses_data">
+                        <div class="account_addresses_data_street">
+                            <p>3076 Sangria Street</p>
+                        </div>
+                        <div class="account_addresses_data_apt">
+                            <p>Apt <span></span></p>
+                        </div>
+                        <div class="account_addresses_data_city_state_zip">
+                            <p>Kissimmee</p>
+                            <p>FL</p>
+                            <p>34744-0001</p>
+                        </div>
+                        <div class="account_addresses_data_countr">
+                            <p>United States</p>
+                        </div>
+                        <div class="account_addresses_data_phone">
+                            <p>718-809-5331</p>
+                        </div>
+                        <div class="account_addresses_data_delivery_info">
+                            <a href="#">Add Delivery Instructions</a>
+                        </div>
+                        <div class="account_addresses_data_update_option">
+                            <a href="#">Edit</a>
+                            <a href="#">Remove</a>
+                            <a href="#">Set as Default</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+{% endblock %}

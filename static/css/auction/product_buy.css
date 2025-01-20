@@ -247,12 +247,6 @@ select#suffix {
     width: 20%;
 }
 
-.modal_name_inputs_container {
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-}
-
 
 .modal_name_inputs {
     display: flex;
