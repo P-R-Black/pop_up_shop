@@ -186,7 +186,7 @@ Auction
                         <label>Phone</label>
                         <input type="text" class="personal_info_addres_phone_input" />
                     </div>
-                    <input class="button_medium" type="submit" value="Update"></input>
+                    <input class="button_medium" type="submit" value="Add Address"></input>
 
                 </div>
             </form>
@@ -223,7 +223,7 @@ Auction
                 </div>
                 <div class="dashboard_databox_small">
                     <div class="account_addresses_default_notice">
-                        <p>""</p>
+                        <p class="notDefault">""</p>
                     </div>
                     <div class="account_addresses_data">
                         <div class="account_addresses_data_street">
@@ -249,13 +249,13 @@ Auction
                         <div class="account_addresses_data_update_option">
                             <a href="#">Edit</a>
                             <a href="#">Remove</a>
-                            <a href="#">Set as Default</a>
+                            <a href="#">Set as default</a>
                         </div>
                     </div>
                 </div>
                 <div class="dashboard_databox_small">
                     <div class="account_addresses_default_notice">
-                        <p>""</p>
+                        <p class="notDefault">""</p>
                     </div>
                     <div class="account_addresses_data">
                         <div class="account_addresses_data_street">
@@ -281,13 +281,13 @@ Auction
                         <div class="account_addresses_data_update_option">
                             <a href="#">Edit</a>
                             <a href="#">Remove</a>
-                            <a href="#">Set as Default</a>
+                            <a href="#">Set as default</a>
                         </div>
                     </div>
                 </div>
                 <div class="dashboard_databox_small">
                     <div class="account_addresses_default_notice">
-                        <p>""</p>
+                        <p class="notDefault">""</p>
                     </div>
                     <div class="account_addresses_data">
                         <div class="account_addresses_data_street">
@@ -313,8 +313,45 @@ Auction
                         <div class="account_addresses_data_update_option">
                             <a href="#">Edit</a>
                             <a href="#">Remove</a>
-                            <a href="#">Set as Default</a>
+                            <a href="#">Set as default</a>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="account_payment_container">
+                <div class="personal_info_title_container">
+                    <h3>Payment Options</h3>
+                </div>
+                <div class="payment_options_container">
+                    <div class="dashboard_databox_large">
+                        <div class="account_card_info_container">
+                            <div class="personal_card_data">
+                                <img src="{% static 'img/visa_icon.png' %}" class='personal-visa-logo' />
+                                <h3>0541</h3>
+                                <h3>12/28</h3>
+                            </div>
+                            <div class="account_payment_data_update_option">
+                                <h4>Default</h4>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="dashboard_databox_large">
+                        <div class="account_card_info_container">
+                            <div class="personal_card_data">
+                                <img src="{% static 'img/mastercard_icon.png' %}" class='personal-mc-logo' />
+                                <h3>0541</h3>
+                                <h3>12/28</h3>
+                            </div>
+                            <div class="account_payment_data_update_option">
+                                <a href="#">Edit</a>
+                                <a href="#">Remove</a>
+                                <a href="#">Set as default</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="account_add_payment_container">
+                        <input class="button_medium" type="submit" value="Add Payment"></input>
                     </div>
                 </div>
             </div>
