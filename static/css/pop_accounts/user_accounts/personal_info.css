@@ -115,6 +115,11 @@ select#gen_option {
 
 
 .ship_to_address_update_personal_info_container {
+    margin-top: 2rem;
+
+}
+
+.ship_to_address_update_personal_info_container form {
     display: flex;
     flex-direction: column;
     gap: .5rem;
@@ -311,8 +316,53 @@ select#gen_option {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-
 }
+
+.personal_card_input_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.personal_card_number_container {
+    display: flex;
+    flex-direction: column;
+}
+
+.personal_card_number_container label {
+    color: var(--text-color);
+}
+
+.personal_card_nums_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 40%;
+}
+
+.card_exp_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 10%;
+}
+
+.card_name_input {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 40%;
+}
+
 
 .account_card_info_container {
     display: flex;
