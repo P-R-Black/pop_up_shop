@@ -11,7 +11,7 @@ Auction
 <section class="auction_section container">
     <div class="section_container">
         <div class="page_title">
-            <h2>Personal Data</h2>
+            <h2>Account Data</h2>
         </div>
         <div class="the_dashboard_container">
             <div class="personal_info_title_container">
@@ -101,8 +101,12 @@ Auction
                 </div>
             </form>
 
-            <form action="" method="post">
-                <div class="ship_to_address_update_personal_info_container">
+            <div class="ship_to_address_update_personal_info_container">
+                <div class="personal_info_title_container">
+                    <h3>Account Holder</h3>
+                </div>
+                <form action="" method="post">
+
                     <div class="personal_info_address_inputs">
                         <label>Street Address 1</label>
                         <input type="text" class="personal_info_street_address_one_input" />
@@ -187,9 +191,9 @@ Auction
                         <input type="text" class="personal_info_addres_phone_input" />
                     </div>
                     <input class="button_medium" type="submit" value="Add Address"></input>
+                </form>
+            </div>
 
-                </div>
-            </form>
             <div class="account_addresses_container">
                 <div class="dashboard_databox_small">
                     <div class="account_addresses_default_notice">
@@ -323,6 +327,23 @@ Auction
                     <h3>Payment Options</h3>
                 </div>
                 <div class="payment_options_container">
+                    <form action="" class="personal_card_input_container">
+                        <div class="personal_card_number_container">
+                            <label name="card_number" for="">Card number</label>
+                            <input type="text" class="personal_card_nums_input" />
+                        </div>
+                        <div class="personal_card_number_container">
+                            <label name="card_expiration" for="">Expiration date</label>
+                            <input type="text" class="card_exp_input" />
+                        </div>
+                        <div class="personal_card_number_container">
+                            <label name="card_holder" for="">Name on Card</label>
+                            <input type="text" class="card_name_input" />
+                        </div>
+                        <div class="account_add_payment_container">
+                            <input class="button_medium" type="submit" value="Add Payment"></input>
+                        </div>
+                    </form>
                     <div class="dashboard_databox_large">
                         <div class="account_card_info_container">
                             <div class="personal_card_data">
@@ -349,9 +370,6 @@ Auction
                                 <a href="#">Set as default</a>
                             </div>
                         </div>
-                    </div>
-                    <div class="account_add_payment_container">
-                        <input class="button_medium" type="submit" value="Add Payment"></input>
                     </div>
                 </div>
             </div>
