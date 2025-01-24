@@ -8,13 +8,13 @@ def personal_info(request):
     return render(request, 'pop_accounts/user_accounts/personal_info.html')
 
 def interested_in(request):
-    pass
+     return render(request, 'pop_accounts/user_accounts/interested_in.html')
 
 def on_notice(request):
-    pass
+     return render(request, 'pop_accounts/user_accounts/on_notice.html')
 
 def open_bids(request):
-    pass
+     return render(request, 'pop_accounts/user_accounts/open_bids.html')
 
 def past_bids(request):
     pass
