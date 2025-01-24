@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // Location Edit Modal
 document.addEventListener('DOMContentLoaded', function () {
     // Get edit button and close span
-    const dashboardlocationEditModal = document.getElementById('locationEdittModal');
+    const dashboardlocationEditModal = document.getElementById('locationEditModal');
     const dashboardLocationEditBtn = document.getElementById('dashboardLocationEditBtn');
     const closeLocationEditModal = document.querySelector('.closeLocationEditModal');
 
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Close the modal when clicking outside of it
     if (dashboardlocationEditModal) {
         window.addEventListener('click', function (event) {
-            if (event.target === dashboardlocationEdittModal) {
+            if (event.target === dashboardlocationEditModal) {
                 dashboardlocationEditModal.style.display = 'none';
             }
         });
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // Payment Edit Modal
 document.addEventListener('DOMContentLoaded', function () {
     // Get edit button and close span
-    const dashboardPaymentEditModal = document.getElementById('paymentEdittModal');
+    const dashboardPaymentEditModal = document.getElementById('paymentEditModal');
     const dashboardPaymentEditBtn = document.getElementById('dashboardPaymentEditBtn');
     const closePaymentEditModal = document.querySelector('.closePaymentEditModal');
 
@@ -126,6 +126,100 @@ document.addEventListener('DOMContentLoaded', function () {
         window.addEventListener('click', function (event) {
             if (event.target === dashboardPaymentEditModal) {
                 dashboardPaymentEditModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('bidModal not found in the DOM.');
+    }
+
+
+})
+
+
+// Dashboard Account Data Address Edit Modal
+document.addEventListener('DOMContentLoaded', function (e) {
+    e.preventDefault();
+    // Get edit button and close span
+    const accountAddressEditModal = document.getElementById('accountAddressEditModal');
+    const accountDataAddressEditBtn = document.querySelectorAll('.accountDataAddressEditBtn');
+    const closeAccountAddressEditModal = document.querySelector('.closeAccountAddressEditModal');
+
+    if (accountDataAddressEditBtn) {
+        accountDataAddressEditBtn.forEach((adae) => {
+            // Show the modal when the button is clicked
+            adae.addEventListener('click', function (e) {
+                e.preventDefault();
+                accountAddressEditModal.style.display = 'block';
+            });
+        })
+
+    } else {
+        console.warn('bidButton not found in the DOM.');
+    }
+
+
+    if (closeAccountAddressEditModal) {
+        // Close the modal when the close span is clicked
+        closeAccountAddressEditModal.addEventListener('click', function () {
+            accountAddressEditModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeModal span not found in the DOM.');
+    }
+
+    // Close the modal when clicking outside of it
+    if (accountAddressEditModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === accountAddressEditModal) {
+                accountAddressEditModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('bidModal not found in the DOM.');
+    }
+
+
+})
+
+
+
+// Dashboard Account Data Payment Edit Modal
+document.addEventListener('DOMContentLoaded', function (e) {
+    e.preventDefault();
+    // Get edit button and close span
+    const accountPaymentEditModal = document.getElementById('accountPaymentEditModal');
+    const accountDataPaymentEditBtn = document.querySelectorAll('.accountDataPaymentEditBtn');
+    const closeAccountPaymentEditModal = document.querySelector('.closeAccountPaymentEditModal');
+
+    if (accountDataPaymentEditBtn) {
+        accountDataPaymentEditBtn.forEach((adpe) => {
+            // Show the modal when the button is clicked
+            adpe.addEventListener('click', function (e) {
+                e.preventDefault();
+                console.log('payment edit clicked')
+                accountPaymentEditModal.style.display = 'block';
+            });
+        })
+
+    } else {
+        console.warn('bidButton not found in the DOM.');
+    }
+
+
+    if (closeAccountPaymentEditModal) {
+        // Close the modal when the close span is clicked
+        closeAccountPaymentEditModal.addEventListener('click', function () {
+            accountPaymentEditModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeModal span not found in the DOM.');
+    }
+
+    // Close the modal when clicking outside of it
+    if (accountPaymentEditModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === accountPaymentEditModal) {
+                accountPaymentEditModal.style.display = 'none';
             }
         });
     } else {
