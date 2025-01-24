@@ -228,3 +228,47 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
 
 })
+
+
+// Open bids bid modal
+document.addEventListener('DOMContentLoaded', function () {
+    // Get the modal, button, and close span
+
+    const openBidsBidModal = document.querySelector('.openBidsBidModal');
+    const opeBidsBidButton = document.querySelectorAll('.opeBidsBidButton');
+    const openBidCloseModal = document.querySelector('.openBidCloseModal');
+
+    console.log('openBidsBidModal', openBidsBidModal)
+
+    if (opeBidsBidButton) {
+        opeBidsBidButton.forEach((obbb) => {
+            obbb.addEventListener('click', function () {
+                console.log('a button has been clicked!')
+                openBidsBidModal.style.display = 'block'
+            });
+        })
+    } else {
+        console.warn('open bids bidButton not found in the DOM')
+    }
+
+
+    if (openBidCloseModal) {
+        // Close the modal when the close span is clicked
+        openBidCloseModal.addEventListener('click', function () {
+            openBidsBidModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeModal span not found in the DOM.');
+    }
+
+    // Close the modal when clicking outside of it
+    if (openBidsBidModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === openBidsBidModal) {
+                openBidsBidModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('bidModal not found in the DOM.');
+    }
+});

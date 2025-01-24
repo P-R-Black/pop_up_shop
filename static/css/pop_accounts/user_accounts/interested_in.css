@@ -38,12 +38,12 @@
 .interested_in_item a p {
     color: var(--chevron-color);
     cursor: pointer;
-    transition: var(--tran-03);
+    transition: var(--tran-01);
 }
 
 .interested_in_item a p:hover {
     color: var(--text-color);
-    transition: var(--tran-03);
+    transition: var(--tran-01);
 }
 
 /* .interested_in_condition {
