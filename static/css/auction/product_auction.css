@@ -243,7 +243,7 @@ h4.prod_auct_details_title {
 
 .modal_header h3 {
     color: var(--text-color);
-    font-size: 1.25rem;
+    font-size: clamp(.90rem, 1.25rem, 5vw);
     font-weight: 400;
 }
 

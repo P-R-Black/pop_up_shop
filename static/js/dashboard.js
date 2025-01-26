@@ -229,8 +229,53 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
 })
 
+// Dashboard Open Bids Increase Bid Modal
+document.addEventListener('DOMContentLoaded', function (e) {
+    e.preventDefault();
+    // Get edit button and close span
+    const dashboardBidIncreaseModal = document.querySelector('.dashboardBidIncreaseModal');
+    const dashboardBidIncreaseBtn = document.querySelectorAll('.dashboardBidIncreaseButton');
+    const dashboardBidIncreaseCloseModal = document.querySelector('.dashboardBidIncreaseCloseModal');
 
-// Open bids bid modal
+    console.log('dashboardBidIncreaseModal', dashboardBidIncreaseModal)
+
+    if (dashboardBidIncreaseBtn) {
+        dashboardBidIncreaseBtn.forEach((dbib) => {
+            dbib.addEventListener('click', function () {
+                console.log('a button has been clicked!')
+                dashboardBidIncreaseModal.style.display = 'block'
+            });
+        })
+    } else {
+        console.warn('open bids bidButton not found in the DOM')
+    }
+
+
+    if (dashboardBidIncreaseCloseModal) {
+        // Close the modal when the close span is clicked
+        dashboardBidIncreaseCloseModal.addEventListener('click', function () {
+            dashboardBidIncreaseModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeModal span not found in the DOM.');
+    }
+
+    // Close the modal when clicking outside of it
+    if (dashboardBidIncreaseModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === dashboardBidIncreaseModal) {
+                dashboardBidIncreaseModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('bidModal not found in the DOM.');
+    }
+
+
+})
+
+
+// Open Bids Page bid modal
 document.addEventListener('DOMContentLoaded', function () {
     // Get the modal, button, and close span
 
@@ -243,7 +288,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (opeBidsBidButton) {
         opeBidsBidButton.forEach((obbb) => {
             obbb.addEventListener('click', function () {
-                console.log('a button has been clicked!')
                 openBidsBidModal.style.display = 'block'
             });
         })
