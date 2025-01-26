@@ -1,0 +1,20 @@
+.past_purchases_databox_headers {
+    color: var(--text-color);
+    display: grid;
+
+    grid-template-columns: 25% 25% 25% 25%;
+    text-align: center;
+    text-decoration: underline;
+}
+
+
+
+.past_purchases_items_container {
+    align-items: center;
+    color: var(--chevron-color);
+    display: grid;
+    grid-template-columns: 25% 25% 25% 25%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
