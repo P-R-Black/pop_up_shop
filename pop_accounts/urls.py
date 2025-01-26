@@ -8,5 +8,7 @@ urlpatterns = [
     path('interested-in', views.interested_in, name='interested_in'),
     path('on-notice', views.on_notice, name='on_notice'),
     path('open-bids', views.open_bids, name='open_bids'),
+    path('bids-history', views.past_bids, name='past_bids'),
+    path('purchase-history', views.past_purchases, name='past_purchases'),
 
 ]
