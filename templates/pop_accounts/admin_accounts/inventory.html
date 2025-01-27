@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Inventory
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Inventory</h2>
+        </div>
+        <div class="the_inventory_container">
+            <div class="inventory_item_select">
+                <ul>
+                    <li><a href="#">Shoes</a></li>
+                    <li><a href="#">Clothing</a></li>
+                    <li><a href="#">Misc.</a></li>
+                </ul>
+            </div>
+            <div class="inventory_notice_container">
+                <div class="inventory_shoe_items_container">
+                    <ul>
+                        <li>
+                            <p class="inventory_count">10</p>
+                            <p class="inventory_year">2024</p>
+                            <a class="inventory_item" href="#">Jordan 1 Retro Low OG SP Travis Scott Medium Olive</a>
+                            <p class="inventory_size">9 US</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                        <li>
+                            <p class="inventory_count">1</p>
+                            <p class="inventory_year">2024</p>
+                            <a class="inventory_item" href="#">Jordan 1 Retro Low OG SP Travis Scott Medium Olive</a>
+                            <p class="inventory_size">9.5 US</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                        <li>
+                            <p class="inventory_count">1</p>
+                            <p class="inventory_year">2024</p>
+                            <a class="inventory_item" href="">Air Force 3 Low x Nigo Blue Void and Tour Yellow</a>
+                            <p class="inventory_size">16.5 US</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                        <li>
+                            <p class="inventory_count">1</p>
+                            <p class="inventory_year">2023</p>
+                            <a class="inventory_item" href="">Nike Dunk Low Zion Williomson Voodoo</a>
+                            <p class="inventory_size">9.5 US</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="inventory_clothing_items_container">
+                    <ul>
+                        <li>
+                            <p class="inventory_count">1</p>
+                            <p class="inventory_year">2024</p>
+                            <a class="inventory_item" href="#">Supreme Matte Black T</a>
+                            <p class="inventory_size">Med</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                        <li>
+                            <p class="inventory_count">1</p>
+                            <p class="inventory_year">2025</p>
+                            <a class="inventory_item" href="#">Louis Vuitton x Fear of God Hoodie</a>
+                            <p class="inventory_size">Large</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                        <li>
+                            <p class="inventory_count">1</p>
+                            <p class="inventory_year">2025</p>
+                            <a class="inventory_item" href="">Fear of God Wool Hoodie</a>
+                            <p class="inventory_size">Med</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                        <li>
+                            <p class="inventory_count">1</p>
+                            <p class="inventory_year">2015</p>
+                            <a class="inventory_item" href="">Hermes Vingtage Tie</a>
+                            <p class="inventory_size">N/A</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="purchased_en_route_container">
+            <div class="page_title">
+                <h3>Purchased & En Route</h3>
+            </div>
+            <div class="inventory_notice_container">
+                <div class="inventory_shoe_items_container">
+                    <ul>
+                        <li>
+                            <p class="inventory_count">1</p>
+                            <p class="inventory_year">2024</p>
+                            <a class="inventory_item" href="#">Air Jordan 1 Low Paris Saint-Germain Sail and Off
+                                Noir</a>
+                            <p class="inventory_size">9.5 US</p>
+                            <p class="inventory_gen">M</p>
+                            <button class="button_small">Edit</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+</section>
+
+{% endblock %}
