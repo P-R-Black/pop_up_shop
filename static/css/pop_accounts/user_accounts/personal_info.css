@@ -131,10 +131,12 @@ select#gen_option {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+
 }
 
 .personal_info_address_inputs label {
     color: var(--text-color);
+
 }
 
 
@@ -189,7 +191,7 @@ select#gen_option {
     width: 25%;
 }
 
-.personal_info_city_state_zip_container .personal_info_state_inputs {
+.personal_info_state_inputs {
     margin-right: 2rem;
     width: 20%;
 }
@@ -403,29 +405,6 @@ select#gen_option {
 
 }
 
-/* .dashboard_databox_medium {
-    background-color: var(--text-color);
-    color: var(--body-color);
-    border-radius: 5px;
-    padding: 1rem 1rem;
-    width: 60%;
-
-} */
-
-/* 
-
-.personal_card_data {
-    align-items: center;
-    justify-content: flex-start;
-    display: flex;
-    gap: 1rem;
-} */
-
-/* .dashboard_databox_long {
-    background-color: var(--text-color);
-    color: var(--body-color);
-    border-radius: 5px;
-    height: 15rem;
-    padding: 1rem 1rem;
-
-} */
+.account_payment_data_update_option a:hover {
+    color: lightblue;
+}

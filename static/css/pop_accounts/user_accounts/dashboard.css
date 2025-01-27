@@ -19,6 +19,8 @@
     border-radius: 5px;
     height: 15rem;
     padding: 1rem 1rem;
+    position: relative;
+
 
 }
 
@@ -87,7 +89,7 @@
 .dashboard_size_container p:nth-child(1),
 .dashboard_location_container p:nth-child(1),
 .dashboard_payment_container p:nth-child(1) {
-    font-size: clamp(1rem, 1.15rem, 3vw);
+    font-size: clamp(1rem, 1.15rem, 2vw);
     font-weight: 700;
     width: 6rem;
 }
@@ -95,14 +97,13 @@
 .dashboard_size_container p:nth-child(2),
 .dashboard_location_container p:nth-child(2),
 .dashboard_payment_container p:nth-child(2) {
-    font-size: clamp(1rem, 1.15rem, 3vw);
+    font-size: clamp(1rem, 1.15rem, 2vw);
     text-align: left;
     width: 15rem;
 }
 
 .dashboard_interest_container {
     display: flex;
-    font-size: clamp(1rem, 1.15rem, 3vw);
     justify-content: center;
     width: 100%;
 
@@ -122,9 +123,10 @@
 
 .dashboard_interest_container ul li a {
     color: var(--body-color);
+    font-size: clamp(1rem, 1.15rem, 2vw);
     margin-right: 1rem;
-}
 
+}
 
 .dashboard_interest_container ul li a:hover {
     color: var(--chevron-color);
