@@ -1,0 +1,158 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+    .personal_info_name_container select {
+        width: 15%;
+    }
+
+
+
+    .personal_info_first_name_container,
+    .personal_info_middle_name_container {
+        margin-right: 3rem;
+    }
+
+    .shoe_sizes_container,
+    .shoe_gen_options_container {
+        width: 20%;
+    }
+
+
+    .account_addresses_container {
+        justify-content: center;
+    }
+
+    .personal_card_nums_input {
+        width: 50%;
+
+    }
+
+    .card_exp_input {
+        width: 20%;
+
+    }
+
+    .card_name_input {
+        width: 50%;
+
+    }
+
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+
+    .personal_info_name_container select {
+        width: 20%;
+    }
+
+    .personal_info_name_inputs {
+        flex-direction: column;
+
+    }
+
+    .personal_middle_initial_input {
+        width: 5rem;
+    }
+
+    .personal_info_first_name_input,
+    .personal_info_last_name_input {
+        width: 80%
+    }
+
+    .personal_info_first_name_container {
+        margin-right: 0rem;
+    }
+
+    .personal_info_street_address_one_input,
+    .personal_info_street_address_two_input {
+        width: 80%;
+    }
+
+    .personal_info_city_state_zip_container {
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .personal_info_city_state_zip_container .personal_info_address_inputs {
+        margin-right: 2rem;
+        width: 60%;
+    }
+
+    .personal_info_state_inputs {
+        width: 45%;
+    }
+
+    .personal_info_addres_phone_input {
+        width: 36%;
+    }
+
+    .personal_card_nums_input {
+        width: 50%;
+    }
+
+    .card_exp_input {
+        width: 20%;
+    }
+
+    .card_name_input {
+        width: 50%;
+    }
+
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+
+
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+    .personal_info_name_container select {
+        width: 25%;
+    }
+
+    .shoe_sizes_container,
+    .shoe_gen_options_container {
+        width: 35%;
+    }
+
+    .personal_info_city_state_zip_container .personal_info_address_inputs {
+        width: 80%;
+    }
+
+    .personal_info_state_inputs {
+        width: 60%;
+    }
+
+    .personal_info_addres_phone_input {
+        width: 50%;
+    }
+
+    .personal_card_nums_input {
+        width: 70%;
+    }
+
+    .card_exp_input {
+        width: 40%;
+    }
+
+    .card_name_input {
+        width: 70%;
+    }
+
+    .account_payment_data_update_option {
+        flex-direction: column;
+        gap: .25rem;
+    }
+
+}

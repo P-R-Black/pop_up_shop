@@ -29,4 +29,8 @@
     .size_options_container {
         grid-template-columns: repeat(3, 40%);
     }
+
+    #dashboardPaymentEdit {
+        width: 45%;
+    }
 }

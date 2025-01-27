@@ -10,5 +10,8 @@ urlpatterns = [
     path('open-bids', views.open_bids, name='open_bids'),
     path('bids-history', views.past_bids, name='past_bids'),
     path('purchase-history', views.past_purchases, name='past_purchases'),
+    # admin dashboard
+    path('dashboard-admin',views.dashboard_admin, name='dashboard_admin'),
+    path('inventory-admin',views.inventory, name='inventory_admin'),
 
 ]

@@ -21,3 +21,11 @@ def past_bids(request):
     
 def past_purchases(request):
     return render(request, 'pop_accounts/user_accounts/past_purchases.html')
+
+# ADMIN DASHBOARD
+
+def dashboard_admin(request):
+    return render(request, 'pop_accounts/admin_accounts/dashboard.html')
+
+def inventory(request):
+    return render(request, 'pop_accounts/admin_accounts/inventory.html')

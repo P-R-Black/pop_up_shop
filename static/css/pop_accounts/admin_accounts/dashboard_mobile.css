@@ -15,15 +15,9 @@
 
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
 
+
 @media screen and (max-width: 640px) {}
 
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
-@media screen and (max-width: 450px) {
-
-    .interested_in_databox_headers h3:nth-child(even) {
-        margin-top: 2rem;
-
-    }
-
-}
+@media screen and (max-width: 450px) {}

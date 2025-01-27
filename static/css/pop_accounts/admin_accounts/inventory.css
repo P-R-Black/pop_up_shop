@@ -1,0 +1,99 @@
+.the_inventory_container {
+    margin-top: 2rem;
+    min-height: auto;
+    overflow-y: scroll;
+    padding-bottom: 7rem;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.inventory_item_select {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    height: 3rem;
+    width: 50%;
+
+}
+
+.inventory_item_select ul {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+
+}
+
+.inventory_item_select ul li a {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.inventory_notice_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    margin-top: 4rem;
+    width: 100%;
+}
+
+.inventory_shoe_items_container {
+    width: 90%;
+
+}
+
+
+.inventory_shoe_items_container ul li,
+.inventory_clothing_items_container ul li {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .5rem;
+
+}
+
+.inventory_shoe_items_container ul li p,
+.inventory_shoe_items_container ul li a,
+.inventory_clothing_items_container ul li p,
+.inventory_clothing_items_container ul li a {
+    color: var(--chevron-color);
+    font-size: 1.25rem;
+
+}
+
+.inventory_shoe_items_container ul li p:hover,
+.inventory_shoe_items_container ul li a:hover,
+.inventory_clothing_items_container ul li p:hover,
+.inventory_clothing_items_container ul li a:hover {
+    color: lightblue;
+
+}
+
+.inventory_shoe_items_container ul li p:nth-child(1),
+.inventory_clothing_items_container ul li p:nth-child(1) {
+    width: 5%;
+}
+
+.inventory_shoe_items_container ul li p:nth-child(2),
+.inventory_clothing_items_container ul li p:nth-child(2) {
+    width: 8%;
+}
+
+.inventory_shoe_items_container ul li a,
+.inventory_clothing_items_container ul li a {
+    width: 55%;
+}
+
+.inventory_shoe_items_container ul li p:nth-child(4),
+.inventory_clothing_items_container ul li p:nth-child(4) {
+    width: 8%;
+}
+
+
+.inventory_clothing_items_container {
+    display: none;
+    visibility: hidden;
+    width: 90%;
+
+}

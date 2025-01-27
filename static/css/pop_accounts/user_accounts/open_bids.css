@@ -16,7 +16,8 @@
 .open_bids_detail_size p,
 .open_bids_last_bid p,
 .open_bids_bid_status p {
-    font-size: 1.15rem;
+    /* font-size: 1.15rem; */
+    font-size: clamp(1rem, 1.15rem, 2vw);
 }
 
 .open_bids_detail_item a p {
@@ -29,29 +30,3 @@
     color: var(--text-color);
     transition: var(--tran-03);
 }
-
-
-/*
-.interested_in_container {
-    margin-top: 2rem;
-    overflow-y: scroll;
-    padding-bottom: 7rem;
-    height: auto;
-}
-
-.interested_in_databox_headers {
-    color: var(--text-color);
-    display: grid;
-
-    grid-template-columns: 20% 20% 20% 20% 20%;
-    text-align: center;
-    text-decoration: underline;
-}
-
-
-*/
-
-/* .interested_in_condition {
-    display: flex;
-    justify-content: center;
-} */
