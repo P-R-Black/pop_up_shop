@@ -6,6 +6,7 @@
     align-items: center;
     display: flex;
     flex-direction: column;
+
 }
 
 .inventory_item_select {
@@ -37,6 +38,7 @@
     flex-direction: column;
     margin-top: 4rem;
     width: 100%;
+
 }
 
 .inventory_shoe_items_container {

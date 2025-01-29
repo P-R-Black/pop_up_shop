@@ -29,3 +29,6 @@ def dashboard_admin(request):
 
 def inventory(request):
     return render(request, 'pop_accounts/admin_accounts/inventory.html')
+
+def sales(request):
+    return render(request, 'pop_accounts/admin_accounts/sales.html')
