@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Sales
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Sales</h2>
+        </div>
+        <div class="the_inventory_container">
+            <div class="inventory_item_select">
+                <ul>
+                    <li><a href="#">Day</a></li>
+                    <li><a href="#">Month</a></li>
+                    <li><a href="#">Year</a></li>
+                </ul>
+            </div>
+            <div class="sales_items_graphs_container">
+                <div class="sales_items_container">
+                    <div class="dashboard_databox_smaller">
+                        <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
+                            <h3>2024 Sales</h3>
+                            <div class="blank_div"></div>
+                        </div>
+                        <div class="dashboard_admin_sales_container">
+                            <h3>$105,500.50</h3>
+                        </div>
+                    </div>
+                    <div class="dashboard_databox_smaller">
+                        <div class="dashboard_admin_sales_container">
+                            <h3>1100</h3>
+                        </div>
+                        <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
+                            <h3>Items Sold</h3>
+                            <div class="blank_div"></div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="sales_chart_container">
+                    <div class="sales_chart_present_container">
+                        <canvas id="sales_chart_data"></canvas>
+                    </div>
+                    <div class="sales_chart_present_container">
+                        <canvas id="sales_chart_two_data"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+</section>
+
+{% endblock %}
