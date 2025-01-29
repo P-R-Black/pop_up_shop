@@ -44,6 +44,12 @@
     font-size: 4rem;
 }
 
+.dashboard_admin_sales_container h3 {
+    /* font-size: 4rem; */
+    font-size: clamp(.90rem, 1.55rem, 3vw);
+    font-weight: 500;
+}
+
 
 .dashboard_admin_sizes_container {
     display: flex;

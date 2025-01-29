@@ -316,3 +316,244 @@ document.addEventListener('DOMContentLoaded', function () {
         console.warn('bidModal not found in the DOM.');
     }
 });
+
+
+
+// chart js
+// const DATA_COUNT = 7;
+// const NUMBER_CFG = { count: DATA_COUNT, min: -100, max: 100 };
+
+// const labels = Utils.months({ count: 7 });
+// const data = {
+//     labels: labels,
+//     datasets: [
+//         {
+//             label: 'Fully Rounded',
+//             data: Utils.numbers(NUMBER_CFG),
+//             borderColor: Utils.CHART_COLORS.red,
+//             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
+//             borderWidth: 2,
+//             borderRadius: Number.MAX_VALUE,
+//             borderSkipped: false,
+//         },
+//         {
+//             label: 'Small Radius',
+//             data: Utils.numbers(NUMBER_CFG),
+//             borderColor: Utils.CHART_COLORS.blue,
+//             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
+//             borderWidth: 2,
+//             borderRadius: 5,
+//             borderSkipped: false,
+//         }
+//     ]
+// };
+
+// const config = {
+//     type: 'bar',
+//     data: data,
+//     options: {
+//         responsive: true,
+//         plugins: {
+//             legend: {
+//                 position: 'top',
+//             },
+//             title: {
+//                 display: true,
+//                 text: 'Chart.js Bar Chart'
+//             }
+//         }
+//     },
+// };
+
+const indChartArea = document.getElementById('sales_chart_data');
+
+// chart js
+const sales_stats = () => {
+    const currData = [10, 20, 30, 40, 50, 70, 55, 45, 65, 85, 75]
+    const data = {
+        labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
+        datasets: [
+            {
+                label: 'Daily Sales',
+                data: currData,
+                backgroundColor: ['rgb(203, 58, 96)'],
+                borderColor: 'red',
+                borderWidth: 2,
+                // pointRadius: 5,
+                borderRadius: Number.MAX_VALUE,
+                borderSkipped: false,
+            }]
+    };
+
+    const legendMargin = {
+        id: 'legendMargin',
+        beforeInit(chart, legend, options) {
+            const fitValue = chart.legend.fit
+
+
+            chart.legend.fit = function fit() {
+                fitValue.bind(chart.legend)()
+                return this.height += 30;
+            }
+        }
+    };
+
+    const config = {
+        type: 'bar',
+        data,
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    fullWidth: true,
+                    labels: {
+                        // usePointStyle: true,
+                        // pointStyle: 'dash',
+                        color: 'rgb(203, 58, 96)',
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: 'rgb(203, 58, 96)',
+                        font: {
+                            family: 'Libre Caslon Text',
+                        }
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: 'rgb(203, 58, 96)',
+                        font: {
+                            family: 'Libre Caslon Text',
+                        }
+                    },
+                    beginAtZero: true,
+                    afterTickToLabelConversion: (ctx) => {
+                        newTicks = []
+
+                        for (let i = 0; i < ctx.ticks.length; i++) {
+                            let theVal = ctx.ticks[i]['value']
+                            newTicks.push({ value: theVal, label: '$' + theVal })
+                        }
+                        ctx.ticks = newTicks
+
+                    }
+                }
+            }
+        },
+        plugins: [legendMargin]
+
+    };
+
+    let chartStatus = Chart.getChart('sales_chart_data');
+    if (chartStatus != undefined) {
+        chartStatus.destroy()
+    }
+    var ctx = new Chart(indChartArea, config);
+}
+
+
+
+
+const salesChartTwoData = document.getElementById('sales_chart_two_data');
+const yearOverYearStats = () => {
+    // chart js
+    const DATA_COUNT = 7;
+    const NUMBER_CFG = { count: DATA_COUNT, min: -100, max: 100 };
+
+    const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'] //Utils.months({ count: 7 });
+    const data = {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Last Year',
+                data: [5, 10, 15, 20, 25], //Utils.numbers(NUMBER_CFG),
+                borderColor: 'blue', //Utils.CHART_COLORS.red,
+                backgroundColor: 'lightblue', //Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
+                borderWidth: 2,
+                borderRadius: Number.MAX_VALUE,
+                borderSkipped: false,
+            },
+            {
+                label: 'This Year',
+                data: [10, 20, 30, 40, 50],//Utils.numbers(NUMBER_CFG),
+                borderColor: 'red', //Utils.CHART_COLORS.blue,
+                backgroundColor: ['rgb(203, 58, 96)'], //Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
+                borderWidth: 2,
+                borderRadius: Number.MAX_VALUE,
+                borderSkipped: false,
+            }
+        ]
+    };
+
+    const config = {
+        type: 'bar',
+        data: data,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    fullWidth: true,
+                    labels: {
+                        // usePointStyle: true,
+                        // pointStyle: 'dash',
+                        color: 'rgb(203, 58, 96)',
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: 'rgb(203, 58, 96)',
+                        font: {
+                            family: 'Libre Caslon Text',
+                        }
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: 'rgb(203, 58, 96)',
+                        font: {
+                            family: 'Libre Caslon Text',
+                        }
+                    },
+                    beginAtZero: true,
+                    afterTickToLabelConversion: (ctx) => {
+                        newTicks = []
+
+                        for (let i = 0; i < ctx.ticks.length; i++) {
+                            let theVal = ctx.ticks[i]['value']
+                            newTicks.push({ value: theVal, label: '$' + theVal })
+                        }
+                        ctx.ticks = newTicks
+
+                    }
+                }
+            }
+        },
+    };
+
+    let chartStatus = Chart.getChart('sales_chart_two_data');
+    if (chartStatus != undefined) {
+        chartStatus.destroy()
+    }
+    var ctx = new Chart(salesChartTwoData, config);
+}
+
+
+window.onload = function () {
+
+    if (window.innerWidth <= 600) {
+        Chart.defaults.font.size = 10;
+    } else if (window.innerWidth >= 601 && window.innerWidth <= 1024) {
+        Chart.defaults.font.size = 16;
+    } else {
+        Chart.defaults.font.size = 22;
+    }
+    sales_stats()
+    yearOverYearStats()
+}

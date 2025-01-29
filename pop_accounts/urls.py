@@ -13,5 +13,6 @@ urlpatterns = [
     # admin dashboard
     path('dashboard-admin',views.dashboard_admin, name='dashboard_admin'),
     path('inventory-admin',views.inventory, name='inventory_admin'),
+    path('sales-admin', views.sales, name='sales_admin'),
 
 ]
