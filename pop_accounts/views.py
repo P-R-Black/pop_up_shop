@@ -32,3 +32,18 @@ def inventory(request):
 
 def sales(request):
     return render(request, 'pop_accounts/admin_accounts/sales.html')
+
+def most_on_notice(request):
+    return render(request, 'pop_accounts/admin_accounts/most_on_notice.html')
+
+def most_interested(request):
+    return render(request, 'pop_accounts/admin_accounts/most_interested.html')
+
+def total_open_bids(request):
+    return render(request, 'pop_accounts/admin_accounts/total_open_bids.html')
+
+def total_accounts(request):
+    return render(request, 'pop_accounts/admin_accounts/total_accounts.html')
+
+def account_sizes(request):
+    return render(request, 'pop_accounts/admin_accounts/account_sizes.html')
