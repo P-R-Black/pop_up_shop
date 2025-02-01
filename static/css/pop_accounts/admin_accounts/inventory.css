@@ -14,6 +14,7 @@
     display: flex;
     justify-content: space-between;
     height: 3rem;
+    margin-bottom: 1rem;
     width: 50%;
 
 }
@@ -28,7 +29,8 @@
 
 .inventory_item_select ul li a {
     color: var(--text-color);
-    font-size: 1.5rem;
+    /* font-size: 1.5rem; */
+    font-size: clamp(1rem, 1.5rem, 6vw);
     font-weight: 700;
 }
 
@@ -60,7 +62,7 @@
 .inventory_clothing_items_container ul li p,
 .inventory_clothing_items_container ul li a {
     color: var(--chevron-color);
-    font-size: 1.25rem;
+    font-size: clamp(1rem, 1.25rem, 3vw);
 
 }
 
