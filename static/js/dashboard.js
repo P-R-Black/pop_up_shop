@@ -383,7 +383,7 @@ const sales_stats = () => {
                 borderRadius: Number.MAX_VALUE,
                 borderSkipped: false,
             }]
-    };
+    }
 
     const legendMargin = {
         id: 'legendMargin',
@@ -403,6 +403,7 @@ const sales_stats = () => {
         data,
         options: {
             maintainAspectRatio: false,
+            responsive: true,
             plugins: {
                 legend: {
                     display: true,
@@ -469,7 +470,7 @@ const yearOverYearStats = () => {
         labels: labels,
         datasets: [
             {
-                label: 'Last Year',
+                label: 'Last Year Sales',
                 data: [5, 10, 15, 20, 25], //Utils.numbers(NUMBER_CFG),
                 borderColor: 'blue', //Utils.CHART_COLORS.red,
                 backgroundColor: 'lightblue', //Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
@@ -478,7 +479,7 @@ const yearOverYearStats = () => {
                 borderSkipped: false,
             },
             {
-                label: 'This Year',
+                label: 'This Year Sales',
                 data: [10, 20, 30, 40, 50],//Utils.numbers(NUMBER_CFG),
                 borderColor: 'red', //Utils.CHART_COLORS.blue,
                 backgroundColor: ['rgb(203, 58, 96)'], //Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
