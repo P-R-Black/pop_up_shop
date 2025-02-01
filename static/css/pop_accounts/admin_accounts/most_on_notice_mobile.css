@@ -2,19 +2,21 @@
 @media screen and (max-width: 1350px) {}
 
 /* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
-@media screen and (max-width: 1245px) {}
+@media screen and (max-width: 1245px) {
+    .admin_bottom_data_container {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+    }
+}
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
 @media screen and (max-width: 1000px) {
-    .sales_items_graphs_container {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .sales_items_container {
-        flex-direction: row;
-        justify-content: center;
+    .admin_bottom_data_container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
     }
 }
 

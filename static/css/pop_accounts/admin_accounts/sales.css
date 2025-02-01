@@ -20,8 +20,14 @@
     border: 2px solid var(--text-color);
     border-radius: 5px;
     margin-left: .5rem;
-    width: 58rem;
+    width: auto;
     aspect-ratio: 3/1.09;
+}
+
+.sales_chart_present_container canvas {
+    width: 200%;
+    aspect-ratio: 3/1;
+
 }
 
 
