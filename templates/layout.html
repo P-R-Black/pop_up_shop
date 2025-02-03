@@ -121,7 +121,8 @@
                     </li>
                     <li class="nav-link">
                         <a href="{% url 'pop_accounts:dashboard' %}">
-                            <i class='bx bxs-dashboard icon'></i>
+                            <!-- <i class='bx bxs-dashboard icon'></i> -->
+                            <i class='bx bxs-user-detail icon'></i>
                             <span class="text nav-text">Dashboard</span>
                         </a>
                     </li>
@@ -165,6 +166,12 @@
                         <a href="#">
                             <i class='bx bx-log-out icon'></i>
                             <span class="text nav-text">Log out</span>
+                        </a>
+                    </li>
+                    <li class="" id="signUpModalBtn">
+                        <a href="#">
+                            <i class='bx bx-user-plus icon'></i>
+                            <span class="text nav-text">Sign Up</span>
                         </a>
                     </li>
                     <li class="mode">
@@ -213,6 +220,73 @@
             </div>
             {% endcomment %}
         </div>
+        <!-- Size Sign Up Modal -->
+        <div class="sign_up_modal fade" id="signUpModal" tabindex="-1" aria-labelledby="bidModalLabel"
+            aria-hidden="true">
+            <div class="sign_up_modal_content">
+                <div class="modal_header">
+                    <div class="empty_div"></div>
+                    <button type="button" class="btn-close closeSignUpModal" aria-label="Close">X</button>
+                </div>
+                <div class="sign_up_pic_form_container">
+                    <div class="sign_up_image_container">
+                        <img class="img_sign_up" alt="Responsive image" src="{% static 'img/sneakerEight.png' %}"
+                            alt="{{ image.image.alt_text}}" />
+                    </div>
+                    <div class="sign_up_title_options_container show_container">
+                        <div class="sign_up_modal_title">
+                            <h3>Log in or sign up in seconds</h3>
+                            <p>Use your email or another service to contine with The Pop Up (It's Free).</p>
+                        </div>
+                        <div class="sign_up_options_container">
+                            <button class="sign_up_option_buttons">
+                                <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
+                                <p>Continue with Google</p>
+                            </button>
+                            <button class="sign_up_option_buttons">
+                                <img src="{% static 'img/facebook.svg' %}" class='g-logo' />
+                                <p> Continue with Facebook</p>
+                            </button>
+                            <button class="sign_up_option_buttons emailSignUpButton">
+                                <i class='bx bx-envelope icon'></i>
+                                <p> Sign up with email</p>
+                            </button>
+                        </div>
+                        <div class="sign_up_modal_policy">
+                            <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                        </div>
+                    </div>
+                    <div class="sign_up_email_container hide_container">
+                        <div class="email_sign_up_modal_title">
+                            <div class="email_sign_up_modal_container">
+                                <i class='bx bx-chevron-left backChevron' id='backChevron'></i>
+                                <h3>Continue with email</h3>
+                            </div>
+
+                            <p>We'll check if you have an account and help you create one if you don't.</p>
+                        </div>
+                        <div class="sign_up_options_container">
+                            <form action="" method="post" class="sign_up_options_form">
+                                <label for="" name="name">Name</label>
+                                <input type="text">
+                                <label for="" name="email">Email</label>
+                                <input type="text">
+                                <label for="" name="password">Password</label>
+                                <input type="text">
+                                <label for="" name="confirm_password">Confirm Password</label>
+                                <input type="text">
+                                <button type="submit" class="button_small_white">Submit</button>
+                            </form>
+                        </div>
+                        <div class="sign_up_modal_policy">
+                            <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- End of Sign Up Modal -->
     </nav>
 
 

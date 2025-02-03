@@ -196,7 +196,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
             // Show the modal when the button is clicked
             adpe.addEventListener('click', function (e) {
                 e.preventDefault();
-                console.log('payment edit clicked')
                 accountPaymentEditModal.style.display = 'block';
             });
         })
@@ -237,12 +236,9 @@ document.addEventListener('DOMContentLoaded', function (e) {
     const dashboardBidIncreaseBtn = document.querySelectorAll('.dashboardBidIncreaseButton');
     const dashboardBidIncreaseCloseModal = document.querySelector('.dashboardBidIncreaseCloseModal');
 
-    console.log('dashboardBidIncreaseModal', dashboardBidIncreaseModal)
-
     if (dashboardBidIncreaseBtn) {
         dashboardBidIncreaseBtn.forEach((dbib) => {
             dbib.addEventListener('click', function () {
-                console.log('a button has been clicked!')
                 dashboardBidIncreaseModal.style.display = 'block'
             });
         })
@@ -283,7 +279,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const opeBidsBidButton = document.querySelectorAll('.opeBidsBidButton');
     const openBidCloseModal = document.querySelector('.openBidCloseModal');
 
-    console.log('openBidsBidModal', openBidsBidModal)
 
     if (opeBidsBidButton) {
         opeBidsBidButton.forEach((obbb) => {
