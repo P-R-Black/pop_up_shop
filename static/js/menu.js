@@ -12,6 +12,40 @@ const mobileSearchBox = body.querySelector('.mobile-search-box')
 const mobileSearchIcon = body.querySelector('#mobile-search-icon')
 
 
+document.addEventListener('DOMContentLoaded', function () {
+    const backChevron = document.getElementById('backChevron');
+    const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
+    const signUpEmailContainer = document.querySelector('.sign_up_email_container');
+
+    const emailSignUpButton = document.querySelector('.emailSignUpButton');
+    console.log('emailSignUpButton', emailSignUpButton)
+
+    if (backChevron) {
+        backChevron.addEventListener('click', () => {
+            console.log('backChevron button clicked')
+            console.log('this is signUpEmailContainer', signUpEmailContainer)
+
+            signUpEmailContainer.classList.remove('show_container')
+            signUpEmailContainer.classList.add('hide_container')
+            signUpTitleOptionsContainer.classList.remove('hide_container')
+            signUpTitleOptionsContainer.classList.add('show_container')
+        })
+    }
+
+    if (emailSignUpButton) {
+        emailSignUpButton.addEventListener('click', () => {
+            console.log('the email button is clicked')
+            signUpTitleOptionsContainer.classList.remove('show_container')
+            signUpTitleOptionsContainer.classList.add('hide_container')
+            signUpEmailContainer.classList.remove('hide_container')
+            signUpEmailContainer.classList.add('show_container')
+        })
+    }
+
+
+})
+
+
 
 toggle.addEventListener('click', () => {
     sidebar.classList.toggle('close');
@@ -89,9 +123,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const btn = document.getElementById('bidButton');
     const span = document.querySelector('.closeModal');
 
-
-
-
     if (btn) {
         // Show the modal when the button is clicked
         btn.addEventListener('click', function () {
@@ -140,6 +171,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
+
+
 // address change modal
 document.addEventListener('DOMContentLoaded', function () {
     // Get the modal, button, and close span
@@ -163,6 +196,44 @@ document.addEventListener('DOMContentLoaded', function () {
             addressChangeModal.style.display = 'none';
         }
     });
+});
+
+// sign-up moddal
+document.addEventListener('DOMContentLoaded', function () {
+    // Get the modal, button, and close span
+    const signUpModal = document.getElementById('signUpModal');
+    const signUpModalBtn = document.getElementById('signUpModalBtn');
+    const closeSignUpModal = document.querySelector('.closeSignUpModal');
+
+    if (signUpModalBtn) {
+        // Show the modal when the button is clicked
+        signUpModalBtn.addEventListener('click', function () {
+            signUpModal.style.display = 'block';
+        });
+    } else {
+        console.warn('bidButton not found in the DOM.');
+    }
+
+
+    if (closeSignUpModal) {
+        // Close the modal when the close span is clicked
+        closeSignUpModal.addEventListener('click', function () {
+            signUpModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeModal span not found in the DOM.');
+    }
+
+    // Close the modal when clicking outside of it
+    if (signUpModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === signUpModal) {
+                signUpModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('bidModal not found in the DOM.');
+    }
 });
 
 
