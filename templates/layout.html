@@ -233,57 +233,90 @@
                         <img class="img_sign_up" alt="Responsive image" src="{% static 'img/sneakerEight.png' %}"
                             alt="{{ image.image.alt_text}}" />
                     </div>
-                    <div class="sign_up_title_options_container show_container">
-                        <div class="sign_up_modal_title">
-                            <h3>Log in or sign up in seconds</h3>
-                            <p>Use your email or another service to contine with The Pop Up (It's Free).</p>
-                        </div>
-                        <div class="sign_up_options_container">
-                            <button class="sign_up_option_buttons">
-                                <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
-                                <p>Continue with Google</p>
-                            </button>
-                            <button class="sign_up_option_buttons">
-                                <img src="{% static 'img/facebook.svg' %}" class='g-logo' />
-                                <p> Continue with Facebook</p>
-                            </button>
-                            <button class="sign_up_option_buttons emailSignUpButton">
-                                <i class='bx bx-envelope icon'></i>
-                                <p> Sign up with email</p>
-                            </button>
-                        </div>
-                        <div class="sign_up_modal_policy">
-                            <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
-                        </div>
-                    </div>
-                    <div class="sign_up_email_container hide_container">
-                        <div class="email_sign_up_modal_title">
-                            <div class="email_sign_up_modal_container">
-                                <i class='bx bx-chevron-left backChevron' id='backChevron'></i>
-                                <h3>Continue with email</h3>
+                    <div class="interntal_sign_up_container">
+                        <div class="sign_up_title_options_container show_container">
+                            <div class="sign_up_modal_title">
+                                <h3>Log in or sign up in seconds</h3>
+                                <p>Use your email or another service to contine with The Pop Up (It's Free).</p>
                             </div>
+                            <div class="sign_up_options_container">
+                                <button class="sign_up_option_buttons">
+                                    <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
+                                    <p>Continue with Google</p>
+                                </button>
+                                <button class="sign_up_option_buttons">
+                                    <img src="{% static 'img/facebook.svg' %}" class='g-logo' />
+                                    <p> Continue with Facebook</p>
+                                </button>
+                                <button class="sign_up_option_buttons emailSignUpButton">
+                                    <i class='bx bx-envelope icon'></i>
+                                    <p> Sign up with email</p>
+                                </button>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                            </div>
+                        </div>
+                        <div class="sign_up_email_container hide_container">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <i class='bx bx-chevron-left backChevron' id='backChevron'></i>
+                                    <h3>Continue with email</h3>
+                                </div>
 
-                            <p>We'll check if you have an account and help you create one if you don't.</p>
+                                <p>We'll check if you have an account and help you create one if you don't.</p>
+                            </div>
+                            <div class="sign_up_options_container">
+                                <form action="" method="post" class="sign_up_options_form">
+                                    {% csrf_token %}
+                                    <label for="" name="name">Name</label>
+                                    <input type="text">
+                                    <label for="" name="email">Email</label>
+                                    <input type="text">
+                                    <label for="" name="password">Password</label>
+                                    <input type="text">
+                                    <label for="" name="confirm_password">Confirm Password</label>
+                                    <input type="text">
+                                    <button type="submit" class="button_small_white emailSubmitButton">Submit</button>
+                                </form>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                            </div>
                         </div>
-                        <div class="sign_up_options_container">
-                            <form action="" method="post" class="sign_up_options_form">
-                                <label for="" name="name">Name</label>
-                                <input type="text">
-                                <label for="" name="email">Email</label>
-                                <input type="text">
-                                <label for="" name="password">Password</label>
-                                <input type="text">
-                                <label for="" name="confirm_password">Confirm Password</label>
-                                <input type="text">
-                                <button type="submit" class="button_small_white">Submit</button>
-                            </form>
-                        </div>
-                        <div class="sign_up_modal_policy">
-                            <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                        <div class="sign_up_email_confirm_container hide_container">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevron'></i>
+                                    <h3>Confirm email</h3>
+                                </div>
+                            </div>
+                            <div class="comfirmation_input_container">
+                                <div class="confirmation_input_container_text">
+                                    <p>A confirmatin code has been sent to your email.</p>
+                                    <p>Enter confirmation code below.</p>
+                                    <p>Code expires in <span>00:00</span></p>
+                                </div>
+
+                                <form action="" method="post">
+                                    {%csrf_token%}
+                                    <div class="confirmation_input">
+                                        <input type="number">
+                                        <input type="number">
+                                        <input type="number">
+                                        <input type="number">
+                                        <input type="number">
+                                        <input type="number">
+                                    </div>
+                                    <input type="submit" class="button_small_white" value="Submit">
+                                </form>
+
+
+                            </div>
+                            <div class="empty_div"></div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
         <!-- End of Sign Up Modal -->
