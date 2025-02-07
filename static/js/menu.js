@@ -12,19 +12,53 @@ const mobileSearchBox = body.querySelector('.mobile-search-box')
 const mobileSearchIcon = body.querySelector('#mobile-search-icon')
 
 
+
+// sign up email modal 
 document.addEventListener('DOMContentLoaded', function () {
     const backChevron = document.getElementById('backChevron');
     const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
     const signUpEmailContainer = document.querySelector('.sign_up_email_container');
-
     const emailSignUpButton = document.querySelector('.emailSignUpButton');
-    console.log('emailSignUpButton', emailSignUpButton)
+
+
+    const confirmContainerBackChevron = document.getElementById('confirmContainerBackChevron')
+    const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container')
+    const emailSubmitButton = document.querySelector('.emailSubmitButton')
+
+    if (emailSubmitButton) {
+        emailSubmitButton.addEventListener('click', (e) => {
+            e.preventDefault()
+            signUpEmailContainer.classList.remove('show_container')
+            signUpEmailContainer.classList.add('shift_left')
+            signUpEmailConfirmContainer.classList.remove('hide_container')
+            signUpEmailConfirmContainer.classList.add('show_container')
+
+        })
+    }
+
+    if (confirmContainerBackChevron) {
+        confirmContainerBackChevron.addEventListener('click', () => {
+            console.log('the emailSubmitButton button is clicked')
+            signUpEmailContainer.classList.add('show_container')
+            signUpEmailContainer.classList.remove('shift_left')
+            signUpEmailConfirmContainer.classList.add('hide_container')
+            signUpEmailConfirmContainer.classList.remove('show_container')
+        })
+    }
+
+
+    if (emailSignUpButton) {
+        emailSignUpButton.addEventListener('click', () => {
+            signUpTitleOptionsContainer.classList.remove('show_container')
+            signUpTitleOptionsContainer.classList.add('hide_container')
+
+            signUpEmailContainer.classList.remove('hide_container')
+            signUpEmailContainer.classList.add('show_container')
+        })
+    }
 
     if (backChevron) {
         backChevron.addEventListener('click', () => {
-            console.log('backChevron button clicked')
-            console.log('this is signUpEmailContainer', signUpEmailContainer)
-
             signUpEmailContainer.classList.remove('show_container')
             signUpEmailContainer.classList.add('hide_container')
             signUpTitleOptionsContainer.classList.remove('hide_container')
@@ -32,15 +66,45 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-    if (emailSignUpButton) {
-        emailSignUpButton.addEventListener('click', () => {
-            console.log('the email button is clicked')
-            signUpTitleOptionsContainer.classList.remove('show_container')
-            signUpTitleOptionsContainer.classList.add('hide_container')
-            signUpEmailContainer.classList.remove('hide_container')
-            signUpEmailContainer.classList.add('show_container')
-        })
-    }
+
+
+
+
+
+
+
+    // const backChevron = document.querySelector('.backChevron');
+    // const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
+    // const signUpEmailContainer = document.querySelector('.sign_up_email_container');
+    // const emailSignUpButton = document.querySelector('.emailSignUpButton');
+
+
+    // const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container')
+    // const emailSubmitButton = document.querySelector('.emailSubmitButton')
+
+
+    // if (emailSubmitButton) {
+    //     emailSubmitButton.addEventListener('click', (e) => {
+    //         e.preventDefault
+    //         signUpEmailContainer.classList.add('hide_container');
+    //         signUpEmailContainer.classList.add('show_container');
+    //     });
+    // }
+
+
+    // if (emailSignUpButton) {
+    //     emailSignUpButton.addEventListener('click', () => {
+    //         signUpTitleOptionsContainer.classList.add('hide_container');
+    //         signUpEmailContainer.classList.add('show_container');
+    //     });
+    // }
+
+    // if (backChevron) {
+    //     backChevron.addEventListener('click', () => {
+    //         signUpTitleOptionsContainer.classList.remove('hide_container');
+    //         signUpEmailContainer.classList.remove('show_container');
+    //     });
+    // }
 
 
 })
