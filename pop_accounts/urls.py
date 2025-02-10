@@ -3,6 +3,8 @@ from . import views
 
 app_name = 'pop_accounts'
 urlpatterns = [
+    path('login', views.user_login, name='login'),
+    path('password-reset', views.user_password_reset, name='password_reset'),
     path('dashboard', views.dashboard, name='dashboard'),
     path('personal-information', views.personal_info, name='personal_info'),
     path('interested-in', views.interested_in, name='interested_in'),

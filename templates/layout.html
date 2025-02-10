@@ -84,6 +84,12 @@
     <link rel="stylesheet" href="{% static 'css/pop_accounts/admin_accounts/most_on_notice_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/admin_accounts/account_sizes.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/admin_accounts/account_sizes_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pop_accounts/login/login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pop_accounts/login/login_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pop_accounts/login/password_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pop_accounts/login/password_reset_mobile.css' %}">
+
+
 
 
 
@@ -168,7 +174,7 @@
                             <span class="text nav-text">Log out</span>
                         </a>
                     </li>
-                    <li class="" id="signUpModalBtn">
+                    <li class="signUpModalBtn">
                         <a href="#">
                             <i class='bx bx-user-plus icon'></i>
                             <span class="text nav-text">Sign Up</span>
@@ -250,14 +256,14 @@
                                 </button>
                                 <button class="sign_up_option_buttons emailSignUpButton">
                                     <i class='bx bx-envelope icon'></i>
-                                    <p> Sign up with email</p>
+                                    <p> Continue with email</p>
                                 </button>
                             </div>
                             <div class="sign_up_modal_policy">
                                 <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
                             </div>
                         </div>
-                        <div class="sign_up_email_container hide_container">
+                        <div class="email_verification_container hide_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
                                     <i class='bx bx-chevron-left backChevron' id='backChevron'></i>
@@ -269,9 +275,60 @@
                             <div class="sign_up_options_container">
                                 <form action="" method="post" class="sign_up_options_form">
                                     {% csrf_token %}
+                                    <label for="" name="email">Email</label>
+                                    <input type="text">
+                                    <button type="submit" class="button_small_white emailSubmitButton">Continue</button>
+                                </form>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                            </div>
+                        </div>
+
+                        {% comment %} if email not on file and signing up for the first time show
+                        sign_up_email_container {% endcomment %}
+
+                        <div class="sign_up_email_container hide_container">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
+                                    <h3>Create account with</h3>
+                                </div>
+
+                                <p>Email should appear here</p>
+                            </div>
+                            <div class="sign_up_options_container">
+                                <form action="" method="post" class="sign_up_options_form">
+                                    {% csrf_token %}
                                     <label for="" name="name">Name</label>
                                     <input type="text">
-                                    <label for="" name="email">Email</label>
+                                    <label for="" name="password">Password</label>
+                                    <input type="text">
+                                    <label for="" name="confirm_password">Confirm Password</label>
+                                    <input type="text">
+                                    <button type="submit"
+                                        class="button_small_white passwordSubmitButton">Submit</button>
+                                </form>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                            </div>
+                        </div>
+                        {% comment %}
+                        if email on file show email_login_container
+                        <div class="email_login_container hide_container">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
+                                    <h3>Create account with</h3>
+                                </div>
+
+                                <p>Email should appear here</p>
+                            </div>
+                            <div class="sign_up_options_container">
+                                <form action="" method="post" class="sign_up_options_form">
+                                    {% csrf_token %}
+                                    <label for="" name="name">Name</label>
                                     <input type="text">
                                     <label for="" name="password">Password</label>
                                     <input type="text">
@@ -284,16 +341,18 @@
                                 <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
                             </div>
                         </div>
+                        {% endcomment %}
+
                         <div class="sign_up_email_confirm_container hide_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevron'></i>
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronThree'></i>
                                     <h3>Confirm email</h3>
                                 </div>
                             </div>
                             <div class="comfirmation_input_container">
                                 <div class="confirmation_input_container_text">
-                                    <p>A confirmatin code has been sent to your email.</p>
+                                    <p>A confirmation code has been sent to your email.</p>
                                     <p>Enter confirmation code below.</p>
                                     <p>Code expires in <span>00:00</span></p>
                                 </div>
@@ -308,10 +367,10 @@
                                         <input type="number">
                                         <input type="number">
                                     </div>
-                                    <input type="submit" class="button_small_white" value="Submit">
+                                    <a type="submit" class="button_small_white" value="Submit"
+                                        href="pop_accounts/personal-information">Submit
+                                    </a>
                                 </form>
-
-
                             </div>
                             <div class="empty_div"></div>
                         </div>
@@ -333,12 +392,6 @@
 
     <script src="{% static 'js/menu.js' %}"></script>
     <script src="{% static 'js/dashboard.js' %}"></script>
-    {% comment %}
-    <!-- 
-    <script src="{% static 'js/main.js' %}"></script>
-    <script src="{% static 'js/insights.js' %}"></script> 
-    -->
-    {% endcomment %}
 </body>
 
 </html>
