@@ -205,6 +205,34 @@ select#gen_option {
 
     padding-left: .5rem;
     width: 100%;
+}
+
+.personal_info_text_permission_container {
+    color: var(--text-color);
+    display: flex;
+    gap: 1rem;
+    margin-top: .5rem;
+}
+
+.personal_info_delivery_instructions {
+    display: flex;
+    flex-direction: column;
+    margin: .5rem 0 1rem 0;
+}
+
+.personal_info_delivery_instructions label {
+    color: var(--text-color);
+}
+
+
+.personal_info_delivery_instructions textarea {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    padding-left: .5rem;
+    resize: none;
+    width: 60%;
 
 }
 

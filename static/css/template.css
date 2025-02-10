@@ -70,8 +70,6 @@ body.dark {
     position: relative;
     transition: var(--tran-05);
     width: var(--container-width-lg);
-
-
 }
 
 
@@ -679,17 +677,6 @@ body.dark .switch::before {
     height: 90%;
 }
 
-/* .modal_header {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-}
-
-.modal_header h3 {
-    color: var(--text-color);
-    font-size: clamp(.90rem, 1.25rem, 5vw);
-    font-weight: 400;
-} */
 
 
 /* ===== sign_up_pic_form_container ===== */
@@ -733,6 +720,7 @@ body.dark .switch::before {
 /* ==== sign_up_title_options_container ==== */
 
 .sign_up_title_options_container,
+.email_verification_container,
 .sign_up_email_container,
 .sign_up_email_confirm_container {
     position: absolute;
@@ -823,18 +811,29 @@ body.dark .switch::before {
 }
 
 
-/* ===== end sign_up_email_container =====  */
+/* ===== email_verification_container ====*/
 
-.sign_up_email_container {
+.email_verification_container {
     left: 100%;
     transform: translateX(0%);
     width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    height: 100%;
 }
 
-.sign_up_email_container.show_container {
+.email_verification_container.show_container {
     transform: translateX(-100%);
+
 }
 
+
+.email_verification_container.shift_left {
+    transform: translateX(-200%);
+}
 
 
 
@@ -848,6 +847,7 @@ body.dark .switch::before {
 .sign_up_modal_title p {
     text-align: center;
     margin-bottom: 1rem;
+    width: 90%;
 }
 
 .email_sign_up_modal_title {
@@ -887,6 +887,7 @@ body.dark .switch::before {
 .sign_up_options_form {
     display: flex;
     flex-direction: column;
+    margin-top: 1rem;
 }
 
 form.sign_up_options_form input {
@@ -900,37 +901,64 @@ form.sign_up_options_form input {
     margin-bottom: 1rem;
 }
 
-/* ===== end sign_up_email_container =====  */
+/* ===== end of email_verification_container ===== */
+
+
+/* ===== start sign_up_email_container ===== */
+.sign_up_email_container {
+    left: 200%;
+    transform: translateX(0%);
+    width: 100%;
+
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+
+.sign_up_email_container.show_container {
+    transform: translateX(-200%);
+
+}
+
+.sign_up_email_container.shift_left_again {
+    transform: translateX(-300%);
+}
+
+
+
+/* ===== end sign_up_email_container ===== */
+
 
 
 /* ===== sign_up_email_confirm_container ===== */
-
 
 .sign_up_email_confirm_container {
     left: 200%;
     transform: translateX(0%);
     width: 100%;
 
-    /* left: 100%;
-    transform: translateX(0%);
-    width: 100%; */
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
 }
+
 
 .sign_up_email_confirm_container.show_container {
     transform: translateX(-200%);
 
-    /* transform: translateX(-100%); */
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    align-items: center;
-    justify-content: space-between;
-
 }
 
-.sign_up_email_container.shift_left {
-    transform: translateX(-200%);
-}
+/* .sign_up_email_confirm_container.shift_left_again {
+    transform: translateX(-300%);
+} */
+
+
+
 
 
 .confirmation_input_container_text {
@@ -939,10 +967,20 @@ form.sign_up_options_form input {
     flex-direction: column;
 }
 
-.confirmation_input_container_text p:nth-child(1),
+
+.confirmation_input_container_text p:nth-child(1) {
+    font-size: 1.25rem;
+    text-align: center;
+    margin-bottom: .5rem;
+    width: 80%;
+
+}
+
 .confirmation_input_container_text p:nth-child(2) {
     font-size: 1.25rem;
     font-weight: bold;
+    text-align: center;
+    width: 80%;
 }
 
 .confirmation_input_container_text p:nth-child(2) {
