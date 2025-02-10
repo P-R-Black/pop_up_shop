@@ -1,8 +1,14 @@
 from django.shortcuts import render
 
 # Create your views here.
+def user_login(request):
+    return render(request, 'pop_accounts/login/login.html')
+
+def user_password_reset(request):
+    return render(request, 'pop_accounts/login/password_reset.html')
+
 def dashboard(request):
-    return render(request, ('pop_accounts/user_accounts/dashboard_pages/dashboard.html'))
+    return render(request, 'pop_accounts/user_accounts/dashboard_pages/dashboard.html')
 
 def personal_info(request):
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/personal_info.html')

@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Login
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="login_section_container">
+        <div class="page_title">
+            <h2>Login</h2>
+        </div>
+        <div class="login_page_login_container">
+            <div class="login_title">
+                <h2>The Pop Up</h2>
+            </div>
+            <div class="login_input_container">
+                <form action="" method="post">
+                    <input class="login_input" type="text" name="email" placeholder="name">
+                    <input class="login_input" type="text" name="password" placeholder="password">
+                    <input type="submit" value="Sign In" class="button_medium">
+                </form>
+            </div>
+            <div class="login_user_options_container">
+                <a href="password-reset">Forgot Password</a>
+                <p class="signUpModalBtn">Sign Up</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
