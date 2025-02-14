@@ -10,5 +10,7 @@ urlpatterns = [
     path('coming-soon', views.coming_soon, name='coming_soon'),
     path('future-releases', views.future_releases, name='future_releases'),
     path('product-details', views.product_details, name='product_details'),
+    # footer_links
+    path('terms', views.terms_and_conditions, name='terms'),
 
 ]

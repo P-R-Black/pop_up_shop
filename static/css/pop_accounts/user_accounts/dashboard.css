@@ -1,8 +1,11 @@
 .the_dashboard_container {
     margin-top: 2rem;
-    min-height: 100vh;
-    overflow-y: scroll;
-    padding-bottom: 7rem;
+    /* min-height: 100vh; */
+    min-height: auto;
+    padding-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+
 }
 
 .personal_interest_notice_container {

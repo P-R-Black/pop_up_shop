@@ -60,6 +60,8 @@
     <link rel="stylesheet" href="{% static 'css/auction/future_releases_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_details.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_details_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/personal_info.css' %}">
@@ -88,6 +90,7 @@
     <link rel="stylesheet" href="{% static 'css/pop_accounts/login/login_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/login/password_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/login/password_reset_mobile.css' %}">
+
 
 
 
@@ -154,6 +157,12 @@
                         <a href="{% url 'auction:future_releases' %}">
                             <i class='bx bxs-calendar icon'></i>
                             <span class="text nav-text">Future Releases</span>
+                        </a>
+                    </li>
+                    <li class="nav-link">
+                        <a href="{% url 'auction:product_buy' %}">
+                            <i class='bx bx-cart icon'></i>
+                            <span class="text nav-text">Cart</span>
                         </a>
                     </li>
                     <li class="nav-link">
@@ -320,7 +329,7 @@
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
                                     <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
-                                    <h3>Create account with</h3>
+                                    <h3>Login</h3>
                                 </div>
 
                                 <p>Email should appear here</p>
@@ -328,17 +337,63 @@
                             <div class="sign_up_options_container">
                                 <form action="" method="post" class="sign_up_options_form">
                                     {% csrf_token %}
-                                    <label for="" name="name">Name</label>
-                                    <input type="text">
                                     <label for="" name="password">Password</label>
                                     <input type="text">
-                                    <label for="" name="confirm_password">Confirm Password</label>
-                                    <input type="text">
-                                    <button type="submit" class="button_small_white emailSubmitButton">Submit</button>
+                                    <button type="submit" class="button_small_white">Submit</button>
                                 </form>
                             </div>
-                            <div class="sign_up_modal_policy">
-                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                            <div class="login_user_options_container">
+                                <a href="#">Forgot Password</a>
+                            </div>
+                        </div>
+                        {% endcomment %}
+
+                        <!-- slides related to password reset -->
+                        {% comment %}
+                        if "forgotton password" selected show this slide
+                        <div class="email_login_container hide_container">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
+                                    <h3>Forgot your password?</h3>
+                                </div>
+
+                                <p>No problem. Enter your email, press continue, and then check your email.</p>
+                                <p>We've sent you a message to help you reset your password.</p>
+                            </div>
+                            <div class="sign_up_options_container">
+                                <form action="" method="post" class="sign_up_options_form">
+                                    {% csrf_token %}
+                                    <label for="" name="email">email</label>
+                                    <input type="text">
+                                    <button type="submit" class="button_small_white">Continue</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endcomment %}
+
+                        {% comment %}
+                        show this slide after reset password email sent
+                        <div class="email_login_container hide_container">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
+                                    <h3>verify it's you</h3>
+                                </div>
+
+                                <p>To verify that you are you, enter the code we just to <span>email address</span></p>
+
+                            </div>
+                            <div class="sign_up_options_container">
+                                <form action="" method="post" class="sign_up_options_form">
+                                    {% csrf_token %}
+                                    <label for="" name="code">code</label>
+                                    <input type="text">
+                                    <button type="submit" class="button_small_white">Submit</button>
+                                </form>
+                            </div>
+                            <div class="login_user_options_container">
+                                <p>Didn't get the code?<a href="#">Resend code</a></p>
                             </div>
                         </div>
                         {% endcomment %}
@@ -380,16 +435,107 @@
         </div>
         <!-- End of Sign Up Modal -->
     </nav>
-
-
     {% block main %}
 
     {% endblock %}
-    <footer class="section_foot">
+    <footer class="footer_container">
+        <div class="top_footer">
+            <div class="footer_logo_social_container">
+                <div class="image-text">
+                    <span class="image">
+                        <div class="logo-text" alt="logo">The Pop Up</div>
+                    </span>
+                </div>
+                <div class="footer_social_container">
+                    <ul>
+                        <li><a href=""><i class="fa-brands fa-x-twitter"></i></a></li>
+                        <li><a href=""><i class="fa-brands fa-facebook-f"></i></a></li>
+                        <li><a href=""><i class="fa-brands fa-square-instagram"></i></a></li>
+                        <li><a href=""><i class="fa-brands fa-tiktok"></i></a></li>
+                    </ul>
+                </div>
+            </div>
 
+            <div class="footer_links_container">
+                <div class="footer_about_container">
+                    <div class="footer_about_title">
+                        <h3>About</h3>
+                    </div>
+                    <ul class="footer_about_options">
+                        <li>
+                            <h4>About Us</h4>
+                        </li>
+                        <li>
+                            <h4>How It Works</h4>
+                        </li>
+                        <li>
+                            <h4>Verification</h4>
+                        </li>
+                    </ul>
+                </div>
+                <div class="footer_about_container">
+                    <div class="footer_about_title">
+                        <h3>Help</h3>
+                    </div>
+                    <ul class="footer_about_options">
+                        <li>
+                            <h4>Contact Us</h4>
+                        </li>
+
+                        <li>
+                            <h4>Help Center</h4>
+                        </li>
+
+                        <li>
+                            <h4>Verification</h4>
+                        </li>
+
+                    </ul>
+                </div>
+                <div class="footer_about_container">
+                    <div class="footer_about_title">
+                        <h3>Regiseter</h3>
+                    </div>
+                    <ul class="footer_about_options">
+                        <li>
+                            <h4>Login/Logout</h4>
+                        </li>
+                        <li>
+                            <h4>Signup</h4>
+                        </li>
+                        <li>
+                            <h4>Reset Password</h4>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer_invite_payment_container">
+                <button class="button_long">Invite Friend</button>
+                <div class="footer_payment_options">
+
+                    <img src="{% static 'img/paypal_card_icon.png' %}" class='footer_paypal-logo' />
+                    <img src="{% static 'img/visa_icon.png' %}" class='footer_visa-logo' />
+                    <img src="{% static 'img/mastercard_icon.png' %}" class='footer_mc-logo' />
+                    <img src="{% static 'img/discover_icon.png' %}" class='footer_disc-logo' />
+                    <img src="{% static 'img/dia-logo.png' %}" class='footer_dai-logo' />
+                    <img src="{% static 'img/usdc-logo.png' %}" class='footer_usdc-logo' />
+                    <img src="{% static 'img/apple-pay.png' %}" class="footer_apple_logo">
+                    <img src="{% static 'img/google-pay-svgrepo-com.svg' %}" class='footer_g-logo' />
+                </div>
+            </div>
+        </div>
+        <div class="bottom_footer">
+            <div class="footer_terms_container">
+                <ul>
+                    <li><a href="">Terms</a></li>
+                    <li><a href="">Privacy</a></li>
+                    <li><a href="">Privacy Choices</a></li>
+                    <li>©2025 The Pop Up</li>
+                    <li>All Rights Reserved</li>
+                </ul>
+            </div>
+        </div>
     </footer>
-
-
     <script src="{% static 'js/menu.js' %}"></script>
     <script src="{% static 'js/dashboard.js' %}"></script>
 </body>

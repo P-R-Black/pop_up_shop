@@ -1,7 +1,6 @@
 .auction_section {
     background: var(--body-color);
     min-height: 100vh;
-
 }
 
 
@@ -13,7 +12,7 @@
     margin-top: 2rem;
     min-height: 100vh;
     overflow-y: scroll;
-    padding-bottom: 7rem;
+    padding-bottom: 4rem;
 }
 
 .the_auction_container a {

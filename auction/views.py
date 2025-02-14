@@ -40,3 +40,6 @@ def future_releases(request):
 
 def product_details(request):
     return render(request, ('auction/product_details.html'))
+
+def terms_and_conditions(request):
+    return render(request, ('auction/footer_links/terms_and_conditions.html'))
