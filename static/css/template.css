@@ -43,6 +43,8 @@ body {
     height: 100vh;
     background: var(--body-color);
     transition: var(--tran-02);
+
+
 }
 
 body.dark {
@@ -56,25 +58,20 @@ body.dark {
     --chevron-color: #ffffff;
 }
 
-/* .container {
-    left: 8rem;
-    width: var(--container-width-lg);
-    margin: 0 auto;
-    position: relative;
-    transition: var(--tran-05);
-} */
 
 .container {
     left: 16rem;
+    /* min-height: 100%; */
+    min-height: 100vh;
+    overflow-y: scroll;
     padding: 0 .5rem;
     position: relative;
     transition: var(--tran-05);
     width: var(--container-width-lg);
 }
 
-
-
-.sidebar.close~.container {
+.sidebar.close~.container,
+.sidebar.close~.footer_container {
     left: 88px;
     width: calc(100% - 88px);
 }
@@ -643,28 +640,32 @@ body.dark .switch::before {
 
 /* Modal background */
 .sign_up_modal {
-    display: none;
     /* Hidden by default */
+    display: none;
+
+    /* Enable scroll if needed */
     position: fixed;
     z-index: 1000;
-    left: 10%;
+    left: 20%;
     top: 0;
-    width: 100%;
-    height: 100%;
+
+    width: 75%;
+    height: 90%;
     overflow: auto;
-    /* Enable scroll if needed */
-    background-color: rgba(0, 0, 0, 0.4);
+
     /* Black background with opacity */
+    background-color: rgba(0, 0, 0, 0.4);
+
 }
 
 /* Modal content */
 .sign_up_modal_content {
     background-color: #fff;
-    margin: 15% auto;
+    /* margin: 15% auto; */
     /* Center it */
     padding: 1rem 1rem;
     border: 1px solid #888;
-    width: 65%;
+    width: 85%;
     /* Adjust width */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 5px;
@@ -675,6 +676,7 @@ body.dark .switch::before {
     flex-direction: column;
     gap: 1rem;
     height: 90%;
+    margin: 2.5% auto;
 }
 
 
@@ -733,6 +735,11 @@ body.dark .switch::before {
     right: 0%;
     transform: translateX(0%);
     width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
 }
 
 
@@ -763,7 +770,8 @@ body.dark .switch::before {
     align-items: center;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    justify-content: space-around;
+    height: 40%;
 }
 
 
@@ -1023,3 +1031,194 @@ form.sign_up_options_form input {
 
 
 /*  ====== End of Sign Up Modal ===== */
+
+
+/*  ====== Start of Footer ===== */
+footer {
+    background-color: rgba(57, 57, 57, 0.87);
+    padding: 1rem 1rem;
+
+    height: auto;
+
+}
+
+.footer_container {
+    height: auto;
+    left: 16rem;
+    width: 81%;
+    transition: var(--tran-05);
+
+    position: relative;
+
+}
+
+
+
+footer span div.logo-text {
+    color: var(--text-color);
+    font-family: var(--logo-font);
+    font-size: 3rem;
+    font-weight: 600;
+    text-align: left;
+    transition: var(--tran-03);
+    width: 16rem;
+}
+
+
+.top_footer {
+    align-items: baseline;
+    display: flex;
+    height: 15rem;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1rem;
+    width: 100%;
+
+}
+
+.footer_logo_social_container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: auto;
+    width: 12rem;
+}
+
+.footer_social_container {
+    display: flex;
+    height: 2rem;
+    justify-content: center;
+    width: 80%;
+}
+
+.footer_social_container ul {
+    display: flex;
+    height: 2rem;
+    justify-content: space-between;
+    width: 100%;
+
+}
+
+
+
+.footer_social_container ul li a {
+    color: var(--primary-color-light);
+    font-size: 1.35rem;
+}
+
+.footer_social_container ul li a:hover {
+    color: var(--text-color);
+}
+
+
+.footer_links_container {
+    display: flex;
+    justify-content: space-between;
+    width: 40%;
+}
+
+.footer_about_title h3 {
+    color: var(--primary-color-light);
+    font-weight: 500;
+    margin-bottom: .5rem;
+    text-align: left;
+}
+
+.footer_about_options li h4 {
+    color: var(--primary-color-light);
+    cursor: pointer;
+    font-size: .90rem;
+    font-weight: 300;
+    margin-bottom: .5rem;
+    text-align: left;
+
+}
+
+.footer_about_options li h4:hover {
+    color: var(--text-color);
+}
+
+.footer_invite_payment_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 25%;
+}
+
+.footer_payment_options {
+    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(4, 25px);
+    justify-content: space-between;
+    width: 50%;
+
+
+}
+
+.footer_apple_logo {
+    height: 1.25rem;
+    background-color: white;
+}
+
+
+.footer_paypal-logo {
+    height: 1.25rem;
+}
+
+.footer_g-logo,
+.footer_visa-logo,
+.footer_mc-logo,
+.footer_disc-logo {
+    height: 1.75rem;
+}
+
+.footer_dai-logo,
+.footer_usdc-logo {
+    height: 1.2rem;
+}
+
+
+.bottom_footer {
+    height: auto;
+    width: 100%;
+    padding: 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+
+.footer_terms_container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+
+.footer_terms_container ul {
+    display: flex;
+    justify-content: space-around;
+    width: 50%;
+}
+
+
+
+.footer_terms_container ul li a {
+    color: var(--primary-color-light);
+    font-size: .80rem;
+    font-weight: 300;
+}
+
+.footer_terms_container ul li {
+    color: var(--primary-color-light);
+    font-size: .80rem;
+    font-weight: 300;
+}
+
+.footer_terms_container ul li a:hover {
+    color: var(--text-color);
+}
+
+/*  ====== End of Footer ===== */
