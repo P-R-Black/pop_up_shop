@@ -41,5 +41,19 @@ def future_releases(request):
 def product_details(request):
     return render(request, ('auction/product_details.html'))
 
+# site and usage info
+def about_us(request):
+    return render(request, 'auction/site_info/about_us.html')
+
+def how_it_works(request):
+    return render(request, 'auction/site_info/how_it_works.html')
+
+def verification(request):
+    return render(request, 'auction/site_info/verification.html')
+
+
 def terms_and_conditions(request):
     return render(request, ('auction/footer_links/terms_and_conditions.html'))
+
+def privacy_policy(request):
+    return render(request, 'auction/footer_links/privacy.html')
