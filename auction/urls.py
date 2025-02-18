@@ -11,6 +11,10 @@ urlpatterns = [
     path('future-releases', views.future_releases, name='future_releases'),
     path('product-details', views.product_details, name='product_details'),
     # footer_links
+    path('about', views.about_us, name='about'),
+    path('how-it-works', views.how_it_works, name='how-it-works'),
+    path('verification', views.verification, name='verification'),
     path('terms', views.terms_and_conditions, name='terms'),
+    path('privacy', views.privacy_policy, name='privacy'),
 
 ]

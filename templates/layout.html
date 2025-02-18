@@ -60,8 +60,15 @@
     <link rel="stylesheet" href="{% static 'css/auction/future_releases_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_details.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_details_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/site_info/about_us.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/site_info/about_us_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/site_info/how_it_works.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/site_info/how_it_works_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy_mobile.css' %}">
+
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/personal_info.css' %}">
@@ -463,13 +470,13 @@
                     </div>
                     <ul class="footer_about_options">
                         <li>
-                            <h4>About Us</h4>
+                            <a href="{% url 'auction:about' %}">About Us</a>
                         </li>
                         <li>
-                            <h4>How It Works</h4>
+                            <a href="{% url 'auction:how-it-works' %}">How It Works</a>
                         </li>
                         <li>
-                            <h4>Verification</h4>
+                            <a href="{% url 'auction:verification' %}">Verification</a>
                         </li>
                     </ul>
                 </div>
@@ -479,15 +486,15 @@
                     </div>
                     <ul class="footer_about_options">
                         <li>
-                            <h4>Contact Us</h4>
+                            <a href="#">Contact Us</a>
                         </li>
 
                         <li>
-                            <h4>Help Center</h4>
+                            <a href="#">Help Center</a>
                         </li>
 
                         <li>
-                            <h4>Verification</h4>
+                            <a href="#">Site Map</a>
                         </li>
 
                     </ul>
@@ -498,13 +505,13 @@
                     </div>
                     <ul class="footer_about_options">
                         <li>
-                            <h4>Login/Logout</h4>
+                            <a>Login/Logout</a>
                         </li>
                         <li>
-                            <h4>Signup</h4>
+                            <a>Signup</a>
                         </li>
                         <li>
-                            <h4>Reset Password</h4>
+                            <a>Reset Password</a>
                         </li>
                     </ul>
                 </div>
@@ -527,8 +534,8 @@
         <div class="bottom_footer">
             <div class="footer_terms_container">
                 <ul>
-                    <li><a href="">Terms</a></li>
-                    <li><a href="">Privacy</a></li>
+                    <li><a href="{% url 'auction:terms' %}">Terms</a></li>
+                    <li><a href="{% url 'auction:privacy' %}">Privacy</a></li>
                     <li><a href="">Privacy Choices</a></li>
                     <li>©2025 The Pop Up</li>
                     <li>All Rights Reserved</li>
