@@ -64,6 +64,13 @@
     <link rel="stylesheet" href="{% static 'css/auction/site_info/about_us_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/site_info/how_it_works.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/site_info/how_it_works_mobile.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/auction/site_info/contact_us.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/site_info/contact_us_mobile.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/auction/site_info/help_center.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/site_info/help_center_mobile.css' %}">
+
     <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy.css' %}">
@@ -486,11 +493,11 @@
                     </div>
                     <ul class="footer_about_options">
                         <li>
-                            <a href="#">Contact Us</a>
+                            <a href="{% url 'auction:contact' %}">Contact Us</a>
                         </li>
 
                         <li>
-                            <a href="#">Help Center</a>
+                            <a href="{% url 'auction:help-center' %}">Help Center</a>
                         </li>
 
                         <li>
@@ -545,6 +552,7 @@
     </footer>
     <script src="{% static 'js/menu.js' %}"></script>
     <script src="{% static 'js/dashboard.js' %}"></script>
+    <script src="{% static 'js/footer.js' %}"></script>
 </body>
 
 </html>
