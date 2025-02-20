@@ -51,6 +51,11 @@ def how_it_works(request):
 def verification(request):
     return render(request, 'auction/site_info/verification.html')
 
+def contact_us(request):
+    return render(request, 'auction/site_info/contact_us.html')
+
+def help_center(request):
+    return render(request, 'auction/site_info/help_center.html')
 
 def terms_and_conditions(request):
     return render(request, ('auction/footer_links/terms_and_conditions.html'))

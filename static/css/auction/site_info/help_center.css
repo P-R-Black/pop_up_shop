@@ -1,0 +1,168 @@
+.help_center_container {
+    min-height: 70vh;
+}
+
+.help_center_buttons_container_top {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 1rem;
+    justify-content: flex-start;
+    margin-bottom: 1rem;
+}
+
+.help_center_box {
+    align-items: center;
+    background: transparent;
+    border: 4px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--chevron-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    height: 15rem;
+    width: 15rem;
+
+    font-family: "Inter", sans-serif;
+    font-weight: 300;
+    font-size: 1.25rem;
+    transition: var(--tran-04);
+}
+
+.help_center_box:hover {
+    background: var(--text-color);
+    border: 4px solid var(--chevron-color);
+    color: var(--primary-color-light);
+
+}
+
+
+.help_center_display_container.hide {
+    display: none;
+}
+
+.help_center_display_container.show {
+    display: block;
+    margin-top: 1rem;
+    width: 77.5%;
+}
+
+
+.help_center_details_container_buy.hide {
+    display: none;
+
+}
+
+.help_center_details_container_buy.show {
+    display: block;
+    width: 100%;
+
+}
+
+.help_center_details_container_buy.show h3,
+.help_center_details_container_sell.show h3,
+.help_center_details_container_account.show h3,
+.help_center_details_container_shipping.show h3,
+.help_center_details_container_payment.show h3,
+.help_center_details_container_fee.show h3 {
+    color: var(--chevron-color);
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0 0 1rem 1rem;
+}
+
+.help_center_details_container_sell.hide {
+    display: none;
+
+}
+
+.help_center_details_container_sell.show {
+    display: block;
+    width: 100%;
+
+}
+
+.help_center_details_container_account.hide {
+    display: none;
+
+}
+
+.help_center_details_container_account.show {
+    display: block;
+    width: 100%;
+
+}
+
+.help_center_details_container_buy.show ul li a,
+.help_center_details_container_sell.show ul li a,
+.help_center_details_container_account.show ul li a,
+.help_center_details_container_shipping.show ul li a,
+.help_center_details_container_payment.show ul li a,
+.help_center_details_container_fee.show ul li a {
+    color: var(--chevron-color);
+    font-size: 1.15rem;
+    margin-bottom: 1rem;
+    transition: var(--tran-03);
+
+}
+
+.help_center_details_container_buy.show ul li a:hover,
+.help_center_details_container_sell.show ul li a:hover,
+.help_center_details_container_account.show ul li a:hover,
+.help_center_details_container_shipping.show ul li a:hover,
+.help_center_details_container_payment.show ul li a:hover,
+.help_center_details_container_fee.show ul li a:hover {
+    color: var(--text-color);
+}
+
+.help_center_details_container_buy.show ul li,
+.help_center_details_container_sell.show ul li,
+.help_center_details_container_account.show ul li,
+.help_center_details_container_shipping.show ul li,
+.help_center_details_container_payment.show ul li,
+.help_center_details_container_fee.show ul li {
+    margin-bottom: .5rem;
+    border-bottom: 1px solid var(--chevron-color);
+}
+
+
+.help_center_display_container_bottom.hide {
+    display: none;
+}
+
+.help_center_display_container_bottom.show {
+    display: block;
+    margin-top: 1rem;
+    width: 77.5%;
+}
+
+
+.help_center_details_container_shipping.hide {
+    display: none;
+}
+
+.help_center_details_container_shipping.show {
+    display: block;
+    width: 100%;
+}
+
+
+.help_center_details_container_payment.hide {
+    display: none;
+
+}
+
+.help_center_details_container_payment.show {
+    display: block;
+    width: 100%;
+}
+
+
+.help_center_details_container_fee.hide {
+    display: none;
+
+}
+
+.help_center_details_container_fee.show {
+    display: block;
+    width: 100%;
+}

@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Help Center
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="terms_and_container">
+        <div class="footer_links_title">
+            <h2>Help Center</h2>
+        </div>
+        <div class="the_auction_container">
+            <div class="t_and_c_container">
+                <div class="help_center_container">
+                    <div class="help_center_buttons_container_top">
+                        <button class="help_center_box" id="help_center_buying">Buying</button>
+                        <button class="help_center_box" id="help_center_selling">Selling</button>
+                        <button class="help_center_box" id="help_center_accounts">My Account</button>
+                    </div>
+                    <div class="help_center_display_container hide">
+                        <div class="help_center_details_container_buy hide" id="buying_display">
+                            <h3>Know More About Buying</h3>
+                            <ul>
+                                <li><a href="#">Auction Bid vs Buy Now</a></li>
+                                <li><a href="#">Retracting a Bid</a></li>
+                                <li><a href="#">Who Am I Buying From</a></li>
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_sell hide" id="selling_display">
+                            <h3>Know More About Selling</h3>
+                            <ul>
+                                <li><a href="#">Who is Doing the Selling</a></li>
+                                <li><a href="#">Can I Sell on The Pop Up</a></li>
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_account hide" id="my_account_display">
+                            <h3>Understanding My Account</h3>
+                            <ul>
+                                <li><a href="#">Update My Account Information</a></li>
+                                <li><a href="#">Reset My Password</a></li>
+                                <li><a href="#">Delete My Account</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="help_center_buttons_container_top">
+                        <button class="help_center_box" id="help_center_shipping">Shipping and Tracking</button>
+                        <button class="help_center_box" id="help_center_payments">Payment Options</button>
+                        <button class="help_center_box" id="help_center_fees">Fees</button>
+                    </div>
+                    <div class="help_center_display_container_bottom hide">
+                        <div class="help_center_details_container_shipping hide" id="shipping_display">
+                            <h3>Know More About Shipping and Tracking</h3>
+                            <ul>
+                                <li><a href="#">General Shipping</a></li>
+                                <li><a href="#">Track Shipping</a></li>
+                                <li><a href="#">International Shipping</a></li>
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_payment hide" id="payment_opt_display">
+                            <h3>Know More Payment Options</h3>
+                            <ul>
+                                <li><a href="#">What are the Payment Options</a></li>
+                                <li><a href="#">Does The Pop Up Accept Cryptocurrency as Payment</a></li>
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_fee hide" id="fees_display">
+                            <h3>Understanding Fees</h3>
+                            <ul>
+                                <li><a href="#">Processing Fee</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
