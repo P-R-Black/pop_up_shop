@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Payment Help
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="terms_and_container">
+        <div class="footer_links_title">
+            <h2>Payment Options</h2>
+        </div>
+        <div class="the_auction_container">
+            <div class="help_pages_container">
+                <div class="help_nav_container">
+                    <ul class="help_links">
+                        <li><a href="#paymentOptions">What are the Payment Options</a></li>
+                        <li><a href="#cryptoPayment">Does The Pop Up Accept Cryptocurrency as Payment</a></li>
+                        <li><a href="#paymentProcessing">Payment Processing</a></li>
+                    </ul>
+                </div>
+                <div class="help_content_container">
+                    <div class="help_title_container">
+                        <h3 id="paymentOptions">What are the Payment Options</h3>
+                    </div>
+                    <div class="help_content">
+                        <p>
+                            We currently accept PayPal, Venmo, Visa, Mastercard, Discover, Apple Pay, Google Pay, DAI
+                            and USDC as forms of payment.
+                        </p>
+                    </div>
+                    <div class="help_title_container">
+                        <h3 id="cryptoPayment">Does The Pop Up Accept Cryptocurrency as Payment</h3>
+                    </div>
+                    <div class="help_content">
+                        <p>
+                            At this time "The Pop Up" does accept payment in the DAI and USDC stable coins.
+                        </p>
+                    </div>
+                    <div class="help_title_container">
+                        <h3 id="paymentProcessing">Payment Processing</h3>
+                    </div>
+                    <div class="help_content">
+                        <p>
+                            PayPal, Venmo, credit card, debit card, Apple Pay and Google Pay
+                            payments are processed through <a
+                                href="https://stripe.com/?utm_campaign=AMER_US_en_Google_Search_Brand_Stripe_EXA-20839462206&utm_medium=cpc&utm_source=google&ad_content=720048964694&utm_term=stripe&utm_matchtype=e&utm_adposition=&utm_device=c&gad_source=1&gclid=EAIaIQobChMIhZ7XpJrliwMV3nF_AB0euTkoEAAYASAAEgI4BvD_BwE">Stripe.</a>
+                        </p>
+                        <p>DAI and USDC payments are processed through <a href="https://www.bitpay.com/">BitPay.</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

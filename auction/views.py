@@ -62,3 +62,22 @@ def terms_and_conditions(request):
 
 def privacy_policy(request):
     return render(request, 'auction/footer_links/privacy.html')
+
+# help_center_pages
+def buying_help(request):
+    return render(request, 'auction/site_info/help_center_pages/buying_page.html')
+
+def selling_help(request):
+    return render(request, 'auction/site_info/help_center_pages/selling_page.html')
+
+def account_help(request):
+    return render(request, 'auction/site_info/help_center_pages/my_account_page.html')
+
+def shipping_help(request):
+    return render(request, 'auction/site_info/help_center_pages/shipping_page.html')
+
+def payment_help(request):
+    return render(request, 'auction/site_info/help_center_pages/payment_options_page.html')
+
+def fees_help(request):
+    return render(request, 'auction/site_info/help_center_pages/fees_page.html')

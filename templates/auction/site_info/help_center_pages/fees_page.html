@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Fees Help
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="terms_and_container">
+        <div class="footer_links_title">
+            <h2>Fees</h2>
+        </div>
+        <div class="the_auction_container">
+            <div class="help_pages_container">
+                <div class="help_nav_container">
+                    <ul class="help_links">
+                        <li><a href="#processingFee">Processing Fee</a></li>
+                    </ul>
+                </div>
+                <div class="help_content_container">
+                    <div class="help_title_container">
+                        <h3 id="processingFee">Processing Fee</h3>
+                    </div>
+                    <div class="help_content">
+                        <p>
+                            A processing fee is add to each purchase. Our processing fee is
+                            typically 15% of the shopping cart's subtotal. This processing
+                            fee is used to service and maintain the site as well as cover
+                            other administration expenses. Fees are subject to change
+                            without warning.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,4 @@
+todo.txt
+.env
+pop_up_shop/settings/.env
+db.sqlite3
