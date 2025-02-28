@@ -25,24 +25,24 @@ Help Center
                         <div class="help_center_details_container_buy hide" id="buying_display">
                             <h3>Know More About Buying</h3>
                             <ul>
-                                <li><a href="#">Auction Bid vs Buy Now</a></li>
-                                <li><a href="#">Retracting a Bid</a></li>
-                                <li><a href="#">Who Am I Buying From</a></li>
+                                <li><a href="{% url 'auction:buying-help' %}">Auction Bid vs Buy Now</a></li>
+                                <li><a href="{% url 'auction:buying-help' %}">Retracting a Bid</a></li>
+                                <li><a href="{% url 'auction:buying-help' %}">Who Am I Buying From</a></li>
                             </ul>
                         </div>
                         <div class="help_center_details_container_sell hide" id="selling_display">
                             <h3>Know More About Selling</h3>
                             <ul>
-                                <li><a href="#">Who is Doing the Selling</a></li>
-                                <li><a href="#">Can I Sell on The Pop Up</a></li>
+                                <li><a href="{% url 'auction:selling-help' %}">Who is Doing the Selling</a></li>
+                                <li><a href="{% url 'auction:selling-help' %}">Can I Sell on The Pop Up</a></li>
                             </ul>
                         </div>
                         <div class="help_center_details_container_account hide" id="my_account_display">
                             <h3>Understanding My Account</h3>
                             <ul>
-                                <li><a href="#">Update My Account Information</a></li>
-                                <li><a href="#">Reset My Password</a></li>
-                                <li><a href="#">Delete My Account</a></li>
+                                <li><a href="{% url 'auction:account-help' %}">Update My Account Information</a></li>
+                                <li><a href="{% url 'auction:account-help' %}">Reset My Password</a></li>
+                                <li><a href="{% url 'auction:account-help' %}">Delete My Account</a></li>
                             </ul>
                         </div>
                     </div>
@@ -55,22 +55,25 @@ Help Center
                         <div class="help_center_details_container_shipping hide" id="shipping_display">
                             <h3>Know More About Shipping and Tracking</h3>
                             <ul>
-                                <li><a href="#">General Shipping</a></li>
-                                <li><a href="#">Track Shipping</a></li>
-                                <li><a href="#">International Shipping</a></li>
+                                <li><a href="{% url 'auction:shipping-help' %}">General Shipping</a></li>
+                                <li><a href="{% url 'auction:shipping-help' %}">Track Shipping</a></li>
+                                <li><a href="{% url 'auction:shipping-help' %}">International Shipping</a></li>
+                                <li><a href="{% url 'auction:shipping-help' %}">Update My Shipping Address</a></li>
                             </ul>
                         </div>
                         <div class="help_center_details_container_payment hide" id="payment_opt_display">
                             <h3>Know More Payment Options</h3>
                             <ul>
-                                <li><a href="#">What are the Payment Options</a></li>
-                                <li><a href="#">Does The Pop Up Accept Cryptocurrency as Payment</a></li>
+                                <li><a href="{% url 'auction:payment-help' %}">What are the Payment Options</a></li>
+                                <li><a href="{% url 'auction:payment-help' %}">Does The Pop Up Accept Cryptocurrency as
+                                        Payment</a></li>
+                                <li><a href="{% url 'auction:payment-help' %}">Payment Processing</a></li>
                             </ul>
                         </div>
                         <div class="help_center_details_container_fee hide" id="fees_display">
                             <h3>Understanding Fees</h3>
                             <ul>
-                                <li><a href="#">Processing Fee</a></li>
+                                <li><a href="{% url 'auction:fees-help' %}">Processing Fee</a></li>
                             </ul>
                         </div>
                     </div>
