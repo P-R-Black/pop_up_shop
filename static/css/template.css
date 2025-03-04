@@ -63,7 +63,7 @@ body.dark {
 .container {
     left: 16rem;
     /* min-height: 100%; */
-    min-height: 100vh;
+    /* min-height: 100vh; */
     overflow-y: scroll;
     padding: 0 .5rem;
     position: relative;
@@ -1038,9 +1038,7 @@ form.sign_up_options_form input {
 footer {
     background-color: rgba(57, 57, 57, 0.87);
     padding: 1rem 1rem;
-
     height: auto;
-
 }
 
 .footer_container {

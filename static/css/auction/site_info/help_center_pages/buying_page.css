@@ -45,6 +45,18 @@
     margin-bottom: 1rem;
 }
 
+
+.help_content p a {
+
+    color: var(--light-blue-links);
+    font-family: "Inter", sans-serif;
+    font-size: 1rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+}
+
+
+
 .help_content p:last-child {
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--chevron-color)
