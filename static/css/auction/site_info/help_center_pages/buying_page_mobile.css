@@ -6,35 +6,11 @@
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
-@media screen and (max-width: 1000px) {
-
-    .modal_email_contact_input,
-    .modal_subject_contact_input {
-
-        width: 70%;
-    }
-
-    .modal_message_contact_input {
-        width: 70%;
-
-    }
-}
+@media screen and (max-width: 1000px) {}
 
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
-@media screen and (max-width: 800px) {
-
-    .modal_email_contact_input,
-    .modal_subject_contact_input {
-
-        width: 80%;
-    }
-
-    .modal_message_contact_input {
-        width: 80%;
-
-    }
-}
+@media screen and (max-width: 800px) {}
 
 
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
@@ -43,15 +19,9 @@
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
 @media screen and (max-width: 450px) {
-
-    .modal_email_contact_input,
-    .modal_subject_contact_input {
-
-        width: 95%;
+    .help_pages_container {
+        display: grid;
+        grid-template-columns: 40% 60%;
     }
 
-    .modal_message_contact_input {
-        width: 95%;
-
-    }
 }

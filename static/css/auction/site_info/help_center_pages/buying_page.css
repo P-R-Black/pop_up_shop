@@ -16,7 +16,7 @@
 .help_links li a {
     color: var(--light-blue-links);
     font-family: "Inter", sans-serif;
-    font-size: 1.15rem;
+    font-size: clamp(.80rem, 1.15rem, 4.5vw);
     text-decoration: underline;
 }
 
@@ -32,7 +32,7 @@
 .help_title_container h3 {
     color: var(--chevron-color);
     font-family: "Inter", sans-serif;
-    font-size: 1.25rem;
+    font-size: clamp(1.10rem, 1.25rem, 4.5vw);
     font-weight: 700;
 }
 
@@ -40,7 +40,7 @@
 
     color: var(--chevron-color);
     font-family: "Inter", sans-serif;
-    font-size: 1rem;
+    font-size: clamp(.75rem, 1rem, 4vw);
     font-weight: 300;
     margin-bottom: 1rem;
 }

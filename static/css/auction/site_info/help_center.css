@@ -1,6 +1,7 @@
 .help_center_container {
-    min-height: 70vh;
+    min-height: auto;
 }
+
 
 .help_center_buttons_container_top {
     display: grid;
@@ -19,12 +20,12 @@
     cursor: pointer;
     display: flex;
     justify-content: center;
-    height: 15rem;
-    width: 15rem;
+    height: clamp(5.30rem, 15rem, 15vw);
+    width: clamp(5.30rem, 15rem, 15vw);
 
     font-family: "Inter", sans-serif;
     font-weight: 300;
-    font-size: 1.25rem;
+    font-size: clamp(.80rem, 1.25rem, 3vw);
     transition: var(--tran-04);
 }
 
@@ -65,7 +66,8 @@
 .help_center_details_container_payment.show h3,
 .help_center_details_container_fee.show h3 {
     color: var(--chevron-color);
-    font-size: 2rem;
+    /* font-size: 2rem; */
+    font-size: clamp(1.50rem, 2rem, 6vw);
     font-weight: 600;
     margin: 0 0 1rem 1rem;
 }
@@ -99,7 +101,7 @@
 .help_center_details_container_payment.show ul li a,
 .help_center_details_container_fee.show ul li a {
     color: var(--chevron-color);
-    font-size: 1.15rem;
+    font-size: clamp(.85rem, 1.15rem, 6vw);
     margin-bottom: 1rem;
     transition: var(--tran-03);
 

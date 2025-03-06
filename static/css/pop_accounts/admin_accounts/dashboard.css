@@ -45,7 +45,7 @@
 }
 
 .dashboard_admin_sales_container h3 {
-    font-size: clamp(.90rem, 1.55rem, 3vw);
+    font-size: clamp(1.10rem, 1.55rem, 5vw);
     font-weight: 500;
 }
 

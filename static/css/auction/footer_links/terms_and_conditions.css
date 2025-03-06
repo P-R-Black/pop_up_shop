@@ -2,14 +2,12 @@
     margin-top: 5rem;
 }
 
-.footer_links_title h2 {
-    border-bottom: 2px solid var(--chevron-color);
-}
 
 .footer_links_title h2 {
+    border-bottom: 2px solid var(--chevron-color);
     color: var(--chevron-color);
     font-family: "Inter", sans-serif;
-    font-size: 2.5rem;
+    font-size: clamp(1.75rem, 2.5rem, 6vw);
     font-weight: 300;
 }
 
