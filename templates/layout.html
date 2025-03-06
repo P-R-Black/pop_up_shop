@@ -311,8 +311,10 @@
                             </div>
                         </div>
 
-                        {% comment %} if email not on file and signing up for the first time show
-                        sign_up_email_container {% endcomment %}
+                        {% comment %}
+                        if email not on file and signing up for the first time show
+                        sign_up_email_container
+                        {% endcomment %}
 
                         <div class="sign_up_email_container hide_container">
                             <div class="email_sign_up_modal_title">
@@ -323,7 +325,7 @@
 
                                 <p>Email should appear here</p>
                             </div>
-                            <div class="sign_up_options_container">
+                            <div class="sign_up_options_form_container">
                                 <form action="" method="post" class="sign_up_options_form">
                                     {% csrf_token %}
                                     <label for="" name="name">Name</label>

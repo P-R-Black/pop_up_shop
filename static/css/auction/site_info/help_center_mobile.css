@@ -1,0 +1,33 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+
+    .help_center_details_container_buy.show ul li a,
+    .help_center_details_container_sell.show ul li a,
+    .help_center_details_container_account.show ul li a,
+    .help_center_details_container_shipping.show ul li a,
+    .help_center_details_container_payment.show ul li a,
+    .help_center_details_container_fee.show ul li a {
+        margin-bottom: .25rem;
+
+    }
+
+}
