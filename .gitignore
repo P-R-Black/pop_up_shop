@@ -10,11 +10,9 @@ db.sqlite3-journal
 media
 
 todo.txt
-.env
-pop_up_shop/settings/.env
-
 requirements.txt
 account_test.py
+auction_dummy_data.py
 
 
 .coverage
@@ -24,7 +22,9 @@ account_test.py
 coverage.xml
 
 # Environments #
+*.env
 .env
 .venv
 .env/
 .venv/
+pop_up_shop/settings/.env
