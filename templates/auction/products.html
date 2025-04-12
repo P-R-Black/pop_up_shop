@@ -13,66 +13,58 @@ Auction
         <div class="page_title">
             <h2>Products</h2>
         </div>
+        <div class="product_type_container">
+            <div class="product_type_item_select">
+                <ul>
+                    <li {% if not product_type %} class="selected" {% endif %}>
+                        <a href="{% url 'auction:products' %}">All</a>
+                    </li>
+                    {% for c in product_types %}
+                    {% if product_type and product_type.slug == c.slug %}
+                    <li class="selected">
+                        {% else %}
+                    <li>
+                        {% endif %}
+                        <a href="{% url 'auction:products' c.slug %}">{{ c.name|capfirst }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
         <div class="products_container">
+            {% if product %}
+            {% for p in product %}
             <div class="product_display_container">
-                <a href="product-details">
+                <a href="{{ p.get_absolute_url }}">
                     <div class="circle_image_container">
                         <div class="background_circle"></div>
-                        <img class="img_fluid_product" alt="Responsive image" src="{% static 'img/sneakerThree.png' %}"
-                            alt="{{ image.image.alt_text}}" />
+
+                        {% for image in p.product_image.all %}
+                        {% if image.is_feature %}
+                        <img class="img_fluid_product" alt="{{ image.alt_text }}" src="{{ image.image.url }}" />
+                        {% endif %}
+                        {% endfor %}
+
                     </div>
                 </a>
 
-
                 <div class="products_desc_container">
-                    <h3>2024</h3>
-                    <h3>Jordan 11 Retro</h3>
-                    <h3>Legend Blue</h3>
+
+                    {% for spec in p.popupproductspecificationvalue_set.all|slice:"2:3" %}
+                    <h3>{{ spec }}</h3>
+                    {% endfor %}
+                    <h3>{{ p.product_title }}</h3>
+                    <h3>{{ p.secondary_product_title}}</h3>
                 </div>
                 <div class="products_button_container">
                     <button class="button_medium" href="/">Buy Now</button>
                     <button class="button_medium" href="/">Add to Cart</button>
                 </div>
             </div>
-            <div class="product_display_container">
-                <a href="product-details">
-                    <div class="circle_image_container">
-                        <div class="background_circle"></div>
-                        <img class="img_fluid_product" alt="Responsive image" src="{% static 'img/sneakerOne.png' %}"
-                            alt="{{ image.image.alt_text}}" />
-                    </div>
-                </a>
-
-                <div class="products_desc_container">
-                    <h3>2003</h3>
-                    <h3>Nike SB Dunk Low</h3>
-                    <h3>Paris</h3>
-                </div>
-                <div class="products_button_container">
-                    <button class="button_medium" href="/">Buy Now</button>
-                    <button class="button_medium" href="/">Add to Cart</button>
-                </div>
-            </div>
-            <div class="product_display_container">
-                <a href="product-details">
-                    <div class="circle_image_container">
-                        <div class="background_circle"></div>
-                        <img class="img_fluid_product" alt="Responsive image" src="{% static 'img/sneakerFive.png' %}"
-                            alt="{{ image.image.alt_text}}" />
-                    </div>
-                </a>
-
-                <div class="products_desc_container">
-                    <h3>2020</h3>
-                    <h3>Nike SB Dunk Low</h3>
-                    <h3>Ben & Jerry Chunky Dunky</h3>
-                </div>
-                <div class="products_button_container">
-                    <button class="button_medium" href="/">Buy Now</button>
-                    <button class="button_medium" href="/">Add to Cart</button>
-                </div>
-
-            </div>
+            {% endfor %}
+            {% else %}
+            <h4>Nothing to display</h4>
+            {% endif %}
         </div>
     </div>
 </section>

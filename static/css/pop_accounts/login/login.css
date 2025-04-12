@@ -24,7 +24,7 @@
 
 .login_input_container {
     /* border: 2px solid yellow; */
-    width: 30%;
+    width: 35%;
 }
 
 .login_input_container form {
@@ -47,6 +47,11 @@
     height: 2rem;
     padding-left: .5rem;
     width: 100%
+}
+
+.login_alert {
+    color: var(--chevron-color);
+    font-size: 1.25rem;
 }
 
 

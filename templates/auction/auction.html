@@ -14,6 +14,56 @@ Auction
             <h2>Current Auction</h2>
         </div>
         <div class="the_auction_container">
+            {% for i in in_auction %}
+            <div class="item_container_two product_display_container_long">
+                <a href="/auction/open" class="auction_product_detail_container">
+                    <div class="auct_prod_title_container_two">
+                        <h3>{{ i.product_title }}</h3>
+                        <h3>{{ i.secondary_product_title }}</h3>
+                    </div>
+                    <div class="auct_img_container">
+                        {% for image in i.product_image.all %}
+                        {% if image.is_feature %}
+                        <img class="min_img_fluid" src="{{ image.image.url }}" alt="{{ image.alt_text }}">
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="sub_auction_product_detail_container">
+
+                        <h4>Size</h4>
+                        {% if product_specifications.product_sex == "Male" %}
+                        <h4>US {{"Men's"}} {{product_specifications.size }}</h4>
+                        {% else %}
+                        <h4>US {{"Women's"}} {{product_specifications.size }}</h4>
+                        {% endif %}
+                    </div>
+                    <div class="sub_auction_product_detail_container">
+                        <h4>Condition</h4>
+                        <h4>{{product_specifications.condition|capfirst }}</h4>
+                    </div>
+                </a>
+                <div class="auction_prod_links_container">
+                    <a href="/auction/product-buy" class="button_long buy-now-button">Buy Now $1,000</a>
+                    <button type="button" class="button_long bidButtonClass">Make Bid</button>
+                </div>
+                <div class="auction_product_auction_details">
+                    {% if i.auction_duration %}
+                    <h4>Auction closes in</h4>
+                    <h2>{{ i.auction_duration.days}}</h2>
+                    {% if i.auction_duration > 1 %}
+                    <h3>Days</h3>
+                    {% else %}
+                    <h3>Day</h3>
+                    {% endif %}
+                    <div class="auction_product_auction_details_hours">
+                        <h2>{{ i.auction_duration.hours}} <span>Hours</span></h2>
+                    </div>
+                    {% else %}
+                    <h4>Auction Hasn't Started Yet</h4>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
             <div class="item_container_two databox_long">
                 <a href="/auction/open" class="auction_product_detail_container">
                     <div class="auct_img_container">
@@ -33,7 +83,7 @@ Auction
                     </div>
                 </a>
                 <div class="auction_prod_links_container">
-                    <a href="/auction/product-buy" class="button_long">Buy Now $1,000</a>
+                    <a href="/auction/product-buy" class="button_long buy-now-button">Buy Now $1,000</a>
                     <button type="button" class="button_long bidButtonClass">Make Bid</button>
                 </div>
                 <div class="auction_product_auction_details">
@@ -197,5 +247,23 @@ Auction
     <!-- End of Bid Modal -->
 
 </section>
-
 {% endblock %}
+<scrip src="{% static 'js/payment.js' %}">
+    $(document).on('click', '.buy-now-button', function (e) {
+    e.preventDefault();
+    $.ajax({
+    type: 'POST',
+    url: '{% url "cart:cart_add" %}',
+    data: {
+    productid: $('.buy-now-button').val(),
+    <!-- productqty: $('#select option:selected').text(), -->
+    csrfmiddlewaretoken: "{{csrf_token}}",
+    action: 'post'
+    },
+    success: function (json) {
+    document.getElementById("basket-qty").innerHTML = json.qty
+    },
+    error: function (xhr, errmsg, err) {}
+    });
+    })
+</scrip>

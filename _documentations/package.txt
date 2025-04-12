@@ -1,0 +1,9 @@
+Package List
+####
+
+django
+djagno-mptt
+pillow
+stripe
+coverage
+six

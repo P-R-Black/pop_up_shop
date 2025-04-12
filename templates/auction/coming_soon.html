@@ -13,55 +13,53 @@ Auction
         <div class="page_title">
             <h2>Coming Soon</h2>
         </div>
+        <div class="product_type_container">
+            <div class="product_type_item_select">
+                <ul>
+                    <li {% if not product_type %} class="selected" {% endif %}>
+                        <a href="{% url 'auction:coming_soon' %}">All</a>
+                    </li>
+                    {% for c in product_types %}
+                    {% if product_type and product_type.slug == c.slug %}
+                    <li class="selected">
+                        {% else %}
+                    <li>
+                        {% endif %}
+                        <a href="{% url 'auction:coming_soon' c.slug %}">{{ c.name|capfirst }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
         <div class="cs_container">
+            {% if product %}
+            {% for prod in product %}
             <div class="cs_display_container">
                 <div class="rectangle_image_container">
                     <div class="background_rectangle"></div>
-                    <img class="img_fluid_cs" alt="Responsive image" src="{% static 'img/sneakerThree.png' %}"
+                    {% for image in prod.product_image.all %}
+                    {% if image.is_feature %}
+                    <img class="img_fluid_cs" alt="{{ image.alt_text }}" src="{{ image.image.url}}"
                         alt="{{ image.image.alt_text}}" />
+                    {% endif %}
+                    {% endfor %}
                 </div>
 
                 <div class="cs_desc_container">
-                    <h3>2024</h3>
-                    <h3>Jordan 11 Retro</h3>
-                    <h3>Legend Blue</h3>
+                    {% for spec in prod.popupproductspecificationvalue_set.all|slice:"2:3" %}
+                    <h3>{{ spec }}</h3>
+                    {% endfor %}
+                    <h3>{{ prod.product_title }}</h3>
+                    <h3>{{ prod.secondary_product_title}}</h3>
                 </div>
                 <div class="cs_button_container">
                     <button class="button_medium" href="/">Notify Me</button>
                 </div>
             </div>
-            <div class="cs_display_container">
-                <div class="rectangle_image_container">
-                    <div class="background_rectangle"></div>
-                    <img class="img_fluid_cs" alt="Responsive image" src="{% static 'img/sneakerOne.png' %}"
-                        alt="{{ image.image.alt_text}}" />
-                </div>
-
-                <div class="cs_desc_container">
-                    <h3>2003</h3>
-                    <h3>Nike SB Dunk Low</h3>
-                    <h3>Paris</h3>
-                </div>
-                <div class="cs_button_container">
-                    <button class="button_medium" href="/">Notify Me</button>
-                </div>
-            </div>
-            <div class="cs_display_container">
-                <div class="rectangle_image_container">
-                    <div class="background_rectangle"></div>
-                    <img class="img_fluid_cs" alt="Responsive image" src="{% static 'img/sneakerFive.png' %}"
-                        alt="{{ image.image.alt_text}}" />
-                </div>
-
-                <div class="cs_desc_container">
-                    <h3>2020</h3>
-                    <h3>Nike SB Dunk Low</h3>
-                    <h3>Ben & Jerry Chunky Dunky</h3>
-                </div>
-                <div class="cs_button_container">
-                    <button class="button_medium" href="/">Notify Me</button>
-                </div>
-            </div>
+            {% endfor %}
+            {% else %}
+            <h4>Nothing to display</h4>
+            {% endif %}
         </div>
     </div>
 </section>

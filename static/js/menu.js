@@ -166,8 +166,6 @@ mobileMoon.addEventListener('click', () => {
 mobileSun.addEventListener('click', () => {
     body.classList.toggle('dark');
 
-    console.log('sun clicked')
-
 })
 
 

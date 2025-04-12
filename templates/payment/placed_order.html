@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Order Placed
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="login_section_container">
+        <div class="page_title">
+            <h2>Order Placed</h2>
+        </div>
+    </div>
+</section>
+<script>
+    var STRIPE_PUBLIC_KEY = '{{ STRIPE_PUBLIC_KEY }}'
+    var CSRF_TOKEN = '{{ csrf_token }}';
+</script>
+{% endblock %}

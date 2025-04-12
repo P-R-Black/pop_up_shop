@@ -1,3 +1,4 @@
+from ast import arg
 from django.db import models
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -7,33 +8,36 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin, BaseUserManager)
 # from django_countries.fields import CountryField
 import uuid
-from auction.models import PopUpProducts
-
+from auction.models import PopUpProduct
+from django.contrib.auth.models import UserManager
 # from .managers import CustomPopUpAccountManager  # Assuming you have a custom user manager
 
 
 # Create your models here.
 class CustomPopUpAccountManager(BaseUserManager):
-    def create_superuser(self, email, first_name, last_name, password=None, **other_fields):
+    def create_superuser(self, email, first_name, last_name, password, **other_fields):
 
         other_fields.setdefault('is_staff', True)
         other_fields.setdefault('is_superuser', True)
         other_fields.setdefault('is_active', True)
 
         if other_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must be assinged to is staff=True.')
+            raise ValueError(_('Superuser must be assinged to is staff=True.'))
 
         if other_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must be assigned to is_superuser=True.')
+            raise ValueError(_('Superuser must be assigned to is_superuser=True.'))
 
-        if not email:
-            raise ValueError('An email address is required.')
+        # if not email:
+        #     raise ValueError(_('An email address is required.'))
 
-        # if not user_name:
-        #     raise ValueError('An user name is required.')
+        # if not first_name:
+        #     raise ValueError(_('An user first name is required.'))
+
+        # if not last_name:
+        #     raise ValueError(_('An user last name is required.'))
 
         # if not password:
-        #     raise ValueError('A user password is required.')
+        #     raise ValueError(_('A user password is required.'))
 
         # user = self.create_superuser(email, user_name, first_name, password, **other_fields)
         # user.is_superuser = True
@@ -47,7 +51,7 @@ class CustomPopUpAccountManager(BaseUserManager):
             raise ValueError(_('An email address is required.'))
 
         email = self.normalize_email(email)
-        user = self.model(email=email, last_name=last_name, first_name=first_name, **other_fields)
+        user = self.model(email=email, first_name=first_name, last_name=last_name, **other_fields)
         user.set_password(password)
         user.save()
         return user
@@ -90,15 +94,15 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     middle_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
     mobile_phone = models.CharField(max_length=20, blank=True)
-    mobile_notification = models.BooleanField(default=False)
-    shoe_size = models.CharField(max_length=6)
+    mobile_notification = models.BooleanField(default=True)
+    shoe_size = models.CharField(max_length=10)
     size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200)
     favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default='nike')
     deleted_at = models.DateTimeField(null=True, blank=True)  
 
     # Relationships
-    prods_interested_in = models.ManyToManyField(PopUpProducts, related_name="interested_users", blank=True)
-    prods_on_notice_for = models.ManyToManyField(PopUpProducts, related_name="notified_users", blank=True)
+    prods_interested_in = models.ManyToManyField(PopUpProduct, related_name="interested_users", blank=True)
+    prods_on_notice_for = models.ManyToManyField(PopUpProduct, related_name="notified_users", blank=True)
 
     # Bidding Information
     open_bids = models.ManyToManyField("PopUpBid", related_name="active_bids", blank=True)
@@ -111,16 +115,19 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    objects = SoftDeleteUserManager()
-    all_objects = models.Manager()
+    objects = CustomPopUpAccountManager()
+    # objects = SoftDeleteUserManager()
+    # all_objects = models.Manager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
+
     class Meta:
-        verbose_name = 'PopUpCustomers'
+        verbose_name = 'PopUpCustomer'
         verbose_name_plural = 'PopUpCustomers'
     
+
     def soft_delete(self):
         """Mark the user account as inactive instead of deleting it."""
         self.is_active = False  # Prevents login
@@ -133,6 +140,7 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
         self.deleted_at = None
         self.save(update_fields=["is_active", "deleted_at"])
 
+
     @property
     def is_deleted(self):
         return self.deleted_at is not None
@@ -143,7 +151,7 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
 
     def hard_delete(self):
         """Permanently delete the account (only for admin use)."""
-        super().delete(*args, **kwargs)
+        super().delete(*arg, **kwargs)
 
 
     def email_user(self, subject, message):
@@ -202,8 +210,8 @@ class PopUpCustomerAddress(models.Model):
     default = models.BooleanField(_("Default"), default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    objects = SoftDeleteManager()
-    all_objects = models.Manager()
+    # objects = SoftDeleteManager()
+    # all_objects = models.Manager()
 
     class Meta:
         verbose_name = 'PopUpCustomerAddress'
@@ -243,10 +251,18 @@ class PopUpBid(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="bids")
-    product = models.ForeignKey(PopUpProducts, on_delete=models.CASCADE, related_name="bids")
+    product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE, related_name="bids")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    is_winning_bid = models.BooleanField(default=False)
+
+    # Auto-bidding fields
+    max_auto_bid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Maximum bid limit for automatic bidding.")
+    bid_increment = models.DecimalField(max_digits=10, decimal_places=2, default=5.00, help_text="Minimum amount by which the next bid must increase.")
+
+    # Expiration Field
+    expires_at = models.DateTimeField(null=True, blank=True, help_text="Bid expiration time.")
 
     class Meta:
         ordering = ["-timestamp"]
@@ -254,6 +270,49 @@ class PopUpBid(models.Model):
     def __str__(self):
         return f"{self.customer} - {self.product} - ${self.amount}"
 
+    def save(self, *args, **kwargs):
+        """
+        Ensure bid amount is valid before saving
+        """
+        latest_bid = PopUpBid.objects.filter(product=self.product).order_by('-amount').first()
+        if latest_bid:
+            if self.amount <= latest_bid.amount:
+                raise ValueError('Bid amount must be higher than the current highest bid.')
+        if self.expires_at and self.expires_at < timezone.now():
+            self.is_active = False
+
+        super().save(*args, **kwargs)
+
+        # Handle aut-bidding after saving
+        self.process_auto_bid()
+    
+    def process_auto_bid(self):
+        """
+        Checks if auto-bidding is enabled and places a new bid if necessary.
+        """
+        highest_bid = PopUpBid.objects.filter(product=self.product, is_active=True)
+        if highest_bid and highest_bid.max_auto_bid:
+            # Find the next highest bid amount within the auto-bid limit
+            new_bid_amount = highest_bid.amount + highest_bid.bid_increment
+            if new_bid_amount <= highest_bid.max_auto_bid:
+                # Place a new bid for the same user within their max auto-bid limit
+                PopUpBid.objects.create(
+                    customer=highest_bid.customer,
+                    product=highest_bid.product,
+                    amount=new_bid_amount,
+                    is_active=True,
+                    max_auto_bid=highest_bid.max_auto_bid,
+                    bid_increment=highest_bid.bid_increment
+                )
+        
+    
+    @classmethod
+    def get_highest_bid(cls, product):
+        """
+        Get the highest bid for a given a product
+        """
+        return cls.objects.filter(product=product).order_by('-amount').first()
+    
 
 class PopUpPurchase(models.Model):
     """
@@ -261,7 +320,7 @@ class PopUpPurchase(models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="purchases")
-    product = models.ForeignKey(PopUpProducts, on_delete=models.CASCADE, related_name="purchases")
+    product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE, related_name="purchases")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     purchased_at = models.DateTimeField(auto_now_add=True)
     address = models.ForeignKey(PopUpCustomerAddress, on_delete=models.SET_NULL, null=True, blank=True)
@@ -271,3 +330,41 @@ class PopUpPurchase(models.Model):
     
     def __str__(self):
         return f"{self.customer} - {self.product} - ${self.price}"
+
+    
+    
+class PopUpCustomerIP(models.Model):
+    """
+    Model for tracking customer IP Address
+    """
+    customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="ip_addresses")
+    ip_address = models.GenericIPAddressField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Customer IP Address"
+        verbose_name_plural = "Customer IP Addresses"
+    
+    def __str__(self):
+        return f"{self.customer.email} - {self.ip_address}"
+
+
+class PopUpCustomerPayment(models.Model):
+    """
+    Model for tracking customer payment preference
+    """
+    customer = models.OneToOneField(PopUpCustomer, on_delete=models.CASCADE, related_name="payment_info")
+    stripe_customer_id = models.CharField(max_length=100, blank=True, null=True)
+    paypal_billing_agreement_id = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+
+
+"""
+rm -rf quotes_api/migrations/  # Remove migration files
+python3 manage.py flush         # Clears all data from the database
+python3 manage.py makemigrations quotes_api
+python3 manage.py migrate
+
+"""

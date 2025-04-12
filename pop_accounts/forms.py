@@ -1,5 +1,5 @@
 from django import forms
-from .models import PopUpCustomer, PopUpCustomerAddress
+from .models import PopUpCustomer # PopUpCustomerAddress
 from django.contrib.auth.forms import (AuthenticationForm, PasswordResetForm, SetPasswordForm)
 # from django_countries.data import COUNTRIES
 
@@ -32,66 +32,86 @@ from django.contrib.auth.forms import (AuthenticationForm, PasswordResetForm, Se
 #         self.fields['postcode'].widget.attrs.update(
 #             {'class': 'form-control mb-2 account-form', 'placeholder': 'Postal Code'})
 
+"""
+class PopUpUserLoginForm(forms.ModelForm):
+    email = forms.EmailField(
+        label='Email',
+        max_length=100, 
+        help_text='Required',
+        error_messages={'required': 'Sorry, you will need an email'},
+        widget=forms.TextInput(attrs={
+            'class': 'login_input',
+            'placeholder': 'Email',
+            'id': 'login_email',
+            'type': 'text',
+            'name': 'email'
+        }
+    ))
+    
+    password = forms.CharField(
+        label='Password', 
+        widget=forms.PasswordInput(attrs={
+            'class': 'login_input',
+            'placeholder': 'Password',
+            'id': 'login_pwd',
+            'type': 'text',
+            'name': 'password'
+        }
+    ))
+    
+    class Meta:
+        model = PopUpCustomer
+        fields = ('email','password',)
+    
 
-# class PopUpUserLoginForm(AuthenticationForm):
-#     username = forms.CharField(widget=forms.TextInput(
-#         attrs={
-#             'class': 'form-control mb-3',
-#             'placeholder': 'Username',
-#             'id': 'login-username'
-#         }
-#     ))
-#     password = forms.CharField(widget=forms.PasswordInput(
-#         attrs={
-#             'class': 'form-control',
-#             'placeholder': 'Password',
-#             'id': 'login-pwd'
-#         }
-#     ))
+
+class PopUpRegistrationForm(forms.ModelForm):
+    
+    email = forms.EmailField(
+        label='Email',
+        max_length=100, 
+        help_text='Required',
+        error_messages={'required': 'Sorry, you will need an email'}
+        )
+    
+    password = forms.CharField(
+        label='Password', 
+        widget=forms.PasswordInput)
+    
+    password2 = forms.CharField(
+        label='Repeat Password', 
+        widget=forms.PasswordInput)
+
+    class Meta:
+        model = PopUpCustomer
+        fields = ('email',)
 
 
-# class PopUpRegistrationForm(forms.ModelForm):
-#     user_name = forms.CharField(label='Enter Username', min_length=4, max_length=50, help_text='Required')
-#     email = forms.CharField(max_length=100, help_text='Required',
-#                             error_messages={'required': 'Sorry, you will need an email'})
-#     password = forms.CharField(label='Password', widget=forms.PasswordInput)
-#     password2 = forms.CharField(label='Repeat Password', widget=forms.PasswordInput)
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if PopUpCustomer.objects.filter(email=email).exists():
+            raise forms.ValidationError(
+                "Please use another Email, the email you've entered has already been taken"
+            )
+        return email
 
-#     class Meta:
-#         model = PopUpCustomer
-#         fields = ('user_name', 'email',)
+    def clean_passowrd2(self):
+        cd = self.cleaned_data
+        if cd['password'] != cd['password2']:
+            raise forms.ValidationError('Passwords do not match')
+        return cd['password2']
 
-#     def clean_username(self):
-#         user_name = self.cleaned_data['user_name'].lower()
-#         r = PopUpCustomer.objects.filter(user_name=user_name)
-#         if r.count():
-#             raise forms.ValidationError('Username already exists')
-#         return user_name
 
-#     def clean_passowrd2(self):
-#         cd = self.cleaned_data
-#         if cd['password'] != cd['password2']:
-#             raise forms.ValidationError('Passwords do not match')
-#         return cd['password2']
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs.update(
+            {'class': 'sign_up_options_form', 'placeholder': 'Email', 'name': 'email', 'id': 'id_email'})
+        self.fields['password'].widget.attrs.update(
+            {'class': 'sign_up_options_form', 'placeholder': 'Password'})
+        self.fields['password2'].widget.attrs.update(
+            {'class': 'sign_up_options_form', 'placeholder': 'Repeat Password'})
+"""
 
-#     def clean_email(self):
-#         email = self.cleaned_data['email']
-#         if PopUpCustomer.objects.filter(email=email).exists():
-#             raise forms.ValidationError(
-#                 "Please use another Email, the email you've entered has already been taken"
-#             )
-#         return email
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.fields['user_name'].widget.attrs.update(
-#             {'class': 'form-control mb-3', 'placeholder': 'Username'})
-#         self.fields['email'].widget.attrs.update(
-#             {'class': 'form-control mb-3', 'placeholder': 'E-mail', 'name': 'email', 'id': 'id_email'})
-#         self.fields['password'].widget.attrs.update(
-#             {'class': 'form-control mb-3', 'placeholder': 'Password'})
-#         self.fields['password2'].widget.attrs.update(
-#             {'class': 'form-control mb-3', 'placeholder': 'Repeat Password'})
 
 
 # class PopUpUserEditForm(forms.ModelForm):

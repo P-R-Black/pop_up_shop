@@ -1,5 +1,30 @@
+
+### Django ##
+*.log
+*.pot
+*.pyc
+__pycache__/
+development.py
+db.sqlite3
+db.sqlite3-journal
+media
+
 todo.txt
 .env
 pop_up_shop/settings/.env
-db.sqlite3
+
 requirements.txt
+account_test.py
+
+
+.coverage
+.coverage.*
+.cache
+.notsettests.xml
+coverage.xml
+
+# Environments #
+.env
+.venv
+.env/
+.venv/
