@@ -1,11 +1,10 @@
 .auction_section {
     background: var(--body-color);
-    height: 100vh;
-
+    min-height: 100vh;
 }
 
 .section_container {
-    margin-bottom: 5rem;
+    margin-bottom: 3rem;
 }
 
 

@@ -20,14 +20,14 @@ environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-# print('BASE_DIR', BASE_DIR)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY="django-insecure-zy@no(pe718vwb6@g8lr(o77%-sa^k65q)d)83t&bs6i2xloys" 
-# SEC_TEST = os.environ.get('SECRET_KEY') 
+SECRET_KEY=os.environ.get('SECRET_KEY')
+
 # print('SEC_TEST', SEC_TEST)
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -35,7 +35,7 @@ DEBUG=True
 # print('DEBUG TEST', DEBUG)
 #os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = ["*", "localhost:8080", "localhost"]
+ALLOWED_HOSTS = ["*", "localhost:8000", "localhost"]
 
 
 # Application definition
@@ -49,7 +49,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'auction.apps.AuctionConfig',
     'home.apps.HomeConfig',
-    'pop_accounts.apps.PopAccountsConfig'
+    'pop_accounts.apps.PopAccountsConfig',
+    'orders.apps.OrdersConfig',
+    'payment.apps.PaymentConfig',
+    'cart.apps.CartConfig',
+    'coupon.apps.CouponConfig',
+    'reward.apps.RewardConfig',
+    'mptt'
 ]
 
 MIDDLEWARE = [
@@ -75,6 +81,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'auction.context_processors.categories',
             ],
         },
     },
@@ -138,3 +145,27 @@ MEDIA_ROOT = os.path.join(BASE_DIR, '../media/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'pop_accounts.PopUpCustomer'
+
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/'
+
+
+# THIS SHOULD BE CHANGED TO A FEW HOURS
+PASSWORD_RESET_TIMEOUT = 1
+
+# Email Setting
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# Cart Session Id
+CART_SESSION_ID = 'cart'
+
+# Stripe Data
+# os.environ.setdefault('STRIPE_PUBLIC_KEY', "pk_test_dL4uFuUsLi4Gll22DK9qc96h00rBjrjF9S")
+
+STRIPE_PUBLISHABLE_KEY=os.environ.get('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY =os.environ.get('STRIPE_SECRET_KEY')
+# STRIPE_WEBHOOK =os.environ.get ""
+STRIPE_ENDPOINT_SECRET =os.environ.get('STRIPE_ENDPOINT_SECRET')
+
+# stripe listen --forward-to 127.0.0.1:8000/payment/webhook

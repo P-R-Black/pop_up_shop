@@ -5,6 +5,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <title>{% block title %}The Pop Up{% endblock %}</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta property="og:title" content="The Seville Report">
@@ -177,7 +178,7 @@
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="{% url 'auction:product_buy' %}">
+                        <a href="{% url 'cart:cart_summary' %}">
                             <i class='bx bx-cart icon'></i>
                             <span class="text nav-text">Cart</span>
                         </a>
@@ -301,8 +302,12 @@
                             <div class="sign_up_options_container">
                                 <form action="" method="post" class="sign_up_options_form">
                                     {% csrf_token %}
+                                    <label>{{ form.email.label}}</label>
+                                    {{ form.email }}
+                                    {% comment %}
                                     <label for="" name="email">Email</label>
                                     <input type="text">
+                                    {% endcomment %}
                                     <button type="submit" class="button_small_white emailSubmitButton">Continue</button>
                                 </form>
                             </div>
@@ -482,13 +487,13 @@
                     </div>
                     <ul class="footer_about_options">
                         <li>
-                            <a href="{% url 'auction:about' %}">About Us</a>
+                            <a href="{% url 'home:about' %}">About Us</a>
                         </li>
                         <li>
-                            <a href="{% url 'auction:how-it-works' %}">How It Works</a>
+                            <a href="{% url 'home:how-it-works' %}">How It Works</a>
                         </li>
                         <li>
-                            <a href="{% url 'auction:verification' %}">Verification</a>
+                            <a href="{% url 'home:verification' %}">Verification</a>
                         </li>
                     </ul>
                 </div>
@@ -498,11 +503,11 @@
                     </div>
                     <ul class="footer_about_options">
                         <li>
-                            <a href="{% url 'auction:contact' %}">Contact Us</a>
+                            <a href="{% url 'home:contact' %}">Contact Us</a>
                         </li>
 
                         <li>
-                            <a href="{% url 'auction:help-center' %}">Help Center</a>
+                            <a href="{% url 'home:help-center' %}">Help Center</a>
                         </li>
 
                         <li>
@@ -545,8 +550,8 @@
         <div class="bottom_footer">
             <div class="footer_terms_container">
                 <ul>
-                    <li><a href="{% url 'auction:terms' %}">Terms</a></li>
-                    <li><a href="{% url 'auction:privacy' %}">Privacy</a></li>
+                    <li><a href="{% url 'home:terms' %}">Terms</a></li>
+                    <li><a href="{% url 'home:privacy' %}">Privacy</a></li>
                     <li><a href="">Privacy Choices</a></li>
                     <li>©2025 The Pop Up</li>
                     <li>All Rights Reserved</li>
@@ -557,6 +562,7 @@
     <script src="{% static 'js/menu.js' %}"></script>
     <script src="{% static 'js/dashboard.js' %}"></script>
     <script src="{% static 'js/footer.js' %}"></script>
+    <script src="{% static 'js/payment.js' %}"></script>
 </body>
 
 </html>

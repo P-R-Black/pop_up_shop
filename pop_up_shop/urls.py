@@ -18,12 +18,19 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+import debug_toolbar
 
 
 urlpatterns = [
     path('', include('home.urls')),
     path('pop_accounts/', include('pop_accounts.urls')),
     path('auction/', include('auction.urls')),
+    path('orders/', include('orders.urls')),
+    path('cart/', include('cart.urls')),
+    path('coupon/', include('coupon.urls')),
+    path('reward/', include('reward.urls')),
+    path('payment/', include('payment.urls')),
+    path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
    
 ]

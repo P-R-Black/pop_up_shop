@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Help Center
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="terms_and_container">
+        <div class="footer_links_title">
+            <h2>Help Center</h2>
+        </div>
+        <div class="the_auction_container">
+            <div class="t_and_c_container">
+                <div class="help_center_container">
+                    <div class="help_center_buttons_container_top">
+                        <button class="help_center_box" id="help_center_buying">Buying</button>
+                        <button class="help_center_box" id="help_center_selling">Selling</button>
+                        <button class="help_center_box" id="help_center_accounts">My Account</button>
+                    </div>
+                    <div class="help_center_display_container hide">
+                        <div class="help_center_details_container_buy hide" id="buying_display">
+                            <h3>Know More About Buying</h3>
+                            <ul>
+                                <li><a href="{% url 'home:buying-help' %}">Auction Bid vs Buy Now</a></li>
+                                <li><a href="{% url 'home:buying-help' %}">Retracting a Bid</a></li>
+                                <li><a href="{% url 'home:buying-help' %}">Who Am I Buying From</a></li>
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_sell hide" id="selling_display">
+                            <h3>Know More About Selling</h3>
+                            <ul>
+                                <li><a href="{% url 'home:selling-help' %}">Who is Doing the Selling</a></li>
+                                <li><a href="{% url 'home:selling-help' %}">Can I Sell on The Pop Up</a></li>
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_account hide" id="my_account_display">
+                            <h3>Understanding My Account</h3>
+                            <ul>
+                                <li><a href="{% url 'home:account-help' %}">Update My Account Information</a></li>
+                                <li><a href="{% url 'home:account-help' %}">Reset My Password</a></li>
+                                <li><a href="{% url 'home:account-help' %}">Delete My Account</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="help_center_buttons_container_top">
+                        <button class="help_center_box" id="help_center_shipping">Shipping and Tracking</button>
+                        <button class="help_center_box" id="help_center_payments">Payment Options</button>
+                        <button class="help_center_box" id="help_center_fees">Fees</button>
+                    </div>
+                    <div class="help_center_display_container_bottom hide">
+                        <div class="help_center_details_container_shipping hide" id="shipping_display">
+                            <h3>Know More About Shipping and Tracking</h3>
+                            <ul>
+                                <li><a href="{% url 'home:shipping-help' %}">General Shipping</a></li>
+                                <li><a href="{% url 'home:shipping-help' %}">Track Shipping</a></li>
+                                <li><a href="{% url 'home:shipping-help' %}">International Shipping</a></li>
+                                <li><a href="{% url 'home:shipping-help' %}">Update My Shipping Address</a></li>
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_payment hide" id="payment_opt_display">
+                            <h3>Know More Payment Options</h3>
+                            <ul>
+                                <li><a href="{% url 'home:payment-help' %}">What are the Payment Options</a></li>
+                                <li><a href="{% url 'home:payment-help' %}">Does The Pop Up Accept Cryptocurrency as
+                                        Payment</a></li>
+                                <li><a href="{% url 'home:payment-help' %}">Payment Processing</a></li>
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_fee hide" id="fees_display">
+                            <h3>Understanding Fees</h3>
+                            <ul>
+                                <li><a href="{% url 'home:fees-help' %}">Processing Fee</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
