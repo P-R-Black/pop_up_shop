@@ -283,6 +283,17 @@ class PopUpBid(models.Model):
 
         super().save(*args, **kwargs)
 
+        highest = PopUpBid.get_highest_bid(self.product)
+        self.product.current_highest_bid = highest.amount if highest else None
+        self.product.save(update_fields=['current_highest_bid'])
+
+        # Reset all other bids to is_winning_bid=False
+        PopUpBid.objects.filter(product=self.product).update(is_winning_bid=False)
+
+        # ✅ Set current highest bid to is_winning_bid=True
+        if highest:
+            PopUpBid.objects.filter(pk=highest.pk).update(is_winning_bid=True)
+
         # Handle aut-bidding after saving
         self.process_auto_bid()
     
