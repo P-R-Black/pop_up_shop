@@ -138,7 +138,8 @@ class PopUpProduct(models.Model):
     INVENTORY_STATUS_CHOICES = (
         ('anticipated', 'Anticipated'),
         ('in_transit', 'In Transit'),
-        ('in_inventory', 'In Inventory')
+        ('in_inventory', 'In Inventory'),
+        ('sold_out', 'Sold Out')
     )
 
 
@@ -159,11 +160,17 @@ class PopUpProduct(models.Model):
 
     description = models.TextField(verbose_name=_("description"), help_text=_("Not Required"), blank=True)
     slug = models.SlugField(max_length=255, unique=True)
-    # replaced retail_price with starting_price, because although it's an auction site, users will have the 
+    # added starting_price, because although it's an auction site, users will have the 
     # opportunity to buy the product outright, and that starting price will be calculated by using the retail 
     # price + shipping and handling + $50. 
     starting_price = models.DecimalField( verbose_name=_("Regular price"), max_digits=10, decimal_places=2)
-
+    current_highest_bid = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Stores the current highest bid for this product."
+    )
     
     # Don't need discount price
     # discount_price = models.DecimalField(
@@ -235,6 +242,7 @@ class PopUpProduct(models.Model):
             hours = duration.seconds // 3600
             return {"days": days, "hours": hours}
         return None
+
 
     def save(self, *args, **kwargs):
         # Generate slug if it's not provided
