@@ -18,21 +18,22 @@ def all_auction_view(request):
         if p.auction_status == "Ongoing":
             in_auction.append(p)
             product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
-            print('p.auction_duration', p.auction_duration)
-    print('in_auction', in_auction)
-    print('product_specifications', product_specifications)
-
     return render(request, 'auction/auction.html', {'in_auction': in_auction, 'product_specifications': product_specifications})
 
+"""
 
-def product_auction_view(request):
-    # need image of product in auction
-    # need name of product:
-    # need product size
-    # need product condition
-    # need product buy now price
-    # need days left in auction
-    return render(request, 'auction/product_auction.html')
+def product_detail(request, slug, id=id):
+    product = get_object_or_404(PopUpProduct, slug=slug, is_active=True)
+    product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=product)
+    }
+    return render(request, 'auction/product_detail.html', {'product': product, 'product_specifications':product_specifications})
+"""
+
+def product_auction_view(request, slug, id=id):
+    product = get_object_or_404(PopUpProduct, slug=slug, is_active=True)
+    product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=product)
+    }
+    return render(request, 'auction/product_auction.html', {'product': product, 'product_specifications': product_specifications})
 
 def product_buy_view(request):
     # need payment option attached to account  | # shopping cart length

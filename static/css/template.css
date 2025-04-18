@@ -213,7 +213,7 @@ body.dark {
 .button_long {
     align-items: center;
     background: var(--text-color);
-    border: 1px solid black;
+    border: 1px solid var(--body-color);
     border-radius: 5px;
     color: var(--primary-color-light);
     cursor: pointer;
@@ -223,7 +223,12 @@ body.dark {
     justify-content: center;
     padding: 0 .5rem 0 .5rem;
     text-align: center;
+    transition: var(--tran-03);
     width: clamp(7rem, 12rem, 15vw)
+}
+
+.button_long:hover {
+    transform: scale(1.10);
 }
 
 .button_long_white {
