@@ -120,7 +120,7 @@ Auction
             <div class="auction_container_right">
                 <div class="auction_product_details_container databox">
                     <div class="details_size_container">
-                        <p>Size</p>
+                        <p>Size:</p>
                         {% if product_specifications.product_sex == "Male" %}
                         <p class="databox_assign_left">US {{"Men's"}} {{product_specifications.size }}</p>
                         {% else %}
@@ -128,8 +128,12 @@ Auction
                         {% endif %}
                     </div>
                     <div class="details_condition_container">
-                        <p>Condition</p>
+                        <p>Condition:</p>
                         <p class="databox_assign_left">{{product_specifications.condition|capfirst }}</p>
+                    </div>
+                    <div class="details_condition_container">
+                        <p>Highest Bid:</p>
+                        <p class="databox_assign_left">${{ product.current_highest_bid|intcomma }}</p>
                     </div>
                     <div class="details_buy_now_container">
                         <a class="button_small" href="/auction/product-buy">Buy Now</a>

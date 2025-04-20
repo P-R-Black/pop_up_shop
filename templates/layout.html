@@ -300,14 +300,16 @@
                                 <p>We'll check if you have an account and help you create one if you don't.</p>
                             </div>
                             <div class="sign_up_options_container">
-                                <form action="" method="post" class="sign_up_options_form">
+                                <form action="{% url 'pop_accounts:register_modal' %}" method="POST"
+                                    class="sign_up_options_form">
                                     {% csrf_token %}
-                                    <label>{{ form.email.label}}</label>
-                                    {{ form.email }}
-                                    {% comment %}
-                                    <label for="" name="email">Email</label>
-                                    <input type="text">
-                                    {% endcomment %}
+
+                                    {% if email_form.errors %}
+                                    <div role="alert">Error: Incorrect Username or Password!</div>
+                                    {% endif %}
+
+                                    {{ email_form.email }}
+
                                     <button type="submit" class="button_small_white emailSubmitButton">Continue</button>
                                 </form>
                             </div>
@@ -328,49 +330,53 @@
                                     <h3>Create account with</h3>
                                 </div>
 
-                                <p>Email should appear here</p>
+                                <p class="email_provided_signin_popup"></p>
                             </div>
                             <div class="sign_up_options_form_container">
-                                <form action="" method="post" class="sign_up_options_form">
+                                <form action="{% url 'pop_accounts:register_modal' %}" method="POST"
+                                    class="registration_options_form">
                                     {% csrf_token %}
-                                    <label for="" name="name">Name</label>
-                                    <input type="text">
-                                    <label for="" name="password">Password</label>
-                                    <input type="text">
-                                    <label for="" name="confirm_password">Confirm Password</label>
-                                    <input type="text">
+
+                                    {{ registration_form.email }}
+                                    {{ registration_form.first_name }}
+                                    {{ registration_form.password }}
+                                    {{ registration_form.password2 }}
+
                                     <button type="submit"
-                                        class="button_small_white passwordSubmitButton">Submit</button>
+                                        class="button_small_white registrationSubmitButton">Submit</button>
                                 </form>
                             </div>
                             <div class="sign_up_modal_policy">
                                 <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
                             </div>
                         </div>
-                        {% comment %}
-                        if email on file show email_login_container
-                        <div class="email_login_container hide_container">
+
+                        <div class="email_login_container hide_email_login_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronThree'></i>
                                     <h3>Login</h3>
                                 </div>
-
-                                <p>Email should appear here</p>
                             </div>
                             <div class="sign_up_options_container">
-                                <form action="" method="post" class="sign_up_options_form">
+                                <form action="{% url 'pop_accounts:register_modal' %}" method="POST"
+                                    class="sign_up_options_form">
                                     {% csrf_token %}
-                                    <label for="" name="password">Password</label>
-                                    <input type="text">
-                                    <button type="submit" class="button_small_white">Submit</button>
+
+                                    {% if password_form.errors %}
+                                    <div role="alert">Error: Incorrect Username or Password!</div>
+                                    {% endif %}
+
+                                    <p class="email_provided_signin_popup"></p>
+                                    {{ password_form.password }}
+
+                                    <button type="submit" class="button_small_white loginSubmitButton">Submit</button>
                                 </form>
                             </div>
                             <div class="login_user_options_container">
                                 <a href="#">Forgot Password</a>
                             </div>
                         </div>
-                        {% endcomment %}
 
                         <!-- slides related to password reset -->
                         {% comment %}
@@ -378,7 +384,7 @@
                         <div class="email_login_container hide_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronFour'></i>
                                     <h3>Forgot your password?</h3>
                                 </div>
 
@@ -401,7 +407,7 @@
                         <div class="email_login_container hide_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronFive'></i>
                                     <h3>verify it's you</h3>
                                 </div>
 
@@ -425,7 +431,7 @@
                         <div class="sign_up_email_confirm_container hide_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronThree'></i>
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronSix'></i>
                                     <h3>Confirm email</h3>
                                 </div>
                             </div>
@@ -447,7 +453,7 @@
                                         <input type="number">
                                     </div>
                                     <a type="submit" class="button_small_white" value="Submit"
-                                        href="pop_accounts/personal-information">Submit
+                                        href="{% url 'pop_accounts:personal_info' %}">Submit
                                     </a>
                                 </form>
                             </div>

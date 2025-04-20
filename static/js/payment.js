@@ -1,6 +1,4 @@
-console.log('stress test')
 var stripe = Stripe(STRIPE_PUBLIC_KEY);
-console.log('stripe', stripe)
 
 var elem = document.getElementById('submit')
 clientsecret = elem.getAttribute('data-secret')
