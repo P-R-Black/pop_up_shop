@@ -6,10 +6,14 @@ from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-# from .forms import PopUpRegistrationForm, PopUpUserLoginForm
+from django.contrib.auth import authenticate, login
 from .token import account_activation_token
 from orders.views import user_orders
-
+from django.http import JsonResponse
+from .models import PopUpCustomer
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from .forms import PopUpRegistrationForm
 
 # Create your views here.
 def user_registration(request):
@@ -121,3 +125,70 @@ def total_accounts(request):
 # @login_required
 def account_sizes(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/account_sizes.html')
+
+
+
+def register_modal_view(request):
+    NewUser = False
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        password2 = request.POST.get('password2')
+        
+        # Registration Form Submit
+        if email and password and password2:
+            print("got all three!")
+            email = request.session.get('auth_email') or request.POST.get('email')
+            print('email', email)
+            data = request.POST.copy()
+            print('data', data)
+            data['email'] = email
+            form = PopUpRegistrationForm(data)
+
+            if form.is_valid():
+                new_user = form.save(commit=False)
+                print('new_user', new_user)
+                new_user.set_password(form.cleaned_data['password'])
+                new_user.save()
+                login(request, new_user)
+                return JsonResponse({'registered': True})
+            else:
+                # Return error dict in JSON
+                errors = form.errors.as_json()
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+            # errors = form.errors.as_json()
+            # return JsonResponse({'registered': False, 'errors': errors})
+
+
+        # Handle Email Check
+        if email and not password:
+            if validate_email_address(email):
+                user_exists = PopUpCustomer.objects.filter(email=email).exists()
+                if not user_exists:
+                    NewUser = True
+                    return JsonResponse({'status': NewUser})
+                request.session['auth_email'] = email
+                return JsonResponse({'status': NewUser})
+
+        
+        # Takes Password If Email Already on file
+        if password:
+            email = request.session.get('auth_email')
+            user = authenticate(request, email=email, password=password)
+            if user:
+                login(request, user)
+                # return redirect(reverse('pop_accounts:dashboard'))
+                return JsonResponse({'authenticated': True}) # for testint
+            return JsonResponse({'authenticated': False})
+            # messages.info(request, "Username or Password is Incorrect")
+            # return redirect(reverse('pop_accounts:login'))
+
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+
+def validate_email_address(email):
+    try:
+        validate_email(email)
+        return True
+    except ValidationError:
+        return False

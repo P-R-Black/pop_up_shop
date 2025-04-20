@@ -23,18 +23,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const signUpEmailContainer = document.querySelector('.sign_up_email_container')
     const emailSubmitButton = document.querySelector('.emailSubmitButton')
 
+    const emailLoginContainer = document.querySelector('.email_login_container')
+
     const confirmContainerBackChevron = document.getElementById('confirmContainerBackChevron')
 
     const confirmContainerBackChevronTwo = document.getElementById('confirmContainerBackChevronTwo')
-
     const confirmContainerBackChevronThree = document.getElementById('confirmContainerBackChevronThree')
+
+    const confirmContainerBackChevronSix = document.getElementById('confirmContainerBackChevronSix')
     const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container')
     const passwordSubmitButton = document.querySelector('.passwordSubmitButton')
+    // const loginSubmitButton = document.querySelector('.loginSubmitButton')
 
 
 
-    if (confirmContainerBackChevronThree) {
-        confirmContainerBackChevronThree.addEventListener('click', () => {
+    if (confirmContainerBackChevronSix) {
+        confirmContainerBackChevronSix.addEventListener('click', () => {
             signUpEmailContainer.classList.add('show_container')
             signUpEmailContainer.classList.remove('shift_left_again')
             signUpEmailConfirmContainer.classList.add('hide_container')
@@ -55,6 +59,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         })
     }
+
+    // if (loginSubmitButton) {
+    //     loginSubmitButton.addEventListener('click', () => {
+
+    //         console.log('loginSubmitButton clicked')
+    //     })
+    // }
 
 
     if (confirmContainerBackChevron) {
@@ -83,11 +94,64 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (emailSubmitButton) {
         emailSubmitButton.addEventListener('click', (e) => {
-            e.preventDefault()
-            emailVerificationContainer.classList.remove('show_container')
-            emailVerificationContainer.classList.add('shift_left')
-            signUpEmailContainer.classList.remove('hide_container')
-            signUpEmailContainer.classList.add('show_container')
+            e.preventDefault();
+
+            const form = emailSubmitButton.closest('form');
+            const formData = new FormData(form);
+            const emailProvidedSigninPopup = document.querySelectorAll('.email_provided_signin_popup')
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === false) {
+                        // Go to password login container
+                        console.log(" formData.get('email')", formData.get('email'))
+                        emailVerificationContainer.classList.remove('show_container');
+                        emailVerificationContainer.classList.add('shift_left');
+                        emailLoginContainer.classList.remove('hide_email_login_container');
+                        emailLoginContainer.classList.add('show_email_login_container');
+
+                        emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
+                    } else if (data.status === true) {
+                        const email = formData.get('email');
+                        sessionStorage.setItem('auth_email', email);
+                        // Go to registration container
+                        console.log(" formData.get('email') 2", formData.get('email'))
+                        emailVerificationContainer.classList.remove('show_container');
+                        emailVerificationContainer.classList.add('shift_left');
+                        signUpEmailContainer.classList.remove('hide_container');
+                        signUpEmailContainer.classList.add('show_container');
+                        emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
+                        // Pre-fill email in registration form
+                        const registrationEmailInput = document.querySelector('#id_reg_email');
+                        if (registrationEmailInput) {
+                            registrationEmailInput.value = email;
+                        }
+                    } else {
+                        console.error('Unexpected response:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting email:', error);
+                });
+        });
+    }
+
+    if (confirmContainerBackChevronThree) {
+        confirmContainerBackChevronThree.addEventListener('click', () => {
+
+            emailLoginContainer.classList.remove('show_email_login_container')
+            emailLoginContainer.classList.add('hide_email_login_container')
+
+            emailVerificationContainer.classList.remove('shift_left')
+            emailVerificationContainer.classList.add('show_container')
+
 
         })
     }
@@ -113,11 +177,64 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-
-
-
-
 })
+
+
+// Submit Registration Form
+const registrationSubmitButton = document.querySelector('.registrationSubmitButton');
+
+if (registrationSubmitButton) {
+    registrationSubmitButton.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const form = registrationSubmitButton.closest('form');
+        const formData = new FormData(form);
+
+        // Inject email from sessionStorage if not in form
+        const storedEmail = sessionStorage.getItem('auth_email');
+        if (storedEmail) {
+            formData.set('email', storedEmail);  // Ensure it’s part of the POST data
+        }
+
+        fetch('/pop_accounts/auth/register/', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+            },
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success UI or redirect
+                    console.log('User registered!');
+                } else if (data.errors) {
+                    displayFormErrors(data.errors);
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting registration form:', error);
+            });
+    });
+}
+
+const displayFormErrors = (errors) => {
+    // Clear any existing errors
+    document.querySelectorAll('.field-error').forEach(el => el.remove());
+    for (const [fieldName, errorList] of Object.entries(errors)) {
+        const field = document.querySelector(`#id_${fieldName}`);
+        if (field) {
+            const errorDiv = document.createElement('div');
+            errorDiv.classList.add('field-error');
+            errorDiv.style.color = 'red';
+            errorDiv.style.marginTop = '5px';
+            errorDiv.innerText = errorList.join(', ');
+            field.parentNode.appendChild(errorDiv)
+        }
+    }
+}
+
 
 
 
@@ -280,7 +397,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (signUpModalBtn) {
         signUpModalBtn.forEach((sub) => {
             sub.addEventListener('click', () => {
-                console.log('button clicked signUpModal')
                 signUpModal.style.display = 'block';
             })
         })

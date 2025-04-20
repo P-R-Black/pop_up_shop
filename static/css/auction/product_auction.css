@@ -67,7 +67,7 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: .75rem;
-    width: 90%;
+    width: 95%;
 
 }
 
@@ -96,7 +96,7 @@ p.databox_assign_left {
     color: var(--text-color);
     display: flex;
     flex-direction: column;
-    height: 12rem;
+    height: 14rem;
     justify-content: center;
 }
 

@@ -7,9 +7,6 @@ from django.utils.text import slugify
 
 # Create your views here.
 def all_auction_view(request):
-    # need items currently in auction
-    # need items picture, name, highest bid, product id | auction_start_date="2025-04-11 23:56:41"
-    # product_two = PopUpProduct.objects.filter()
     in_auction = []
     product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=True, inventory_status="in_inventory")   
     product_specifications = None
@@ -20,14 +17,6 @@ def all_auction_view(request):
             product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
     return render(request, 'auction/auction.html', {'in_auction': in_auction, 'product_specifications': product_specifications})
 
-"""
-
-def product_detail(request, slug, id=id):
-    product = get_object_or_404(PopUpProduct, slug=slug, is_active=True)
-    product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=product)
-    }
-    return render(request, 'auction/product_detail.html', {'product': product, 'product_specifications':product_specifications})
-"""
 
 def product_auction_view(request, slug, id=id):
     product = get_object_or_404(PopUpProduct, slug=slug, is_active=True)

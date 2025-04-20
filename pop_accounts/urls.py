@@ -3,6 +3,9 @@ from . import views
 
 app_name = 'pop_accounts'
 urlpatterns = [
+    # Auth register / login
+    path('auth/register/', views.register_modal_view, name='register_modal'),
+
     path('login', views.user_login, name='login'),
     path('password-reset', views.user_password_reset, name='password_reset'),
     path('dashboard', views.dashboard, name='dashboard'),

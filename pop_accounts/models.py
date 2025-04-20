@@ -46,14 +46,14 @@ class CustomPopUpAccountManager(BaseUserManager):
 
         return self.create_user(email, first_name, last_name, password, **other_fields)
 
-    def create_user(self, email, first_name, last_name, password, **other_fields):
+    def create_user(self, email, password=None, **other_fields): #create_user(self, email, first_name, last_name, password, **other_fields):
         if not email:
             raise ValueError(_('An email address is required.'))
 
         email = self.normalize_email(email)
-        user = self.model(email=email, first_name=first_name, last_name=last_name, **other_fields)
+        user = self.model(email=email,  **other_fields)
         user.set_password(password)
-        user.save()
+        user.save(using=self._db)
         return user
 
 

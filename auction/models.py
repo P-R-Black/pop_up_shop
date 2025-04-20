@@ -237,7 +237,8 @@ class PopUpProduct(models.Model):
     @property
     def auction_duration(self):
         if self.auction_start_date and self.auction_end_date:
-            duration = self.auction_end_date - self.auction_start_date
+            # duration = self.auction_end_date - self.auction_start_date
+            duration = self.auction_end_date - now()
             days = duration.days
             hours = duration.seconds // 3600
             return {"days": days, "hours": hours}
