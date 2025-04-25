@@ -12,6 +12,54 @@ const mobileSearchBox = body.querySelector('.mobile-search-box')
 const mobileSearchIcon = body.querySelector('#mobile-search-icon')
 
 
+const signUpModal = document.getElementById('signUpModal');
+const signUpModalBtn = document.querySelectorAll('.signUpModalBtn');
+const closeSignUpModal = document.querySelector('.closeSignUpModal');
+
+const timerDisplay = document.querySelector('#code-timer');
+
+
+// 2f auth confirmation
+const confirmSubmitBtn = document.querySelector('.confirm_submit_button');
+const confirmInputs = document.querySelectorAll('.confirmation_input input');
+
+// sign-up moddal
+document.addEventListener('DOMContentLoaded', function () {
+    // Get the modal, button, and close span
+
+
+    if (signUpModalBtn) {
+        signUpModalBtn.forEach((sub) => {
+            sub.addEventListener('click', () => {
+                signUpModal.style.display = 'block';
+            })
+        })
+    } else {
+        console.warn('bidButton not found in the DOM.');
+    }
+
+
+    if (closeSignUpModal) {
+        // Close the modal when the close span is clicked
+        closeSignUpModal.addEventListener('click', function () {
+            signUpModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeModal span not found in the DOM.');
+    }
+
+    // Close the modal when clicking outside of it
+    if (signUpModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === signUpModal) {
+                signUpModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('bidModal not found in the DOM.');
+    }
+});
+
 
 // sign up email modal 
 document.addEventListener('DOMContentLoaded', function () {
@@ -20,50 +68,34 @@ document.addEventListener('DOMContentLoaded', function () {
     const emailVerificationContainer = document.querySelector('.email_verification_container');
     const emailSignUpButton = document.querySelector('.emailSignUpButton');
 
-    const signUpEmailContainer = document.querySelector('.sign_up_email_container')
-    const emailSubmitButton = document.querySelector('.emailSubmitButton')
+    const signUpEmailContainer = document.querySelector('.sign_up_email_container');
+    const emailSubmitButton = document.querySelector('.emailSubmitButton');
 
-    const emailLoginContainer = document.querySelector('.email_login_container')
+    const emailLoginContainer = document.querySelector('.email_login_container');
 
-    const confirmContainerBackChevron = document.getElementById('confirmContainerBackChevron')
+    const confirmContainerBackChevron = document.getElementById('confirmContainerBackChevron');
 
-    const confirmContainerBackChevronTwo = document.getElementById('confirmContainerBackChevronTwo')
-    const confirmContainerBackChevronThree = document.getElementById('confirmContainerBackChevronThree')
+    const confirmContainerBackChevronTwo = document.getElementById('confirmContainerBackChevronTwo');
+    const confirmContainerBackChevronThree = document.getElementById('confirmContainerBackChevronThree');
 
-    const confirmContainerBackChevronSix = document.getElementById('confirmContainerBackChevronSix')
-    const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container')
-    const passwordSubmitButton = document.querySelector('.passwordSubmitButton')
-    // const loginSubmitButton = document.querySelector('.loginSubmitButton')
-
-
-
-    if (confirmContainerBackChevronSix) {
-        confirmContainerBackChevronSix.addEventListener('click', () => {
-            signUpEmailContainer.classList.add('show_container')
-            signUpEmailContainer.classList.remove('shift_left_again')
-            signUpEmailConfirmContainer.classList.add('hide_container')
-            signUpEmailConfirmContainer.classList.remove('show_container')
-        })
-    }
+    const confirmContainerBackChevronSix = document.getElementById('confirmContainerBackChevronSix');
+    const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container');
+    const passwordSubmitButton = document.querySelector('.passwordSubmitButton');
+    const loginSubmitButton = document.querySelector('.loginSubmitButton');
+    const modal = document.querySelector('.sign_up_modal');
 
 
-    if (passwordSubmitButton) {
-        passwordSubmitButton.addEventListener('click', (e) => {
-            e.preventDefault()
-            signUpEmailContainer.classList.remove('show_container')
-            signUpEmailContainer.classList.add('shift_left_again')
 
-            signUpEmailConfirmContainer.classList.remove('hide_container')
-            signUpEmailConfirmContainer.classList.add('show_container')
+    // if (passwordSubmitButton) {
+    //     passwordSubmitButton.addEventListener('click', (e) => {
+    //         e.preventDefault()
+    //         signUpEmailContainer.classList.remove('show_container')
+    //         signUpEmailContainer.classList.add('shift_left_again')
+
+    //         signUpEmailConfirmContainer.classList.remove('hide_container')
+    //         signUpEmailConfirmContainer.classList.add('show_container')
 
 
-        })
-    }
-
-    // if (loginSubmitButton) {
-    //     loginSubmitButton.addEventListener('click', () => {
-
-    //         console.log('loginSubmitButton clicked')
     //     })
     // }
 
@@ -79,8 +111,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     if (confirmContainerBackChevronTwo) {
-        confirmContainerBackChevronTwo.addEventListener('click', () => {
-
+        confirmContainerBackChevronTwo.addEventListener('click', (e) => {
+            e.preventDefault();
             signUpEmailContainer.classList.remove('show_container')
             signUpEmailContainer.classList.add('hide_container')
 
@@ -92,6 +124,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
+
+    // Email submitted and checked if on file.
+    // If not on file, take to register
+    // If email on file, take to password entry
     if (emailSubmitButton) {
         emailSubmitButton.addEventListener('click', (e) => {
             e.preventDefault();
@@ -142,6 +178,106 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
     }
+
+
+
+    // After Password Entered, 2f Auth Form
+    // if (loginSubmitButton) {
+    //     loginSubmitButton.addEventListener('click', (e) => {
+    //         console.log('i\'ve been clicked!')
+    //         e.preventDefault()
+    //         emailLoginContainer.classList.remove('show_email_login_container');
+    //         emailLoginContainer.classList.add('hide_email_login_container_to_left');
+    //         signUpEmailConfirmContainer.classList.remove('hide_ign_up_email_confirm_container')
+    //         signUpEmailConfirmContainer.classList.add('show_sign_up_email_confirm_container')
+    //     })
+    // }
+
+    if (loginSubmitButton) {
+        loginSubmitButton.addEventListener('click', (e) => {
+            e.preventDefault()
+            console.log("I've been clicked!")
+            const form = loginSubmitButton.closest('form');
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                header: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data['authenticated'] === true) {
+                        emailLoginContainer.classList.remove('show_email_login_container');
+                        emailLoginContainer.classList.add('hide_email_login_container_to_left');
+                        signUpEmailConfirmContainer.classList.remove('hide_ign_up_email_confirm_container')
+                        signUpEmailConfirmContainer.classList.add('show_sign_up_email_confirm_container')
+
+                        setTimeout(() => {
+                            const fiveMinutes = 5 * 60;
+                            startCodeTimer(fiveMinutes, timerDisplay)
+                        }, 100)
+
+
+                    } else {
+                        console.error('Unexpected response:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error subitting password', error)
+                })
+        })
+    }
+
+    if (confirmContainerBackChevronSix) {
+        confirmContainerBackChevronSix.addEventListener('click', () => {
+            console.log('backbutton six clicked!')
+            signUpEmailConfirmContainer.classList.remove('show_sign_up_email_confirm_container')
+            signUpEmailConfirmContainer.classList.add('hide_ign_up_email_confirm_container')
+            emailLoginContainer.classList.remove('hide_email_login_container_to_left');
+            emailLoginContainer.classList.add('show_email_login_container');
+
+
+        })
+    }
+
+    // 2f auth confirmation
+    if (confirmSubmitBtn) {
+        confirmSubmitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            const code = Array.from(confirmInputs).map(input => input.value).join('');
+
+            fetch('/pop_accounts/auth/verify-code/', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ code })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.verified) {
+
+                        if (signUpModal) {
+                            signUpModal.style.display = 'none';
+                        }
+
+                    } else {
+                        alert(data.error || 'Invalid code.')
+                    }
+                })
+                .catch(err => {
+                    console.error('Two-Factor Authentication verification failed', err);
+                });
+        });
+    }
+
+
 
     if (confirmContainerBackChevronThree) {
         confirmContainerBackChevronThree.addEventListener('click', () => {
@@ -237,7 +373,36 @@ const displayFormErrors = (errors) => {
 
 
 
+// 2F Auth Timer
+const startCodeTimer = (duration, display) => {
+    let timer = duration;
+    const countdown = setInterval(() => {
+        const minutes = Math.floor(timer / 60)
+        const seconds = timer % 60;
 
+        display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        if (--timer < 0) {
+            clearInterval(countdown);
+            display.textContent = "Time Has Expired, Request Another";
+            display.style.textAlign = "center";
+
+            // Optional Disable from submissions or show a message
+
+            if (confirmSubmitBtn) {
+                confirmSubmitBtn.disabled = true;
+
+                confirmSubmitBtn.innerText = "Code Expired";
+                confirmSubmitBtn.classList.add('disabled_button');
+                confirmSubmitBtn.style.width = "128px";
+            }
+        }
+    }, 1000);
+}
+
+
+
+// Adjust Logo in Navbar
 toggle.addEventListener('click', () => {
     sidebar.classList.toggle('close');
     navLogoText.classList.toggle('abbrev')
@@ -387,44 +552,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// sign-up moddal
-document.addEventListener('DOMContentLoaded', function () {
-    // Get the modal, button, and close span
-    const signUpModal = document.getElementById('signUpModal');
-    const signUpModalBtn = document.querySelectorAll('.signUpModalBtn');
-    const closeSignUpModal = document.querySelector('.closeSignUpModal');
 
-    if (signUpModalBtn) {
-        signUpModalBtn.forEach((sub) => {
-            sub.addEventListener('click', () => {
-                signUpModal.style.display = 'block';
-            })
-        })
-    } else {
-        console.warn('bidButton not found in the DOM.');
-    }
-
-
-    if (closeSignUpModal) {
-        // Close the modal when the close span is clicked
-        closeSignUpModal.addEventListener('click', function () {
-            signUpModal.style.display = 'none';
-        });
-    } else {
-        console.warn('closeModal span not found in the DOM.');
-    }
-
-    // Close the modal when clicking outside of it
-    if (signUpModal) {
-        window.addEventListener('click', function (event) {
-            if (event.target === signUpModal) {
-                signUpModal.style.display = 'none';
-            }
-        });
-    } else {
-        console.warn('bidModal not found in the DOM.');
-    }
-});
 
 
 

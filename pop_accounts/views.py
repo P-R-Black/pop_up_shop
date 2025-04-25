@@ -14,6 +14,12 @@ from .models import PopUpCustomer
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .forms import PopUpRegistrationForm
+import random
+from django.core.mail import send_mail
+from django.views.decorators.http import require_POST
+import secrets
+from django.utils import timezone
+from datetime import timedelta
 
 # Create your views here.
 def user_registration(request):
@@ -129,12 +135,16 @@ def account_sizes(request):
 
 
 def register_modal_view(request):
+    
     NewUser = False
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
-        
+
+        print("POST data:", request.POST)
+        print('password', password)
+        print('password2', password2)
         # Registration Form Submit
         if email and password and password2:
             print("got all three!")
@@ -172,16 +182,39 @@ def register_modal_view(request):
 
         
         # Takes Password If Email Already on file
-        if password:
+        # if password:
+        #     email = request.session.get('auth_email')
+        #     user = authenticate(request, email=email, password=password)
+        #     if user:
+        #         login(request, user)
+        #         # return redirect(reverse('pop_accounts:dashboard'))
+        #         return JsonResponse({'authenticated': True}) # for testint
+        #     # return JsonResponse({'authenticated': False})
+        #     # messages.info(request, "Username or Password is Incorrect")
+        #     return redirect(reverse('pop_accounts:login'))
+        
+        if password and password2 == None:
+            print('this has been called, password and not password2')
             email = request.session.get('auth_email')
             user = authenticate(request, email=email, password=password)
             if user:
-                login(request, user)
-                # return redirect(reverse('pop_accounts:dashboard'))
-                return JsonResponse({'authenticated': True}) # for testint
-            return JsonResponse({'authenticated': False})
-            # messages.info(request, "Username or Password is Incorrect")
-            # return redirect(reverse('pop_accounts:login'))
+                # Login is successful, generate and send 2FA code
+                code = generate_2fa_code()
+                request.session['2fa_code'] = code
+                request.session['2fa_code_created_at'] = timezone.now().isoformat()
+                request.session['2fa_user_id'] = str(user.id)
+
+                # send email
+                send_mail(
+                    subject = "Your Verification Code",
+                    message = f"Your code is {code}.",
+                    from_email= "no-reply@thepopup.com",
+                    recipient_list = [email],
+                    fail_silently = False
+                )
+
+                return JsonResponse({'authenticated': True})
+
 
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -192,3 +225,42 @@ def validate_email_address(email):
         return True
     except ValidationError:
         return False
+
+
+def generate_2fa_code():
+    return f"{secrets.randbelow(10**6):06}"
+
+
+@require_POST
+def verify_2fa_code(request):
+    code_entered = request.POST.get('code')
+    session_code = request.session.get('2fa_code')
+    created_at_str = request.session.get('2fa_code_created_at')
+    user_id = request.session.get('2fa_user_id')
+
+    if not all([session_code, created_at_str, user_id]):
+        return JsonResponse({"verified": False, "error": "Session expired or invalid"})
+
+    # Convert ISO string back to datetime
+    code_created_at = timezone.datetime.fromisoformat(created_at_str)
+
+    # Check if more than 5 minutes have passed
+    if timezone.now() > code_created_at + timedelta(minutes=5):
+        del request.session['2fa_code']
+        del request.session['2fa_code_created_at']
+        del request.session['2fa_user_id']
+        return JsonResponse({'verified': False, 'error': 'Verification code has expired'}, status=400)
+
+    if str(code_entered).strip() == str(session_code).strip():
+        user = PopUpCustomer.objects.get(id=user_id)
+        login(request, user)
+
+        # clean up session 
+        del request.session['2fa_code']
+        del request.session['2fa_code_created_at']
+        del request.session['2fa_user_id']
+
+
+        return JsonResponse({'verified': True})
+    
+    return JsonResponse({'verified': False, 'error': 'Invalid Code'}, status=400)

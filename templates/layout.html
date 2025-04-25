@@ -428,21 +428,21 @@
                         </div>
                         {% endcomment %}
 
-                        <div class="sign_up_email_confirm_container hide_container">
+                        <div class="sign_up_email_confirm_container hide_ign_up_email_confirm_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
                                     <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronSix'></i>
-                                    <h3>Confirm email</h3>
+                                    <h3>Confirmation</h3>
                                 </div>
                             </div>
                             <div class="comfirmation_input_container">
                                 <div class="confirmation_input_container_text">
                                     <p>A confirmation code has been sent to your email.</p>
                                     <p>Enter confirmation code below.</p>
-                                    <p>Code expires in <span>00:00</span></p>
+                                    <p><span id="code-timer">05:00</span></p>
                                 </div>
 
-                                <form action="" method="post">
+                                <form action="{% url 'pop_accounts:verify_2fa' %}" method="post">
                                     {%csrf_token%}
                                     <div class="confirmation_input">
                                         <input type="number">
@@ -452,9 +452,9 @@
                                         <input type="number">
                                         <input type="number">
                                     </div>
-                                    <a type="submit" class="button_small_white" value="Submit"
-                                        href="{% url 'pop_accounts:personal_info' %}">Submit
-                                    </a>
+                                    <button type="submit" class="button_small_white confirm_submit_button"
+                                        value="Submit" href="{% url 'pop_accounts:personal_info' %}">Submit
+                                    </button>
                                 </form>
                             </div>
                             <div class="empty_div"></div>
