@@ -5,6 +5,7 @@ app_name = 'pop_accounts'
 urlpatterns = [
     # Auth register / login
     path('auth/register/', views.register_modal_view, name='register_modal'),
+    path('auth/verify-code/', views.verify_2fa_code, name='verify_2fa'),
 
     path('login', views.user_login, name='login'),
     path('password-reset', views.user_password_reset, name='password_reset'),

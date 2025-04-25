@@ -176,6 +176,26 @@ body.dark {
     transition: var(--tran-03);
 }
 
+.confirm_submit_button.disabled_button {
+
+    background: var(--databox-color);
+    border: 1.5px solid var(--databox-color);
+    border-radius: 5px;
+    color: var(--primary-light-grey);
+    transition: var(--tran-03);
+
+}
+
+.confirm_submit_button.disabled_button:hover {
+
+    background: var(--databox-color);
+    border: 1.5px solid var(--databox-color);
+    border-radius: 5px;
+    color: var(--primary-light-grey);
+    transition: var(--tran-03);
+
+}
+
 .button_smaller_white {
     align-items: center;
     background: transparent;
@@ -978,7 +998,10 @@ form.registration_options_form input {
 
 
 /* ===== start email_login_container | displayed if email on file ===== */
+
 .email_login_container {
+    /* left: 200%; */
+    /* transform: translateX(0%); */
     left: 200%;
     transform: translateX(0%);
     width: 100%;
@@ -996,9 +1019,9 @@ form.registration_options_form input {
 
 }
 
-/* .email_login_container.hide_email_login_container {
+.email_login_container.hide_email_login_container_to_left {
     transform: translateX(-300%);
-} */
+}
 
 
 
@@ -1031,10 +1054,11 @@ p.email_provided_signin_popup {
 }
 
 
-.sign_up_email_confirm_container.show_container {
+.sign_up_email_confirm_container.show_sign_up_email_confirm_container {
     transform: translateX(-200%);
 
 }
+
 
 /* .sign_up_email_confirm_container.shift_left_again {
     transform: translateX(-300%);
@@ -1056,26 +1080,22 @@ p.email_provided_signin_popup {
     text-align: center;
     margin-bottom: .5rem;
     width: 80%;
-
 }
 
 .confirmation_input_container_text p:nth-child(2) {
     font-size: 1.25rem;
     font-weight: bold;
+    margin-bottom: .75rem;
     text-align: center;
     width: 80%;
 }
-
-.confirmation_input_container_text p:nth-child(2) {
-    margin-bottom: .75rem;
-}
-
 
 .confirmation_input_container_text p:nth-child(3) {
     color: var(--text-color);
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: .50rem;
+    text-align: center;
 }
 
 
@@ -1097,8 +1117,9 @@ p.email_provided_signin_popup {
     border: 2px solid var(--text-color);
     border-radius: 5px;
     color: var(--text-color);
-    font-size: 1rem;
+    font-size: 1.25rem;
     height: 3rem;
+    text-align: center;
     width: 2rem;
 }
 
