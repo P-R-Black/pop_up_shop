@@ -334,6 +334,12 @@ class TestPopUpProductSpecificationValueModel(TestCase):
         self.assertEqual(value.specification.name, "Color")
         self.assertEqual(str(value), "Red")
 
+"""
+THINGS TO TEST
+1. Number of days left in auction.
+2. Auction completed
+"""
+
 # coverage report | gets coverage report
 # coverage html | gets coverage report in html. open index.html file in htmlcov directory
 # run --omit='*/venv/*' manage.py test | command to run test

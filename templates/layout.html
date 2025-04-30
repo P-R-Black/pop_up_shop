@@ -129,6 +129,9 @@
 
         <div class="menu-bar">
             <div class="menu">
+                <div class="greetings_box">
+                    <h4 class="greetings_box_name">Hello Palo</h4>
+                </div>
                 <li class="search-box">
                     <i class='bx bx-search icon'></i>
                     <input type="text" placeholder="Search...">
@@ -310,7 +313,8 @@
 
                                     {{ email_form.email }}
 
-                                    <button type="submit" class="button_small_white emailSubmitButton">Continue</button>
+                                    <button type="submit" class="button_small_white emailSubmitButton"
+                                        id="emailContinueBtn" disabled>Continue</button>
                                 </form>
                             </div>
                             <div class="sign_up_modal_policy">
@@ -370,18 +374,23 @@
                                     <p class="email_provided_signin_popup"></p>
                                     {{ password_form.password }}
 
-                                    <button type="submit" class="button_small_white loginSubmitButton">Submit</button>
+                                    <button type="submit" class="button_small_white loginSubmitButton"
+                                        id="passwordSubmitBtn" disabled>Submit</button>
                                 </form>
                             </div>
+                            <div class="login_user_options_error_container">
+                                <p class="login_user_options_error" style="color: red; display: none;"> </p>
+                            </div>
                             <div class="login_user_options_container">
-                                <a href="#">Forgot Password</a>
+                                <a class="passwordForgetLink" href="#">Forgot Password</a>
                             </div>
                         </div>
 
                         <!-- slides related to password reset -->
                         {% comment %}
                         if "forgotton password" selected show this slide
-                        <div class="email_login_container hide_container">
+                        {% endcomment %}
+                        <div class="forgot_password_container hide_forgot_password_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
                                     <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronFour'></i>
@@ -391,42 +400,24 @@
                                 <p>No problem. Enter your email, press continue, and then check your email.</p>
                                 <p>We've sent you a message to help you reset your password.</p>
                             </div>
-                            <div class="sign_up_options_container">
-                                <form action="" method="post" class="sign_up_options_form">
+                            <div class="forgot_password_options_container">
+                                <form action="" method="POST" class="password_reset_sign_up_options_form">
                                     {% csrf_token %}
-                                    <label for="" name="email">email</label>
-                                    <input type="text">
-                                    <button type="submit" class="button_small_white">Continue</button>
-                                </form>
-                            </div>
-                        </div>
-                        {% endcomment %}
 
-                        {% comment %}
-                        show this slide after reset password email sent
-                        <div class="email_login_container hide_container">
-                            <div class="email_sign_up_modal_title">
-                                <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronFive'></i>
-                                    <h3>verify it's you</h3>
+                                    {% if email_password_reset_form.errors %}
+                                    <div role="alert">Error: Email not on file!</div>
+                                    {% endif %}
+
+                                    {{ email_password_reset_form.email }}
+
+                                    <button type="button" class="button_small_white resetPasswordBtn"
+                                        id="resetPasswordBtn" disabled>Continue</button>
+                                </form>
+                                <div id="resetSpinner" style="display: none; text-align: center; margin-top: 10px;">
+                                    <div class="spinner"></div>
                                 </div>
-
-                                <p>To verify that you are you, enter the code we just to <span>email address</span></p>
-
-                            </div>
-                            <div class="sign_up_options_container">
-                                <form action="" method="post" class="sign_up_options_form">
-                                    {% csrf_token %}
-                                    <label for="" name="code">code</label>
-                                    <input type="text">
-                                    <button type="submit" class="button_small_white">Submit</button>
-                                </form>
-                            </div>
-                            <div class="login_user_options_container">
-                                <p>Didn't get the code?<a href="#">Resend code</a></p>
                             </div>
                         </div>
-                        {% endcomment %}
 
                         <div class="sign_up_email_confirm_container hide_ign_up_email_confirm_container">
                             <div class="email_sign_up_modal_title">
@@ -439,23 +430,32 @@
                                 <div class="confirmation_input_container_text">
                                     <p>A confirmation code has been sent to your email.</p>
                                     <p>Enter confirmation code below.</p>
-                                    <p><span id="code-timer">05:00</span></p>
+                                    <p><span id="code_timer">05:00</span></p>
                                 </div>
 
-                                <form action="{% url 'pop_accounts:verify_2fa' %}" method="post">
-                                    {%csrf_token%}
+
+                                <form method="post">
+                                    {% csrf_token %}
                                     <div class="confirmation_input">
-                                        <input type="number">
-                                        <input type="number">
-                                        <input type="number">
-                                        <input type="number">
-                                        <input type="number">
-                                        <input type="number">
+                                        <input class="code-input" type="number" maxlength="1">
+                                        <input class="code-input" type="number" maxlength="1">
+                                        <input class="code-input" type="number" maxlength="1">
+                                        <input class="code-input" type="number" maxlength="1">
+                                        <input class="code-input" type="number" maxlength="1">
+                                        <input class="code-input" type="number" maxlength="1">
                                     </div>
-                                    <button type="submit" class="button_small_white confirm_submit_button"
-                                        value="Submit" href="{% url 'pop_accounts:personal_info' %}">Submit
+                                    <button type="button" class="button_small_white confirm_submit_button">Submit
                                     </button>
                                 </form>
+                                <div class="resend_request_container">
+                                    <div class="inner_resend_request_container">
+                                        <p>Didn’t get the code? </p>
+                                        <a class="button_medium_white" href="#" id="resend_code_link">Resend Code
+                                        </a>
+
+                                    </div>
+                                    <p id="resend_status_message" style="color: green; display: none;"></p>
+                                </div>
                             </div>
                             <div class="empty_div"></div>
                         </div>
@@ -566,6 +566,7 @@
         </div>
     </footer>
     <script src="{% static 'js/menu.js' %}"></script>
+    <script src="{% static 'js/register_login.js' %}"></script>
     <script src="{% static 'js/dashboard.js' %}"></script>
     <script src="{% static 'js/footer.js' %}"></script>
     <script src="{% static 'js/payment.js' %}"></script>

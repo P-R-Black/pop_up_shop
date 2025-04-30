@@ -73,6 +73,8 @@ class PopUpEmailOnlyForm(forms.ModelForm):
         help_text='Required',
         error_messages={'required': 'Sorry, you will need an email'}
         )
+    
+
     class Meta:
         model = PopUpCustomer
         fields = ('email',)
@@ -86,7 +88,7 @@ class PopUpEmailOnlyForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update(
-            {'class': 'sign_up_options_form_email', 'placeholder': 'Email', 'name': 'email', 'id': 'id_email_check'})
+            {'class': 'sign_up_options_form_email', 'type': 'email', 'placeholder': 'Email', 'name': 'email', 'id': 'id_email_check'})
 
 
 class PopUpPasswordOnlyForm(forms.ModelForm):
@@ -170,7 +172,85 @@ class PopUpRegistrationForm(forms.ModelForm):
 
 
 
+class PopUpEmailPasswordResetForm(forms.ModelForm):
+    email = forms.EmailField(
+        label='Email',
+        max_length=100, 
+        help_text='Required',
+        error_messages={'required': 'Sorry, you will need an email'},
+         widget=forms.PasswordInput(attrs={
+            'class': 'email_password_reset_form',
+            'placeholder': 'Email',
+            'id': 'id_email_password_reset_form',
+            'type': 'email',
+            'name': 'email_reset'
+        }
+    ))
 
+    class Meta:
+        model = PopUpCustomer
+        fields = ('email',)
+
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        return email
+
+
+
+class PopUpPasswordResetForm(forms.ModelForm):
+
+    email = forms.EmailField(
+        label='Email',
+        max_length=100, 
+        help_text='Required',
+        error_messages={'required': 'Sorry, you will need an email'},
+         widget=forms.EmailInput(attrs={
+            'class': 'email_for_password_reset_one',
+            'placeholder': 'Email',
+            'id': 'id_email_for_password_reset_one',
+            'type': 'email',
+            'name': 'email'
+        }
+    ))
+     
+  
+    password = forms.CharField(
+        label='Password',
+        help_text='Required',
+        required=True,
+        error_messages={'required': 'Sorry, you will need an email'},
+        widget=forms.PasswordInput(attrs={
+            'class': 'password_reset_one',
+            'placeholder': 'New Password',
+            'id': 'id_password_reset_one',
+            'type': 'password',
+            'name': 'password'
+        }
+        
+    ))
+
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={
+            'class': 'password_reset_one',
+            'placeholder': 'Confirm Password',
+            'id': 'id_password_reset_two',
+            'type': 'password',
+            'name': 'password2'
+        }
+        
+    ))
+
+    def clean_password2(self):
+        cd = self.cleaned_data
+        if cd['password'] != cd['password2']:
+            raise forms.ValidationError('Passwords do not match')
+        return cd['password2']
+
+    class Meta:
+        model = PopUpCustomer
+        fields = ('password',)
 
 
 # class PopUpUserEditForm(forms.ModelForm):

@@ -32,6 +32,7 @@ SECRET_KEY=os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG=True 
+
 # print('DEBUG TEST', DEBUG)
 #os.environ.get('DEBUG')
 
@@ -138,6 +139,26 @@ USE_I18N = True
 USE_TZ = True
 
 
+print('BASE_DIR', BASE_DIR)
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'security_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'settings/logs/security.log',
+        },
+    },
+    'loggers': {
+        'security': {
+            'handlers': ['security_file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
@@ -158,7 +179,7 @@ LOGIN_URL = '/'
 
 
 # THIS SHOULD BE CHANGED TO A FEW HOURS
-PASSWORD_RESET_TIMEOUT = 1
+PASSWORD_RESET_TIMEOUT = 3600
 
 # Email Setting
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

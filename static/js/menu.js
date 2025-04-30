@@ -16,12 +16,42 @@ const signUpModal = document.getElementById('signUpModal');
 const signUpModalBtn = document.querySelectorAll('.signUpModalBtn');
 const closeSignUpModal = document.querySelector('.closeSignUpModal');
 
-const timerDisplay = document.querySelector('#code-timer');
+const timerDisplay = document.querySelector('#code_timer');
 
 
 // 2f auth confirmation
 const confirmSubmitBtn = document.querySelector('.confirm_submit_button');
 const confirmInputs = document.querySelectorAll('.confirmation_input input');
+
+
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+function getCSRFToken() {
+    const name = 'csrftoken';
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        if (cookie.trim().startsWith(name + '=')) {
+            return decodeURIComponent(cookie.trim().split('=')[1]);
+        }
+    }
+    return '';
+}
+
 
 // sign-up moddal
 document.addEventListener('DOMContentLoaded', function () {
@@ -69,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const emailSignUpButton = document.querySelector('.emailSignUpButton');
 
     const signUpEmailContainer = document.querySelector('.sign_up_email_container');
+    const signUpEmailInput = document.querySelector('.sign_up_options_form_email');
     const emailSubmitButton = document.querySelector('.emailSubmitButton');
 
     const emailLoginContainer = document.querySelector('.email_login_container');
@@ -77,12 +108,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const confirmContainerBackChevronTwo = document.getElementById('confirmContainerBackChevronTwo');
     const confirmContainerBackChevronThree = document.getElementById('confirmContainerBackChevronThree');
+    const confirmContainerBackChevronFour = document.getElementById('confirmContainerBackChevronFour');
 
     const confirmContainerBackChevronSix = document.getElementById('confirmContainerBackChevronSix');
     const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container');
-    const passwordSubmitButton = document.querySelector('.passwordSubmitButton');
+
+    const signUpOptionsFormPasswordInput = document.querySelector('.sign_up_options_form_password')
+    // const passwordSubmitButton = document.querySelector('.passwordSubmitButton');
     const loginSubmitButton = document.querySelector('.loginSubmitButton');
-    const modal = document.querySelector('.sign_up_modal');
+    // const modal = document.querySelector('.sign_up_modal');
 
 
 
@@ -147,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     if (data.status === false) {
                         // Go to password login container
-                        console.log(" formData.get('email')", formData.get('email'))
                         emailVerificationContainer.classList.remove('show_container');
                         emailVerificationContainer.classList.add('shift_left');
                         emailLoginContainer.classList.remove('hide_email_login_container');
@@ -158,7 +191,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         const email = formData.get('email');
                         sessionStorage.setItem('auth_email', email);
                         // Go to registration container
-                        console.log(" formData.get('email') 2", formData.get('email'))
                         emailVerificationContainer.classList.remove('show_container');
                         emailVerificationContainer.classList.add('shift_left');
                         signUpEmailContainer.classList.remove('hide_container');
@@ -202,13 +234,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fetch(form.action, {
                 method: 'POST',
-                header: {
+                headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: formData
             })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('data at loginbutton', data)
                     if (data['authenticated'] === true) {
                         emailLoginContainer.classList.remove('show_email_login_container');
                         emailLoginContainer.classList.add('hide_email_login_container_to_left');
@@ -216,17 +249,31 @@ document.addEventListener('DOMContentLoaded', function () {
                         signUpEmailConfirmContainer.classList.add('show_sign_up_email_confirm_container')
 
                         setTimeout(() => {
-                            const fiveMinutes = 5 * 60;
+                            const fiveMinutes = 1 * 60;
                             startCodeTimer(fiveMinutes, timerDisplay)
                         }, 100)
 
 
-                    } else {
+                    } else if (data['authenticated'] === false) {
                         console.error('Unexpected response:', data);
+                        console.error('Unexpected response2:', data.message);
+                        const loginUserOptionsError = document.querySelector('.login_user_options_error');
+                        loginUserOptionsError.style.display = "block";
+                        loginUserOptionsError.textContent = "Invalid Credentials Provided";
+                        loginUserOptionsError.style.fontSize = "20px"
+                        // if (data.error === "Invalid credentials. Attempt 5/5") {
+                        //     loginUserOptionsError.textContent = "Too many failed attempts. Try again in 15 minutes"
+                        // } else {
+                        //     loginUserOptionsError.textContent = "Invalid Credentials Provided"
+                        // }
+                    } else if (data['authenticated'] === false && data['locked_out'] === true) {
+                        loginUserOptionsError.style.textAlign = "center"
+                        loginUserOptionsError.textContent = data.error
+
                     }
                 })
                 .catch(error => {
-                    console.error('Error subitting password', error)
+                    console.error('Error submitting password', error)
                 })
         })
     }
@@ -248,34 +295,56 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmSubmitBtn.addEventListener('click', (e) => {
             e.preventDefault();
 
-            const code = Array.from(confirmInputs).map(input => input.value).join('');
+            const code = Array.from(confirmInputs).map(input => input.value.trim()).join('');
+
+            if (code.length != 6) {
+                alert("Please enter the full 6-digit code.");
+                return;
+            }
+            // const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            const csrfToken = getCookie('csrftoken'); // <- use cookie
+
+
+            if (!csrfToken) {
+                console.error('CSRF token not found.')
+                return;
+            }
+
+            const nameBox = document.querySelector('.greetings_box_name')
+
 
             fetch('/pop_accounts/auth/verify-code/', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-CSRFToken': csrfToken,
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
                 body: new URLSearchParams({ code })
             })
-                .then(response => response.json())
+                .then(async (response) => {
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                    }
+                    return data;
+                })
                 .then(data => {
                     if (data.verified) {
 
-                        if (signUpModal) {
-                            signUpModal.style.display = 'none';
-                        }
-
+                        if (signUpModal) signUpModal.style.display = 'none';
+                        if (nameBox && data.user_name) nameBox.innerHTML = `Hello ${data.user_name}`
                     } else {
-                        alert(data.error || 'Invalid code.')
+                        alert(data.error || 'Invalid code.');
                     }
                 })
                 .catch(err => {
                     console.error('Two-Factor Authentication verification failed', err);
+                    alert(err.message || 'Something went wrong.')
                 });
         });
     }
+
 
 
 
@@ -313,7 +382,115 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
+    // Disable Password Submit Button
+    const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
+    signUpOptionsFormPasswordInput.addEventListener('input', () => {
+        passwordSubmitBtn.disabled = signUpOptionsFormPasswordInput.value.length < 8;
+    });
+
+
+    // Disable Email Submit Button
+    const emailInput = document.getElementById('id_email_check');
+    const emailContinueBtn = document.getElementById('emailContinueBtn');
+    emailInput.addEventListener('input', () => {
+        emailContinueBtn.disabled = !emailInput.value.includes('@');
+    });
+
+    // Disable Password Reset Submit Button
+    const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+    const resetPasswordInput = document.getElementById('id_email_password_reset_form');
+
+    resetPasswordInput.addEventListener('input', () => {
+        resetPasswordBtn.disabled = !resetPasswordInput.value.includes('@');
+    });
+
+
+
+
+    // Forgot password
+    const passwordForgetLink = document.querySelector('.passwordForgetLink');
+    const passwordForgetContainer = document.querySelector('.forgot_password_container');
+
+
+    if (passwordForgetLink) {
+        passwordForgetLink.addEventListener('click', () => {
+            emailLoginContainer.classList.remove('show_email_login_container');
+            emailLoginContainer.classList.add('hide_email_login_container_to_left');
+            passwordForgetContainer.classList.add('show_forgot_password_container')
+
+
+        })
+    }
+
+
+    if (confirmContainerBackChevronFour) {
+        confirmContainerBackChevronFour.addEventListener('click', () => {
+            passwordForgetContainer.classList.remove('show_forgot_password_container')
+            passwordForgetContainer.classList.add('hide_forgot_password_container')
+
+            emailLoginContainer.classList.remove('hide_email_login_container_to_left');
+            emailLoginContainer.classList.add('show_email_login_container');
+
+        })
+    }
+
+
+
+
+    if (resetPasswordBtn) {
+        resetPasswordBtn.addEventListener('click', (e) => {
+
+            e.preventDefault();
+
+            const email = resetPasswordInput.value.trim();
+            const csrfToken = getCookie('csrftoken');
+
+
+            const originalButtonText = resetPasswordBtn.textContent;
+            const resetSpinner = document.getElementById('resetSpinner');
+
+            // Show spiner
+            resetSpinner.style.display = 'block'
+            // Disable button so user can't click twice
+            resetPasswordBtn.disabled = true
+            resetPasswordBtn.textContent = 'Sending...';
+
+
+            fetch('/pop_accounts/auth/send-reset-link/', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ email })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Password reset link sent to your email.')
+                    } else {
+                        alert(data.error || 'Something went wrong')
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending password reset link:', error);
+                })
+                .finally(() => {
+                    // Hide spiner, reset button text, re-enable button
+                    resetSpinner.style.display = 'none';
+                    resetPasswordBtn.disabled = false;
+                    resetPasswordBtn.textContent = originalButtonText
+                })
+        })
+    }
+
 })
+
+
+
+
+
 
 
 // Submit Registration Form
@@ -401,6 +578,79 @@ const startCodeTimer = (duration, display) => {
 }
 
 
+const resendLink = document.getElementById('resend_code_link');
+const statusMessage = document.getElementById('resend_status_message');
+resendLink.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    resendLink.style.pointerEvents = 'none';
+    resendLink.style.opacity = ' 0.5';
+    statusMessage.style.display = 'none';
+
+    fetch('/pop_accounts/resend-code/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                statusMessage.textContent = "A new code was sent!"
+                statusMessage.style.display = "block";
+                confirmSubmitBtn.classList.remove('disabled_button');
+                confirmSubmitBtn.disabled = false
+                confirmSubmitBtn.innerText = "Submit"
+
+                // Resetart the timer
+                startCodeTimer(1 * 60, timerDisplay);
+
+                setTimeout(() => {
+                    resendLink.style.pointerEvents = 'auto';
+                    resendLink.style.opacity = '1';
+                    statusMessage.style.display = 'none'
+                }, 15000);
+            } else {
+                statusMessage.textContent = data.error || "Something went wrong."
+                statusMessage.style.color = 'red';
+                statusMessage.style.display = 'block';
+            }
+        }).catch(err => {
+            statusMessage.textContent = "Error resending code.";
+            statusMessage.style.color = "red";
+            statusMessage.style.display = "block"
+        })
+})
+
+
+
+
+
+// 2FA Tab On Input Entry
+document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
+    input.addEventListener('input', () => {
+        if (input.value.length === input.maxLength && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+        }
+    });
+
+});
+
+// Backspace to empty input
+document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
+    input.addEventListener('input', () => {
+        if (input.value.length === input.maxLength && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+        }
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+            inputs[index - 1].focus();
+        }
+    });
+});
 
 // Adjust Logo in Navbar
 toggle.addEventListener('click', () => {
@@ -691,4 +941,99 @@ const calculateSubtotal = () => {
 
 
 
+// Grab email for Password Reset
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = newURLSearchParams(window.location.search);
+    console.log('urlParams', urlParams)
 
+    const email = urlParams.get('email')
+    console.log('email', email)
+
+    if (email) {
+        const emailInput = document.querySelector('#id_email_for_password_reset_one');
+        console.log('emailInput', emailInput)
+        if (emailInput) {
+            emailInput.value = email;
+        }
+    }
+})
+
+
+// Password Reset
+const passwordResetForm = document.getElementById('passwordResetForm');
+
+if (passwordResetForm) {
+    passwordResetForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(passwordResetForm);
+        const csrfToken = getCookie('csrftoken')
+
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Password reset successully! You can now log in');
+                    window.location.href = '/'; // may want to redirect to 2fa page
+                } else {
+                    alert(data.error || 'Something went wrong')
+                }
+            })
+            .catch(error => {
+                console.error('Error resetting password', error);
+                alert('An unexpected error occurred')
+            });
+    });
+}
+
+
+
+// Password Reset Confirm
+const resetPasswordFormBtn = document.querySelector('.resetPasswordFormBtn');
+// const resetPasswordFormBtnTwo = document.getElementById('resetPasswordFormBtn');
+
+console.log('resetPasswordFormBtn', resetPasswordFormBtn)
+
+// console.log('resetPasswordFormBtnTwo', resetPasswordFormBtnTwo)
+
+const resetPasswordForm = document.getElementById('resetPasswordForm');
+console.log('resetPasswordForm', resetPasswordForm)
+
+if (resetPasswordForm) {
+    resetPasswordForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(resetPasswordForm);
+        console.log('formData', formData)
+
+        const csrfToken = getCookie('csrftoken')
+        console.log('csrfToken', csrfToken)
+
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Password reset successully! You can now log in');
+                    window.location.href = '/'; // may want to redirect to 2fa page
+                } else {
+                    alert(data.error || 'Something went wrong')
+                }
+            })
+            .catch(error => {
+                console.error('Error resetting password', error);
+                alert('An unexpected error occurred')
+            });
+    });
+}
