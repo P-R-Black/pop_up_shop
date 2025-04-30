@@ -115,6 +115,8 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    last_password_reset = models.DateTimeField(null=True, blank=True)
+
     objects = CustomPopUpAccountManager()
     # objects = SoftDeleteUserManager()
     # all_objects = models.Manager()
@@ -370,8 +372,14 @@ class PopUpCustomerPayment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+# To track every password reset link sent
+class PasswordResetRequestLog(models.Model):
+    customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name='password_reset_logs')
+    ip_address = models.GenericIPAddressField()
+    requested_at = models.DateTimeField(auto_now_add=True)
 
-
+    def __str__(self):
+        return f"{self.customer.email} - {self.ip_address} @ {self.requested_at}"
 """
 rm -rf quotes_api/migrations/  # Remove migration files
 python3 manage.py flush         # Clears all data from the database

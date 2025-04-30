@@ -1,0 +1,1 @@
+console.log('sanity check for register_login.js')

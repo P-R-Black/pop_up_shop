@@ -86,7 +86,7 @@ body.dark {
 }
 
 .page_title h2 {
-    font-family: 'noto sans';
+    font-family: var(--text-font);
     font-size: clamp(2.5rem, 4rem, 10vw);
     font-weight: 900;
     color: var(--text-color);
@@ -96,7 +96,7 @@ body.dark {
 }
 
 .page_title h3 {
-    font-family: 'noto sans';
+    font-family: var(--text-font);
     font-size: clamp(2rem, 3.5rem, 10vw);
     font-weight: 600;
     color: var(--text-color);
@@ -176,25 +176,7 @@ body.dark {
     transition: var(--tran-03);
 }
 
-.confirm_submit_button.disabled_button {
 
-    background: var(--databox-color);
-    border: 1.5px solid var(--databox-color);
-    border-radius: 5px;
-    color: var(--primary-light-grey);
-    transition: var(--tran-03);
-
-}
-
-.confirm_submit_button.disabled_button:hover {
-
-    background: var(--databox-color);
-    border: 1.5px solid var(--databox-color);
-    border-radius: 5px;
-    color: var(--primary-light-grey);
-    transition: var(--tran-03);
-
-}
 
 .button_smaller_white {
     align-items: center;
@@ -228,6 +210,20 @@ body.dark {
     height: 2rem;
     justify-content: center;
     width: clamp(6rem, 8rem, 25vw);
+}
+
+.button_medium_white {
+    align-items: center;
+    background: transparent;
+    border: 1.5px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    font-size: clamp(.85rem, 1rem, 2vw);
+    height: 1.5rem;
+    justify-content: center;
+    width: clamp(5rem, 7rem, 20vw);
 }
 
 .button_long {
@@ -352,6 +348,19 @@ body.dark {
     color: var(--primary-color-light);
     transition: var(--tran-03);
 }
+
+
+
+.button_small_white:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: #ccc;
+    border-color: #ccc;
+    color: #666;
+    pointer-events: none;
+}
+
+
 
 .button_small:active,
 .button_medium:active,
@@ -585,6 +594,17 @@ body.dark .sidebar li a:hover .text {
 }
 
 
+.menu-bar .menu .greetings_box h4 {
+    color: var(--text-color);
+    font-family: var(--text-font);
+    font-size: 1rem;
+    font-weight: 400;
+    margin-left: 1.25rem;
+    text-align: left;
+}
+
+
+
 .menu-bar .mode {
     background: var(--primary-color-light);
     border-radius: 6px;
@@ -751,7 +771,8 @@ body.dark .switch::before {
 .email_verification_container,
 .sign_up_email_container,
 .email_login_container,
-.sign_up_email_confirm_container {
+.sign_up_email_confirm_container,
+.forgot_password_container {
     position: absolute;
     width: 50%;
     top: 0;
@@ -940,8 +961,16 @@ body.dark .switch::before {
 }
 
 
+.password_reest_sign_up_options_form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+}
+
+
 form.sign_up_options_form input,
-form.registration_options_form input {
+form.registration_options_form input,
+form.password_reset_sign_up_options_form input {
     border: 2px solid var(--text-color);
     border-radius: 5px;
     color: var(--text-color);
@@ -952,11 +981,6 @@ form.registration_options_form input {
     margin-bottom: 1rem;
 }
 
-.sign_up_options_form_email {
-    width: 100%;
-    height: 2rem;
-    border: 2px solid var(--text-color);
-}
 
 #id_email {
     width: 100%;
@@ -968,7 +992,7 @@ form.registration_options_form input {
 /* ===== end of email_verification_container ===== */
 
 
-/* ===== start sign_up_email_container ===== */
+/* ===== start sign_up_email_container / Register Screen ===== */
 .sign_up_email_container {
     left: 200%;
     transform: translateX(0%);
@@ -1000,8 +1024,6 @@ form.registration_options_form input {
 /* ===== start email_login_container | displayed if email on file ===== */
 
 .email_login_container {
-    /* left: 200%; */
-    /* transform: translateX(0%); */
     left: 200%;
     transform: translateX(0%);
     width: 100%;
@@ -1037,8 +1059,6 @@ p.email_provided_signin_popup {
 
 
 
-
-
 /* ===== sign_up_email_confirm_container ===== */
 
 .sign_up_email_confirm_container {
@@ -1063,8 +1083,6 @@ p.email_provided_signin_popup {
 /* .sign_up_email_confirm_container.shift_left_again {
     transform: translateX(-300%);
 } */
-
-
 
 
 
@@ -1107,6 +1125,25 @@ p.email_provided_signin_popup {
     gap: 1rem;
 }
 
+
+.resend_request_container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1.25rem;
+    text-align: center;
+}
+
+#resend_status_message {
+    margin-top: .5rem;
+}
+
+.inner_resend_request_container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    gap: .5rem;
+}
+
 .confirmation_input {
     display: flex;
     justify-content: center;
@@ -1124,6 +1161,82 @@ p.email_provided_signin_popup {
 }
 
 /* ===== end of sign_up_email_confirm_container ===== */
+
+/* ===== start of forgot_password_container ===== */
+.forgot_password_container {
+    left: 200%;
+    transform: translateX(0%);
+    width: 100%;
+
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+
+.forgot_password_container.show_forgot_password_container {
+    transform: translateX(-200%);
+
+
+}
+
+
+/* .forgot_password_container.hide_forgot_password_container {
+    transform: translateX(-300%);
+} */
+
+
+.forgot_password_options_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    height: 100%;
+}
+
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    /* Light grey */
+    border-top: 4px solid #555;
+    /* Black */
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 0.8s linear infinite;
+    margin: auto;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+/*
+
+
+
+
+
+p.email_provided_signin_popup {
+    color: var(--text-color);
+    font-size: clamp(1rem, 1.50rem, 2.5vw);
+    margin-bottom: 1rem;
+    text-align: center;
+
+}
+*/
+
+/* ===== end of forgot_password_container ===== */
 
 
 /*  ====== End of Sign Up Modal ===== */

@@ -6,9 +6,13 @@ urlpatterns = [
     # Auth register / login
     path('auth/register/', views.register_modal_view, name='register_modal'),
     path('auth/verify-code/', views.verify_2fa_code, name='verify_2fa'),
+    path('auth/send-reset-link/', views.send_password_reset_link, name='send_reset_link'),
+    path('resend-code/', views.resend_2fa_code, name='resend_2fa_code'),
+    path('password-reset/<uidb64>/<token>/', views.user_password_reset_confirm, name='password_reset_confirm'),
 
     path('login', views.user_login, name='login'),
-    path('password-reset', views.user_password_reset, name='password_reset'),
+    # path('password-reset', views.user_password_reset, name='password_reset'),
+    
     path('dashboard', views.dashboard, name='dashboard'),
     path('personal-information', views.personal_info, name='personal_info'),
     path('interested-in', views.interested_in, name='interested_in'),
