@@ -6,14 +6,14 @@ from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, get_user_model
 from .token import account_activation_token
 from orders.views import user_orders
-from django.http import JsonResponse
-from .models import PopUpCustomer, PasswordResetRequestLog
+from django.http import JsonResponse, HttpResponse
+from .models import PopUpCustomer, PasswordResetRequestLog, PopUpCustomerAddress
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from .forms import PopUpRegistrationForm
+from .forms import PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, ThePopUpUserAddressForm
 import random
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
@@ -21,11 +21,17 @@ import secrets
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.contrib.auth.tokens import default_token_generator
-from .token_generator import custom_token_generator
 import time
 from django.core.cache import cache
 from django.utils.timezone import now
+from django.contrib.auth import logout
+from django.views import View
+from .utils import validate_email_address
+from django.conf import settings
+
 import logging
+
+
 
 logger  = logging.getLogger('security')
 
@@ -61,20 +67,26 @@ def user_registration(request):
         return render(request, 'pop_accounts/registration/register.html', {'form', register_form})
 
 
+
 def user_login(request):
     login_form = "login"
-    # login_form = PopUpUserLoginForm()
-    # if request.method == 'POST':
-    #     login_form = PopUpUserLoginForm(request.POST)
+    login_form = PopUpUserLoginForm()
+    if request.method == 'POST':
+        login_form = PopUpUserLoginForm(request.POST)
          
-    #     email = request.POST.get('email')
-    #     password = request.POST.get('password')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
      
-    #     print('email', email)
-    #     print('password', password)
+        print('email', email)
+        print('password', password)
     
     return render(request, 'pop_accounts/login/login.html', {'form': login_form})
 
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('/')
 
 
 def user_password_reset(request):
@@ -122,15 +134,12 @@ def user_password_reset_confirm(request, uidb64, token):
             return render(request, 'pop_accounts/login/password_reset_confirm.html', {'validlink': False})
         
     elif request.method == 'POST':
-        print('POST CALLED!!!')
         if user is None:
             return JsonResponse({'success': False, 'error': 'Invalid reset link.'})
         
         new_password = request.POST.get('password')
         confirm_password = request.POST.get('password2')
 
-        print('new_password', new_password)
-        print('confirm_password', confirm_password)
 
         if not new_password or not confirm_password:
             return JsonResponse({'success': False, 'error': 'All fields are required.'})
@@ -145,14 +154,144 @@ def user_password_reset_confirm(request, uidb64, token):
         return JsonResponse({'success': True, 'message': 'Password reset successful.'})
 
 
-# @login_required
+@login_required
 def dashboard(request):
     orders = user_orders(request)
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/dashboard.html')
 
-# @login_required
+@login_required
 def personal_info(request):
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/personal_info.html')
+    user = request.user
+    addresses = PopUpCustomerAddress.objects.filter(customer=user)
+
+    personal_form = PopUpUserEditForm(initial={
+            'first_name': user.first_name,
+            'middle_name': user.middle_name,
+            'last_name': user.last_name,
+            'shoe_size': user.shoe_size,
+            'size_gender': user.size_gender,
+            'favorite_brand': user.favorite_brand,
+            'mobile_phone': user.mobile_phone,
+            'mobile_notification': user.mobile_notification
+        })
+    
+    address_form = ThePopUpUserAddressForm()
+
+    if request.method == "POST":
+
+        # Determine which form as been submitted
+        if 'first_name' in request.POST:
+
+            # It's the personal info form
+            personal_form = PopUpUserEditForm(request.POST)
+            if personal_form.is_valid():
+                # Manually update user fields
+                data = personal_form.cleaned_data
+                user.first_name = data.get('first_name', '')
+                user.middle_name = data.get('middle_name', '')
+                user.last_name = data.get('last_name', '')
+                user.shoe_size = data.get('shoe_size', '')
+                user.size_gender = data.get('size_gender', '')
+                user.favorite_brand = data.get('favorite_brand', '')
+                user.mobile_phone = data.get('mobile_phone', '')
+                user.mobile_notification = data.get('mobile_notification', '')
+                user.save()
+
+                messages.success(request, "Your profile has been updated.")
+                return redirect('pop_accounts:personal_info')
+            
+        elif 'street_address_1' in request.POST:
+
+            address_id = request.POST.get('address_id')
+            print('address_id', address_id)
+            
+            if address_id:
+                # Edit existing address
+                address= get_object_or_404(PopUpCustomerAddress, id=address_id, customer=user)
+                address_form = ThePopUpUserAddressForm(request.POST, instance=address)
+            else:
+                address_form= ThePopUpUserAddressForm(request.POST)
+                # print('else address', address)
+            
+            # It's the address form          
+            address_form.is_valid()
+            if address_form.is_valid():
+                address = address_form.save(commit=False)
+                address.customer = user
+                address.address_line = address_form.cleaned_data['street_address_1']
+                address.address_line2 = address_form.cleaned_data['street_address_2']
+                address.apartment_suite_number = address_form.cleaned_data['apt_ste_no']
+                address.town_city = address_form.cleaned_data['city_town']
+                address.state = address_form.cleaned_data['state']
+                address.postcode = address_form.cleaned_data['postcode']
+                address.delivery_instructions = address_form.cleaned_data['delivery_instructions']
+                address.default = address_form.cleaned_data.get('address_default', False)
+                address.save()
+                msg = "Address has been updated." if address_id else "Address has been added."
+                messages.success(request,msg)
+                # messages.success(request, "Address has been added.")
+                return redirect('pop_accounts:personal_info')
+           
+        
+    # else:
+    #     personal_form = PopUpUserEditForm(initial={
+    #         'first_name': user.first_name,
+    #         'middle_name': user.middle_name,
+    #         'last_name': user.last_name,
+    #         'shoe_size': user.shoe_size,
+    #         'size_gender': user.size_gender,
+    #         'favorite_brand': user.favorite_brand,
+    #         'mobile_phone': user.mobile_phone,
+    #         'mobile_notification': user.mobile_notification
+    #         })
+
+
+    return render(request, 'pop_accounts/user_accounts/dashboard_pages/personal_info.html', {
+        'form': personal_form, 'address_form': address_form, 'addresses': addresses, 'user': user})
+
+
+@login_required
+def get_address(request, address_id):
+    address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
+    return JsonResponse({
+        'address_line': address.address_line,
+        'address_line2': address.address_line2,
+        'apartment_suite_number': address.apartment_suite_number,
+        'town_city': address.town_city,
+        'state': address.state,
+        'postcode': address.postcode,
+        'delivery_instructions': address.delivery_instructions,
+    })
+
+@login_required
+def delete_address(request, address_id):
+    if request.method == "POST":
+        address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
+        address.delete()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'error': 'Invalid Request'}, status=400)
+
+
+@login_required
+def set_default_address(request, address_id):
+    user = request.user
+    try:
+        address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user, deleted_at__isnull=True)
+        # Unset all other address
+        PopUpCustomerAddress.objects.filter(customer=user, default=True).update(default=False)
+
+        # Set selected address as default
+        address.default = True
+        address.save()
+
+        return JsonResponse({'success': True})
+    except PopUpCustomerAddress.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Address not found'}, status=404)
+
+
+
+
+
 
 # @login_required
 def interested_in(request):
@@ -179,6 +318,7 @@ def past_purchases(request):
 # @login_required
 def dashboard_admin(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/dashboard.html')
+
 # @login_required
 def inventory(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/inventory.html')
@@ -198,7 +338,8 @@ def most_interested(request):
 # @login_required
 def total_open_bids(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html')
-@login_required
+
+# @login_required
 def total_accounts(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_accounts.html')
 
@@ -207,7 +348,166 @@ def account_sizes(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/account_sizes.html')
 
 
+class EmailCheckView(View):
+    def post(self, request):
+        NewUser = False
+        email = request.POST.get('email')
+        print('email in EmailCheckView', email)
+        if email and validate_email_address(email):
+            user_exists = PopUpCustomer.objects.filter(email=email).exists()
+            if not user_exists:
+                NewUser = True
+                return JsonResponse({'status': NewUser})
+            
+            request.session['auth_email'] = email
+            return JsonResponse({'status': not user_exists})
+        return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
 
+
+class RegisterView(View):
+    def post(self, request):
+        email = request.session.get('auth_email') or request.POST.get('email')
+        password = request.POST.get('password')
+        password2 = request.POST.get('password2')
+
+        # email = request.session.get('auth_email') or request.POST.get('email')
+        # print('we\'ve got email', email)
+
+        # data = request.POST.copy()
+        # data['email'] = email
+
+        # print('data', data)
+        if email and password and password2:
+            # email = request.session.get('auth_email') or request.POST.get('email')
+            data = request.POST.copy()
+            data['email'] = email
+            try:
+                form = PopUpRegistrationForm(data)
+            except Exception as e:
+                return JsonResponse({'error': 'Form init failed', 'details': str(e)}, status=500)
+
+            if form.is_valid():
+                user = form.save(commit=False)
+                user.set_password(form.cleaned_data['password'])
+                user.is_active = False  # Disable account until email is confirmed
+                user.save()
+                try:
+                    self.send_verification_email(request, user)
+                except Exception as e:
+                    print('Error sending verification email', e)
+                # login(request, user)
+                return JsonResponse({'registered': True, 'message': 'Check your email to confirm your account'})
+            else:
+                return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+            
+        elif email and password:
+            return JsonResponse({'success': False, 'errors': 'Please confirm password'}, status=400)
+    
+    def send_verification_email(self, request, user):
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        verify_url = request.build_absolute_uri(reverse('pop_accounts:verify_email', kwargs={'uidb64': uid, 'token': token}))
+
+        subject = "Verify Your Email"
+        message = f"Hi {user.first_name}, \n\nPlease click the link below to verify your email:\n{verify_url}\n\nThanks!"
+        send_mail(
+            subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+
+
+"""
+# Lhowlett@gmail.com
+# Registration Form Submit
+        if email and password and password2:
+            email = request.session.get('auth_email') or request.POST.get('email')
+            data = request.POST.copy()
+            data['email'] = email
+            form = PopUpRegistrationForm(data)
+
+            if form.is_valid():
+                new_user = form.save(commit=False)
+                new_user.set_password(form.cleaned_data['password'])
+                new_user.save()
+
+                # Still log the user in immediately after registration (optional)
+                login(request, new_user)
+                return JsonResponse({'registered': True})
+            else:
+                # Return error dict in JSON
+                errors = form.errors.as_json()
+                return JsonResponse({'success': False, 'errors': errors}, status=400)
+            # errors = form.errors.as_json()
+            # return JsonResponse({'registered': False, 'errors': errors})
+"""
+class Login2FAView(View):
+    MAX_ATTEMPTS = 5
+    LOCKOUT_TIME = timedelta(minutes=15)
+
+    def post(self, request):
+        print('post in Login2FAView triggerd')
+
+
+        email = request.session.get('auth_email')
+        print('we\'ve got', email)
+
+        password = request.POST.get('password')
+        print('we\'ve got', password)
+
+        password2 = request.POST.get('password2')
+        print('we\'ve got', password2)
+        now_time = now()
+
+        
+
+        # Check session lockout
+        attempts = request.session.get('login_attempts', 0)
+        first_try = request.session.get('first_attempt_time')
+        locked_until = request.session.get('locked_until')
+
+        if locked_until and now_time < datetime.fromisoformat(locked_until):
+            return JsonResponse({'authenticated': False, 'error': 'Locked out'}, status=429)
+        
+        user = authenticate(request, email=email, password=password)
+        if user:
+            request.session['pending_login_user_id'] = str(user.id)
+            request.session.pop('login_attempts', None)
+            request.session.pop('first_attempt_time', None)
+            request.session.pop('locked_utnil', None)
+
+            code = generate_2fa_code()
+            request.session['2fa_code'] = code
+            request.session['2fa_code_created_at'] = now_time.isoformat()
+
+            send_mail(
+                subject = "Your Verification Code",
+                message = f"Your code is {code}.",
+                from_email = "no-reply@thepopup.com",
+                recipient_list = [ email],
+                fail_silently = False
+            )
+
+            return JsonResponse({'authenticated': True, '2fa_required': True})
+        
+        # Handle Failure and Lockout
+        if not first_try:
+            request.session['first_attempt_time'] = now_time.isoformat()
+            attempts = 1
+        else:
+            first_try_time = datetime.fromisoformat(first_try)
+            if now_time - first_try_time > self.LOCKOUT_TIME:
+                attempts = 1
+                request.session['first_attempt_time'] = now_time.isoformat()
+            else:
+                attempts += 1
+
+        
+        request.session['login_attempts'] = attempts
+        if attempts >= self.MAX_ATTEMPTS:
+            request.session[locked_until] = (now_time + self.LOCKOUT_TIME).isoformat()
+            return JsonResponse({'authenticated': False, 'locked_out': True}, status=403)
+        
+        return JsonResponse({'authenticated': False, 'error': f'Invalid Credentials. Attempt {attempts}/{self.MAX_ATTEMPTS}'}, status=401)
+
+"""
 def register_modal_view(request):
     MAX_ATTEMPTS = 5
     LOCKOUT_TIME = timedelta(minutes=15)
@@ -216,10 +516,6 @@ def register_modal_view(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
-
-        print('email', email)
-        print('password', password)
-        print('password2', password2)
 
         # Registration Form Submit
         if email and password and password2:
@@ -258,8 +554,6 @@ def register_modal_view(request):
         if password and password2 is None:
             email = request.session.get('auth_email')
             now = timezone.now()
-            print('handle sign in email', email)
-            print('handle sign in password', password)
 
 
             # Initialize session values if not present
@@ -329,14 +623,9 @@ def register_modal_view(request):
                 return JsonResponse({'authenticated': False, 'error': f'Invalid credentials. Attempt {login_attempts}/{MAX_ATTEMPTS}'}, status=401)
 
     return redirect(request.META.get('HTTP_REFERER', '/'))
+"""
 
 
-def validate_email_address(email):
-    try:
-        validate_email(email)
-        return True
-    except ValidationError:
-        return False
 
 
 def generate_2fa_code():
@@ -512,4 +801,45 @@ def send_password_reset_link(request):
     user.save(update_fields=['last_password_reset'])
 
     return JsonResponse({'success': True, 'message': 'Password reset link sent.'})
+
+
+class VerifyEmailView(View):
+    template_name = 'pop_accounts/registration/verify_email.html'
+
+    def get(self, request, uidb64, token):
+        login_form = PopUpUserLoginForm()   
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = get_user_model().objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+            user = None
+
+        
+        if user and default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return render(request, self.template_name, {'email_verified': True, 'form': login_form, 'uidb64': uidb64, 'token': token })
+        else:
+            return render(request, self.template_name, {'invalid_link': True, 'form': login_form})
+    
+    def post(self, request, uidb64, token):
+        form = PopUpUserLoginForm()
+        email = request.session.get('auth_email') or request.POST.get('email')
+        password = request.POST.get('password')
+
+        if form.is_valid():
+
+            email = form.cleaned_data['email']
+
+            password = form.cleaned_data['password']
+
+            user = authenticate(request, email=email, password=password)
+
+            if user is not None:
+                login(request, user)
+                return redirect('pop_accounts:personal_info')
+            else:
+                form.add_error(None, "Invalid email or password")
+        
+        return render(request, self.template_name, {'form': form, 'email_verified': True, 'login_failed': True, 'uidb64':  uidb64, 'token': token})
 

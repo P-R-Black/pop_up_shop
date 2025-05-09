@@ -129,9 +129,11 @@
 
         <div class="menu-bar">
             <div class="menu">
+                {% if request.user.is_authenticated %}
                 <div class="greetings_box">
-                    <h4 class="greetings_box_name">Hello Palo</h4>
+                    <h4 class="greetings_box_name">Hello {{ request.user.first_name}}</h4>
                 </div>
+                {% endif %}
                 <li class="search-box">
                     <i class='bx bx-search icon'></i>
                     <input type="text" placeholder="Search...">
@@ -149,6 +151,7 @@
                             <span class="text nav-text">Home</span>
                         </a>
                     </li>
+                    {% if request.user.is_authenticated %}
                     <li class="nav-link">
                         <a href="{% url 'pop_accounts:dashboard' %}">
                             <!-- <i class='bx bxs-dashboard icon'></i> -->
@@ -156,6 +159,7 @@
                             <span class="text nav-text">Dashboard</span>
                         </a>
                     </li>
+                    {% endif %}
                     <li class="nav-link">
                         <a href="{% url 'auction:products' %}">
                             <i class='bx bx-package icon'></i>
@@ -192,24 +196,34 @@
                             <span class="text nav-text">Invite a Friend</span>
                         </a>
                     </li>
-                    <li class="">
-                        <a href="#">
+
+                    {% if request.user.is_authenticated %}
+                    <form action="{% url 'pop_accounts:logout' %}" method="post">
+                        {% csrf_token %}
+                        <li class="nav-link">
+                            <button>
+                                <i class='bx bx-log-out icon'></i>
+                                <span class="text nav-text">Log out</span>
+                            </button>
+                        </li>
+                    </form>
+                    {% else %}
+                    <li class="signUpModalBtn">
+                        <button>
                             <i class='bx bx-log-in icon'></i>
                             <span class="text nav-text">Log in</span>
-                        </a>
+                        </button>
                     </li>
-                    <li class="">
-                        <a href="#">
-                            <i class='bx bx-log-out icon'></i>
-                            <span class="text nav-text">Log out</span>
-                        </a>
-                    </li>
+                    {% endif%}
+
+                    {% if not request.user.is_authenticated %}
                     <li class="signUpModalBtn">
                         <a href="#">
                             <i class='bx bx-user-plus icon'></i>
                             <span class="text nav-text">Sign Up</span>
                         </a>
                     </li>
+                    {% endif %}
                     <li class="mode">
                         <div class="moon-sun">
                             <i class='bx bx-moon icon moon'></i>
@@ -303,7 +317,7 @@
                                 <p>We'll check if you have an account and help you create one if you don't.</p>
                             </div>
                             <div class="sign_up_options_container">
-                                <form action="{% url 'pop_accounts:register_modal' %}" method="POST"
+                                <form action="{% url 'pop_accounts:check_email' %}" method="POST"
                                     class="sign_up_options_form">
                                     {% csrf_token %}
 
@@ -335,9 +349,13 @@
                                 </div>
 
                                 <p class="email_provided_signin_popup"></p>
+                                <div class="registration_form_errors"
+                                    style="color: red; display: none; margin-bottom: 4px; font-size: 16px;">
+                                </div>
                             </div>
                             <div class="sign_up_options_form_container">
-                                <form action="{% url 'pop_accounts:register_modal' %}" method="POST"
+
+                                <form action="{% url 'pop_accounts:register' %}" method="POST"
                                     class="registration_options_form">
                                     {% csrf_token %}
 
@@ -363,7 +381,7 @@
                                 </div>
                             </div>
                             <div class="sign_up_options_container">
-                                <form action="{% url 'pop_accounts:register_modal' %}" method="POST"
+                                <form action="{% url 'pop_accounts:user_login' %}" method="POST"
                                     class="sign_up_options_form">
                                     {% csrf_token %}
 

@@ -229,8 +229,10 @@ document.addEventListener('DOMContentLoaded', function () {
         loginSubmitButton.addEventListener('click', (e) => {
             e.preventDefault()
             console.log("I've been clicked!")
+
             const form = loginSubmitButton.closest('form');
             const formData = new FormData(form);
+
 
             fetch(form.action, {
                 method: 'POST',
@@ -241,7 +243,6 @@ document.addEventListener('DOMContentLoaded', function () {
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('data at loginbutton', data)
                     if (data['authenticated'] === true) {
                         emailLoginContainer.classList.remove('show_email_login_container');
                         emailLoginContainer.classList.add('hide_email_login_container_to_left');
@@ -310,9 +311,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            const nameBox = document.querySelector('.greetings_box_name')
-
-
             fetch('/pop_accounts/auth/verify-code/', {
                 method: 'POST',
                 headers: {
@@ -331,9 +329,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(data => {
                     if (data.verified) {
-
                         if (signUpModal) signUpModal.style.display = 'none';
-                        if (nameBox && data.user_name) nameBox.innerHTML = `Hello ${data.user_name}`
+                        window.location.reload()
                     } else {
                         alert(data.error || 'Invalid code.');
                     }
@@ -491,8 +488,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-
-
 // Submit Registration Form
 const registrationSubmitButton = document.querySelector('.registrationSubmitButton');
 
@@ -500,11 +495,18 @@ if (registrationSubmitButton) {
     registrationSubmitButton.addEventListener('click', function (e) {
         e.preventDefault();
 
+        console.log('registrationSubmitButton clicked!')
+
         const form = registrationSubmitButton.closest('form');
+
+        console.log('form.action is:', form.action)
+
         const formData = new FormData(form);
 
         // Inject email from sessionStorage if not in form
         const storedEmail = sessionStorage.getItem('auth_email');
+        console.log('storedEmail', storedEmail)
+
         if (storedEmail) {
             formData.set('email', storedEmail);  // Ensure it’s part of the POST data
         }
@@ -519,11 +521,12 @@ if (registrationSubmitButton) {
         })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                console.log('data in js', data)
+                if (data.registered) {
                     // Show success UI or redirect
                     console.log('User registered!');
                 } else if (data.errors) {
-                    displayFormErrors(data.errors);
+                    displayFormErrorsTwo(data.errors);
                 }
             })
             .catch(error => {
@@ -531,6 +534,59 @@ if (registrationSubmitButton) {
             });
     });
 }
+
+// Object { success: false, errors: "Please confirm password" }
+// Object { success: false, errors: '{"password2": [{"message": "Passwords do not match", "code": ""}]}' }
+
+function displayFormErrorsTwo(errors) {
+    console.log('errors', errors);
+
+    const errorContainer = document.querySelector('.registration_form_errors');
+    errorContainer.innerHTML = ''; // Clear previous errors
+    errorContainer.style.display = 'block';
+
+    let parsedErrors = {};
+
+    try {
+        parsedErrors = JSON.parse(errors);  // Try to parse Django-style JSON errors
+        console.log('parsedErrors', parsedErrors)
+    } catch (e) {
+        // If it fails, assume it's a simple string message
+        const p = document.createElement('p');
+        p.classList.add('form-error-message');
+        p.textContent = errors;
+        errorContainer.appendChild(p);
+        return; // Don't continue processing as JSON
+    }
+
+    console.log('parsedErrors', parsedErrors);
+
+    const passwordErrors = parsedErrors.password || [];
+    const password2Errors = parsedErrors.password2 || [];
+
+    if (passwordErrors.length > 0) {
+        passwordErrors.forEach(error => {
+            const p = document.createElement('p');
+            p.classList.add('form-error-message');
+            p.textContent = `${error.message}`;
+            errorContainer.appendChild(p);
+        });
+    } else if (password2Errors.length > 0) {
+        password2Errors.forEach(error => {
+            const p = document.createElement('p');
+            p.classList.add('form-error-message');
+            p.textContent = `Confirm Password: ${error.message}`;
+            errorContainer.appendChild(p);
+        });
+    }
+
+    if (errorContainer.children.length > 0) {
+        errorContainer.style.display = 'block';
+    }
+
+}
+
+
 
 const displayFormErrors = (errors) => {
     // Clear any existing errors

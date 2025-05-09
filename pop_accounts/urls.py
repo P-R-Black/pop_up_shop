@@ -1,20 +1,37 @@
 from django.urls import path
 from . import views
+from .views import EmailCheckView, RegisterView, Login2FAView, VerifyEmailView
 
 app_name = 'pop_accounts'
 urlpatterns = [
+
+    #Auth register / login class based views
+    path('auth/check-email/', EmailCheckView.as_view(), name='check_email'),
+    path('auth/register/', RegisterView.as_view(), name='register'),
+    path('verify/<uidb64>/<token>/', VerifyEmailView.as_view(), name='verify_email'),
+    path('auth/user-login/', Login2FAView.as_view(), name='user_login'),
+
+    
     # Auth register / login
-    path('auth/register/', views.register_modal_view, name='register_modal'),
+
+    # path('auth/register/', views.register_modal_view, name='register_modal'),
     path('auth/verify-code/', views.verify_2fa_code, name='verify_2fa'),
     path('auth/send-reset-link/', views.send_password_reset_link, name='send_reset_link'),
     path('resend-code/', views.resend_2fa_code, name='resend_2fa_code'),
     path('password-reset/<uidb64>/<token>/', views.user_password_reset_confirm, name='password_reset_confirm'),
 
-    path('login', views.user_login, name='login'),
+    path('login/', views.user_login, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     # path('password-reset', views.user_password_reset, name='password_reset'),
     
     path('dashboard', views.dashboard, name='dashboard'),
-    path('personal-information', views.personal_info, name='personal_info'),
+
+    # User Info
+    path('personal-information/', views.personal_info, name='personal_info'),
+    path('get-address/<uuid:address_id>/', views.get_address, name='get_address'),
+    path('delete-address/<uuid:address_id>/', views.delete_address, name='delete_address'),
+    path('set-default-address/<uuid:address_id>/', views.set_default_address, name='set_default_address'),
+
     path('interested-in', views.interested_in, name='interested_in'),
     path('on-notice', views.on_notice, name='on_notice'),
     path('open-bids', views.open_bids, name='open_bids'),

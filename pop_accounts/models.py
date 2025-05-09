@@ -131,7 +131,9 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     
 
     def soft_delete(self):
-        """Mark the user account as inactive instead of deleting it."""
+        """ 
+        Mark the user account as inactive instead of deleting it.
+        """
         self.is_active = False  # Prevents login
         self.deleted_at = now()
         self.save(update_fields=["is_active", "deleted_at"])
@@ -212,8 +214,8 @@ class PopUpCustomerAddress(models.Model):
     default = models.BooleanField(_("Default"), default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    # objects = SoftDeleteManager()
-    # all_objects = models.Manager()
+    objects = SoftDeleteManager()
+    all_objects = models.Manager()
 
     class Meta:
         verbose_name = 'PopUpCustomerAddress'
