@@ -149,7 +149,65 @@ document.addEventListener('DOMContentLoaded', function (e) {
             // Show the modal when the button is clicked
             adae.addEventListener('click', function (e) {
                 e.preventDefault();
+
+                console.log('edit address modal opening!')
+
                 accountAddressEditModal.style.display = 'block';
+
+                const addressId = this.getAttribute('data-address-id')
+                console.log('addressId', addressId);
+
+                fetch(`/pop_accounts/get-address/${addressId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+
+                        console.log('data', data)
+                        // Populate the modal form fields with response data;
+                        console.log(' data.address_line', data.address_line)
+
+                        const streetAddressLineOne = document.querySelectorAll('.personal_info_street_address_one_input')
+                        const streetAddressLineTwo = document.querySelectorAll('.personal_info_street_address_two_input')
+                        const streetAddressSte = document.querySelectorAll('.personal_info_apt_inputs');
+                        const streetAddressCityTown = document.querySelectorAll('.personal_info_address_city_input');
+                        const streetAddressState = document.querySelectorAll('.personal_info_address_state');
+                        const streetAddressZipCode = document.querySelectorAll('.personal_info_address_zip_input');
+                        const streetAddressDelivInstruct = document.querySelectorAll('.delivery_instruct_text');
+                        const streetAddressHiddenInput = document.querySelectorAll('#address-id')  // hidden input
+
+                        streetAddressLineOne.forEach((addyOne) => {
+                            addyOne.value = data.address_line
+                        })
+                        streetAddressLineTwo.forEach((addyOne) => {
+                            addyOne.value = data.address_line2
+                        })
+                        streetAddressSte.forEach((addyOne) => {
+                            addyOne.value = data.apartment_suite_number
+                        })
+                        streetAddressCityTown.forEach((addyOne) => {
+                            addyOne.value = data.town_city
+
+                        })
+
+                        streetAddressState.forEach((addyOne) => {
+                            addyOne.value = data.state
+
+                        })
+                        streetAddressZipCode.forEach((addyOne) => {
+                            addyOne.value = data.postcode
+
+                        })
+                        streetAddressDelivInstruct.forEach((addyOne) => {
+                            addyOne.value = data.delivery_instructions
+
+                        })
+
+                        streetAddressHiddenInput.forEach((addyOne) => {
+                            addyOne.value = addressId
+
+                        })
+
+
+                    })
             });
         })
 
@@ -180,6 +238,93 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
 
 })
+
+
+// Remove Address in Personal Info Page
+document.addEventListener('DOMContentLoaded', () => {
+
+    const removeButtons = document.querySelectorAll('.accountDataAddressRemoveBtn');
+
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+
+
+            console.log('remove clicked!')
+
+            const addressId = this.getAttribute('data-address-id');
+            console.log('addressId', addressId)
+
+
+            const confirmed = confirm("Are you sure you want to remove this address?");
+            if (!confirmed) return;
+
+            fetch(`/pop_accounts/delete-address/${addressId}/`, {
+                method: 'POST',  // or 'DELETE' if your backend supports it
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})  // optional
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Remove the entire container
+                        this.closest('.dashboard_databox_small').remove();
+                    } else {
+                        alert("Failed to remove address.");
+                    }
+                });
+        });
+    });
+
+    // Function to get CSRF token from cookie
+    function getCSRFToken() {
+        const name = 'csrftoken';
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                return decodeURIComponent(cookie.slice(name.length + 1));
+            }
+        }
+        return '';
+    }
+});
+
+
+// Set Address as Default Address
+document.addEventListener('DOMContentLoaded', () => {
+    const defaultButtons = document.querySelectorAll('.setDefaultAddressBtn');
+
+    defaultButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            // e.preventDefault();
+
+            console.log('defaultButtons called!')
+
+            const addressId = this.getAttribute('data-address-id');
+            console.log('addressId', addressId);
+
+            fetch(`/pop_accounts/set-default-address/${addressId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload()
+                    } else {
+                        alert('Failed to set default address.')
+                    }
+                })
+        })
+    })
+})
+
 
 
 

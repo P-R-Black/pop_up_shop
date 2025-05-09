@@ -423,8 +423,9 @@ text font: inter
 
 /* ====== Resuable CSS ====== */
 .sidebar .text {
-    font-size: 16px;
-    font-weight: 500;
+    font-family: var(--text-font);
+    font-size: 15px;
+    font-weight: 300;
     color: var(--text-color);
     transition: var(--tran-03);
     white-space: nowrap;
@@ -482,7 +483,6 @@ text font: inter
 }
 
 .sidebar .logo-text.abbrev {
-
     font-size: 2rem;
 }
 
@@ -580,11 +580,58 @@ header .logo-text .header-text {
     color: var(--sidebar-color);
 }
 
+
+
 body.dark .sidebar li a:hover .icon,
 body.dark .sidebar li a:hover .text {
     color: var(--sidebar-color);
 
 }
+
+
+.sidebar li button {
+    align-items: center;
+    background: var(--sidebar-color);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    height: 100%;
+    text-decoration: none;
+    transition: var(--tran-04);
+    width: 100%;
+}
+
+
+
+.sidebar li button:hover {
+    background: var(--primary-color);
+    height: 2rem;
+}
+
+
+.sidebar li button:hover .icon,
+.sidebar li button:hover .text {
+    color: var(--sidebar-color);
+}
+
+
+body.dark .sidebar li button:hover .icon,
+body.dark .sidebar li button:hover .text {
+    color: var(--sidebar-color);
+
+}
+
+/*
+.sidebar li .icon,
+.sidebar li .text {
+    color: var(--text-color);
+    transition: var(--tran-02)
+}
+
+
+*/
+
+
 
 .sidebar .menu-bar {
     height: cacl(100% - 50px);
@@ -1016,7 +1063,13 @@ form.password_reset_sign_up_options_form input {
 }
 
 
-/* ===== end sign_up_email_container ===== */
+.registration_form_errors {
+    border: 2px solid green;
+    height: auto;
+    width: 100%;
+}
+
+/* ===== end sign_up_email_container / Register Screen ===== */
 
 
 
