@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
-from .views import EmailCheckView, RegisterView, Login2FAView, VerifyEmailView
+from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, 
+                    UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -13,18 +14,20 @@ urlpatterns = [
 
     
     # Auth register / login
-
-    # path('auth/register/', views.register_modal_view, name='register_modal'),
-    path('auth/verify-code/', views.verify_2fa_code, name='verify_2fa'),
+    path('auth/verify-code/', Verify2FACodeView.as_view(), name='verify_2fa'),
+    # path('auth/verify-code/', views.verify_2fa_code, name='verify_2fa'),
     path('auth/send-reset-link/', views.send_password_reset_link, name='send_reset_link'),
     path('resend-code/', views.resend_2fa_code, name='resend_2fa_code'),
     path('password-reset/<uidb64>/<token>/', views.user_password_reset_confirm, name='password_reset_confirm'),
 
-    path('login/', views.user_login, name='login'),
-    path('logout/', views.logout_view, name='logout'),
+
+    path('login/', UserLoginView.as_view(), name='login'),
+    path('logout/',UserLogOutView.as_view(), name='logout'),
+   
     # path('password-reset', views.user_password_reset, name='password_reset'),
     
-    path('dashboard', views.dashboard, name='dashboard'),
+    # path('dashboard', views.dashboard, name='dashboard'),
+    path('dashboard/', UserDashboardView.as_view(), name='dashboard'),
 
     # User Info
     path('personal-information/', views.personal_info, name='personal_info'),
@@ -37,6 +40,7 @@ urlpatterns = [
     path('open-bids', views.open_bids, name='open_bids'),
     path('bids-history', views.past_bids, name='past_bids'),
     path('purchase-history', views.past_purchases, name='past_purchases'),
+
     # admin dashboard
     path('dashboard-admin',views.dashboard_admin, name='dashboard_admin'),
     path('inventory-admin',views.inventory, name='inventory_admin'),

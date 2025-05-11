@@ -23,12 +23,20 @@ Dashboard
                     </div>
                     <div class="dashboard_size_container">
                         <p>Size</p>
-                        <p class="dashboard_databox_assign_left">US Men's 9</p>
+                        {% if user.size_gender == "male" %}
+                        <p class="dashboard_databox_assign_left">U.S. {{"Men's"}} {{ user.shoe_size }}</p>
+                        {% else %}
+                        <p class="dashboard_databox_assign_left">U.S. {{"Women's"}} {{ user.shoe_size }}</p>
+                        {% endif %}
                         <a href="#" id="dashboardSizeEditBtn">Edit</a>
                     </div>
                     <div class="dashboard_location_container">
                         <p>Location</p>
-                        <p class="dashboard_databox_assign_left">St. Petersburg, 33711</p>
+                        {% for address in addresses %}
+                        <p class="dashboard_databox_assign_left">{{ address.town_city }}, {{ address.postcode }}
+
+                        </p>
+                        {% endfor %}
                         <a href="#" id="dashboardLocationEditBtn">Edit</a>
                     </div>
                     <div class="dashboard_payment_container">
@@ -37,7 +45,7 @@ Dashboard
                         <a href="#" id="dashboardPaymentEditBtn">Edit</a>
                     </div>
                     <div class="dashboard_more_container">
-                        <a href="personal-information">More</a>
+                        <a href="{% url 'pop_accounts:personal_info' %}">More</a>
                     </div>
                 </div>
                 <div class="dashboard_databox_small">

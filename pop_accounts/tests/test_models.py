@@ -4,7 +4,8 @@ from pop_accounts.models import (PopUpCustomer, CustomPopUpAccountManager, SoftD
 from django.utils.timezone import now
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
-
+from unittest.mock import patch
+from django.core.mail import send_mail
 
 class TestPopUpCustomerModel(TestCase):
     def setUp(self):
@@ -36,12 +37,47 @@ class TestPopUpCustomerModel(TestCase):
         self.assertEqual(str(self.customer.favorite_brand), "Jordan")
 
 
-class TestSoftDeleteManager(TestCase):
-    pass
+    def test_soft_delete_makrs_user_as_inactive_and_sets_deleted_at(self):
+        self.customer.soft_delete()
+        self.customer.refresh_from_db()
+        self.assertFalse(self.customer.is_active)
+        self.assertIsNotNone(self.customer.deleted_at)
+        self.assertTrue(self.customer.is_deleted)
+    
 
-class TestPopUpCustomerAddress(TestCase):
-    pass
+    def test_restore_user_reset_is_active_and_deleted_at(self):
+        self.customer.soft_delete()
+        self.customer.restore()
+        self.customer.refresh_from_db()
+        self.assertTrue(self.customer.is_active)
+        self.assertIsNone(self.customer.deleted_at)
+        self.assertFalse(self.customer.is_deleted)
 
+
+    def test_str_returns_full_name(self):
+        self.assertEqual(str(self.customer), "Palo Negro")
+
+    # @patch('pop_accounts.models.send_mail')
+    # def test_email_user_sends_email(self, mock_send_mail):
+    #     self.customer.email_user("Subject", "Message")
+    #     mock_send_mail.assert_called_once_with(
+    #         "Subject",
+    #         "Message",
+    #         "1@1.com",
+    #         [self.customer.email],
+    #         fail_silently=False
+    #     )
+
+    def test_hard_delete_removes_instance(self):
+        self.customer.hard_delete()
+        with self.assertRaises(PopUpCustomer.DoesNotExist):
+            PopUpCustomer.objects.get(id=self.customer.id)
+
+
+    def test_soft_delete_user_not_returned_by_default_manager(self):
+        self.customer.soft_delete()
+        users = PopUpCustomer.objects.filter(email="testMail@gmail.com")
+        self.assertEqual(users.count(), 0)
 
 """
 Run Test
