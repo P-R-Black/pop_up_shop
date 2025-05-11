@@ -331,8 +331,10 @@ select#gen_option {
     align-items: flex-start;
     display: flex;
     flex-direction: column;
-    margin-top: 1rem;
+    margin-top: .5rem;
+    min-height: 55%;
     width: 15rem;
+
 }
 
 .account_addresses_data_city_state_zip {
@@ -341,29 +343,33 @@ select#gen_option {
     gap: .5rem;
 }
 
-.account_addresses_data .account_addresses_data_delivery_info {
+.account_addresses_data_delivery_info {
     margin-top: .5rem;
+    max-height: 15%;
 }
 
-.account_addresses_data .account_addresses_data_delivery_info a {
+.account_addresses_data_delivery_info p {
     color: var(--body-color);
-    font-size: 1rem;
-    margin-top: 1rem;
+    font-size: .85rem;
+}
+
+.account_addresses_data_delivery_info a {
+    color: var(--body-color);
+    font-size: .85rem;
     transition: var(--tran-03);
 }
 
-.account_addresses_data .account_addresses_data_update_option {
-    margin-top: .5rem;
+.account_addresses_data_update_option {
+    margin-top: 1rem;
     width: 100%;
 
 }
 
-.account_addresses_data .account_addresses_data_update_option input {
+.account_addresses_data_update_option input {
     background: transparent;
     color: var(--body-color);
     cursor: pointer;
     font-size: .8rem;
-    margin-top: 1.5rem;
     transition: var(--tran-03);
 
 }

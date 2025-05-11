@@ -71,8 +71,13 @@ MIDDLEWARE = [
 ]
 
 AUTHENTICATION_BACKENDS = [
+    'pop_accounts.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend'
 ]
+
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = None
+SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
 
 ROOT_URLCONF = 'pop_up_shop.urls'
 
@@ -139,7 +144,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-print('BASE_DIR', BASE_DIR)
 LOGGING = {
     'version': 1,
     'handlers': {

@@ -126,24 +126,24 @@ Auction
                             <div class="account_addresses_data_phone">
                                 <p>{{ user.mobile_phone }}</p>
                             </div>
-                            <div class="account_addresses_data_delivery_info">
-                                {% if addy.delivery_instructions %}
-                                <p>{{ addy.delivery_instructions|capfirst }}</p>
-                                {% else %}
-                                <a href="">Add Delivery Info</a>
-                                {% endif %}
-                            </div>
-                            <div class="account_addresses_data_update_option">
-                                <input type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressEditBtn"
-                                    value="Edit">
-                                <input type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressRemoveBtn"
-                                    value="Remove">
-                                {% if not addy.default %}
-                                <input type="submit" data-address-id="{{ addy.id }}" value="Set as default"
-                                    class="setDefaultAddressBtn">
-                                {% endif %}
+                        </div>
+                        <div class="account_addresses_data_delivery_info">
+                            {% if addy.delivery_instructions %}
+                            <p>{{ addy.delivery_instructions|capfirst }}</p>
+                            {% else %}
+                            <a href="">Add Delivery Info</a>
+                            {% endif %}
+                        </div>
+                        <div class="account_addresses_data_update_option">
+                            <input type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressEditBtn"
+                                value="Edit">
+                            <input type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressRemoveBtn"
+                                value="Remove">
+                            {% if not addy.default %}
+                            <input type="submit" data-address-id="{{ addy.id }}" value="Set as default"
+                                class="setDefaultAddressBtn">
+                            {% endif %}
 
-                            </div>
                         </div>
                     </div>
                     <!-- Address Modal -->

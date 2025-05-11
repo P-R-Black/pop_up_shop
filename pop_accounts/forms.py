@@ -384,7 +384,8 @@ class PopUpEmailPasswordResetForm(forms.ModelForm):
 
 
 class PopUpPasswordResetForm(forms.ModelForm):
-
+    """
+    Email not needed since token used to verify user
     email = forms.EmailField(
         label='Email',
         max_length=100, 
@@ -398,6 +399,8 @@ class PopUpPasswordResetForm(forms.ModelForm):
             'name': 'email'
         }
     ))
+    """
+    
      
   
     password = forms.CharField(

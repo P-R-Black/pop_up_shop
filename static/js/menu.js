@@ -58,36 +58,36 @@ document.addEventListener('DOMContentLoaded', function () {
     // Get the modal, button, and close span
 
 
-    if (signUpModalBtn) {
-        signUpModalBtn.forEach((sub) => {
-            sub.addEventListener('click', () => {
-                signUpModal.style.display = 'block';
-            })
-        })
-    } else {
-        console.warn('bidButton not found in the DOM.');
-    }
+    // if (signUpModalBtn) {
+    //     signUpModalBtn.forEach((sub) => {
+    //         sub.addEventListener('click', () => {
+    //             signUpModal.style.display = 'block';
+    //         })
+    //     })
+    // } else {
+    //     console.warn('bidButton not found in the DOM.');
+    // }
 
 
-    if (closeSignUpModal) {
-        // Close the modal when the close span is clicked
-        closeSignUpModal.addEventListener('click', function () {
-            signUpModal.style.display = 'none';
-        });
-    } else {
-        console.warn('closeModal span not found in the DOM.');
-    }
+    // if (closeSignUpModal) {
+    //     // Close the modal when the close span is clicked
+    //     closeSignUpModal.addEventListener('click', function () {
+    //         signUpModal.style.display = 'none';
+    //     });
+    // } else {
+    //     console.warn('closeModal span not found in the DOM.');
+    // }
 
-    // Close the modal when clicking outside of it
-    if (signUpModal) {
-        window.addEventListener('click', function (event) {
-            if (event.target === signUpModal) {
-                signUpModal.style.display = 'none';
-            }
-        });
-    } else {
-        console.warn('bidModal not found in the DOM.');
-    }
+    // // Close the modal when clicking outside of it
+    // if (signUpModal) {
+    //     window.addEventListener('click', function (event) {
+    //         if (event.target === signUpModal) {
+    //             signUpModal.style.display = 'none';
+    //         }
+    //     });
+    // } else {
+    //     console.warn('bidModal not found in the DOM.');
+    // }
 });
 
 
@@ -118,6 +118,44 @@ document.addEventListener('DOMContentLoaded', function () {
     const loginSubmitButton = document.querySelector('.loginSubmitButton');
     // const modal = document.querySelector('.sign_up_modal');
 
+    const confirmContainerBackChevronFive = document.getElementById('confirmContainerBackChevronFive')
+    const forgotPasswordEmailCheckContainer = document.querySelector('.forgot_password_email_check_container')
+
+
+    if (signUpModalBtn) {
+        signUpModalBtn.forEach((sub) => {
+            sub.addEventListener('click', () => {
+                signUpModal.style.display = 'block';
+                // signUpTitleOptionsContainer.classList.add('show_container')
+                // signUpTitleOptionsContainer.classList.add('sign_up_title_options_container')
+                // emailVerificationContainer.classList.add('email_verification_container')
+                // emailVerificationContainer.classList.add('hide_container')
+            })
+        })
+    } else {
+        console.warn('bidButton not found in the DOM.');
+    }
+
+
+    if (closeSignUpModal) {
+        // Close the modal when the close span is clicked
+        closeSignUpModal.addEventListener('click', function () {
+            signUpModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeModal span not found in the DOM.');
+    }
+
+    // Close the modal when clicking outside of it
+    if (signUpModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === signUpModal) {
+                signUpModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('bidModal not found in the DOM.');
+    }
 
 
     // if (passwordSubmitButton) {
@@ -152,6 +190,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
             emailVerificationContainer.classList.remove('shift_left')
             emailVerificationContainer.classList.add('show_container')
+
+
+        })
+    }
+
+    if (confirmContainerBackChevronFive) {
+        confirmContainerBackChevronFive.addEventListener('click', (e) => {
+            e.preventDefault()
+            console.log('clicked on Five!')
+            passwordForgetContainer.classList.add('show_forgot_password_container')
+            passwordForgetContainer.classList.remove('hide_forgot_password_container')
+
+            forgotPasswordEmailCheckContainer.classList.remove('show_forgot_password_email_check_container')
+            forgotPasswordEmailCheckContainer.classList.add('forgot_password_email_check_container')
 
 
         })
@@ -243,6 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('data from loginSubmitButton is', data)
                     if (data['authenticated'] === true) {
                         emailLoginContainer.classList.remove('show_email_login_container');
                         emailLoginContainer.classList.add('hide_email_login_container_to_left');
@@ -281,7 +334,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (confirmContainerBackChevronSix) {
         confirmContainerBackChevronSix.addEventListener('click', () => {
-            console.log('backbutton six clicked!')
             signUpEmailConfirmContainer.classList.remove('show_sign_up_email_confirm_container')
             signUpEmailConfirmContainer.classList.add('hide_ign_up_email_confirm_container')
             emailLoginContainer.classList.remove('hide_email_login_container_to_left');
@@ -298,6 +350,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const code = Array.from(confirmInputs).map(input => input.value.trim()).join('');
 
+            console.log('code', code)
+
             if (code.length != 6) {
                 alert("Please enter the full 6-digit code.");
                 return;
@@ -313,6 +367,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fetch('/pop_accounts/auth/verify-code/', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': csrfToken,
@@ -321,7 +376,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: new URLSearchParams({ code })
             })
                 .then(async (response) => {
+                    console.log('response in confirmSubmitBtn', response)
                     const data = await response.json();
+                    console.log('data', data)
                     if (!response.ok) {
                         throw new Error(data.error || `HTTP error! status: ${response.status}`);
                     }
@@ -446,6 +503,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const originalButtonText = resetPasswordBtn.textContent;
             const resetSpinner = document.getElementById('resetSpinner');
 
+
+
             // Show spiner
             resetSpinner.style.display = 'block'
             // Disable button so user can't click twice
@@ -455,6 +514,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fetch('/pop_accounts/auth/send-reset-link/', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': csrfToken,
@@ -465,7 +525,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Password reset link sent to your email.')
+                        //alert('Password reset link sent to your email.')
+                        passwordForgetContainer.classList.remove('show_forgot_password_container')
+                        passwordForgetContainer.classList.add('hide_forgot_password_container')
+
+                        forgotPasswordEmailCheckContainer.classList.remove('hide_forgot_password_email_check_container')
+                        forgotPasswordEmailCheckContainer.classList.add('show_forgot_password_email_check_container')
+
                     } else {
                         alert(data.error || 'Something went wrong')
                     }
@@ -535,8 +601,6 @@ if (registrationSubmitButton) {
     });
 }
 
-// Object { success: false, errors: "Please confirm password" }
-// Object { success: false, errors: '{"password2": [{"message": "Passwords do not match", "code": ""}]}' }
 
 function displayFormErrorsTwo(errors) {
     console.log('errors', errors);

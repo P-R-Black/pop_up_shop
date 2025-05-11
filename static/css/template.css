@@ -819,7 +819,8 @@ body.dark .switch::before {
 .sign_up_email_container,
 .email_login_container,
 .sign_up_email_confirm_container,
-.forgot_password_container {
+.forgot_password_container,
+.forgot_password_email_check_container {
     position: absolute;
     width: 50%;
     top: 0;
@@ -1236,9 +1237,10 @@ p.email_provided_signin_popup {
 }
 
 
-/* .forgot_password_container.hide_forgot_password_container {
+
+.forgot_password_container.hide_forgot_password_container {
     transform: translateX(-300%);
-} */
+}
 
 
 .forgot_password_options_container {
@@ -1273,26 +1275,34 @@ p.email_provided_signin_popup {
 }
 
 
-
-/*
-
-
-
-
-
-p.email_provided_signin_popup {
-    color: var(--text-color);
-    font-size: clamp(1rem, 1.50rem, 2.5vw);
-    margin-bottom: 1rem;
-    text-align: center;
-
-}
-*/
-
 /* ===== end of forgot_password_container ===== */
 
 
-/*  ====== End of Sign Up Modal ===== */
+
+/* ===== start of forgot_password_email_check_container ===== */
+.forgot_password_email_check_container {
+    left: 200%;
+    transform: translateX(0%);
+    width: 100%;
+
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+
+.forgot_password_email_check_container.show_forgot_password_email_check_container {
+    transform: translateX(-200%);
+}
+
+
+
+/* ===== end of forgot_password_email_check_container ===== */
+
+
+/* ==================================== End of Sign Up Modal =================================== */
 
 
 /*  ====== Start of Footer ===== */

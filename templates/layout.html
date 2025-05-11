@@ -198,7 +198,7 @@
                     </li>
 
                     {% if request.user.is_authenticated %}
-                    <form action="{% url 'pop_accounts:logout' %}" method="post">
+                    <form action="{% url 'pop_accounts:logout' %}" method="POST">
                         {% csrf_token %}
                         <li class="nav-link">
                             <button>
@@ -408,7 +408,7 @@
                         {% comment %}
                         if "forgotton password" selected show this slide
                         {% endcomment %}
-                        <div class="forgot_password_container hide_forgot_password_container">
+                        <div class="forgot_password_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
                                     <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronFour'></i>
@@ -476,6 +476,21 @@
                                 </div>
                             </div>
                             <div class="empty_div"></div>
+                        </div>
+                        <!-- After forgot password continue button hit -->
+                        {% comment %}
+                        if "after forgotton password" tells to check email for link.
+                        {% endcomment %}
+                        <div class="forgot_password_email_check_container hide_forgot_password_email_check_container">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronFive'></i>
+                                    <h3>Everything went as planned</h3>
+                                </div>
+
+                                <p>You've been sent an email.</p>
+                                <p>To reset your password, follow the instructions in th email.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -545,9 +560,18 @@
                         <h3>Regiseter</h3>
                     </div>
                     <ul class="footer_about_options">
-                        <li>
-                            <a>Login/Logout</a>
+                        {% if request.user.is_authenticated %}
+                        <form action="{% url 'pop_accounts:logout' %}" method="POST">
+                            <li>
+                                <a>Logout</a>
+                            </li>
+                        </form>
+
+                        {% else %}
+                        <li class="signUpModalBtn">
+                            <a>Login</a>
                         </li>
+                        {% endif %}
                         <li>
                             <a>Signup</a>
                         </li>

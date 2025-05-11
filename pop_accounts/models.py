@@ -15,6 +15,13 @@ from django.contrib.auth.models import UserManager
 
 # Create your models here.
 class CustomPopUpAccountManager(BaseUserManager):
+
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_at__isnull=True)
+    
+    def get_by_natural_key(self, email):
+        return self.get(email=email)
+    
     def create_superuser(self, email, first_name, last_name, password, **other_fields):
 
         other_fields.setdefault('is_staff', True)
@@ -119,7 +126,7 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomPopUpAccountManager()
     # objects = SoftDeleteUserManager()
-    # all_objects = models.Manager()
+    all_objects = models.Manager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -155,7 +162,7 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
 
     def hard_delete(self):
         """Permanently delete the account (only for admin use)."""
-        super().delete(*arg, **kwargs)
+        super().delete()
 
 
     def email_user(self, subject, message):
@@ -199,7 +206,7 @@ class PopUpCustomerAddress(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    customer = models.ForeignKey(PopUpCustomer, verbose_name=_("Customer"), on_delete=models.CASCADE)
+    customer = models.ForeignKey(PopUpCustomer, verbose_name=_("Customer"), on_delete=models.CASCADE, related_name='address')
     prefix = models.CharField(max_length=10, choices=PREFIX_CHOICES, default="none")
     suffix = models.CharField(max_length=10, choices=SUFFIX_CHOICES, default="none")
     postcode = models.CharField(_("Postcode"), max_length=50)
@@ -375,13 +382,15 @@ class PopUpCustomerPayment(models.Model):
 
 
 # To track every password reset link sent
-class PasswordResetRequestLog(models.Model):
+class PopUpPasswordResetRequestLog(models.Model):
     customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name='password_reset_logs')
     ip_address = models.GenericIPAddressField()
     requested_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.customer.email} - {self.ip_address} @ {self.requested_at}"
+    
+
 """
 rm -rf quotes_api/migrations/  # Remove migration files
 python3 manage.py flush         # Clears all data from the database
