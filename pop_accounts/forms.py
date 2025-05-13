@@ -357,6 +357,7 @@ class PopUpRegistrationForm(forms.ModelForm):
             {'class': 'sign_up_options_form_email', 'placeholder': 'Confirm Password', 'name': 'password2', 'type': 'password'})
 
 
+
 class PopUpEmailPasswordResetForm(forms.ModelForm):
     email = forms.EmailField(
         label='Email',

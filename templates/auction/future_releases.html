@@ -54,7 +54,13 @@ Auction
                     <h3>{{ prod.secondary_product_title}}</h3>
                 </div>
                 <div class="fr_button_container">
-                    <button class="button_medium" href="/">Interested</button>
+                    {% if user.is_authenticated and prod in user.prods_interested_in.all %}
+                    <button class="button_medium interested_btn" data-product-id="{{ prod.id }}"
+                        data-interested="true">Interested ❤️</button>
+                    {% else %}
+                    <button class="button_medium interested_btn" data-product-id="{{ prod.id }}"
+                        data-interested="false">Interested</button>
+                    {% endif %}
                 </div>
             </div>
 

@@ -387,6 +387,10 @@ class PopUpPasswordResetRequestLog(models.Model):
     ip_address = models.GenericIPAddressField()
     requested_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = 'PopUpPasswordResetRequestLog'
+        verbose_name_plural = 'PopUpPasswordResetRequestLog'
+
     def __str__(self):
         return f"{self.customer.email} - {self.ip_address} @ {self.requested_at}"
     

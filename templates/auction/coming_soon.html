@@ -53,7 +53,15 @@ Auction
                     <h3>{{ prod.secondary_product_title}}</h3>
                 </div>
                 <div class="cs_button_container">
-                    <button class="button_medium" href="/">Notify Me</button>
+                    {% if user.is_authenticated and prod in user.prods_on_notice_for.all %}
+                    <button class="button_medium notify-me-button" data-product-id="{{ prod.id }}"
+                        data-interested="true">On Notice ❤️</button>
+                    {% else %}
+                    <button class="button_medium notify-me-button" data-product-id="{{ prod.id }}"
+                        data-interested="false">Notify
+                        Me
+                    </button>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}

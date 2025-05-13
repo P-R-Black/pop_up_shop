@@ -3,6 +3,10 @@ from django.http import JsonResponse
 # from .models import Product, Bid
 from .models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
 from django.utils.text import slugify
+import json
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
+
 
 
 # Create your views here.
@@ -54,8 +58,9 @@ def coming_soon(request, slug=None):
     else:
         product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
     return render(request, 'auction/coming_soon.html', {'product': product, 'product_types': product_types, 'product_type': product_type})
-
-
+        
+        
+        
 def future_releases(request, slug=None):
     product_type = None
     product_types = PopUpProductType.objects.all()
@@ -74,3 +79,7 @@ def product_detail(request, slug, id=id):
     product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=product)
     }
     return render(request, 'auction/product_detail.html', {'product': product, 'product_specifications':product_specifications})
+
+
+
+
