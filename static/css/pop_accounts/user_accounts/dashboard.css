@@ -10,9 +10,9 @@
 
 .personal_interest_notice_container {
     display: grid;
-    grid-template-columns: repeat(2, 45%);
+    grid-template-columns: repeat(2, 49%);
     justify-content: space-between;
-    gap: 1rem;
+    gap: 1.15rem;
 
 }
 
@@ -23,6 +23,7 @@
     height: 15rem;
     padding: 1rem 1rem;
     position: relative;
+    width: 100%;
 }
 
 

@@ -12,6 +12,7 @@ from .token import account_activation_token
 from orders.views import user_orders
 from django.http import JsonResponse, HttpResponse
 from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress
+from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .forms import PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, ThePopUpUserAddressForm
@@ -30,7 +31,7 @@ from django.views import View
 from .utils import validate_email_address
 from django.conf import settings
 import hashlib
-
+import json
 import logging
 
 
@@ -140,12 +141,119 @@ class UserDashboardView(LoginRequiredMixin, View):
     def get(self, request):
         user = request.user
         addresses = user.address.all()
-        context = {'user': user, 'addresses': addresses}
+        prod_interested_in = user.prods_interested_in.all()
+        prods_on_notice_for = user.prods_on_notice_for.all()
+
+        context = {'user': user, 'addresses': addresses, 'prod_interested_in': prod_interested_in, 
+                   'prods_on_notice_for': prods_on_notice_for
+                   }
         return render(request, self.template_name, context)
 
     def post(self, request):
         return render(request, self.template_name)
 
+
+
+class UserInterestedInView(LoginRequiredMixin, View):
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/interested_in.html'
+    product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="anticipated")   
+    product_specifications = None
+    
+    def get(self, request):
+        user = request.user
+        prod_interested_in = user.prods_interested_in.all()
+
+        for p in self.product:
+            self.product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
+        
+        context = {'user': user, 'prod_interested_in': prod_interested_in, 'product_specifications': self.product_specifications}
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        return render(request, self.template_name)
+    
+
+class MarkProductInterestedView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+     
+        data = json.loads(request.body)
+        product_id = data.get('product_id')
+        action = data.get("action", "add")
+
+        if not product_id:
+            return JsonResponse({"status": "error", "message": "Product ID missing"})
+            
+        try:
+            product = PopUpProduct.objects.get(id=product_id)
+            user = request.user
+            if product in user.prods_interested_in.all():
+                user.prods_interested_in.remove(product)
+                return JsonResponse({'status': 'removed', 'message': 'Product removed from interested list.'})
+            else:
+                user.prods_interested_in.add(product)
+                return JsonResponse({'status': 'added', 'message': 'Product added to interested list.'})
+            
+        except PopUpProduct.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+
+        if action == "remove":
+            request.user.prods_interested_in.remove(product)
+        else:
+            request.user.prods_interested_in.add(product)
+    
+        return JsonResponse({'status': 'success'})
+
+
+class UserOnNoticeView(LoginRequiredMixin, View):
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/on_notice.html'
+    product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="anticipated")   
+    product_specifications = None
+
+    def get(self, request):
+        user = request.user
+        prods_on_notice_for = user.prods_on_notice_for.all()
+
+        for p in self.product:
+            self.product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
+        
+        context = {'user': user, 'prods_on_notice_for': prods_on_notice_for, 'product_specifications': self.product_specifications}
+
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        return render(request, self.template_name)
+
+
+class MarkProductOnNoticeView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+
+        data = json.loads(request.body)
+        product_id = data.get('product_id')
+        action = data.get("action", "add")
+
+        if not product_id:
+            return JsonResponse({"status": "error", "message": "Product ID missing"})
+            
+        try:
+            product = PopUpProduct.objects.get(id=product_id)
+            user = request.user
+            if product in user.prods_on_notice_for.all():
+                user.prods_on_notice_for.remove(product)
+                return JsonResponse({'status': 'removed', 'message': 'Product removed from notify me list.'})
+            else:
+                user.prods_on_notice_for.add(product)
+                return JsonResponse({'status': 'added', 'message': 'Product added to notify me list.'})
+        except PopUpProduct.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+
+        if action == "remove":
+            request.user.prods_on_notice_for.remove(product)
+        else:
+            request.user.prods_on_notice_for.add(product)
+    
+        return JsonResponse({'status': 'success'})
+
+    
 
 @login_required
 def personal_info(request):
@@ -191,7 +299,6 @@ def personal_info(request):
         elif 'street_address_1' in request.POST:
 
             address_id = request.POST.get('address_id')
-            print('address_id', address_id)
             
             if address_id:
                 # Edit existing address
@@ -220,19 +327,6 @@ def personal_info(request):
                 # messages.success(request, "Address has been added.")
                 return redirect('pop_accounts:personal_info')
            
-        
-    # else:
-    #     personal_form = PopUpUserEditForm(initial={
-    #         'first_name': user.first_name,
-    #         'middle_name': user.middle_name,
-    #         'last_name': user.last_name,
-    #         'shoe_size': user.shoe_size,
-    #         'size_gender': user.size_gender,
-    #         'favorite_brand': user.favorite_brand,
-    #         'mobile_phone': user.mobile_phone,
-    #         'mobile_notification': user.mobile_notification
-    #         })
-
 
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/personal_info.html', {
         'form': personal_form, 'address_form': address_form, 'addresses': addresses, 'user': user})
@@ -277,17 +371,6 @@ def set_default_address(request, address_id):
         return JsonResponse({'success': False, 'error': 'Address not found'}, status=404)
 
 
-
-
-
-
-# @login_required
-def interested_in(request):
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/interested_in.html')
-
-# @login_required
-def on_notice(request):
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/on_notice.html')
 
 # @login_required
 def open_bids(request):
@@ -358,13 +441,6 @@ class RegisterView(View):
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
 
-        # email = request.session.get('auth_email') or request.POST.get('email')
-        # print('we\'ve got email', email)
-
-        # data = request.POST.copy()
-        # data['email'] = email
-
-        # print('data', data)
         if email and password and password2:
             # email = request.session.get('auth_email') or request.POST.get('email')
             data = request.POST.copy()
@@ -383,13 +459,14 @@ class RegisterView(View):
                     self.send_verification_email(request, user)
                 except Exception as e:
                     print('Error sending verification email', e)
-                # login(request, user)
                 return JsonResponse({'registered': True, 'message': 'Check your email to confirm your account'})
             else:
                 return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
             
         elif email and password:
             return JsonResponse({'success': False, 'errors': 'Please confirm password'}, status=400)
+
+        return JsonResponse({'success': False, 'errors': 'Missing required fields'}, status=400)
     
     def send_verification_email(self, request, user):
         token = default_token_generator.make_token(user)
@@ -408,7 +485,6 @@ class Login2FAView(View):
     If email on file, user prompted to enter password
     Class accepts password, verifies correct email-password and sends 6 digit code
     """
-    print('Login2FAView called!')
     MAX_ATTEMPTS = 5
     LOCKOUT_TIME = timedelta(minutes=15)
 
@@ -519,67 +595,6 @@ class Verify2FACodeView(View):
 
 
 
-# @require_POST
-# def verify_2fa_code(request):
-#     code_entered = request.POST.get('code')
-#     session_code = request.session.get('2fa_code')
-#     created_at_str = request.session.get('2fa_code_created_at')
-#     user_id = request.session.get('pending_login_user_id')
-#     # user_id = request.session.get('2fa_user_id')
-
-#     if not all([session_code, created_at_str, user_id]):
-#         return JsonResponse({"verified": False, "error": "Session expired or invalid"})
-
-#     try:
-#         code_created_at = timezone.datetime.fromisoformat(created_at_str)
-#         if timezone.is_naive(code_created_at):
-#             code_created_at = timezone.make_aware(code_created_at)
-#     except Exception:
-#         return JsonResponse({'verified': False, 'error': 'Invalid timestamp format'}, status=400)
-
-    
-#     # code_created_at = timezone.datetime.fromisoformat(created_at_str)
-
-#     # Check if more than 5 minutes have passed
-#     if timezone.now() > code_created_at + timedelta(minutes=5):
-#         request.session.pop('2fa_code', None)
-#         request.session.pop('2fa_code_created_at', None)
-#         request.session.pop('pending_login_user_id', None)
-#         return JsonResponse({'verified': False, 'error': 'Verification code has expired'}, status=400)
-
-    
-#     if str(code_entered).strip() == str(session_code).strip():
-#         try:
-#             user = PopUpCustomer.objects.get(id=user_id)
-#             login(request, user, backend='pop_accounts.backends.EmailBackend')
-#             request.session.save()
-#             # request.session.modified = True
-#             # request.session['just_logged_in'] = True  # Force session to be saved
-#             # request.session.save()    
-
-#             print("Session key after login:", request.session.session_key)
-#             print("Authenticated in view?", request.user.is_authenticated)
-#             print("User ID in session:", request.session.get('_auth_user_id'))
-
-#             # login(request, user)
-
-#             # clean up session 
-#             for key in ['2fa_code', '2fa_code_created_at', 'pending_login_user_id']:
-#                 print('key', key)
-#                 request.session.pop(key, None)
-     
-
-#             return JsonResponse({'verified': True, 'user_name': user.first_name})
-#             # return render(request, 'home.html', {'user': user})
-#             # print('user is after verif', user, user.first_name)
-#         except PopUpCustomer.DoesNotExist:
-#             return JsonResponse({'verified': False, 'error': 'User not found'}, status=404)
-        
-#     else:
-
-#         return JsonResponse({'verified': False, 'error': 'Invalid Code'}, status=400)
-
-
 @require_POST
 def resend_2fa_code(request):
     email = request.session.get('auth_email')
@@ -643,7 +658,6 @@ def send_password_reset_link(request):
         requested_at__gte=now_time - RESET_EMAIL_COOLDOWN
     ).exists()
 
-    print('recent_request', recent_request)
     if recent_request:
         return JsonResponse({'success': False, 'error': 'Reset already requested recently.'}, status=429)
    

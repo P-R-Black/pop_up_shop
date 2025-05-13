@@ -1,13 +1,20 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from pop_accounts.models import PopUpCustomer
+from auction.models import PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType
 from unittest.mock import patch
 from django.utils import timezone
 from django.utils.timezone import now
 from datetime import timedelta
 from uuid import uuid4
-
-
+from django.middleware.csrf import CsrfViewMiddleware
+from django.http import HttpRequest
+from django.views.decorators.csrf import csrf_protect
+from django.test import RequestFactory
+from django.http import JsonResponse
+from django.core import mail
+from pop_accounts.utils import validate_password_strength
+from django.core.exceptions import ValidationError
 
 class EmailCheckViewTests(TestCase):
     def setUp(self):
@@ -173,4 +180,280 @@ class Verify2FACodeViewTests(TestCase):
         response = self.client.post(self.url, {'code': self.code})
         self.assertEqual(response.status_code, 404)
         self.assertJSONEqual(response.content, {'verified': False, 'error': 'User not found'})
+    
 
+    def test_csrf_rejected_when_token_missing(self):
+        factory = RequestFactory()
+        request = factory.post(self.url, {'code': self.code})
+
+        # Attach user and session manually if needed
+        request.user = self.user
+        request.session = self.client.session
+
+        # Create CSRF middleware with dummy get_response
+        middleware = CsrfViewMiddleware(lambda req: None)
+
+        # Define a dummy view that requires CSRF
+        @csrf_protect
+        def dummy_view(req):
+            return JsonResponse({'ok': True})
+
+        # Run the middleware manually
+        response = middleware.process_view(request, dummy_view, (), {})
+
+        if response is None:
+            response = dummy_view(request)
+
+        self.assertEqual(response.status_code, 403)
+    
+    def test_missing_ajax_header(self):
+        response = self.client.post(self.url, {'code': self.code}, HTTP_X_REQUESTED_WITH='')
+        self.assertEqual(response.status_code, 200)
+
+
+
+class RegisterViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:register')
+    
+    def test_valid_registration_sends_verification_email(self):
+        response = self.client.post(self.url, {
+            'email': 'test@example.com',
+            'first_name': 'John',
+            'password': 'securePassword!23',
+            'password2': 'securePassword!23',
+
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {
+            'registered': True,
+            'message': 'Check your email to confirm your account'
+        })
+
+        user = PopUpCustomer.objects.get(email='test@example.com')
+        self.assertFalse(user.is_active)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Verify Your Email', mail.outbox[0].subject)
+    
+    def test_registration_with_mismatched_passwords(self):
+        response = self.client.post(self.url, {
+            'email': 'test@example.com',
+            'first_name': 'Jane',
+            'password': 'password!23',
+            'password2': 'differentPassword!'
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.json())
+        self.assertFalse(PopUpCustomer.objects.filter(email='test@example.com').exists())
+    
+
+    def test_registration_bad_password_strength(self):
+        response = self.client.post(self.url, {
+            'email': 'test@example.com',
+            'first_name': 'Jane',
+            'password': 'password123',
+            'password2': 'password123!'
+        })
+
+        self.assertEqual(response.status_code, 400)
+    
+
+    def test_missing_required_fields(self):
+        response = self.client.post(self.url, {
+            'email': '',
+            'first_name': '',
+            'password': '',
+            'password2': ''
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.json())
+    
+
+    def test_registration_fails_without_password2(self):
+        response = self.client.post(self.url, {
+            'email': 'missing@example.com',
+            'first_name': 'Sam',
+            'password': 'somePassword'
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.json())
+
+
+class PasswordStrengthValidationTests(TestCase):
+
+    def test_valid_password(self):
+        try:
+            validate_password_strength('StrongPass1!')
+        except ValidationError:
+            self.fail('validate_password_strength() raised ValidationError unexpectedly!')
+
+    def test_password_too_short(self):
+        with self.assertRaisesMessage(ValidationError, "Password must be at least 8 characters long."):
+            validate_password_strength('S1!a')
+
+    def test_missing_uppercase(self):
+        with self.assertRaisesMessage(ValidationError, "Password must contain at least one uppercase letter."):
+            validate_password_strength('weakpass1!')
+
+    def test_missing_lowercase(self):
+        with self.assertRaisesMessage(ValidationError, "Password must contain at least one lower case letter"):
+            validate_password_strength('WEAKPASS1!')
+
+    def test_missing_digit(self):
+        with self.assertRaisesMessage(ValidationError, "Password must contain at lease one number."):
+            validate_password_strength('Weakpass!')
+
+    def test_missing_special_char(self):
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Password must contain at least one special character (!@#$%^&*(),.?":|<>)'
+        ):
+            validate_password_strength('Weakpass1')
+
+
+class MarkProductInterestedViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = PopUpCustomer.objects.create_user(
+            email="testuser@example.com",
+            password="securePassword!23",
+            first_name="Test",
+            last_name="User",
+            shoe_size="10",
+            size_gender="male"
+        )
+
+        self.brand = PopUpBrand.objects.create(
+            name="Staries",
+            slug="staries"
+        )
+        self.categories = PopUpCategory.objects.create(
+            name="Jordan 3",
+            slug="jordan-3",
+            is_active=True
+        )
+        self.product_type = PopUpProductType.objects.create(
+            name="shoe",
+            slug="shoe",
+            is_active=True
+        )
+
+        now = timezone.now()
+        self.product = PopUpProduct.objects.create(
+            # id=uuid.uuid4(),
+            product_type=self.product_type,
+            category=self.categories,
+            product_title="Test Sneaker",
+            secondary_product_title = "Exclusive Drop",
+            description="New Test Sneaker Exlusive Drop from the best sneaker makers out.",
+            slug="test-sneaker-exclusive-drop", 
+            starting_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=self.brand, 
+            auction_start_date=now + timedelta(days=5), 
+            auction_end_date=now + timedelta(days=10), 
+            inventory_status="In Inventory", 
+            bid_count="0", 
+            reserve_price="0", 
+            is_active=True
+        )
+        self.url = reverse('pop_accounts:mark_interested')
+
+    
+    def test_authenticated_user_can_mark_product_interested(self):
+        self.client.login(email="testuser@example.com", password="securePassword!23")
+        response = self.client.post(
+            self.url,
+            data={"product_id": str(self.product.id)},
+            content_type = "application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "success")
+        self.assertIn(self.product, self.user.prods_interested_in.all())
+    
+
+    def test_unathenticated_user_redirected(self):
+        response = self.client.post(
+            self.url, data={'product_id': str(self.product.id)}, content_type='application/json'
+        )
+
+        # Should redirect to home page
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith('/'))
+    
+    
+    def test_product_does_not_exist(self):
+        self.client.login(email='testuser@example.com', password='securePassword!23')
+        invalid_id = 999999
+        response = self.client.post(
+            self.url, data={'product_id': str(invalid_id)},
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['status'], 'error')
+
+
+
+class MarkProductOnNoticeViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = PopUpCustomer.objects.create_user(
+            email="testuser@example.com",
+            password="securePassword!23",
+            first_name="Test",
+            last_name="User",
+            shoe_size="10",
+            size_gender="male"
+        )
+
+        self.brand = PopUpBrand.objects.create(
+            name="Staries",
+            slug="staries"
+        )
+        self.categories = PopUpCategory.objects.create(
+            name="Jordan 3",
+            slug="jordan-3",
+            is_active=True
+        )
+        self.product_type = PopUpProductType.objects.create(
+            name="shoe",
+            slug="shoe",
+            is_active=True
+        )
+
+        now = timezone.now()
+        self.product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.categories,
+            product_title="Test Sneaker",
+            secondary_product_title = "Exclusive Drop",
+            description="New Test Sneaker Exlusive Drop from the best sneaker makers out.",
+            slug="test-sneaker-exclusive-drop", 
+            starting_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=self.brand, 
+            auction_start_date=now + timedelta(days=5), 
+            auction_end_date=now + timedelta(days=10), 
+            inventory_status="In Inventory", 
+            bid_count="0", 
+            reserve_price="0", 
+            is_active=True
+        )
+        self.url = reverse('pop_accounts:mark_on_notice')
+
+    
+    def test_authenticated_user_can_mark_product_on_notice(self):
+        self.client.login(email="testuser@example.com", password="securePassword!23")
+        response = self.client.post(
+            self.url,
+            data={"product_id": str(self.product.id)},
+            content_type = "application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "success")
+        self.assertIn(self.product, self.user.prods_on_notice_for.all())
+    

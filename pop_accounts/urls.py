@@ -1,7 +1,9 @@
 from django.urls import path
 from . import views
 from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, 
-                    UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView)
+                    UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView,
+                    UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
+                    UserOnNoticeView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -35,11 +37,14 @@ urlpatterns = [
     path('delete-address/<uuid:address_id>/', views.delete_address, name='delete_address'),
     path('set-default-address/<uuid:address_id>/', views.set_default_address, name='set_default_address'),
 
-    path('interested-in', views.interested_in, name='interested_in'),
-    path('on-notice', views.on_notice, name='on_notice'),
-    path('open-bids', views.open_bids, name='open_bids'),
-    path('bids-history', views.past_bids, name='past_bids'),
-    path('purchase-history', views.past_purchases, name='past_purchases'),
+    # path('interested-in/', views.interested_in, name='interested_in'),
+    path('interested-in/', UserInterestedInView.as_view(), name='interested_in'),
+    path('mark-interested/', MarkProductInterestedView.as_view(), name='mark_interested'),
+    path('on-notice/', UserOnNoticeView.as_view(), name='on_notice'),
+    path('mark-on-notice/', MarkProductOnNoticeView.as_view(), name='mark_on_notice'),
+    path('open-bids/', views.open_bids, name='open_bids'),
+    path('bids-history/', views.past_bids, name='past_bids'),
+    path('purchase-history/', views.past_purchases, name='past_purchases'),
 
     # admin dashboard
     path('dashboard-admin',views.dashboard_admin, name='dashboard_admin'),

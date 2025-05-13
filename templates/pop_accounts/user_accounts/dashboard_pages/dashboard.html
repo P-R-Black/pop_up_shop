@@ -50,8 +50,32 @@ Dashboard
                 </div>
                 <div class="dashboard_databox_small">
                     <div class="dashboard_databox_title">
+                        <div><i class='bx bxs-flag-alt dashboard_icon'></i></div>
+                        <h2>Coming Soon On Notice</h2>
+                        <i class='bx bxs-info-circle info-icon'>
+                            <span class="tooltip-text">These are items that you will receive notice about when they go
+                                up for auction.</span>
+                        </i>
+                    </div>
+                    <div class="dashboard_interest_container">
+                        <ul>
+                            {% for prod in prods_on_notice_for %}
+                            <li id="product-two-{{ prod.id }}">
+                                <a href="/">{{ prod }} {{prod.secondary_product_title }}</a>
+                                <input type="checkbox" class="on_notice_checkbox" data-product-id="{{ prod.id }}"
+                                    checked>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="dashboard_more_container">
+                        <a href="{% url 'pop_accounts:on_notice' %}">More</a>
+                    </div>
+                </div>
+                <div class="dashboard_databox_small">
+                    <div class="dashboard_databox_title">
                         <div><i class='bx bx-list-plus dashboard_icon'></i></div>
-                        <h2>Interest In</h2>
+                        <h2>Future Releases Interest In</h2>
                         <i class='bx bxs-info-circle info-icon'>
                             <span class="tooltip-text">
                                 These are future releases that you've notified us that you are interested in.
@@ -61,37 +85,17 @@ Dashboard
                     </div>
                     <div class="dashboard_interest_container">
                         <ul>
-                            <li><a href="/">2024 Jordan 1 Retro Low OG SP</a><input type="checkbox"></li>
-                            <li><a href="#">2024 Travis Scott Medium Olive</a><input type="checkbox"></li>
+                            {% for prod in prod_interested_in %}
+                            <li id="product-{{ prod.id }}">
+                                <a href="/">{{ prod }} {{ prod.secondary_product_title }}</a>
+                                <input type="checkbox" class="interested_checkbox" data-product-id="{{ prod.id }}"
+                                    checked>
+                            </li>
+                            {% endfor %}
                         </ul>
                     </div>
                     <div class="dashboard_more_container">
-                        <a href="interested-in">More</a>
-                    </div>
-                </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div><i class='bx bxs-flag-alt dashboard_icon'></i></div>
-                        <h2>On Notice</h2>
-                        <i class='bx bxs-info-circle info-icon'>
-                            <span class="tooltip-text">These are items that you will receive notice about when they go
-                                up for auction.</span>
-                        </i>
-                    </div>
-                    <div class="dashboard_interest_container">
-                        <ul>
-                            <li>
-                                <a href="/">2024 Air Force 3 Low x Nigo Blue Void and Tour Yellow</a>
-                                <input type="checkbox">
-                            </li>
-                            <li>
-                                <a href="">2024 Nike SB Dunk Low Pro Light Carbon and Monarch</a>
-                                <input type="checkbox">
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="dashboard_more_container">
-                        <a href="on-notice">More</a>
+                        <a href="{% url 'pop_accounts:interested_in' %}">More</a>
                     </div>
                 </div>
                 <div class="dashboard_databox_small">
