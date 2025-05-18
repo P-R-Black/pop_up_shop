@@ -1,10 +1,10 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from pop_accounts.models import PopUpCustomer
 from auction.models import PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType
 from unittest.mock import patch
 from django.utils import timezone
-from django.utils.timezone import now
+from django.utils.timezone import now, make_aware
 from datetime import timedelta
 from uuid import uuid4
 from django.middleware.csrf import CsrfViewMiddleware
@@ -15,6 +15,8 @@ from django.http import JsonResponse
 from django.core import mail
 from pop_accounts.utils import validate_password_strength
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+
 
 class EmailCheckViewTests(TestCase):
     def setUp(self):
@@ -371,7 +373,7 @@ class MarkProductInterestedViewTests(TestCase):
             content_type = "application/json"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["status"], "success")
+        self.assertEqual(response.json()["status"], "added")
         self.assertIn(self.product, self.user.prods_interested_in.all())
     
 
@@ -454,6 +456,6 @@ class MarkProductOnNoticeViewTests(TestCase):
             content_type = "application/json"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["status"], "success")
+        self.assertEqual(response.json()["status"], "added")
         self.assertIn(self.product, self.user.prods_on_notice_for.all())
     

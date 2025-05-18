@@ -65,7 +65,6 @@ class CustomPopUpAccountManager(BaseUserManager):
 
 
 """THE POP UP SHOP"""
-
 class SoftDeleteUserManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(deleted_at__isnull=True)
@@ -112,9 +111,9 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     prods_on_notice_for = models.ManyToManyField(PopUpProduct, related_name="notified_users", blank=True)
 
     # Bidding Information
-    open_bids = models.ManyToManyField("PopUpBid", related_name="active_bids", blank=True)
-    past_bids = models.ManyToManyField("PopUpBid", related_name="past_bids", blank=True)
-    past_purchases = models.ManyToManyField("PopUpPurchase", related_name="user_purchases", blank=True)
+    # open_bids = models.ManyToManyField("PopUpBid", related_name="active_bids", blank=True)
+    # past_bids = models.ManyToManyField("PopUpBid", related_name="past_bids", blank=True)
+    # past_purchases = models.ManyToManyField("PopUpPurchase", related_name="user_purchases", blank=True)
 
     # User Status
     is_active = models.BooleanField(default=False)
@@ -135,6 +134,14 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = 'PopUpCustomer'
         verbose_name_plural = 'PopUpCustomers'
+    
+    @property
+    def open_bids(self):
+        return self.bids.filter(is_active=True)
+
+    @property
+    def past_bids(self):
+        return self.bids.filter(is_active=False)
     
 
     def soft_delete(self):
@@ -212,10 +219,10 @@ class PopUpCustomerAddress(models.Model):
     postcode = models.CharField(_("Postcode"), max_length=50)
     address_line = models.CharField(_("Address Line 1"), max_length=255)
     address_line2 = models.CharField(_("Address Line 2"), max_length=255, blank=True)
-    apartment_suite_number = models.CharField(_("Apartment/Suite"), max_length=50)
+    apartment_suite_number = models.CharField(_("Apartment/Suite"), max_length=50, blank=True)
     town_city = models.CharField(_("Town/City"), max_length=150)
     state = models.CharField(_("State"), max_length=100)
-    delivery_instructions = models.TextField(_("Deliver Instructions"))
+    delivery_instructions = models.TextField(_("Deliver Instructions"), blank=True)
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
     default = models.BooleanField(_("Default"), default=False)
@@ -285,18 +292,25 @@ class PopUpBid(models.Model):
         """
         Ensure bid amount is valid before saving
         """
-        latest_bid = PopUpBid.objects.filter(product=self.product).order_by('-amount').first()
+        # latest_bid = PopUpBid.objects.filter(product=self.product, is_active=True).order_by('-amount').first()
+        latest_bid = PopUpBid.objects.filter(product=self.product, is_active=True).exclude(pk=self.pk).order_by('-amount').first()
+
         if latest_bid:
+            print('latest_bid', latest_bid)
             if self.amount <= latest_bid.amount:
+                print(f'self.amount: {self.amount} | latest_bid.amount: {latest_bid.amount}')
                 raise ValueError('Bid amount must be higher than the current highest bid.')
         if self.expires_at and self.expires_at < timezone.now():
             self.is_active = False
 
         super().save(*args, **kwargs)
 
+
         highest = PopUpBid.get_highest_bid(self.product)
-        self.product.current_highest_bid = highest.amount if highest else None
-        self.product.save(update_fields=['current_highest_bid'])
+        product = self.product
+        product.current_highest_bid = highest.amount if highest else None
+        product.bid_count += 1
+        product.save(update_fields=['current_highest_bid', 'bid_count'])
 
         # Reset all other bids to is_winning_bid=False
         PopUpBid.objects.filter(product=self.product).update(is_winning_bid=False)
@@ -308,25 +322,53 @@ class PopUpBid(models.Model):
         # Handle aut-bidding after saving
         self.process_auto_bid()
     
-    def process_auto_bid(self):
+
+    def process_auto_bid(self, round=0, max_rounds=5):
         """
-        Checks if auto-bidding is enabled and places a new bid if necessary.
+        Handles auto-bidding with protection against infinite loops.
         """
-        highest_bid = PopUpBid.objects.filter(product=self.product, is_active=True)
-        if highest_bid and highest_bid.max_auto_bid:
-            # Find the next highest bid amount within the auto-bid limit
-            new_bid_amount = highest_bid.amount + highest_bid.bid_increment
-            if new_bid_amount <= highest_bid.max_auto_bid:
-                # Place a new bid for the same user within their max auto-bid limit
-                PopUpBid.objects.create(
-                    customer=highest_bid.customer,
-                    product=highest_bid.product,
-                    amount=new_bid_amount,
-                    is_active=True,
-                    max_auto_bid=highest_bid.max_auto_bid,
-                    bid_increment=highest_bid.bid_increment
-                )
+        if round >= max_rounds:
+            print(f"[Auto-bid] Max rounds ({max_rounds}) reached. Stopping auto-bids.")
+            return
+
+        current_highest = PopUpBid.objects.filter(product=self.product, is_active=True).order_by('-amount', '-timestamp').first()
+        print(f'current_highest: {current_highest}' )
+
+        # Check if auto-bidding applies
+        if not current_highest or not current_highest.max_auto_bid:
+            return
         
+        # Check if there's another user's auto-bid that needs to be triggered
+        competing_bids = PopUpBid.objects.filter(
+            product=self.product,
+            is_active=True,
+            max_auto_bid__isnull=False
+        ).exclude(customer=self.customer) #.order_by('-amount','-timestamp')
+
+        print(f'competing_bids: {competing_bids}')
+
+        for competitor in competing_bids:
+            proposed_amount = current_highest.amount + competitor.bid_increment    
+            if proposed_amount <= competitor.max_auto_bid:
+                try:
+                    new_bid = PopUpBid.objects.create(
+                        customer=competitor.customer,
+                        product=competitor.product,
+                        amount=proposed_amount,
+                        is_active=True,
+                        max_auto_bid=competitor.max_auto_bid,
+                        bid_increment=competitor.bid_increment
+                    )
+                    new_bid.save()
+                    print(f"[Auto-bid] New auto-bid placed: {new_bid}")
+
+                    # Recursively check for another auto-bid with incremented round
+                    new_bid.process_auto_bid(round=round + 1, max_rounds=max_rounds)
+                except ValueError as e:
+                    print(f"[Auto-bid] skipped at: {proposed_amount}")
+            
+                break # Stop after first successful auto-bid to prevent mass bid pileups
+
     
     @classmethod
     def get_highest_bid(cls, product):

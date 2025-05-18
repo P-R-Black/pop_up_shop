@@ -1,9 +1,11 @@
 from django.urls import path
 from . import views
+from .views import PlaceBidView
 
 app_name = 'auction'
 urlpatterns = [
     path('', views.all_auction_view, name="auction"),
+    path('place-bid/', PlaceBidView.as_view(), name='place_bid'),
     path('open/', views.product_auction_view, name='product_auction'), # map to product id
     path('open/<slug:slug>/', views.product_auction_view, name='product_auction'), # map to product id
     path('product-buy/', views.product_buy_view, name='product_buy'), # map to product id

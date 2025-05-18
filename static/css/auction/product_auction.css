@@ -405,6 +405,7 @@ input#custom_bid {
     outline: 0;
     border-radius: 5px;
     margin-left: .05rem;
+    width: 100%;
 }
 
 /* Chrome, Safari, Edge, Opera */

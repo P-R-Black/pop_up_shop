@@ -1,6 +1,8 @@
 {% extends "layout.html" %}
 {% load static %}
-
+{% load custom_math %}
+{% load email_filters %}
+{% load humanize %}
 
 {% block title %}
 Auction
@@ -23,82 +25,142 @@ Auction
                     <h3>Bid Action</h3>
                 </div>
                 <div class="open_bids_open_bids">
+                    {% for hb in open_bids %}
                     <div class="open_bids_items_container">
                         <div class="open_bids_detail_item">
                             <a href="product-details">
-                                <p>Jordan 1 Retro Low OG SP Travis Scott Medium Olive</p>
+                                <p>{{ hb.product }} {{ hb.product.secondary_product_title }}</p>
                             </a>
                         </div>
                         <div class="open_bids_detail_size">
-                            <p>8.5 US Men</p>
+                            {% for gen in hb.specs|slice:"5:6" %}
+                            {% if gen.value == "Male" %}
+
+                            <p>U.S. {{"Men's"}}
+                                <span>
+                                    {% for h in hb.specs|slice:"4:5" %}
+                                    {{ h }}
+                                    {% endfor %}
+                                </span>
+                            </p>
+                            {% else %}
+                            <p>U.S. {{"Womens's"}}
+                                <span>
+                                    {% for h in hb.specs|slice:"4:5" %}
+                                    {{ h }}
+                                    {% endfor %}
+                                </span>
+                            </p>
+                            {% endif %}
+                            {% endfor %}
                         </div>
                         <div class="open_bids_last_bid">
-                            <p>$500</p>
+                            <p>${{ hb.highest_user_bid.amount }}</p>
                         </div>
                         <div class="open_bids_bid_status">
+                            {% if hb.highest_user_bid.amount == hb.current_highest %}
+                            <p>Current Top Bid</p>
+                            {% else %}
                             <p>Losing Bid</p>
+                            {% endif %}
                         </div>
                         <div class="indi_bids_action">
-                            <button id="opeBidsBidButton" class="button_medium opeBidsBidButton">Increase Bid</button>
+                            {% if hb.highest_user_bid.amount != hb.current_highest %}
+                            <button id="opeBidsBidButton" class="button_medium bidButtonClass"
+                                data-product-id="{{ hb.product.id }}">Increase Bid</button>
+                            {% endif %}
                         </div>
                         <!-- Bid Modal -->
-                        <div class="modal openBidsBidModal fade" tabindex="-1" aria-labelledby="bidModalLabel"
-                            aria-hidden="true">
+                        <div class="modal fade" id="bidModal-{{ hb.product.id }}" tabindex="-1"
+                            aria-labelledby="bidModalLabel" aria-hidden="true">
                             <div class="modal_content">
 
                                 <div class="modal_header">
                                     <h3 class="modal-title" id="bidModalLabel">Increase Your Bid</h3>
-                                    <button type="button" class="btn-close openBidCloseModal"
-                                        aria-label="Close">X</button>
+                                    <button type="button" class="btn-close closeModal" aria-label="Close">X</button>
                                 </div>
                                 <div class="modal_bid_shipping_days_left">
                                     <div class="modal_bid_and_shipping">
-                                        <h5>$500</h5>
+                                        <h5>${{ hb.current_highest }}</h5>
                                         <h5> + Shipping</h5>
                                     </div>
                                     <div class="modal_bid_numb_of_bids">
-                                        <h5><span>25</span>bids</h5>
+                                        <h5><span>{{ hb.bid_count }}</span>bids</h5>
                                     </div>
                                     <div class="modal_bid_days_left">
-                                        <h5><span>10</span>days left</h5>
+                                        {% if hb.duration.days > 1 %}
+                                        <h5><span>{{ hb.duration.days }}</span>days left</h5>
+                                        {% else %}
+                                        <h5><span>{{ hb.duration.days }}</span>day left</h5>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="modal_body">
-                                    <form id="bidForm" method="post" action="">
+                                    <form class="bidForm" id="bidForm-{{ hb.product.id }}" method="post"
+                                        data-product-id="{{ hb.product.id }}" action="{% url 'auction:place_bid' %}">
                                         {% csrf_token %}
-                                        <div id="predefined_bids" class="form-select">
-                                            <button class="button_long_small" value="10">Bid<span>
-                                                    $10</span></button>
-                                            <button class="button_long_small" value="20">Bid<span>
-                                                    $20</span></button>
-                                            <button class="button_long_small" value="50">Bid<span>
-                                                    $30</span></button>
+                                        <div id="predefined_bids-{{ hb.id }}" class="predefined_bids"
+                                            data-product-id="{{ hb.product.id }}">
+                                            {% if hb.current_highest %}
+                                            {% for inc in quick_bid_increments %}
+                                            {% with new_bid=hb.current_highest|compute_number:inc %}
+                                            <button type="button" data-amount="{{ new_bid }}"
+                                                class="button_long_small quick_bid">Bid <span>
+                                                    ${{new_bid|intcomma }}.00</span></button>
+                                            {% endwith %}
+                                            {% endfor %}
+                                            {% endif %}
+                                            <button class="button_long_small">Cancel Bids</button>
                                         </div>
 
                                         <div class="bid_modal_input_container">
+                                            <input type="hidden" name="product_id" value="{{ hb.product.id }}">
                                             <label for="custom_bid"><span>or enter your bid</span></label>
                                             <div class="modal_bid_input_submit_btn">
                                                 <div class="outer_input_container">
                                                     <h4>$</h4>
-                                                    <input type="number" id="custom_bid" name="bid_amount"
-                                                        class="form-control" placeholder="Enter your bid">
+                                                    <input type="number" step="0.01" id="custom_bid-{{ hb.product.id }}"
+                                                        name="bid_amount" class="form-control" required
+                                                        min="{{ hb.current_highest|compute_number:1|intcomma}}.00"
+                                                        placeholder="Enter custom bid">
                                                 </div>
                                                 <div class="mt-3">
-                                                    <button type="button" class="btn btn-primary button_long_small"
-                                                        id="submitBid">Submit
+                                                    <button type="submit" class="btn btn-primary button_long_small"
+                                                        id="submitBid-{{ hb.product.id }}">Submit
                                                         Bid</button>
                                                 </div>
                                             </div>
-                                            <p>Enter <span>$50 </span>or more</p>
+                                            {% if hb.current_highest %}
+                                            <p class="bid_hint">Enter
+                                                <span>${{hb.current_highest|compute_number:1|intcomma}}.00</span>
+                                                or more
+                                            </p>
+                                            {% else %}
+                                            <p class="bid_hint">Enter
+                                                <span>${{hb.retail_price|compute_number:1|intcomma}}.00</span>
+                                                or more
+                                            </p>
+                                            {% endif %}
                                         </div>
                                     </form>
+                                    <div class="bid_response" style="color:red"></div>
                                 </div>
                                 <div class="modal_user_abbr_user_info">
                                     <div class="modal_user_pay_email_shipping_container">
-                                        <img class="modal_user_card_img" alt="Responsive image"
-                                            src="{% static 'img/tiny-paypal.png' %}" alt="{{ image.image.alt_text}}">
-                                        <p>u****e@hotmail.com</p>
-                                        <p>ship to <span>11422</span></p>
+
+                                        {% for image in hb.product_image.all %}
+                                        {% if image.is_feature %}
+                                        <img class="modal_user_card_img" src="{{ image.image.url }}"
+                                            alt="Responsive Image">
+                                        {% endif %}
+                                        {% endfor %}
+
+                                        {% if user.is_authenticated %}
+                                        <p>{{ user.email|obfuscate_email }}</p>
+                                        {% endif %}
+                                        {% for address in addresses %}
+                                        <p>ship to <span>{{ address.postcode }}</span></p>
+                                        {% endfor %}
                                     </div>
                                     <div class="modal_user_info_update_container">
                                         <a href="/">Update</a>
@@ -106,7 +168,8 @@ Auction
                                 </div>
                                 <div class="modal_purchase_disclaimer">
                                     <p>
-                                        By selecting to submit bid, you authorize The Pop Up to bid up to your max
+                                        By selecting to submit bid, you authorize The Pop Up to bid up to
+                                        your max
                                         bid and if
                                         you win, charge your bid amount and related costs to your
                                         <span>PayPal</span> account.
@@ -117,10 +180,10 @@ Auction
                         </div>
                         <!-- End of Bid Modal -->
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
-
 </section>
 
 {% endblock %}

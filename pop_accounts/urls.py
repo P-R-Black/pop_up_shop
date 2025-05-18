@@ -3,7 +3,7 @@ from . import views
 from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, 
                     UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView,
                     UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
-                    UserOnNoticeView)
+                    UserOnNoticeView, OpenBidsView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -30,6 +30,7 @@ urlpatterns = [
     
     # path('dashboard', views.dashboard, name='dashboard'),
     path('dashboard/', UserDashboardView.as_view(), name='dashboard'),
+    # path('place-bid/', DashboardPlaceBidView.as_view(), name='place_bid'),
 
     # User Info
     path('personal-information/', views.personal_info, name='personal_info'),
@@ -42,7 +43,8 @@ urlpatterns = [
     path('mark-interested/', MarkProductInterestedView.as_view(), name='mark_interested'),
     path('on-notice/', UserOnNoticeView.as_view(), name='on_notice'),
     path('mark-on-notice/', MarkProductOnNoticeView.as_view(), name='mark_on_notice'),
-    path('open-bids/', views.open_bids, name='open_bids'),
+    # path('open-bids/', views.open_bids, name='open_bids'),
+    path('open-bids/', OpenBidsView.as_view(), name="open_bids"),
     path('bids-history/', views.past_bids, name='past_bids'),
     path('purchase-history/', views.past_purchases, name='past_purchases'),
 

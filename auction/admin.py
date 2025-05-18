@@ -6,8 +6,6 @@ from .models import (PopUpProduct, PopUpCategory, PopUpProductSpecification, Pop
 )
 
 
-
-
 admin.site.register(PopUpCategory, MPTTModelAdmin)
 class ProductSpecificationInline(admin.TabularInline):
     model = PopUpProductSpecification
