@@ -843,56 +843,148 @@ if (!localStorage.getItem('darkMode')) {
 // bid modal
 document.addEventListener('DOMContentLoaded', function () {
     // Get the modal, button, and close span
-    const modal = document.getElementById('bidModal');
-    const btn = document.getElementById('bidButton');
-    const span = document.querySelector('.closeModal');
 
-    if (btn) {
-        // Show the modal when the button is clicked
-        btn.addEventListener('click', function () {
-            modal.style.display = 'block';
-        });
+    const bidButton = document.querySelectorAll('.bidButtonClass')
+    if (bidButton) {
+        bidButton.forEach((btn) => {
+            btn.addEventListener('click', function () {
+                console.log("I've been clicked the bidButton")
+                const productId = this.dataset.productId;
+                const modal = document.getElementById(`bidModal-${productId}`);
+                console.log('productId', productId)
+                console.log('modal', modal)
+                if (modal) {
+                    modal.style.display = 'block';
+                }
+            })
+        })
     } else {
         console.warn('bidButton not found in the DOM.');
     }
 
+    document.querySelectorAll('.modal.fade').forEach(modal => {
+        const productId = modal.id.split('-')[1]; // Extract product ID from modal ID
+        console.log('modal opened')
+        console.log('productId', productId)
+        // Handle close button
+        const closeBtn = modal.querySelector('.closeModal');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function () {
+                modal.style.display = 'none';
+            });
+        } else {
+            console.warn(`Close button not found for modal-${productId}`);
+        }
 
-    const bidButton = document.querySelectorAll('.bidButtonClass')
-    bidButton.forEach((bidBtn) => {
-        bidBtn.addEventListener('click', function () {
-            if (bidBtn) {
-                // Show the modal when the button is clicked
-                bidBtn.addEventListener('click', function () {
-                    modal.style.display = 'block';
-                });
-            } else {
-                console.warn('bidButton not found in the DOM.');
-            }
-        })
-    })
-
-
-
-    if (span) {
-        // Close the modal when the close span is clicked
-        span.addEventListener('click', function () {
-            modal.style.display = 'none';
-        });
-    } else {
-        console.warn('closeModal span not found in the DOM.');
-    }
-
-    // Close the modal when clicking outside of it
-    if (modal) {
+        // Handle outside click
         window.addEventListener('click', function (event) {
             if (event.target === modal) {
                 modal.style.display = 'none';
             }
         });
-    } else {
-        console.warn('bidModal not found in the DOM.');
-    }
+    });
+
+
+
+    // if user not signed in and tries to bid
+    document.querySelectorAll('.loginPrompt').forEach(btn => {
+        btn.addEventListener('click', () => {
+            alert("You must be signed in to place a bid");
+            signUpModal.style.display = 'block';
+        })
+    })
+
+    // buttons for prefilled bids
+    document.body.addEventListener('click', (e) => {
+        if (!e.target.closest('.quick_bid')) return;
+        const preBidBtn = e.target.closest('.quick_bid');
+        const form = preBidBtn.closest('.bidForm');
+        const input = form.querySelector('input[name="bid_amount"]');
+
+        input.value = preBidBtn.dataset.amount;
+        input.focus();
+    })
+
+
+    // Handle AJAX Submit
+    document.querySelectorAll('.bidForm').forEach(form => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const data = new FormData(form);
+
+            console.log('data', data)
+
+            // http://localhost:8000/auction/place-bid/
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie('csrftoken')
+
+                },
+                body: data
+            })
+                .then(async (r) => {
+                    const resp = form.nextElementSibling;
+                    const data = await r.json();
+
+
+                    if (!r.ok) {
+                        resp.style.color = "red";
+                        resp.textContent = data.message || "Something went wrong.";
+                        return;
+                    }
+                    resp.style.color = "green";
+                    resp.textContent = `Bid placed! New high $${data.new_highest}, bids: ${data.bid_count}`;
+
+                    // Update the DOM with the new highest bid and bid count
+                    const productId = form.dataset.productId;
+
+                    // Update highest bid
+                    const bidDisplay = document.querySelector(`.current_bid_display[data-product-id="${productId}`)
+                    if (bidDisplay) {
+                        bidDisplay.innerHTML = `$${data.new_highest}`;
+                    }
+
+
+                    // Update bid count
+                    const countDisplay = document.querySelector(`.current_bid_count[data-product-id="${productId}"], .current_bid_count_value`);
+                    if (countDisplay) {
+                        countDisplay.innerHTML = data.bid_count;
+                    }
+
+                    const newHighest = data.new_highest;
+                    const predefinedContaner = document.querySelector(`#predefined_bids[data-product-id="${productId}"`)
+                    if (predefinedContaner) {
+                        const increments = [10, 20, 30];
+                        const preDefButtons = predefinedContaner.querySelectorAll('.quick_bid');
+                        preDefButtons.forEach((btn, index) => {
+                            const increment = increments[index];
+
+                            const updatedAmount = (Number(newHighest) + Number(increment)).toFixed(2);
+
+                            btn.dataset.amount = updatedAmount;
+                            btn.querySelector('span').textContent = `$${Number(updatedAmount).toLocaleString()}`
+                        })
+                    }
+
+                    const bidHint = document.querySelector('.bid_hint');
+                    bidHint.textContent = " "
+
+                    // Optionally clear input
+                    form.reset();
+                })
+                .catch(() => {
+                    const resp = form.nextElementSibling;
+                    resp.style.color = "red";
+                    resp.textContent = "Unexpected error. Please try again";
+                    // form.nextElementSibling.textContent = "Unexpected"
+                });
+        });
+    });
+
 });
+
 
 
 
@@ -1157,3 +1249,5 @@ if (resetPasswordForm) {
             });
     });
 }
+
+

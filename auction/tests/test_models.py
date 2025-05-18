@@ -6,6 +6,8 @@ from auction.models import (PopUpProduct, PopUpCategory, PopUpBrand,
 from django.utils.timezone import now
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware
+from freezegun import freeze_time
+from unittest.mock import patch
 
 class TestPopUpBrandModel(TestCase):
     def setUp(self):
@@ -150,13 +152,15 @@ class TestProductsActiveAuction(TestCase):
     """
     Test an Active Auction
     """
+    # freeze_time("2025-05-17 12:00:00")
     def setUp(self):
         PopUpCategory.objects.create(name='Jordan 3', slug='jordan-3')
         PopUpBrand.objects.create(name='Jordan', slug='jordan')
         PopUpProductType.objects.create(name='shoe', slug='shoe')
 
-        auction_start = make_aware(datetime(2025, 4, 13, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 4, 20, 12,0, 0))
+        auction_start = make_aware(datetime(2025, 5, 10, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 5, 18, 12, 0, 0))
+        
 
         self.prod_one = PopUpProduct.objects.create(
             product_type_id=1, 
@@ -175,7 +179,12 @@ class TestProductsActiveAuction(TestCase):
             reserve_price="0",
             is_active=True)
     
-    def test_product_model_active_auction(self):
+        print('start', self.prod_one.auction_start_date)
+        print('end', self.prod_one.auction_end_date)
+
+    # freeze_time("2025-05-17 12:00:00")
+    def test_product_model_active_auction(self, mock_now):
+
         prod_one = self.prod_one
         status = prod_one.auction_status
         duration = prod_one.auction_duration
@@ -228,7 +237,7 @@ class TestProductsUpcomingAuction(TestCase):
 
 class TestProductsFinishedAuction(TestCase):
     """
-    Test An Upcoming Auction
+    Test A Finished Auction
     """
     def setUp(self):
         PopUpCategory.objects.create(name='Jordan 3', slug='jordan-3')

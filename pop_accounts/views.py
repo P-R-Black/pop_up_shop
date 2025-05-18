@@ -7,11 +7,11 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import authenticate, login, get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from .token import account_activation_token
 from orders.views import user_orders
 from django.http import JsonResponse, HttpResponse
-from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress
+from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid
 from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -33,7 +33,8 @@ from django.conf import settings
 import hashlib
 import json
 import logging
-
+from django.db.models import OuterRef, Subquery, F
+from decimal import Decimal
 
 
 logger  = logging.getLogger('security')
@@ -140,12 +141,54 @@ class UserDashboardView(LoginRequiredMixin, View):
     template_name = 'pop_accounts/user_accounts/dashboard_pages/dashboard.html'
     def get(self, request):
         user = request.user
-        addresses = user.address.all()
+        addresses = user.address.filter(default=True)
         prod_interested_in = user.prods_interested_in.all()
         prods_on_notice_for = user.prods_on_notice_for.all()
 
+        subquery = PopUpBid.objects.filter(
+            customer_id=user.id,
+            product=OuterRef('product'),
+            is_active=True
+        ).order_by('-amount').values('amount')[:1]
+       
+        # This queryset contains a reference to an outer query and may only be used in a subquery.
+        highest_bid_objects = PopUpBid.objects.filter(
+            customer_id=user.id,
+            is_active=True,
+            amount=Subquery(subquery)
+        ).select_related('product')  # This will fetch the related product data
+        
+        product_ids = highest_bid_objects.values_list('product_id', flat=True)
+
+        products = (
+            PopUpProduct.objects.filter(id__in=product_ids, is_active=True, inventory_status='in_inventory')
+            .prefetch_related('popupproductspecificationvalue_set')
+        )
+
+        product_map = {p.id: p for p in products}
+
+        enriched_data = []
+        for bid in highest_bid_objects:
+            product = product_map.get(bid.product_id)
+            if not product:
+                continue
+                
+            enriched_data.append({
+                "highest_user_bid": bid,
+                "product": product,
+                'specs': list(product.popupproductspecificationvalue_set.all()),
+                "current_highest": product.current_highest_bid,
+                "bid_count": product.bid_count,
+                "duration": product.auction_duration,
+                'retail_price': product.retail_price,
+                
+                })
+
+    
+        quick_bid_increments = [10, 20, 30]
         context = {'user': user, 'addresses': addresses, 'prod_interested_in': prod_interested_in, 
-                   'prods_on_notice_for': prods_on_notice_for
+                   'prods_on_notice_for': prods_on_notice_for, 'highest_bid_objects': highest_bid_objects, 
+                   'quick_bid_increments':quick_bid_increments, 'open_bids':enriched_data
                    }
         return render(request, self.template_name, context)
 
@@ -196,13 +239,6 @@ class MarkProductInterestedView(LoginRequiredMixin, View):
         except PopUpProduct.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
 
-        if action == "remove":
-            request.user.prods_interested_in.remove(product)
-        else:
-            request.user.prods_interested_in.add(product)
-    
-        return JsonResponse({'status': 'success'})
-
 
 class UserOnNoticeView(LoginRequiredMixin, View):
     template_name = 'pop_accounts/user_accounts/dashboard_pages/on_notice.html'
@@ -245,13 +281,6 @@ class MarkProductOnNoticeView(LoginRequiredMixin, View):
                 return JsonResponse({'status': 'added', 'message': 'Product added to notify me list.'})
         except PopUpProduct.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
-
-        if action == "remove":
-            request.user.prods_on_notice_for.remove(product)
-        else:
-            request.user.prods_on_notice_for.add(product)
-    
-        return JsonResponse({'status': 'success'})
 
     
 
@@ -372,9 +401,63 @@ def set_default_address(request, address_id):
 
 
 
-# @login_required
-def open_bids(request):
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/open_bids.html')
+class OpenBidsView(LoginRequiredMixin, View):
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/open_bids.html'
+    def get(self, request):
+        user = request.user
+        addresses = user.address.filter(default=True)
+        prod_interested_in = user.prods_interested_in.all()
+        prods_on_notice_for = user.prods_on_notice_for.all()
+
+        subquery = PopUpBid.objects.filter(
+            customer_id=user.id,
+            product=OuterRef('product'),
+            is_active=True
+        ).order_by('-amount').values('amount')[:1]
+       
+        # This queryset contains a reference to an outer query and may only be used in a subquery.
+        highest_bid_objects = PopUpBid.objects.filter(
+            customer_id=user.id,
+            is_active=True,
+            amount=Subquery(subquery)
+        ).select_related('product')  # This will fetch the related product data
+        
+        product_ids = highest_bid_objects.values_list('product_id', flat=True)
+
+        products = (
+            PopUpProduct.objects.filter(id__in=product_ids, is_active=True, inventory_status='in_inventory')
+            .prefetch_related('popupproductspecificationvalue_set')
+        )
+
+        product_map = {p.id: p for p in products}
+
+        enriched_data = []
+        for bid in highest_bid_objects:
+            product = product_map.get(bid.product_id)
+            if not product:
+                continue
+                
+            enriched_data.append({
+                "highest_user_bid": bid,
+                "product": product,
+                'specs': list(product.popupproductspecificationvalue_set.all()),
+                "current_highest": product.current_highest_bid,
+                "bid_count": product.bid_count,
+                "duration": product.auction_duration,
+                'retail_price': product.retail_price,
+                
+                })
+    
+        quick_bid_increments = [10, 20, 30]
+        context = {'user': user, 'addresses': addresses, 'prod_interested_in': prod_interested_in, 
+                   'prods_on_notice_for': prods_on_notice_for, 'highest_bid_objects': highest_bid_objects, 
+                   'quick_bid_increments':quick_bid_increments, 'open_bids':enriched_data
+                   }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        return render(request, self.template_name)
+    
 
 # @login_required
 def past_bids(request):

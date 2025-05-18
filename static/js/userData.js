@@ -64,6 +64,7 @@ function getCookieTwo(name) {
 }
 
 
+// Adds Items to lists like Interested-In or On-Notice and Updates UI
 const addItemsToUserLists = (addToListBtn, fetchUrl, label, emoji = '❤️') => {
     addToListBtn.forEach(button => {
         button.addEventListener('click', function (e) {

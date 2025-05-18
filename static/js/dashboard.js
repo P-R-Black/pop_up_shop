@@ -17,22 +17,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    // const bidButton = document.querySelectorAll('.bidButtonClass')
-    // bidButton.forEach((bidBtn) => {
-    //     bidBtn.addEventListener('click', function () {
-    //         if (bidBtn) {
-    //             // Show the modal when the button is clicked
-    //             bidBtn.addEventListener('click', function () {
-    //                 modal.style.display = 'block';
-    //             });
-    //         } else {
-    //             console.warn('bidButton not found in the DOM.');
-    //         }
-    //     })
-    // })
-
-
-
     if (closeSizeEditModal) {
         // Close the modal when the close span is clicked
         closeSizeEditModal.addEventListener('click', function () {
@@ -373,89 +357,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
 })
 
-// Dashboard Open Bids Increase Bid Modal
-document.addEventListener('DOMContentLoaded', function (e) {
-    e.preventDefault();
-    // Get edit button and close span
-    const dashboardBidIncreaseModal = document.querySelector('.dashboardBidIncreaseModal');
-    const dashboardBidIncreaseBtn = document.querySelectorAll('.dashboardBidIncreaseButton');
-    const dashboardBidIncreaseCloseModal = document.querySelector('.dashboardBidIncreaseCloseModal');
-
-    if (dashboardBidIncreaseBtn) {
-        dashboardBidIncreaseBtn.forEach((dbib) => {
-            dbib.addEventListener('click', function () {
-                dashboardBidIncreaseModal.style.display = 'block'
-            });
-        })
-    } else {
-        console.warn('open bids bidButton not found in the DOM')
-    }
-
-
-    if (dashboardBidIncreaseCloseModal) {
-        // Close the modal when the close span is clicked
-        dashboardBidIncreaseCloseModal.addEventListener('click', function () {
-            dashboardBidIncreaseModal.style.display = 'none';
-        });
-    } else {
-        console.warn('closeModal span not found in the DOM.');
-    }
-
-    // Close the modal when clicking outside of it
-    if (dashboardBidIncreaseModal) {
-        window.addEventListener('click', function (event) {
-            if (event.target === dashboardBidIncreaseModal) {
-                dashboardBidIncreaseModal.style.display = 'none';
-            }
-        });
-    } else {
-        console.warn('bidModal not found in the DOM.');
-    }
-
-
-})
-
-
-// Open Bids Page bid modal
-document.addEventListener('DOMContentLoaded', function () {
-    // Get the modal, button, and close span
-
-    const openBidsBidModal = document.querySelector('.openBidsBidModal');
-    const opeBidsBidButton = document.querySelectorAll('.opeBidsBidButton');
-    const openBidCloseModal = document.querySelector('.openBidCloseModal');
-
-
-    if (opeBidsBidButton) {
-        opeBidsBidButton.forEach((obbb) => {
-            obbb.addEventListener('click', function () {
-                openBidsBidModal.style.display = 'block'
-            });
-        })
-    } else {
-        console.warn('open bids bidButton not found in the DOM')
-    }
-
-
-    if (openBidCloseModal) {
-        // Close the modal when the close span is clicked
-        openBidCloseModal.addEventListener('click', function () {
-            openBidsBidModal.style.display = 'none';
-        });
-    } else {
-        console.warn('closeModal span not found in the DOM.');
-    }
-
-    // Close the modal when clicking outside of it
-    if (openBidsBidModal) {
-        window.addEventListener('click', function (event) {
-            if (event.target === openBidsBidModal) {
-                openBidsBidModal.style.display = 'none';
-            }
-        });
-    } else {
-        console.warn('bidModal not found in the DOM.');
-    }
-});
 
 
 
