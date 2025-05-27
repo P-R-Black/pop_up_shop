@@ -1045,9 +1045,24 @@ subtotalExpand.addEventListener("click", function () {
 // shipping button options
 var shippingButtons = document.querySelectorAll(".button_long_option")
 const shippingCost = document.getElementById('shippingCost')
+const orderQuantity = document.getElementById('purchaseQuantity').innerHTML
+const processingFee = document.getElementById('processingFee').innerHTML
+const salesTax = document.getElementById('purchaseTax').innerHTML
+const purchaseSubtotal = document.getElementById('purchaseSubtotal').innerHTML
+
+
+let shippingMath;
+let orderTotal;
+let shipping;
 
 shippingButtons.forEach((button) => {
-    button.addEventListener("click", function () {
+
+    shippingMath = 1499 * Number(orderQuantity)
+    shippingCost.innerText = `$${shippingMath / 100}`
+
+
+    button.addEventListener("click", function (e) {
+        e.preventDefault();
         // Loop through all buttons and remove "active" class if present
         if (body) {
             shippingButtons.forEach((btn) => btn.classList.remove("chosen"));
@@ -1056,19 +1071,34 @@ shippingButtons.forEach((button) => {
             this.classList.add("chosen");
 
         }
-        console.log('button.innerHTML', button.innerHTML)
-        if (button.innerHTML == "Standard Shipping") {
-            shippingCost.innerText = "$14.99"
+
+        let processFee = processingFee.replace("$", "").replace(",", "")
+        let tax = salesTax.replace("$", "").replace(",", "")
+
+        if (button.name == "standard") {
+            shippingMath = 1499 * Number(orderQuantity)
+            shippingCost.innerText = `$${shippingMath / 100}`
+            shipping = shippingCost.innerText.replace("$", "").replace(",", "")
+            calculateSubtotal(processFee, shipping, tax)
         }
 
-        if (button.innerHTML == "Express Shipping") {
-            shippingCost.innerText = "$29.99"
+        if (button.name == "express") {
+            shippingMath = 2999 * Number(orderQuantity)
+            shippingCost.innerText = `$${shippingMath / 100}`
+            shipping = shippingCost.innerText.replace("$", "").replace(",", "")
+            calculateSubtotal(processFee, shipping, tax)
         }
-        calculateSubtotal()
+
+
 
     });
+
+
 });
 
+function numberWithCommas(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 // update primary payment button
 document.addEventListener('DOMContentLoaded', function () {
@@ -1136,19 +1166,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // get subtotal and total
 
-const calculateSubtotal = () => {
-    const purchaseSubtotal = document.getElementById('purchaseSubtotal')
-    const purchasePrice = document.getElementById('purchasePrice').innerHTML.replace('$', '')
-    const purchaseQuantity = document.getElementById('purchaseQuantity').innerHTML
-    const processingFee = document.getElementById('processingFee').innerHTML.replace('$', '')
-    const shippingInnerHTML = shippingCost.innerHTML.replace('$', '')
-    const purchaseTax = document.getElementById('purchaseTax')
+const calculateSubtotal = (proccessFee, shippingCost, tax) => {
 
-    const merchandiseCost = Number(purchasePrice) * Number(purchaseQuantity)
-    const workingSubtotal = merchandiseCost + Number(processingFee) + Number(shippingInnerHTML)
-    const workingTaxAmount = workingSubtotal * .075
-    purchaseTax.innerHTML = "$" + String(workingTaxAmount.toFixed(2))
-    purchaseSubtotal.innerHTML = "$" + String(Number(workingTaxAmount.toFixed(2)) + workingSubtotal)
+    const purchaseSubtotal = document.getElementById('purchaseSubtotal').innerHTML.replace('$', '').replace(',', '')
+    const purchaseTotal = document.getElementById('purchaseTotal')
+
+    let totalCalculation = parseFloat(purchaseSubtotal) + parseFloat(proccessFee) + parseFloat(tax) + parseFloat(shipping)
+    purchaseTotal.innerHTML = `$${numberWithCommas(totalCalculation)}`
+
+    // const purchasePrice = document.getElementById('purchasePrice').innerHTML.replace('$', '')
+    // const purchaseQuantity = document.getElementById('purchaseQuantity').innerHTML
+    // const processingFee = document.getElementById('processingFee').innerHTML.replace('$', '')
+    // const shippingInnerHTML = shippingCost.innerHTML.replace('$', '')
+    // const purchaseTax = document.getElementById('purchaseTax')
+
+    // const merchandiseCost = Number(purchasePrice) * Number(purchaseQuantity)
+    // const workingSubtotal = merchandiseCost + Number(processingFee) + Number(shippingInnerHTML)
+    // const workingTaxAmount = workingSubtotal * .075
+    // purchaseTax.innerHTML = "$" + String(workingTaxAmount.toFixed(2))
+    // purchaseSubtotal.innerHTML = "$" + String(Number(workingTaxAmount.toFixed(2)) + workingSubtotal)
 }
 
 
@@ -1250,4 +1286,26 @@ if (resetPasswordForm) {
     });
 }
 
+
+// Shipping Address Update in Checkout Page
+document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('.modal_tab');
+    const tabContents = document.querySelectorAll('.modal_tab_content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = button.getAttribute('data-tab');
+
+            // Remove "active" class from all;
+            tabButtons.forEach(btn => btn.classList.remove('activated'))
+            tabContents.forEach(content => content.classList.remove('activated'));
+
+            // Add active to selected
+            button.classList.add('activated');
+            document.getElementById(target).classList.add('activated')
+        })
+    })
+
+})
 

@@ -188,6 +188,8 @@
     text-decoration: underline;
 }
 
+
+/*  ADDRESS CHANGE POPUP / MODAL */
 .address_change_modal {
     display: none;
     /* Hidden by default */
@@ -206,6 +208,7 @@
 /* Modal content */
 .address_modal_content {
     background-color: #fff;
+    height: auto;
     margin: 15% auto;
     /* Center it */
     padding: 1rem 1rem;
@@ -220,6 +223,8 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+
+
 }
 
 .ship_to_name_update_modal_container {
@@ -228,12 +233,19 @@
     gap: .5rem;
     width: 100%;
     height: 50%;
+
 }
+
 
 select#prefix,
 select#suffix {
     color: var(--text-color);
     font-size: 1rem;
+}
+
+select#suffix {
+    margin-top: .10rem;
+
 }
 
 
@@ -246,6 +258,7 @@ select#suffix {
     margin-top: -.5rem;
     width: 20%;
 }
+
 
 
 .modal_name_inputs {
@@ -346,15 +359,92 @@ select#suffix {
     width: 30%;
 }
 
-.modal_addres_phone_input {
+
+.modal_name_inputs textarea {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 3rem;
+    padding-left: .5rem;
+    resize: none;
+    width: 75%;
+}
+
+.modal_address_delivery_instructions {
+    display: flex;
+    flex-direction: column;
+    margin: .5rem 0 1rem 0;
+}
+
+
+
+
+.modal_address_phone_input {
     border: 2px solid var(--text-color);
     border-radius: 5px;
     color: var(--text-color);
     font-size: 1rem;
     height: 2rem;
     padding-left: .5rem;
-    width: 25%;
+    width: 40%;
 }
+
+
+.modal_tabs {
+    display: flex;
+    justify-content: space-around;
+    margin: 1rem 0;
+}
+
+.modal_tab {
+    align-items: center;
+    background: var(--text-color);
+    border: 1px solid black;
+    border-radius: 5px;
+    color: var(--primary-color-light);
+    cursor: pointer;
+    display: flex;
+    font-size: clamp(.85rem, 1rem, 2vw);
+    height: 2rem;
+    justify-content: center;
+    transition: var(--tran-02);
+    width: clamp(6rem, 8rem, 25vw);
+}
+
+.modal_tab.activated {
+    background: var(--primary-color-light);
+    color: var(--text-color);
+}
+
+.modal_tab_content {
+    display: none;
+}
+
+.modal_tab_content.activated {
+    display: block;
+}
+
+
+.add_address_tab.activated {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    height: auto;
+}
+
+.add_address_tab.activated p {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.add_address_tab.activated label {
+    font-size: 1.10rem;
+}
+
+
+
+/* END OF ADDRESS CHANGE POPUP/MODAL */
 
 
 .checkout_shipping_options_container {
@@ -394,6 +484,12 @@ select#suffix {
     display: flex;
     justify-content: space-between;
     margin-top: 1rem;
+}
+
+.purchaseTotal,
+#purchaseTotal {
+    font-size: 1rem;
+    font-weight: 900;
 }
 
 
@@ -502,16 +598,21 @@ select#suffix {
 .checkout_details_condition_container {
     display: flex;
     justify-content: space-between;
+    margin-bottom: .10rem;
 }
 
 
 
 .checkout_details_condition_button_container {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     margin-top: .5rem;
 }
 
 .checkout_details_condition_button_container button {
     cursor: pointer;
+}
+
+.checkout_details_condition_button_container p {
+    font-weight: 600;
 }

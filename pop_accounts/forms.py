@@ -11,6 +11,34 @@ from .utils import validate_password_strength
 
 
 """" The Pop Up"""
+SHOE_SIZE_CHOICES = [
+    ('', 'Select size'),
+    ('5', '5 US'),
+    ('5.5', '5.5 US'),
+    ('6', '6 US'),
+    ('6.5', '6.5 US'),
+    ('7', '7 US'),
+    ('7.5', '7.5 US'),
+    ('8', '8 US'),
+    ('8.5', '8.5 US'),
+    ('9', '9 US'),
+    ('9.5', '9.5 US'),
+    ('10', '10 US'),
+    ('10.5', '10.5 US'),
+    ('11', '11 US'),
+    ('11.5', '11.5 US'),
+    ('12', '12 US'),
+    ('12.5', '12.5 US'),
+    ('13', '13 US'),
+    ('13.5', '13.5 US'),
+    ('14', '14 US'),
+    ('14.5', '14.5 US'),
+    ('15', '15 US'),
+    ('15.5', '15.5 US'),
+    ('16', '16 US'),
+]
+
+
 STATES_SELELCTION = [
     ('', 'State'),
     ('Alabama', 'AL'),
@@ -66,8 +94,92 @@ STATES_SELELCTION = [
     ('Wyoming', 'WY')
 ]
 
+PREFIX = [
+    ('', 'Select Prefix'),
+    ('Mr.', 'Mr.'),
+    ('Mrs.', 'Mrs.'),
+    ('Ms.', 'Ms.'),
+    ('Miss', 'Miss'),
+    ('Dr.', 'Dr.'),
+]
+
+
+SUFFIX = [
+    ('', 'Select Suffix'),
+    ('Jr.', 'Jr.'),
+    ('Sr.', 'Sr.'),
+    ('I', 'I'),
+    ('II', 'II'),
+    ('III', 'III'),
+    ('CPA', 'CPA'),
+    ('M.D.', 'M.D.'),
+    ('PhD', 'PhD.'),
+]
+
 
 class ThePopUpUserAddressForm(forms.ModelForm):
+    prefix = forms.ChoiceField(
+        label='Prefix',
+        choices=PREFIX, required=False,
+        widget=forms.Select(attrs={
+            'class': '',
+            'id': 'prefix',
+            'name': 'prefix',
+        })
+    )
+
+    first_name = forms.CharField(
+        label='First Name', min_length=2, max_length=50, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'personal_info_first_name_input',
+            'placeholder': 'First Name',
+            'id': '',
+            'name': 'first_name'
+        })
+    )
+
+    middle_name = forms.CharField(
+        label='Middle Name', min_length=2, max_length=50, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'personal_info_first_name_input',
+            'placeholder': 'Middle Name',
+            'id': '',
+            'name': 'middle_name'
+        })
+    )
+
+    last_name = forms.CharField(
+        label='Last Name', min_length=2, max_length=50, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'personal_info_last_name_input',
+            'placeholder': 'Last Name',
+            'id': '',
+            'name': 'last_name'
+        })
+    )
+
+    suffix = forms.ChoiceField(
+        label='Prefix',
+        choices=SUFFIX, required=False,
+        widget=forms.Select(attrs={
+            'class': '',
+            'id': 'suffix',
+            'name': 'suffix',
+        })
+    )
+
+    
+    phone_number = forms.CharField(
+        label = "Phone Number", min_length=10, max_length=50, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_address_phone_input',
+            'id': 'modal_address_phone_input',
+            'placeholder': 'Mobile Phone (xxx-xxx-xxxx)',
+            'name': 'phone'
+
+        })
+    )
+
     street_address_1 = forms.CharField(
         label='Street Address 1', max_length=200, required=True,
         widget=forms.TextInput(attrs={
@@ -80,7 +192,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     ))
 
     street_address_2 = forms.CharField(
-        label='Street Address 1', max_length=200, required=False,
+        label='Street Address 2', max_length=200, required=False,
         widget=forms.TextInput(attrs={
             'class': 'personal_info_street_address_two_input',
             'id': '',
@@ -161,29 +273,6 @@ class ThePopUpUserAddressForm(forms.ModelForm):
         model = PopUpCustomerAddress
         fields = ['street_address_1', 'street_address_2', 'apt_ste_no', 'city_town', 'state', 'postcode', 'delivery_instructions']
 
-        # fields = ['address_line', 'address_line2', 'apartment_suite_number', 'town_city',
-        #   'state', 'postcode', 'delivery_instructions', 'default']
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     # Map custom form fields to model fields
-    #     self.fields['street_address_1'].initial = self.instance.address_line
-    #     self.fields['street_address_2'].initial = self.instance.address_line2
-    #     self.fields['apt_ste_no'].initial = self.instance.apartment_suite_number
-    #     self.fields['city_town'].initial = self.instance.town_city
-    #     self.fields['postal_code'].initial = self.instance.postcode
-    #     self.fields['delivery_instructions'].initial = self.instance.delivery_instructions
-    #     self.fields['address_default'].initial = self.instance.default
-
-    # def save(self, commit=True):
-    #     self.instance.address_line = self.cleaned_data['street_address_1']
-    #     self.instance.address_line2 = self.cleaned_data.get('street_address_2', '')
-    #     self.instance.apartment_suite_number = self.cleaned_data.get('apt_ste_no', '')
-    #     self.instance.town_city = self.cleaned_data['city_town']
-    #     self.instance.postcode = self.cleaned_data['postal_code']
-    #     self.instance.delivery_instructions = self.cleaned_data['delivery_instructions']
-    #     self.instance.default = self.cleaned_data.get('address_default', False)
-    #     return super().save(commit=commit)
 
 
 
@@ -447,32 +536,6 @@ class PopUpPasswordResetForm(forms.ModelForm):
         fields = ('password',)
 
 
-SHOE_SIZE_CHOICES = [
-    ('', 'Select size'),
-    ('5', '5 US'),
-    ('5.5', '5.5 US'),
-    ('6', '6 US'),
-    ('6.5', '6.5 US'),
-    ('7', '7 US'),
-    ('7.5', '7.5 US'),
-    ('8', '8 US'),
-    ('8.5', '8.5 US'),
-    ('9', '9 US'),
-    ('9.5', '9.5 US'),
-    ('10', '10 US'),
-    ('10.5', '10.5 US'),
-    ('11', '11 US'),
-    ('11.5', '11.5 US'),
-    ('12', '12 US'),
-    ('12.5', '12.5 US'),
-    ('13', '13 US'),
-    ('13.5', '13.5 US'),
-    ('14', '14 US'),
-    ('14.5', '14.5 US'),
-    ('15', '15 US'),
-    ('15.5', '15.5 US'),
-    ('16', '16 US'),
-]
 
 class PopUpUserEditForm(forms.Form):
     first_name = forms.CharField(
@@ -572,46 +635,177 @@ class PopUpUserEditForm(forms.Form):
         fields = ('first_name', 'last_name', 'middle_mane', 'suffix', 'shoe_size', 'size_gender', 'favorite_brand')
     
 
-# class PopUpUserEditForm(forms.ModelForm):
-#     email = forms.EmailField(
-#         label='Account email (can not be changed)', max_length=200, widget=forms.TextInput(
-#             attrs={
-#                 'class': 'form-control mb-3',
-#                 'placholder': 'email',
-#                 'id': 'form-email',
-#                 'readonly': 'readonly'
-#             }
-#         )
-#     )
-
-#     user_name = forms.CharField(
-#         label='Username', min_length=4, max_length=50, widget=forms.TextInput(
-#             attrs={
-#                 'class': 'form-control mb-3',
-#                 'placholder': 'Username',
-#                 'id': 'form-firstname',
-#                 'readonly': 'readonly'
-#             }
-#         )
-#     )
-
-    # first_name = forms.CharField(
-    #     label='First Name', min_length=4, max_length=50, widget=forms.TextInput(
-    #         attrs={
-    #             'class': 'form-control mb-3',
-    #             'placholder': 'Firstname',
-    #             'id': 'form-lastname',
-    #         }
-    #     )
-    # )
-
-    # class Meta:
-    #     model = PopUpCustomer
-    #     fields = ('email', 'user_name', 'first_name',)
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.fields['user_name'].required = True
-#         self.fields['email'].required = True
 
 
+class PopUpUpdateShippingInformationForm(forms.ModelForm):
+
+    prefix = forms.ChoiceField(
+        label='Prefix',
+        choices=PREFIX, required=False,
+        widget=forms.Select(attrs={
+            'class': '',
+            'id': 'prefix',
+            'name': 'prefix',
+        })
+    )
+
+    first_name = forms.CharField(
+        label='First Name', min_length=2, max_length=50, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_first_name_input',
+            'placeholder': 'First Name',
+            'id': '',
+            'name': 'first_name'
+        })
+    )
+
+    middle_name = forms.CharField(
+        label='Middle Name', min_length=2, max_length=50, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_first_name_input',
+            'placeholder': 'Middle Name',
+            'id': '',
+            'name': 'middle_name'
+        })
+    )
+
+    last_name = forms.CharField(
+        label='Last Name', min_length=2, max_length=50, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_first_name_input',
+            'placeholder': 'Last Name',
+            'id': '',
+            'name': 'last_name'
+        })
+    )
+
+    suffix = forms.ChoiceField(
+        label='Prefix',
+        choices=SUFFIX, required=False,
+        widget=forms.Select(attrs={
+            'class': '',
+            'id': 'suffix',
+            'name': 'suffix',
+        })
+    )
+
+    address_line = forms.CharField(
+        label='Street Address 1', max_length=200, required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_street_address_one_input',
+            'id': '',
+            'placeholder': 'Street Address 1',
+            'type': 'text',
+            'name': 'address_line'
+        }
+    ))
+
+    address_line2 = forms.CharField(
+        label='Street Address 2', max_length=200, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_street_address_two_input',
+            'id': '',
+            'placeholder': 'Street Address 2',
+            'type': 'text',
+            'name': 'address_line2'
+        }
+    ))
+
+    apartment_suite_number = forms.CharField(
+        label='Apt/Ste', max_length=200, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_address_zip_input',
+            'id': '',
+            'placeholder': 'Apt/Ste',
+            'type': 'text',
+            'name': 'apartment_suite_number'
+        }
+    ))
+
+    town_city = forms.CharField(
+        label='City/Town', min_length=2, max_length=200, required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_address_city_input',
+            'id': '',
+            'placeholder': 'City',
+            'type': 'text',
+            'name': 'city'
+        }
+    ))
+
+
+    state = forms.ChoiceField(
+        label='State', required=True,
+        choices=STATES_SELELCTION, 
+        widget=forms.Select(attrs={
+            'class': '',
+            'id': 'state',
+            'placeholder': 'State',
+            'type': 'text',
+            'name': 'state'
+        }
+    ))
+
+    postcode = forms.CharField(
+        label='Postal Code', max_length=50, required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_address_zip_input',
+            'id': '',
+            'placeholder': 'Postal Code',
+            'type': 'text',
+            'name': 'postcode'
+        }
+    ))
+
+    delivery_instructions = forms.CharField(
+        label='Delivery Instructions', max_length=200, required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'modal_address_delivery_instructions',
+            'id': '',
+            'placeholder': 'Delivery Instructions',
+            'type': 'text',
+            'name': 'deliv_instructions'
+        }
+    ))
+
+    phone_number = forms.CharField(
+        label = "Phone Number", min_length=10, max_length=50, required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'modal_address_phone_input',
+            'id': 'modal_address_phone_input',
+            'placeholder': 'Mobile Phone (xxx-xxx-xxxx)',
+            'name': 'phone'
+
+        })
+    )
+
+
+    address_default = forms.BooleanField(
+        label = 'Default Address',
+        required=False,
+        widget = forms.CheckboxInput(attrs={
+            'class': 'personal_info_default_address',
+            'id': ''
+        }
+    ))
+
+    
+
+    mobile_notification = forms.BooleanField(
+        label = 'Permission to Text',
+        required = False,
+        widget = forms.CheckboxInput(attrs={
+            'class': 'mobile_notification',
+            'id': 'mobile_notification'
+        }
+        
+    ))
+
+
+    class Meta:
+        model = PopUpCustomerAddress
+        fields = ['first_name', 'middle_name', 'last_name',
+            'address_line', 'address_line2', 'apartment_suite_number', 
+            'town_city', 'state', 'postcode', 'delivery_instructions',
+            'phone_number']
+    

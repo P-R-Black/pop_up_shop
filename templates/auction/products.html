@@ -41,7 +41,7 @@ Auction
 
                         {% for image in p.product_image.all %}
                         {% if image.is_feature %}
-                        <img class="img_fluid_product" alt="{{ image.alt_text }}" src="{{ image.image.url }}" />
+                        <img class="img_fluid_product" alt="{{ image.alt_text }}" src="{{ image.image }}" />
                         {% endif %}
                         {% endfor %}
 
@@ -57,8 +57,10 @@ Auction
                     <h3>{{ p.secondary_product_title}}</h3>
                 </div>
                 <div class="products_button_container">
-                    <button class="button_medium" href="/">Buy Now</button>
-                    <button class="button_medium" href="/">Add to Cart</button>
+                    <button class="button_medium" id="">Buy Now</button>
+                    <button type="submit" class="button_medium add_to_cart_button" value="{{p.id}}"
+                        data-product-id="{{ p.id }}">Add to
+                        Cart</button>
                 </div>
             </div>
             {% endfor %}
@@ -68,5 +70,34 @@ Auction
         </div>
     </div>
 </section>
+<script>
+    $(document).ready(function () {
 
+        $('.add_to_cart_button').on('click', function (e) {
+            e.preventDefault();
+
+            let productId = $(this).data('product-id');
+            let productQty = 1;  // Default quantity to add. You can modify if you allow qty selection.
+
+            $.ajax({
+                type: 'POST',
+                url: '{% url "cart:cart_add" %}',
+                data: {
+                    productid: productId,
+                    productqty: productQty,  // <-- Typo in key name ("productqty")
+                    action: 'POST',
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                },
+                success: function (json) {
+                    console.log('Cart Updated:', json.qty);
+                    // Optional: update cart count in navbar, or show toast message
+                    $('#cart_qty').fadeOut(150).text(json.qty).fadeIn(150)
+                },
+                error: function (xhr, errmsg, err) {
+                    console.error("Cart add failed:", errmsg);
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

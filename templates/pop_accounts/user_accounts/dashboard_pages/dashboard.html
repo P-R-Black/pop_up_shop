@@ -237,8 +237,7 @@ Dashboard
                                     </div>
                                     <div class="modal_user_abbr_user_info">
                                         <div class="modal_user_pay_email_shipping_container">
-                                            <img class="modal_user_card_img" alt="Responsive image"
-                                                src="{% static 'img/tiny-paypal.png' %}"
+                                            <img class="modal_user_card_img" src="{% static 'img/tiny-paypal.png' %}"
                                                 alt="{{ image.image.alt_text}}">
                                             {% if user.is_authenticated %}
                                             <p>{{ user.email|obfuscate_email }}</p>

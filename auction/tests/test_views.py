@@ -44,38 +44,38 @@ id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 "Air Air Jordan 4 Retro OG SP"
 "Nigel Sylvester Brick by Brick"
 
-# class TestViewResponse(TestCase):
-#     def setUp(self):
-#         self.c = Client()
-#         self.factory = RequestFactory()
+class TestViewResponse(TestCase):
+    def setUp(self):
+        self.c = Client()
+        self.factory = RequestFactory()
 
-#         User.objects.create(username='admin')
-#         PoPUpCategory.objects.create(name="shoe", slug="shoe")
-#         PopUpProduct.objects.create(
-#             category_id=1, 
-#             model_year="2025", 
-#             brand="Jordan",
-#             name="Air Jordan 4 Retro OJ SP Nigel Sylvestor Brick by Brick",
-#             slug="air-jordan-4-retro-oj-sp-nigel-sylvestor-brick-by-brick",
-#             release_date="03/10/2025",
-#             auction_start_date="03/25/2025",
-#             auction_end_date="04/02/2025",
-#             starting_price="$250",
-#             product_sex="Male",
-#             product_description="It's a cool shoe",
-#             style_number="HF4340-800",
-#             colorway="Firewood Orange/Sail-Cinnabar",
-#             retail_price="225",
-#             inventory_status="In Inventory",
-#             is_active="True",
-#             )
+        User.objects.create(username='admin')
+        PopUpCategory.objects.create(name="shoe", slug="shoe")
+        PopUpProduct.objects.create(
+            category_id=1, 
+            model_year="2025", 
+            brand="Jordan",
+            name="Air Jordan 4 Retro OJ SP Nigel Sylvestor Brick by Brick",
+            slug="air-jordan-4-retro-oj-sp-nigel-sylvestor-brick-by-brick",
+            release_date="03/10/2025",
+            auction_start_date="03/25/2025",
+            auction_end_date="04/02/2025",
+            starting_price="$250",
+            product_sex="Male",
+            product_description="It's a cool shoe",
+            style_number="HF4340-800",
+            colorway="Firewood Orange/Sail-Cinnabar",
+            retail_price="225",
+            inventory_status="In Inventory",
+            is_active="True",
+            )
 
-#     def test_url_allowed_hosts(self):
-#         """
-#         Test allowed hosts
-#         """
-#         response = self.Client.get('/')
-#         self.assertEqual(response.status_code, 200)
+    def test_url_allowed_hosts(self):
+        """
+        Test allowed hosts
+        """
+        response = self.c.get('/')
+        self.assertEqual(response.status_code, 200)
     
 #     def test_product_details_url(self):
 #         response = self.c.get(reverse(

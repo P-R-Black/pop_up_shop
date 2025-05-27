@@ -73,7 +73,6 @@ const addItemsToUserLists = (addToListBtn, fetchUrl, label, emoji = '❤️') =>
             const productId = this.dataset.productId;
             const isInterested = this.dataset.interested == "true";
 
-            console.log('fetchUrl is', fetchUrl)
             fetch(fetchUrl, {
                 method: "POST",
                 headers: {

@@ -12,7 +12,7 @@ from .token import account_activation_token
 from orders.views import user_orders
 from django.http import JsonResponse, HttpResponse
 from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid
-from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
+from auction.models import PopUpProduct, PopUpProductSpecificationValue
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .forms import PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, ThePopUpUserAddressForm
@@ -142,8 +142,8 @@ class UserDashboardView(LoginRequiredMixin, View):
     def get(self, request):
         user = request.user
         addresses = user.address.filter(default=True)
-        prod_interested_in = user.prods_interested_in.all()
-        prods_on_notice_for = user.prods_on_notice_for.all()
+        prod_interested_in = user.prods_interested_in.all()[:3]
+        prods_on_notice_for = user.prods_on_notice_for.all()[:3]
 
         subquery = PopUpBid.objects.filter(
             customer_id=user.id,
@@ -342,6 +342,12 @@ def personal_info(request):
             if address_form.is_valid():
                 address = address_form.save(commit=False)
                 address.customer = user
+                address.prefix = address_form.cleaned_data['prefix']
+                address.first_name = address_form.cleaned_data['first_name']
+                address.middle_name = address_form.cleaned_data['middle_name']
+                address.last_name = address_form.cleaned_data['last_name']
+                address.suffix = address_form.cleaned_data['suffix']
+                address.phone_number = address_form.cleaned_data['phone_number']
                 address.address_line = address_form.cleaned_data['street_address_1']
                 address.address_line2 = address_form.cleaned_data['street_address_2']
                 address.apartment_suite_number = address_form.cleaned_data['apt_ste_no']

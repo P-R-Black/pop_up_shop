@@ -53,12 +53,13 @@ class CustomPopUpAccountManager(BaseUserManager):
 
         return self.create_user(email, first_name, last_name, password, **other_fields)
 
-    def create_user(self, email, password=None, **other_fields): #create_user(self, email, first_name, last_name, password, **other_fields):
+    # def create_user(self, email, password=None, **other_fields):
+    def create_user(self, email, first_name=None, last_name=None, password=None, **other_fields):
         if not email:
             raise ValueError(_('An email address is required.'))
 
         email = self.normalize_email(email)
-        user = self.model(email=email,  **other_fields)
+        user = self.model(email=email, first_name=first_name, last_name=last_name, **other_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -101,6 +102,7 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50, blank=True)
     mobile_phone = models.CharField(max_length=20, blank=True)
     mobile_notification = models.BooleanField(default=True)
+    # stripe_customer_id = models.CharField(max_length=40, blank=True, null=True)
     shoe_size = models.CharField(max_length=10)
     size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200)
     favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default='nike')
@@ -216,6 +218,13 @@ class PopUpCustomerAddress(models.Model):
     customer = models.ForeignKey(PopUpCustomer, verbose_name=_("Customer"), on_delete=models.CASCADE, related_name='address')
     prefix = models.CharField(max_length=10, choices=PREFIX_CHOICES, default="none")
     suffix = models.CharField(max_length=10, choices=SUFFIX_CHOICES, default="none")
+
+    # New data, this allows for a name and phone# to be assigned to address
+    first_name = models.CharField(max_length=100, blank=True, null=True)
+    middle_name = models.CharField(max_length=100, blank=True, null=True)
+    last_name = models.CharField(max_length=100, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+
     postcode = models.CharField(_("Postcode"), max_length=50)
     address_line = models.CharField(_("Address Line 1"), max_length=255)
     address_line2 = models.CharField(_("Address Line 2"), max_length=255, blank=True)
@@ -283,6 +292,8 @@ class PopUpBid(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True, help_text="Bid expiration time.")
 
     class Meta:
+        verbose_name = 'PopUpBid'
+        verbose_name_plural = 'PopUpBids'
         ordering = ["-timestamp"]
     
     def __str__(self):
@@ -383,11 +394,15 @@ class PopUpPurchase(models.Model):
     Model for tracking purchases
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="purchases")
-    product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE, related_name="purchases")
+    customer = models.ForeignKey(PopUpCustomer, on_delete=models.PROTECT, related_name="purchases")
+    product = models.ForeignKey(PopUpProduct, on_delete=models.PROTECT, related_name="purchases")
+    bid = models.ForeignKey(PopUpBid, on_delete=models.PROTECT)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    paid = models.BooleanField(default=False)
     purchased_at = models.DateTimeField(auto_now_add=True)
     address = models.ForeignKey(PopUpCustomerAddress, on_delete=models.SET_NULL, null=True, blank=True)
+    stripe_api = models.CharField(max_length=40, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-purchased_at"]

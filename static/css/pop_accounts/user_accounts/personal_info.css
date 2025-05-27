@@ -130,9 +130,10 @@ select#gen_option {
 
 
 .personal_info_address_inputs {
+    align-items: flex-start;
+    color: var(--text-color);
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
 
 }
 
@@ -217,10 +218,6 @@ select#gen_option {
     display: flex;
     flex-direction: column;
     margin: .5rem 0 1rem 0;
-}
-
-.personal_info_delivery_instructions label {
-    color: var(--text-color);
 }
 
 

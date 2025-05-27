@@ -15,7 +15,7 @@ Auction
         </div>
         <div class="the_dashboard_container">
             <div class="personal_info_title_container">
-                <h3>Account Holder</h3>
+                <h3>Update User Data</h3>
             </div>
             <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
                 {% csrf_token %}
@@ -59,11 +59,31 @@ Auction
 
             <div class="ship_to_address_update_personal_info_container">
                 <div class="personal_info_title_container">
-                    <h3>Account Holder</h3>
+                    <h3>Add Address and/or Recipient</h3>
                 </div>
 
                 <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
                     {% csrf_token %}
+                    <div class="modal_name_inputs">
+                        {{ address_form.prefix }}
+                    </div>
+                    <div class="personal_info_name_inputs">
+                        <div class="persional_info_first_name_container">
+                            {{ address_form.first_name }}
+                        </div>
+                        <div class="personal_info_middle_name_container">
+                            {{ address_form.middle_name }}
+                        </div>
+                        <div class="personal_info_last_name_container">
+                            {{ address_form.last_name}}
+                        </div>
+                    </div>
+                    <div class="modal_name_inputs">
+                        {{ address_form.phone_number }}
+                    </div>
+                    <div class="modal_name_inputs">
+                        {{ address_form.suffix }}
+                    </div>
                     <div class="personal_info_address_inputs">
                         {{ address_form.street_address_1 }}
                     </div>
@@ -97,7 +117,7 @@ Auction
 
                 <div class="account_addresses_container">
                     {% for addy in addresses %}
-                    <div class="dashboard_databox_small">
+                    <div class="dashboard_addressbox_small">
                         <div class="account_addresses_default_notice">
                             {% if addy.default %}
                             <p>Default</p>
@@ -159,7 +179,6 @@ Auction
                                 <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
                                     {% csrf_token %}
                                     <div class="modal_name_inputs">
-
                                         {{ address_form.street_address_1 }}
                                     </div>
                                     <div class="modal_name_inputs">
