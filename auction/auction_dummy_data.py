@@ -1,127 +1,61 @@
+
 """
-    class PopUpProduct(models.Model):
-    
-    # The Product table continuing all product items.
-    
-    INVENTORY_STATUS_CHOICES = (
-        ('anticipated', 'Anticipated'),
-        ('in_transit', 'In Transit'),
-        ('in_inventory', 'In Inventory')
-    )
+PRODUCT SPECIFICATION VALUES ORDER
+# sneakers / shoes
+0. style_number
+1. colorway
+2. model_year
+3. release_date
+4. size
+5. product_sex
+6. condition
 
-
-    product_type = models.ForeignKey(PopUpProductType, on_delete=models.RESTRICT)
-    category = models.ForeignKey(PopUpCategory, on_delete=models.RESTRICT)
-    product_title = models.CharField(
-        verbose_name=_("name"),
-        help_text=_("Required"),
-        max_length=255,
-    )
-    secondary_product_title = models.CharField(
-        verbose_name=_("secondary_name"),
-        max_length=255,
-        blank=True,
-        unique=False
-    )
-
-
-    description = models.TextField(verbose_name=_("description"), help_text=_("Not Required"), blank=True)
-    slug = models.SlugField(max_length=255, unique=True)
-    # replaced retail_price with starting_price, because although it's an auction site, users will have the 
-    # opportunity to buy the product outright, and that starting price will be calculated by using the retail 
-    # price + shipping and handling + $50. 
-    starting_price = models.DecimalField( verbose_name=_("Regular price"), max_digits=10, decimal_places=2)
-
-    
-    # Don't need discount price
-    # discount_price = models.DecimalField(
-    #     verbose_name=_("Discount price"),
-    #     help_text=_("Maximum 999.99"),
-    #     error_messages={
-    #         "name": {
-    #             "max_length": _("The price must be between 0 and 999.99."),
-    #         },
-    #     },
-    #     max_digits=5,
-    #     decimal_places=2,
-    # )
-
-    retail_price = models.DecimalField(verbose_name=_("Retail Price"), max_digits=10, decimal_places=2,)
-    brand = models.ForeignKey(PopUpBrand, related_name='products', on_delete=models.CASCADE)
-    auction_start_date = models.DateTimeField(null=True, blank=True)
-    auction_end_date = models.DateTimeField(null=True, blank=True)
-    inventory_status = models.CharField(max_length=30, choices=INVENTORY_STATUS_CHOICES, default="anticipated")
-    bid_count = models.PositiveIntegerField(default=0)
-    # reserve_price - I can set a minimum price below which they won’t sell, add:
-    reserve_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
-    is_active = models.BooleanField(
-        verbose_name=_("Product visibility"),
-        help_text=_("Change product visibility"),
-        default=True,
-    )
-    created_at = models.DateTimeField(_("Created at"), auto_now_add=True, editable=False)
-    updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
-
-    class Meta:
-        ordering = ("-created_at",)
-        verbose_name = _("Product")
-        verbose_name_plural = _("Products")
-        indexes = [
-            models.Index(fields=["auction_start_date"]),
-            models.Index(fields=["auction_end_date"]),
-        ]
-
-    
-    def get_absolute_url(self):
-        return reverse("auction:product_detail", args=[self.slug])
-
-    @property
-    def calculated_starting_price(self):
-        return self.retail_price + Decimal(70)
-    
-    
-    @property
-    def auction_status(self):
-        if self.auction_start_date and self.auction_end_date:
-            if now() < self.auction_start_date:
-                return "Upcoming"
-            elif self.auction_start_date <= now() <= self.auction_end_date:
-                return "Ongoing"
-            else:
-                return "Ended"
-        return "Not Available"
-
-    from datetime import timedelta
-
-
-    @property
-    def auction_duration(self):
-        if self.auction_start_date and self.auction_end_date:
-            duration = self.auction_end_date - self.auction_start_date
-            days = duration.days
-            hours = duration.seconds // 3600
-            return {"days": days, "hours": hours}
-        return None
-
-    def save(self, *args, **kwargs):
-        # Generate slug if it's not provided
-        if not self.slug:
-            base_slug = slugify(self.product_title)
-            slug = base_slug
-            counter = 1
-            while PopUpProduct.objects.filter(slug=slug).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-            self.slug = slug
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.product_title
+# video game system
+7. mpn
+8. battery_life
+9. platform
+10. power_supply_region
+11. storage_capacity
+12. screen_size
+13. ports
+14. graphics
+15. memory
 """
+
+# https/res.cloudinary.com/prblack/image/upload/v1744429406/the_pop_up/j11._zfitg7.png | works
+# /https%3A/res.cloudinary.com/prblack/image/upload/v1744429406/the_pop_up/j11._zfitg7.png
 
 test_account_data = [
+    {
+        "id": "220310034",
+        "product_type": "shoe",
+        "category": "Dunk",
+        "product_title": "Nike Dunk Pro SB Low",
+        "secondary_product_title": "Paris",
+        "description": "The top of the Retro Gamma Blue has a black finish throughout and is made of a customary combination of ballistic net and slick patent leather. The sneaker's branding features include the number '23' engraved in Varsity Maize and a turquoise Jumpman on the heel tab. A top-loaded full-length Air unit is added to the plush Phylon midsole, which is supported by a carbon fiber spring plate. Herringbone suction pods are used on a translucent rubber outsole.",
+        "slug": "nike-dunk-pro-sb-low-paris",
+        "regular_price": "16000.00",
+        "retail_price":"60.00",
+        "brand":"Nike",
+        "auction_start_date":"",
+        "auction_end_date":"",
+        "inventory_status": "in_inventory",
+        "current_highest_bid": "",
+        "bid_count": "0",
+        "reserve_price": "",
+        "is_active": True,
+        "style_number": "308270-111",
+        "colorway": "Rope/Special Cardinal",
+        "model_year": "2002",
+        "release_date": "03/01/2002",
+        "size": "9",
+        "product_sex": "Male",
+        "condition": "new",
+        "image": "https://res.cloudinary.com/prblack/image/upload/v1748261732/paris_objd5d.png",
+        "alternative_text": "Nike Dunk Pro Low SB Low Paris",
+        "is_feature": "True"
 
+     },
     {
         "id": "0123232445",
         "product_type": "shoe",
@@ -136,6 +70,7 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "in_inventory",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": True,
@@ -165,6 +100,7 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "in_inventory",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": True,
@@ -194,6 +130,7 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "in_transit",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
@@ -223,6 +160,7 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "in_transit",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
@@ -252,6 +190,7 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "anticipated",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
@@ -280,6 +219,7 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "anticipated",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
@@ -308,6 +248,7 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "anticipated",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
@@ -336,11 +277,12 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "anticipated",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
         "sku": "SP332221",
-        "color": "Red/black",
+        "colorway": "Red/black",
         "model_year": "2025",
         "release_date": "05/20/2025",
         "image": "https://res.cloudinary.com/prblack/image/upload/v1744510654/the_pop_up/waterG_no1hqo.png",
@@ -361,11 +303,12 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "in_transit",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
         "mpn": "sne8287361e",
-        "color": "white",
+        "colorway": "white",
         "model_year": "2025",
         "battery_life": "N/A",
         "platform": "Sony",
@@ -395,6 +338,7 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "in_transit",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
@@ -421,11 +365,12 @@ test_account_data = [
         "auction_start_date":"",
         "auction_end_date":"",
         "inventory_status": "anticipated",
+        "current_highest_bid": "",
         "bid_count": "0",
         "reserve_price": "",
         "is_active": False,
         "mpn": "0000-000",
-        "color": "Black",
+        "colorway": "Black",
         "model_year": "2025",
         "battery_life": "2 - 6.5 hours",
         "platform": "Nintendo",

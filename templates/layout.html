@@ -27,6 +27,9 @@
     <!-- Font Awesome -->
     <script src="https://kit.fontawesome.com/27e86509c5.js" crossorigin="anonymous"></script>
 
+    <!-- Jquery-->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <!-- Stripe -->
     <script src="https://js.stripe.com/v3/"></script>
 
@@ -109,8 +112,7 @@
     <link rel="stylesheet" href="{% static 'css/pop_accounts/login/password_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/login/password_reset_mobile.css' %}">
 
-
-
+    <link rel="stylesheet" href="{% static 'css/cart/cart.css' %}">
 
 
 
@@ -185,9 +187,19 @@
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="{% url 'cart:cart_summary' %}">
+                        <a type="button" role="button" href="{% url 'cart:cart_summary' %}">
+
                             <i class='bx bx-cart icon'></i>
                             <span class="text nav-text">Cart</span>
+                            {% with total_qty=cart|length %}
+                            <div class="cart_qty" id="cart_qty">
+                                {% if total_qty > 0 %}
+                                {{ total_qty }}
+                                {% else %}
+                                0
+                                {% endif %}
+                            </div>
+                            {% endwith %}
                         </a>
                     </li>
                     <li class="nav-link">
@@ -241,34 +253,6 @@
 
                 </ul>
             </div>
-            {% comment %}
-            <div class="bottom-content">
-                <li class="">
-                    <a href="#">
-                        <i class='bx bx-log-in icon'></i>
-                        <span class="text nav-text">Log in</span>
-                    </a>
-                </li>
-                <li class="">
-                    <a href="#">
-                        <i class='bx bx-log-out icon'></i>
-                        <span class="text nav-text">Log out</span>
-                    </a>
-                </li>
-
-                <li class="mode">
-                    <div class="moon-sun">
-                        <i class='bx bx-moon icon moon'></i>
-                        <i class='bx bx-sun icon sun'></i>
-                    </div>
-                    <span class="mode-text text">Dark Mode</span>
-                    <div class="toggle-switch">
-                        <span class="switch"></span>
-                    </div>
-                </li>
-
-            </div>
-            {% endcomment %}
         </div>
         <!-- Size Sign Up Modal -->
         <div class="sign_up_modal fade" id="signUpModal" tabindex="-1" aria-labelledby="bidModalLabel"

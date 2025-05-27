@@ -204,8 +204,8 @@ class TestProductsUpcomingAuction(TestCase):
         PopUpBrand.objects.create(name='Jordan', slug='jordan')
         PopUpProductType.objects.create(name='shoe', slug='shoe')
 
-        auction_start = make_aware(datetime(2025, 4, 20, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 4, 27, 12,0, 0))
+        auction_start = make_aware(datetime(2025, 5, 23, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 4, 30, 12,0, 0))
 
         self.prod_one = PopUpProduct.objects.create(
             product_type_id=1, 

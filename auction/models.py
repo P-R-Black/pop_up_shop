@@ -93,8 +93,8 @@ class PopUpProductType(models.Model):
         verbose_name_plural = _("Product Types")
     
   
-    # def get_absolute_url(self):
-    #     return reverse('store:product_list_by_category', args=[self.slug])
+    def get_absolute_url(self):
+        return reverse('store:product_list_by_category', args=[self.slug])
 
 
     def __str__(self):
@@ -172,18 +172,6 @@ class PopUpProduct(models.Model):
         help_text="Stores the current highest bid for this product."
     )
     
-    # Don't need discount price
-    # discount_price = models.DecimalField(
-    #     verbose_name=_("Discount price"),
-    #     help_text=_("Maximum 999.99"),
-    #     error_messages={
-    #         "name": {
-    #             "max_length": _("The price must be between 0 and 999.99."),
-    #         },
-    #     },
-    #     max_digits=5,
-    #     decimal_places=2,
-    # )
 
     retail_price = models.DecimalField(verbose_name=_("Retail Price"), max_digits=10, decimal_places=2,)
     brand = models.ForeignKey(PopUpBrand, related_name='products', on_delete=models.CASCADE)
@@ -314,118 +302,3 @@ class PopUpProductImage(models.Model):
     class Meta:
         verbose_name = _("Product Image")
         verbose_name_plural = _("Product Images")
-
-
-
-
-# class PopUpProductSize(models.Model):
-#     SIZE_CATEGORY_CHOICES = (
-#         ('shoe', 'Shoe Size'),
-#         ('clothing', 'Clothing Size')
-#     )
-
-#     product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE, related_name="sizes")
-#     size_category = models.CharField(max_length=20, choices=SIZE_CATEGORY_CHOICES)
-#     size_value = models.CharField(max_length=10) # e.g., '9', '7.5' for shoes, 'M', 'L' for clothing
-
-#     def __str__(self):
-#         return f"{self.product.name} - {self.size_value} - {self.product.product_sex}"
-
-
-
-
-# OLD VERSION
-# class PopUpProductManager(models.Manager):
-#     def get_queryset(self):
-#         return super(PopUpProductManager, self).get_queryset().filter(is_active=True)
-
-
-
-# class PopUpCategory(models.Model):
-#     name = models.CharField(max_length=255, db_index=True)
-#     slug = models.SlugField(max_length=255, unique=True)
-
-    # class Meta:
-    #     verbose_name_plural = 'categories'
-    
-#     def __str__(self):
-#         return self.name
-    
-
-
-
-
-
-# # I think I need something to keep track of the bid on the product
-# class PopUpProduct(models.Model):
-
-#     # PRODUCT_TYPE_CHOICES = (
-#     #     ('shoe', 'Shoe'),
-#     #     ('clothing', 'Clothing'),
-#     #     ('miscellaneous', 'Miscellaneous'),
-#     #     ('memorabilia', 'Memorabilia'),
-        
-#     # )
-
-    # INVENTORY_STATUS_CHOICES = (
-    #     ('anticipated', 'Anticipated'),
-    #     ('in_transit', 'In Transit'),
-    #     ('in_inventory', 'In Inventory')
-    # )
-
-#     PRODUCT_SEX_CHOICES = (
-#         ('male', 'Male'),
-#         ('female', 'Female'),
-#         ('unisex', 'Unisex')
-#     )
-       
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-#     category = models.ForeignKey(PopUpCategory, related_name='product', on_delete=models.CASCADE)
-#     brand = models.ForeignKey(PopUpBrand, related_name='brand', on_delete=models.CASCADE)
-#     name = models.CharField(max_length=255)
-#     slug = models.SlugField(max_length=255, unique=True)
-#     model_year = models.DateField(null=True, blank=True)
-#     release_date = models.DateField(null=True, blank=True)
-#     auction_start_date = models.DateTimeField(null=True, blank=True)
-#     auction_end_date = models.DateTimeField(null=True, blank=True)
-#     starting_price = models.DecimalField(max_digits=10, decimal_places=2)
-#     image = models.ImageField(upload_to="product_images/", default='images/default.png')
-#     product_sex = models.CharField(max_length=100, choices=PRODUCT_SEX_CHOICES, default='male')
-#     # product_type = models.CharField(max_length=100, choices=PRODUCT_TYPE_CHOICES, default='shoe')
-#     product_description = models.TextField(null=True, blank=True)
-#     style_number = models.CharField(max_length=100, null=True, blank=True)
-#     colorway = models.CharField(max_length=100, null=True, blank=True)
-#     retail_price = models.DecimalField(max_digits=10, decimal_places=2)
-#     inventory_status = models.CharField(max_length=30, choices=INVENTORY_STATUS_CHOICES, default="anticipated")
-#     is_active = models.BooleanField(default=False)
-#     created = models.DateTimeField(auto_now_add=True)
-#     updated = models.DateTimeField(auto_now=True)
-#     objects = models.Manager()
-#     produts = PopUpProductManager()
-  
-
-#     class Meta:
-#         ordering = ['-created']
-    
-#     def get_absolute_url(self):
-#         return reverse('auction:product_details', args=[self.slug])
-    
-#     def __str__(self):
-#         return f"{self.brand} - {self.name}"
-
-
-# # should category be used as a foreign key here?
-# # not everything is going to have a size? A Supreme Key chain or a book wont have a size/
-# class PopUpProductSize(models.Model):
-#     SIZE_CATEGORY_CHOICES = (
-#         ('shoe', 'Shoe Size'),
-#         ('clothing', 'Clothing Size')
-#     )
-
-#     product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE, related_name="sizes")
-#     size_category = models.CharField(max_length=20, choices=SIZE_CATEGORY_CHOICES)
-#     size_value = models.CharField(max_length=10) # e.g., '9', '7.5' for shoes, 'M', 'L' for clothing
-
-#     def __str__(self):
-#         return f"{self.product.name} - {self.size_value} - {self.product.product_sex}"
-    

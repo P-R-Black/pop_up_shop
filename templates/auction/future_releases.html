@@ -39,7 +39,7 @@ Auction
                     <div class="background_triangle"></div>
                     {% for image in prod.product_image.all %}
                     {% if image.is_feature %}
-                    <img class="img_fluid_fr" alt="{{ image.alt_text }}" src="{{ image.image.url}}"
+                    <img class="img_fluid_fr" alt="{{ image.alt_text }}" src="{{ image.image }}"
                         alt="{{ image.image.alt_text}}" />
                     {% endif %}
                     {% endfor %}

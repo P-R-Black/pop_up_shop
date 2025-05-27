@@ -26,6 +26,16 @@
     width: 100%;
 }
 
+.dashboard_addressbox_small {
+    background-color: var(--text-color);
+    color: var(--body-color);
+    border-radius: 5px;
+    height: 15rem;
+    padding: 1rem 1rem;
+    position: relative;
+    width: 18rem;
+}
+
 
 .dashboard_databox_title {
     align-items: center;

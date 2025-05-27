@@ -10,7 +10,8 @@ from orders.views import payment_confirmation
 import os
 
 # Create your views here.
-# @login_required
+
+@login_required
 def cart_view(request):
     cart = Cart(request)
     total = str(cart.get_total_price())
@@ -20,12 +21,14 @@ def cart_view(request):
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
     intent = stripe.PaymentIntent.create(
-        # amount=total,
-        # currency='usd',
-        # metadata={'userid': request.user.id}
+        amount=total,
+        currency='usd',
+        metadata={'userid': request.user.id}
     )
 
-    return render(request, 'payment/payment_home.html', {'client_secret': intent.client_secret})
+    return render(request, 'payment/payment_home.html', {
+        'client_secret': intent.client_secret, 
+        'STRIPE_PUBLIC_KEY': os.environ.get('STRIPE_PUBLIC_KEY')})
 
 @csrf_exempt
 def stripe_webhook(request):

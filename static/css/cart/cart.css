@@ -1,0 +1,23 @@
+.cart_qty {
+    align-items: center;
+    background-color: var(--text-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 50%;
+
+    box-sizing: content-box;
+    color: var(--body-color);
+    display: flex;
+
+    font-size: .80rem;
+    font-weight: 600;
+    height: 1.25rem;
+    justify-content: center;
+    /* position: absolute; */
+    margin-left: .5rem;
+    right: 10px;
+    text-align: center;
+    top: 1px;
+    width: 1.25rem;
+
+
+}
