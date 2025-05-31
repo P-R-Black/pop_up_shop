@@ -324,6 +324,7 @@ body.dark {
 
 }
 
+.not_auth_payment_option_buttons:hover,
 .button_long_small:hover,
 .button_small:hover,
 .button_medium:hover {
@@ -332,6 +333,7 @@ body.dark {
     color: var(--text-color);
     transition: var(--tran-03);
 }
+
 
 .button_long_white:hover {
     background: transparent;
@@ -371,6 +373,26 @@ body.dark {
 .button_small_white:active,
 .sign_up_option_buttons:active {
     transform: scale(0.98);
+}
+
+
+
+.not_auth_payment_option_buttons {
+    align-items: center;
+    background-color: var(--text-color);
+    border-radius: 5px;
+    box-sizing: border-box;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.25rem;
+    font-weight: 300;
+    justify-content: center;
+    min-height: 3.25rem;
+    max-height: 4rem;
+    padding: 0px;
+    position: relative;
+    width: 80%;
 }
 
 

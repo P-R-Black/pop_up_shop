@@ -33,14 +33,14 @@ Auction
                     </div>
 
                     <div class="personal_info_shoe_size_container">
+                        <div class="shoe_brand_options_container">
+                            {{ form.favorite_brand }}
+                        </div>
                         <div class="shoe_sizes_container">
                             {{ form.shoe_size }}
                         </div>
                         <div class="shoe_gen_options_container">
                             {{ form.size_gender }}
-                        </div>
-                        <div class="shoe_brand_options_container">
-                            {{ form.favorite_brand }}
                         </div>
                     </div>
 
@@ -55,8 +55,6 @@ Auction
                 </div>
             </form>
 
-
-
             <div class="ship_to_address_update_personal_info_container">
                 <div class="personal_info_title_container">
                     <h3>Add Address and/or Recipient</h3>
@@ -64,57 +62,54 @@ Auction
 
                 <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
                     {% csrf_token %}
-                    <div class="modal_name_inputs">
+                    <div class="personal_info_choice_inputs">
                         {{ address_form.prefix }}
                     </div>
-                    <div class="personal_info_name_inputs">
-                        <div class="persional_info_first_name_container">
+                    <div class="personal_info_names_container">
+                        <div class="personal_info_add_medium">
                             {{ address_form.first_name }}
                         </div>
-                        <div class="personal_info_middle_name_container">
+                        <div class="personal_info_add_medium">
                             {{ address_form.middle_name }}
                         </div>
-                        <div class="personal_info_last_name_container">
+                        <div class="personal_info_add_medium">
                             {{ address_form.last_name}}
                         </div>
                     </div>
-                    <div class="modal_name_inputs">
-                        {{ address_form.phone_number }}
-                    </div>
-                    <div class="modal_name_inputs">
+                    <div class="personal_info_choice_inputs">
                         {{ address_form.suffix }}
                     </div>
-                    <div class="personal_info_address_inputs">
+                    <div class="personal_info_add_long">
                         {{ address_form.street_address_1 }}
                     </div>
-                    <div class="personal_info_address_inputs">
+                    <div class="personal_info_add_long">
                         {{ address_form.street_address_2 }}
                     </div>
-                    <div class="personal_info_address_inputs">
+                    <div class="personal_info_add_small">
                         {{ address_form.apt_ste_no }}
                     </div>
 
                     <div class="personal_info_city_state_zip_container">
-                        <div class="personal_info_address_inputs">
+                        <div class="personal_info_add_medium">
                             {{ address_form.city_town }}
                         </div>
-                        <div class="personal_info_state_inputs">
+                        <div class="personal_info_choice_inputs">
                             {{ address_form.state}}
                         </div>
-                        <div class="personal_info_address_inputs">
+                        <div class="personal_info_add_small">
                             {{ address_form.postcode }}
                         </div>
                     </div>
                     <div class="personal_info_delivery_instructions">
                         {{ address_form.delivery_instructions }}
                     </div>
-                    <div class="personal_info_address_inputs">
+                    <div class="personal_info_default_addy_options">
                         {{ address_form.address_default.label }}
                         {{ address_form.address_default }}
                     </div>
                     <input class="button_medium" type="submit" value="Add Address"></input>
                 </form>
-
+                <!-- Address List -->
                 <div class="account_addresses_container">
                     {% for addy in addresses %}
                     <div class="dashboard_addressbox_small">
@@ -124,6 +119,20 @@ Auction
                             {% endif %}
                         </div>
                         <div class="account_addresses_data">
+                            {% if addy.first_name == None or not addy.first_name %}
+                            <div class="account_addresses_data_street">
+                                <p>{{ user }}</p>
+                            </div>
+                            {% else %}
+                            <p>
+                                {% if addy.prefix %} <span>{{ addy.prefix }}</span> {% endif %}
+                                {{ addy.first_name }} {{ addy.last_name }}
+                                {% if addy.suffix %} <span>{{ addy.suffix }}</span> {% endif %}
+                            </p>
+
+                            {% endif %}
+
+
                             <div class="account_addresses_data_street">
                                 <p>{{ addy.address_line }}</p>
                             </div>
@@ -143,15 +152,13 @@ Auction
                             <div class="account_addresses_data_country">
                                 <p>United States</p>
                             </div>
-                            <div class="account_addresses_data_phone">
-                                <p>{{ user.mobile_phone }}</p>
-                            </div>
                         </div>
                         <div class="account_addresses_data_delivery_info">
                             {% if addy.delivery_instructions %}
                             <p>{{ addy.delivery_instructions|capfirst }}</p>
                             {% else %}
-                            <a href="">Add Delivery Info</a>
+                            <a type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressEditBtn"
+                                value="Add Delivery Info">Add Delivery Info</a>
                             {% endif %}
                         </div>
                         <div class="account_addresses_data_update_option">
@@ -178,28 +185,42 @@ Auction
                             <div class="dashbaord_location_update_container">
                                 <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
                                     {% csrf_token %}
-                                    <div class="modal_name_inputs">
+                                    <div class="personal_info_modal_choice_input">
+                                        {{ address_form.prefix }}
+                                    </div>
+                                    <div class="personal_info_modal_name_input">
+                                        {{ address_form.first_name }}
+                                    </div>
+                                    <div class="personal_info_modal_name_input">
+                                        {{ address_form.middle_name }}
+                                    </div>
+                                    <div class="personal_info_modal_name_input">
+                                        {{ address_form.last_name }}
+                                    </div>
+                                    <div class="personal_info_modal_choice_input">
+                                        {{ address_form.suffix }}
+                                    </div>
+                                    <div class="personal_info_modal_street_input">
                                         {{ address_form.street_address_1 }}
                                     </div>
-                                    <div class="modal_name_inputs">
+                                    <div class="personal_info_modal_street_input">
                                         {{ address_form.street_address_2 }}
                                     </div>
-                                    <div class="modal_name_inputs">
+                                    <div class="personal_info_modal_choice_input">
                                         {{ address_form.apt_ste_no }}
                                     </div>
-                                    <div class="modal_name_inputs">
+
+                                    <div class="personal_info_modal_street_input">
                                         {{ address_form.city_town }}
                                     </div>
-                                    <div class="modal_name_inputs">
+                                    <div class="personal_info_modal_city_state_zip_container">
                                         {{ address_form.state}}
-                                    </div>
-                                    <div class="modal_name_inputs">
                                         {{ address_form.postcode }}
                                     </div>
-                                    <div class="personal_info_delivery_instructions">
+                                    <div class="personal_info_modal_delivery_instructions">
                                         {{ address_form.delivery_instructions }}
                                     </div>
-                                    <div class="modal_name_inputs">
+                                    <div class="personal_info_modal_name_radio">
                                         {{ address_form.address_default.label }}
                                         {{ address_form.address_default }}
                                     </div>

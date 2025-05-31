@@ -44,12 +44,14 @@ class Cart:
             item['price'] = Decimal(item['price'])
             item['total_price'] = item['price'] * item['qty']
             yield item
-        
+
+
     def __len__(self):
         """
         Get cart dta and count the quantity of the items in the basket
         """
         return sum(item['qty'] for item in self.cart.values())
+
 
     def get_subtotal_price(self):
         return sum(Decimal(item['price']) * item['qty'] for item in self.cart.values())
@@ -57,13 +59,17 @@ class Cart:
 
     def get_total_price(self):
         subtotal = sum(Decimal(item['price']) * item['qty'] for item in self.cart.values())
+
+        shipping =  Decimal(0.00)
         if subtotal == 0:
             shipping = Decimal(0.00)
-        else:
-            shipping = Decimal(11.50)
+        # else:
+        #     shipping = Decimal(14.99)
+        #     print('shipping is', shipping)
         
         total = subtotal + Decimal(shipping)
         return total
+
 
     def delete(self, product):
         """
@@ -73,6 +79,7 @@ class Cart:
         if product_id in self.cart:
             del self.cart[product_id]
             self.save()
+        
     
     def update(self, product, qty):
         """

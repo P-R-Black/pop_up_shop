@@ -27,3 +27,16 @@ def validate_password_strength(password):
         
         if not re.search(f'[!@#$%^&*(),.?":|<>]', password):
             raise ValidationError('Password must contain at least one special character (!@#$%^&*(),.?":|<>)')
+
+
+
+def get_client_ip(request):
+    """
+    Retrieve client IP address from request headers, accounting for proxies
+    """
+    x_forward_for = request.META.get('HTTP_X_FORWWARED_FOR')
+    if x_forward_for:
+        ip = x_forward_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip

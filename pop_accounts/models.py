@@ -197,32 +197,37 @@ class PopUpCustomerAddress(models.Model):
     Shipping Address for Users
     """
     PREFIX_CHOICES = [
-        ('mr', 'Mr.'),
-        ('mrs', 'Mrs.'),
-        ('ms', 'Ms.'),
-        ('dr', 'Dr.'),
-        ('prof', 'Prof.'),
-        ('none', 'None'),
+        ('Mr.', 'Mr.'),
+        ('Mrs.', 'Mrs.'),
+        ('Ms.', 'Ms.'),
+        ('Miss', 'Miss'),
+        ('Dr', 'Dr.'),
+        ('Prof', 'Prof.'),
     ]
 
     SUFFIX_CHOICES = [
-        ('jr', 'Jr.'),
-        ('sr', 'Sr.'),
-        ('ii', 'II'),
-        ('iii', 'III'),
-        ('iv', 'IV'),
-        ('none', 'None'),
+        ('Jr.', 'Jr.'),
+        ('Sr.', 'Sr.'),
+        ('II', 'II'),
+        ('III', 'III'),
+        ('IV', 'IV'),
+        ('CPA', 'CPA'),
+        ('M.D.', 'M.D.'),
+        ('PhD', 'PhD'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(PopUpCustomer, verbose_name=_("Customer"), on_delete=models.CASCADE, related_name='address')
-    prefix = models.CharField(max_length=10, choices=PREFIX_CHOICES, default="none")
-    suffix = models.CharField(max_length=10, choices=SUFFIX_CHOICES, default="none")
-
+    
     # New data, this allows for a name and phone# to be assigned to address
+    prefix = models.CharField(max_length=10, choices=PREFIX_CHOICES, default="", blank=True, null=True)
+    suffix = models.CharField(max_length=10, choices=SUFFIX_CHOICES, default="", blank=True, null=True)
     first_name = models.CharField(max_length=100, blank=True, null=True)
     middle_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100, blank=True, null=True)
+
+    # Don't actually Need Phone Number in this model, text updates about delivery would be sent
+    # to primary user in PopUpCustomer
     phone_number = models.CharField(max_length=20, blank=True, null=True)
 
     postcode = models.CharField(_("Postcode"), max_length=50)
@@ -425,7 +430,7 @@ class PopUpCustomerIP(models.Model):
         verbose_name_plural = "Customer IP Addresses"
     
     def __str__(self):
-        return f"{self.customer.email} - {self.ip_address}"
+        return f"{self.customer.email} - {self.ip_address} ({self.created_at})"
 
 
 class PopUpCustomerPayment(models.Model):

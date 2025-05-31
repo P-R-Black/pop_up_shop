@@ -1,21 +1,22 @@
 from django.urls import path
 from . import views
-from .views import PlaceBidView, ProductBuyView
+from .views import (PlaceBidView, ProductBuyView, AllAuctionView, ProductAuctionView, ProductsView, 
+                    ComingSoonView, FutureReleases, ProductDetailView)
 
 app_name = 'auction'
 urlpatterns = [
-    path('', views.all_auction_view, name="auction"),
+    path('', AllAuctionView.as_view(), name="auction"),
     path('place-bid/', PlaceBidView.as_view(), name='place_bid'),
-    path('open/', views.product_auction_view, name='product_auction'), # map to product id
-    path('open/<slug:slug>/', views.product_auction_view, name='product_auction'), # map to product id
-    # path('product-buy/', views.product_buy_view, name='product_buy'), # map to product id
+    path('open/', ProductAuctionView.as_view(), name='product_auction'),
+    path('open/<slug:slug>/', ProductAuctionView.as_view(), name='product_auction'),
     path('product-buy/', ProductBuyView.as_view(), name='product_buy'),
-    path('products/', views.products, name='products'),
-    path('products/<slug:slug>/', views.products, name='products'),
-    path('coming-soon/', views.coming_soon, name='coming_soon'),
-    path('coming-soon/<slug:slug>/', views.coming_soon, name='coming_soon'),
-    path('future-releases/', views.future_releases, name='future_releases'),
-    path('future-releases/<slug:slug>/', views.future_releases, name='future_releases'),
-    path('<slug:slug>', views.product_detail, name='product_detail'),
+    path('products/', ProductsView.as_view(), name='products'),
+    path('products/<slug:slug>/', ProductsView.as_view(), name='products'),
+    path('coming-soon/', ComingSoonView.as_view(), name='coming_soon'),
+    path('coming-soon/<slug:slug>/', ComingSoonView.as_view(), name='coming_soon'),
+    path('future-releases/', FutureReleases.as_view(), name='future_releases'),
+    path('future-releases/<slug:slug>/', FutureReleases.as_view(), name='future_releases'),
+    # path('<slug:slug>', views.product_detail, name='product_detail'),
+    path('<slug:slug>', ProductDetailView.as_view(), name='product_detail'),
    
 ]

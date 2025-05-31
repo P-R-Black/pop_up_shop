@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
 from .token import account_activation_token
 from orders.views import user_orders
 from django.http import JsonResponse, HttpResponse
-from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid
+from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid, PopUpCustomerIP
 from auction.models import PopUpProduct, PopUpProductSpecificationValue
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -28,7 +28,7 @@ from django.core.cache import cache
 from django.utils.timezone import now
 from django.contrib.auth import logout
 from django.views import View
-from .utils import validate_email_address
+from .utils import validate_email_address, get_client_ip
 from django.conf import settings
 import hashlib
 import json
@@ -42,6 +42,9 @@ logger  = logging.getLogger('security')
 
 # Create your views here.
 class UserLoginView(View):
+    """
+    Accessible from email sent to user after password reset
+    """
     template_name = 'pop_accounts/login/login.html'
     form_class = PopUpUserLoginForm
     success_url = '/dashboard/'  # Change to wherever you want to redirect on success
@@ -289,6 +292,7 @@ def personal_info(request):
     user = request.user
     addresses = PopUpCustomerAddress.objects.filter(customer=user)
 
+
     personal_form = PopUpUserEditForm(initial={
             'first_name': user.first_name,
             'middle_name': user.middle_name,
@@ -302,10 +306,12 @@ def personal_info(request):
     
     address_form = ThePopUpUserAddressForm()
 
+
     if request.method == "POST":
+    
 
         # Determine which form as been submitted
-        if 'first_name' in request.POST:
+        if not 'street_address_1' in request.POST and 'first_name' in request.POST:
 
             # It's the personal info form
             personal_form = PopUpUserEditForm(request.POST)
@@ -334,33 +340,35 @@ def personal_info(request):
                 address= get_object_or_404(PopUpCustomerAddress, id=address_id, customer=user)
                 address_form = ThePopUpUserAddressForm(request.POST, instance=address)
             else:
-                address_form= ThePopUpUserAddressForm(request.POST)
-                # print('else address', address)
+                address_form = ThePopUpUserAddressForm(request.POST)
             
-            # It's the address form          
-            address_form.is_valid()
-            if address_form.is_valid():
-                address = address_form.save(commit=False)
-                address.customer = user
-                address.prefix = address_form.cleaned_data['prefix']
-                address.first_name = address_form.cleaned_data['first_name']
-                address.middle_name = address_form.cleaned_data['middle_name']
-                address.last_name = address_form.cleaned_data['last_name']
-                address.suffix = address_form.cleaned_data['suffix']
-                address.phone_number = address_form.cleaned_data['phone_number']
-                address.address_line = address_form.cleaned_data['street_address_1']
-                address.address_line2 = address_form.cleaned_data['street_address_2']
-                address.apartment_suite_number = address_form.cleaned_data['apt_ste_no']
-                address.town_city = address_form.cleaned_data['city_town']
-                address.state = address_form.cleaned_data['state']
-                address.postcode = address_form.cleaned_data['postcode']
-                address.delivery_instructions = address_form.cleaned_data['delivery_instructions']
-                address.default = address_form.cleaned_data.get('address_default', False)
-                address.save()
-                msg = "Address has been updated." if address_id else "Address has been added."
-                messages.success(request,msg)
-                # messages.success(request, "Address has been added.")
-                return redirect('pop_accounts:personal_info')
+            # It's the address form 
+            try:         
+                if address_form.is_valid():
+                    print("address_form.cleaned_data['prefix']", address_form.cleaned_data['prefix'])
+                    print("address_form.cleaned_data['suffix']", address_form.cleaned_data['suffix'])
+                    address = address_form.save(commit=False)
+                    address.customer = user
+                    address.prefix = address_form.cleaned_data['prefix']
+                    address.first_name = address_form.cleaned_data['first_name']
+                    address.middle_name = address_form.cleaned_data['middle_name']
+                    address.last_name = address_form.cleaned_data['last_name']
+                    address.suffix = address_form.cleaned_data['suffix']
+                    address.address_line = address_form.cleaned_data['street_address_1']
+                    address.address_line2 = address_form.cleaned_data['street_address_2']
+                    address.apartment_suite_number = address_form.cleaned_data['apt_ste_no']
+                    address.town_city = address_form.cleaned_data['city_town']
+                    address.state = address_form.cleaned_data['state']
+                    address.postcode = address_form.cleaned_data['postcode']
+                    address.delivery_instructions = address_form.cleaned_data['delivery_instructions']
+                    address.default = address_form.cleaned_data.get('address_default', False)
+                    address.save()
+                    msg = "Address has been updated." if address_id else "Address has been added."
+                    messages.success(request,msg)
+                    # messages.success(request, "Address has been added.")
+                    return redirect('pop_accounts:personal_info')
+            except Exception as e:
+                print('e', e)
            
 
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/personal_info.html', {
@@ -371,6 +379,11 @@ def personal_info(request):
 def get_address(request, address_id):
     address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
     return JsonResponse({
+        'prefix': address.prefix,
+        'first_name': address.first_name,
+        'middle_name': address.middle_name,
+        'last_name': address.last_name,
+        'suffix': address.suffix,
         'address_line': address.address_line,
         'address_line2': address.address_line2,
         'apartment_suite_number': address.apartment_suite_number,
@@ -544,6 +557,10 @@ class RegisterView(View):
                 user.set_password(form.cleaned_data['password'])
                 user.is_active = False  # Disable account until email is confirmed
                 user.save()
+                # capture and store the IP address
+                ip_address = get_client_ip(request)
+                if not PopUpCustomerIP.objects.filter(customer=user, ip_address=ip_address).exists():
+                    PopUpCustomerIP.objects.create(customer=user, ip_address=ip_address)
                 try:
                     self.send_verification_email(request, user)
                 except Exception as e:
@@ -706,11 +723,6 @@ def resend_2fa_code(request):
 
     return JsonResponse({'success': True})
 
-
-# Get IP address
-def get_client_ip(request):
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    return x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get("REMOTE_ADDR")
     
 
 

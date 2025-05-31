@@ -158,8 +158,8 @@ class TestProductsActiveAuction(TestCase):
         PopUpBrand.objects.create(name='Jordan', slug='jordan')
         PopUpProductType.objects.create(name='shoe', slug='shoe')
 
-        auction_start = make_aware(datetime(2025, 5, 10, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 5, 18, 12, 0, 0))
+        auction_start = make_aware(datetime(2025, 5, 29, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 6, 5, 12, 0, 0))
         
 
         self.prod_one = PopUpProduct.objects.create(
@@ -183,7 +183,7 @@ class TestProductsActiveAuction(TestCase):
         print('end', self.prod_one.auction_end_date)
 
     # freeze_time("2025-05-17 12:00:00")
-    def test_product_model_active_auction(self, mock_now):
+    def test_product_model_active_auction(self):
 
         prod_one = self.prod_one
         status = prod_one.auction_status
@@ -204,8 +204,8 @@ class TestProductsUpcomingAuction(TestCase):
         PopUpBrand.objects.create(name='Jordan', slug='jordan')
         PopUpProductType.objects.create(name='shoe', slug='shoe')
 
-        auction_start = make_aware(datetime(2025, 5, 23, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 4, 30, 12,0, 0))
+        auction_start = make_aware(datetime(2025, 6, 1, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 6, 8, 12, 0, 0))
 
         self.prod_one = PopUpProduct.objects.create(
             product_type_id=1, 
@@ -244,8 +244,8 @@ class TestProductsFinishedAuction(TestCase):
         PopUpBrand.objects.create(name='Jordan', slug='jordan')
         PopUpProductType.objects.create(name='shoe', slug='shoe')
 
-        auction_start = make_aware(datetime(2025, 4, 6, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 4, 13, 12,0, 0))
+        auction_start = make_aware(datetime(2025, 5, 22, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 5, 29, 12, 0, 0))
 
         self.prod_one = PopUpProduct.objects.create(
             product_type_id=1, 

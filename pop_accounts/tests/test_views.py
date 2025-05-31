@@ -1,11 +1,12 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
-from pop_accounts.models import PopUpCustomer
+from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
+from auction.utils import get_state_tax_rate
 from auction.models import PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType
 from unittest.mock import patch
 from django.utils import timezone
 from django.utils.timezone import now, make_aware
-from datetime import timedelta
+from datetime import timedelta, datetime
 from uuid import uuid4
 from django.middleware.csrf import CsrfViewMiddleware
 from django.http import HttpRequest
@@ -16,6 +17,78 @@ from django.core import mail
 from pop_accounts.utils import validate_password_strength
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from cart.cart import Cart
+from decimal import Decimal, ROUND_HALF_UP
+from django.http import HttpRequest
+from django.utils.text import slugify
+
+def create_test_user(email, password, first_name, last_name, shoe_size, size_gender):
+    return PopUpCustomer.objects.create_user(
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            shoe_size=shoe_size,
+            size_gender=size_gender
+        )
+
+def create_test_user_two():
+    return PopUpCustomer.objects.create_user(
+            email="testuse2r@example.com",
+            password="securePassword!232",
+            first_name="Test2",
+            last_name="User2",
+            shoe_size="11",
+            size_gender="male"
+        )
+
+
+
+
+def create_brand(name):
+    return PopUpBrand.objects.create(
+        name=name,
+        slug=slugify(name)
+    )
+
+def create_category(name, is_active):
+    return PopUpCategory.objects.create(
+            name=name,
+            slug=slugify(name),
+            is_active=is_active
+        )
+
+
+def create_product_type(name, is_active):
+    return PopUpProductType.objects.create(
+            name=name,
+            slug=slugify(name),
+            is_active=is_active
+        )
+
+def create_test_product(product_type, category, product_title, secondary_product_title, description, slug, 
+                        starting_price, current_highest_bid, retail_price, brand, auction_start_date, 
+                        auction_end_date, inventory_status, bid_count, reserve_price, is_active
+                        ):
+        
+        return PopUpProduct.objects.create(
+            product_type=product_type,
+            category=category,
+            product_title=product_title,
+            secondary_product_title= secondary_product_title,
+            description=description,
+            slug=slug, 
+            starting_price=starting_price, 
+            current_highest_bid=current_highest_bid, 
+            retail_price=retail_price, 
+            brand=brand, 
+            auction_start_date=auction_start_date, 
+            auction_end_date=auction_end_date, 
+            inventory_status=inventory_status, 
+            bid_count=bid_count, 
+            reserve_price=reserve_price, 
+            is_active=is_active
+        )
 
 
 class EmailCheckViewTests(TestCase):
@@ -459,3 +532,558 @@ class MarkProductOnNoticeViewTests(TestCase):
         self.assertEqual(response.json()["status"], "added")
         self.assertIn(self.product, self.user.prods_on_notice_for.all())
     
+
+class ProductBuyViewGETTests(TestCase):
+        
+    # test correct user displayed
+    def setUp(self):
+        self.client = Client()
+        self.user = create_test_user(email="testuser@example.com",
+            password="securePassword!23",
+            first_name="Test",
+            last_name="User",
+            shoe_size="10",
+            size_gender="male")
+        
+        auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
+        self.brand = create_brand("Jordan")
+        self.category = create_category("Jordan 3", True)
+        self.product_type = create_product_type("shoe", True)
+
+   
+        
+        self.product = create_test_product(
+            product_type=self.product_type, 
+            category=self.category, 
+            product_title="Air Jordan 1 Retro", 
+            secondary_product_title="Carolina Blue", 
+            description="The most uncomfortable basketball shoe their is", 
+            slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
+            starting_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=self.brand, 
+            auction_start_date=auction_start, 
+            auction_end_date=auction_end, 
+            inventory_status="in_inventory", 
+            bid_count="0", 
+            reserve_price="0", 
+            is_active=True)
+        
+        self.client.login(email="testuser@example.com", password="securePassword!23")
+        
+        request = self.client.get('/dummy/')
+        request = request.wsgi_request
+
+        cart = Cart(request)
+
+        cart.add(product=self.product, qty=1)
+
+        # Save the cart back to the test client's session
+        session = self.client.session
+        session.update(request.session)
+        session.save()
+    
+
+        # Create Address for user
+        self.address = PopUpCustomerAddress.objects.create(
+            customer = self.user,
+            address_line = "123 Main St",
+            apartment_suite_number = "1A",
+            town_city = "New York",
+            state = "NY",
+            postcode="10001",
+            delivery_instructions="Leave with doorman",
+            default=True
+        )
+
+        self.tax_rate = get_state_tax_rate("NY")
+        self.standard_shipping = Decimal('14.99')
+        self.processing_fee = Decimal('2.50')
+
+
+    def test_user_is_correct_in_view(self):
+        self.assertEqual(self.user.first_name, "Test")
+        self.assertEqual(self.user.last_name, "User")
+    
+
+    def test_product_buy_view_get_correct_tax_rate_applied(self):
+        self.assertEqual(get_state_tax_rate("NY"), 0.08375)
+        self.assertEqual(get_state_tax_rate("FL"), 0.0)
+        self.assertEqual(get_state_tax_rate("CA"), 0.095)
+        self.assertEqual(get_state_tax_rate("GA"), 0.07)
+        self.assertEqual(get_state_tax_rate("TX"), 0.0625)
+        self.assertEqual(get_state_tax_rate("IL"), 0.0886)
+        
+
+    def test_product_buy_view_get_basic_cart_data(self):
+        response = self.client.get(reverse('auction:product_buy'))
+        self.assertEqual(response.status_code, 200)
+
+        context = response.context
+        cart_items = context['cart_items']
+
+        self.assertEqual(len(cart_items), 1)
+
+        self.assertEqual(cart_items[0]['qty'], 1)
+        self.assertEqual(cart_items[0]['product'], self.product)
+        self.assertIn('cart_total', context)
+        self.assertIn('sales_tax', context)
+
+        
+        # Test tax rate and tax calculation
+        expected_subtotal = Decimal(self.product.starting_price)
+        expected_tax = expected_subtotal * Decimal(self.tax_rate)
+        self.assertEqual(Decimal(context['sales_tax']), expected_tax.quantize(Decimal('0.01')))
+
+        # Test grand total calcuation
+        expected_grand_total = expected_subtotal + expected_tax + (self.standard_shipping  * len(cart_items)) + self.processing_fee
+        self.assertEqual(Decimal(context['grand_total']), expected_grand_total.quantize(Decimal('0.01')))
+    
+
+
+    def test_selected_address_used_if_exists(self):
+        # Simulate address selected in session
+        session = self.client.session
+        session['selected_address_id'] = str(self.address.id)
+        session.save()
+
+        response = self.client.get(reverse('auction:product_buy'))
+        self.assertEqual(response.context['selected_address'], self.address)
+        self.assertEqual(response.context['address_form'].instance, self.address)
+    
+    
+
+    def _login_and_seed_cart(self, qty: int = 1):
+        """Log the test client in and drop one product in to the Cart session"""
+        self.client.login(email=self.user.email, password=self.user.password)
+
+        # make a cart entry directly into the session
+        session = self.client.session
+        session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.starting_price)}}
+        session.save()
+    
+    def test_product_buy_view_get_selected_address_displayed(self):
+        """
+        If we stuff selected_address_id into session, the view shoudl surface that exact PopUpCustomerAddress
+        instance via context['selected_address']
+        """
+        self._login_and_seed_cart()
+
+        # store chosen address ID in session
+        session = self.client.session
+        session['selected_address_id'] = str(self.address.id)
+        session.save()
+
+        response = self.client.get(reverse('auction:product_buy'))
+        self.assertEqual(response.status_code, 200)
+
+        # the view should echo back exactly *that* address as selected
+        self.assertIn('selected_address', response.context)
+        self.assertEqual(response.context['selected_address'], self.address)
+
+
+    def test_product_buy_view_get_cart_totals_correct(self):
+        """
+        Verify subtotal, sales-tax, shipping and grand-total calculations
+        for 1 item at $150 (NY tax ≈ 8.375 %), $14.99 std shipping & $2.50 fee.
+        """
+        self._login_and_seed_cart()          # qty = 1
+        # store chosen address ID in session
+        session = self.client.session
+        session['selected_address_id'] = str(self.address.id)
+        session.save()
+
+        response = self.client.get(reverse('auction:product_buy'))
+        self.assertEqual(response.status_code, 200)
+
+        # the view should echo back exactly *that* address as selected
+        self.assertIn('selected_address', response.context)
+        self.assertEqual(response.context['selected_address'], self.address)
+
+    
+    def test_product_buy_view_get_cart_totals_correct(self):
+        """
+        Verify subtotal, sales-tax, shipping and grand-total calculations
+        for 1 item at $150 (NY tax ≈ 8.375 %), $14.99 std shipping & $2.50 fee.
+        """
+        self._login_and_seed_cart()          # qty = 1
+
+        response = self.client.get(reverse('auction:product_buy'))
+        ctx      = response.context
+
+        # --- compute what we EXPECT -----------------
+        subtotal        = Decimal('150.00')
+        tax_rate        = Decimal(str(get_state_tax_rate('New York')))
+        expected_tax    = (subtotal * tax_rate).quantize(Decimal('0.01'), ROUND_HALF_UP)
+
+        shipping        = Decimal('14.99')   # 1499/100 * qty(1)
+        processing_fee  = Decimal('2.50')
+
+        expected_total  = (subtotal + expected_tax + shipping + processing_fee).quantize(
+                              Decimal('0.01'), ROUND_HALF_UP)
+
+        # --- pull what the view produced -------------
+        view_subtotal   = ctx['cart_subtotal']
+        view_tax        = Decimal(ctx['sales_tax'])
+        view_total      = Decimal(ctx['grand_total'])
+
+        # --- assertions ------------------------------
+        self.assertEqual(view_subtotal, subtotal)
+        self.assertEqual(view_tax,      expected_tax)
+        self.assertEqual(view_total,    expected_total)
+    
+
+    def test_invalid_selected_address_id_fails_gracefully(self):
+        self._login_and_seed_cart()
+        session = self.client.session
+        session["selected_address_id"] = "99999999-0000-0000-0000-000000000000"  # invalid UUID
+        session.save()
+
+        response = self.client.get(reverse("auction:product_buy"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "\n<h3>Shipping to</h3>\n")  # whatever text implies success
+
+
+class ProductBuyViewPOSTTests(TestCase):
+     # test correct user displayed
+    def setUp(self):
+        self.client = Client()
+        self.user = create_test_user(email="testuser@example.com",
+            password="securePassword!23",
+            first_name="Test",
+            last_name="User",
+            shoe_size="10",
+            size_gender="male")
+        
+        auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
+        self.brand = create_brand("Jordan")
+        self.category = create_category("Jordan 3", True)
+        self.product_type = create_product_type("shoe", True)
+
+
+        self.product = create_test_product(
+            product_type=self.product_type, 
+            category=self.category, 
+            product_title="Air Jordan 1 Retro", 
+            secondary_product_title="Carolina Blue", 
+            description="The most uncomfortable basketball shoe their is", 
+            slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
+            starting_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=self.brand, 
+            auction_start_date=auction_start, 
+            auction_end_date=auction_end, 
+            inventory_status="in_inventory", 
+            bid_count="0", 
+            reserve_price="0", 
+            is_active=True)
+        
+        self.client.login(email="testuser@example.com", password="securePassword!23")
+        
+        request = self.client.get('/dummy/')
+        request = request.wsgi_request
+
+        cart = Cart(request)
+
+        cart.add(product=self.product, qty=1)
+
+        # Save the cart back to the test client's session
+        session = self.client.session
+        session.update(request.session)
+        session.save()
+    
+
+        # Create Address for user
+        self.address = PopUpCustomerAddress.objects.create(
+            customer = self.user,
+            address_line = "123 Main St",
+            apartment_suite_number = "1A",
+            town_city = "New York",
+            state = "NY",
+            postcode="10001",
+            delivery_instructions="Leave with doorman",
+            default=True
+        )
+
+        self.tax_rate = get_state_tax_rate("NY")
+        self.standard_shipping = Decimal('14.99')
+        self.processing_fee = Decimal('2.50')
+    
+
+    def _login_and_seed_cart(self, qty: int = 1):
+        """Log the test client in and drop one product in to the Cart session"""
+        self.client.login(email=self.user.email, password=self.user.password)
+
+        # make a cart entry directly into the session
+        session = self.client.session
+        session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.starting_price)}}
+        session.save()
+
+    def test_post_select_existing_address_sets_session(self):
+        self._login_and_seed_cart()
+        post_data = {"selected_address": str(self.address.id),}
+        response = self.client.post(reverse('auction:product_buy'), post_data, follow=True)
+        session = self.client.session
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('selected_address_id', session)
+        self.assertEqual(session['selected_address_id'], str(self.address.id))
+
+
+    def test_post_update_existing_address_success(self):
+        self._login_and_seed_cart()
+
+        updated_data = {
+            'address_id': self.address.id,
+            'prefix': 'Mr.',
+            'first_name': 'Updated',
+            'last_name': 'Name',
+            'address_line': '456 New Ave',
+            'apartment_suite_number': '2B',
+            'town_city': 'Brooklyn',
+            'state': 'New York',
+            'postcode': '11201',
+            'delivery_instructions': 'New instructions',
+        }
+
+        response = self.client.post(reverse('auction:product_buy'), updated_data, follow=True)
+        self.address.refresh_from_db()
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.address.first_name, 'Updated')
+        self.assertContains(response, 'Address updated successfully.')
+        self.assertEqual(self.client.session['selected_address_id'], str(self.address.id))
+
+
+    def test_post_add_new_address_success(self):
+        self._login_and_seed_cart()
+
+        new_data = {
+            'prefix': 'Ms.',
+            'first_name': 'New',
+            'last_name': 'User',
+            'address_line': '789 Fresh St',
+            'apartment_suite_number': '3C',
+            'town_city': 'Queens',
+            'state': 'New York',
+            'postcode': '11375',
+            'delivery_instructions': 'Ring bell',
+        }
+
+        response = self.client.post(reverse('auction:product_buy'), new_data, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(PopUpCustomerAddress.objects.filter(first_name='New', customer=self.user).exists())
+
+        new_address = PopUpCustomerAddress.objects.get(first_name='New')
+        self.assertEqual(self.client.session['selected_address_id'], str(new_address.id))
+        self.assertContains(response, "Address added successfully")
+
+
+    def test_post_add_new_address_invalid_form(self):
+        self._login_and_seed_cart()
+
+        invalid_data = {
+            'first_name': '',  # Missing required fields
+            'last_name': '',
+            'postcode': '',
+        }
+
+        response = self.client.post(reverse('auction:product_buy'), invalid_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please correct the errors below.")
+
+
+    def test_product_not_in_inventory_skipped_in_cart(self):
+        self._login_and_seed_cart()
+
+        # Mark product as not in inventory
+        self.product.inventory_status = 'sold'
+        self.product.save()
+
+        response = self.client.get(reverse('auction:product_buy'))
+        cart_items = response.context['cart_items']
+
+        self.assertEqual(len(cart_items), 0)
+
+
+    def test_cart_is_empty_grand_total_zero(self):
+        self.client.login(email='test@test.com', password='123Strong!')
+        session = self.client.session
+        session['cart'] = {}  # Empty cart
+        session.save()
+
+        response = self.client.get(reverse('auction:product_buy'))
+
+        self.assertEqual(response.context['cart_total'], 0)
+        self.assertEqual(response.context['grand_total'], "0.00")
+
+
+class ProductBuyGuestTest(TestCase):
+
+    
+    
+    def setUp(self):
+        self.client = Client()
+
+        auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
+        self.brand = create_brand("Jordan")
+        self.category = create_category("Jordan 3", True)
+        self.product_type = create_product_type("shoe", True)
+
+        # seed one product in session cart
+        self.product = create_test_product(
+            product_type=self.product_type, 
+            category=self.category, 
+            product_title="Air Jordan 1 Retro", 
+            secondary_product_title="Carolina Blue", 
+            description="The most uncomfortable basketball shoe their is", 
+            slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
+            starting_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=self.brand, 
+            auction_start_date=auction_start, 
+            auction_end_date=auction_end, 
+            inventory_status="in_inventory", 
+            bid_count="0", 
+            reserve_price="0", 
+            is_active=True
+        )
+
+        session = self.client.session
+        session['cart'] = {str(self.product.id) : {"qty": 1, "price": str(self.product.starting_price)}}
+        session.save()
+    
+    def test_guest_sees_cart_summary_only(self):
+        resp = self.client.get(reverse('auction:product_buy'))
+        self.assertEqual(resp.status_code, 200)
+
+        # Cart bits should be present
+        self.assertContains(resp, self.product.product_title)
+        self.assertContains(resp, "Subtotal")
+
+        self.assertNotContains(resp, "Shipping Address")
+        self.assertNotContains(resp, '<button>Sign in or create account to complete order.</button>')
+
+
+class ProductBuyAuthTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = create_test_user(email="testuser@example.com",
+            password="securePassword!23",
+            first_name="Test",
+            last_name="User",
+            shoe_size="10",
+            size_gender="male")
+        
+        auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
+        self.brand = create_brand("Jordan")
+        self.category = create_category("Jordan 3", True)
+        self.product_type = create_product_type("shoe", True)
+
+
+        self.product = create_test_product(
+            product_type=self.product_type, 
+            category=self.category, 
+            product_title="Air Jordan 1 Retro", 
+            secondary_product_title="Carolina Blue", 
+            description="The most uncomfortable basketball shoe their is", 
+            slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
+            starting_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=self.brand, 
+            auction_start_date=auction_start, 
+            auction_end_date=auction_end, 
+            inventory_status="in_inventory", 
+            bid_count="0", 
+            reserve_price="0", 
+            is_active=True)
+        
+        # Create Address for user
+        self.address = PopUpCustomerAddress.objects.create(
+            customer = self.user,
+            address_line = "123 Main St",
+            apartment_suite_number = "1A",
+            town_city = "New York",
+            state = "NY",
+            postcode="10001",
+            delivery_instructions="Leave with doorman",
+            default=True
+        )
+
+        self.client.login(email="testuser@example.com", password="securePassword!23")
+
+        # seed cart
+        session = self.client.session
+        session['cart'] = {str(self.product.id) : {"qty": 1, "price": str(self.product.starting_price)}}
+        session.save()
+    
+    
+    def test_authenticated_sees_checkout_controls(self):
+        resp = self.client.get(reverse("auction:product_buy"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Shipping Choice")
+        self.assertContains(resp, self.address.address_line)
+        # self.assertContains(resp, "<button>\n<i class=\'bx bxl-apple\'></i>Pay\n</button>\n")
+    
+
+    def test_empty_cart_totals_zero_for_guest(self):
+        resp = self.client.get(reverse("auction:product_buy"))
+        self.assertContains(resp, "$0.00")
+    
+
+    def test_no_default_address_guest_graceful(self):
+        # user with no addresses (or guest) should not 500:
+        resp = self.client.get(reverse("auction:product_buy"))
+        self.assertEqual(resp.status_code, 200)
+
+
+
+
+
+    # test cart items ✅
+    # test ids_in_cart ✅
+    # test number of cart items ✅
+    # test shipping to address
+    # test saved_address, test default_adderess, test addres_form
+    # test if session seelcted_addres_id exists
+    # test change to shipping address 
+    # test cart total | cart.get_total_price()
+    # test getting user_state
+    # test correct tax_rate
+    # test grand_total
+    # test product filtering, is_active, and inventory_statys ="in_inventory" should be in cart
+    # test enriched_cart
+    # test shipping_cost
+    # test Anonymous access behavior
+    # test Product filtering logic
+    # test Empty cart handling
+    # test Handling of invalid/missing addresses
+    # test Correct form rendering on failed POST
+    # test Session logic behavior
+
+    # POST stuff
+    # test selected_add_id valid
+    # test selected_address_id invalid
+    # user updates existing address
+    # test user adds new address
+
+    # Edge Case Test
+    # empty cart
+    # no default or selected address
+    # invalid session address Id
+    # products missing ni db
+    
+
+    # """
+    # Run Test
+    # python3 manage.py test pop_accounts/tests
+    # """

@@ -87,7 +87,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f"Product {tad['product_title']} already exists, skipping name..."))
             
             if tad['product_title'] != "" and tad['secondary_product_title'] != "":
-                product_slug = slugify(tad['product_title'] + tad['secondary_product_title'])
+                product_slug = slugify(tad['product_title'] + '-'+ tad['secondary_product_title'])
             else:
                 product_slug = slugify(tad['product_title'])
             try:
