@@ -147,8 +147,11 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
                         console.log('data', data)
                         // Populate the modal form fields with response data;
-                        console.log(' data.address_line', data.address_line)
-
+                        const streeAddressPrefix = document.querySelectorAll('.personal_info_input_prefix')
+                        const streeAddressFirstName = document.querySelectorAll('.personal_info_input_first_name')
+                        const streeAddressMiddleName = document.querySelectorAll('.personal_info_input_middle_name')
+                        const streeAddressLastName = document.querySelectorAll('.personal_info_input_last_name')
+                        const streeAddressSuffix = document.querySelectorAll('.personal_info_input_suffix')
                         const streetAddressLineOne = document.querySelectorAll('.personal_info_street_address_one_input')
                         const streetAddressLineTwo = document.querySelectorAll('.personal_info_street_address_two_input')
                         const streetAddressSte = document.querySelectorAll('.personal_info_apt_inputs');
@@ -158,11 +161,29 @@ document.addEventListener('DOMContentLoaded', function (e) {
                         const streetAddressDelivInstruct = document.querySelectorAll('.delivery_instruct_text');
                         const streetAddressHiddenInput = document.querySelectorAll('#address-id')  // hidden input
 
+                        streeAddressPrefix.forEach((addyOne) => {
+                            addyOne.value = data.prefix;
+                        })
+
+                        streeAddressFirstName.forEach((addyOne) => {
+                            addyOne.value = data.first_name;
+                        })
+                        streeAddressMiddleName.forEach((addyOne) => {
+                            addyOne.value = data.middle_name;
+                        })
+
+                        streeAddressLastName.forEach((addyOne) => {
+                            addyOne.value = data.last_name;
+                        })
+
+                        streeAddressSuffix.forEach((addyOne) => {
+                            addyOne.value = data.suffix;
+                        })
                         streetAddressLineOne.forEach((addyOne) => {
-                            addyOne.value = data.address_line
+                            addyOne.value = data.address_line;
                         })
                         streetAddressLineTwo.forEach((addyOne) => {
-                            addyOne.value = data.address_line2
+                            addyOne.value = data.address_line2;
                         })
                         streetAddressSte.forEach((addyOne) => {
                             addyOne.value = data.apartment_suite_number

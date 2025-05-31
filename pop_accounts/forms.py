@@ -71,7 +71,7 @@ STATES_SELELCTION = [
     ('Nebraska', 'NE'),
     ('Nevada', 'NV'),
     ('New Hampshire', 'NH'),
-    ('New Jerse', 'NJ'),
+    ('New Jersey', 'NJ'),
     ('New Mexico', 'NM'),
     ('New York', 'NY'),
     ('North Carolina', 'NC'),
@@ -94,36 +94,14 @@ STATES_SELELCTION = [
     ('Wyoming', 'WY')
 ]
 
-PREFIX = [
-    ('', 'Select Prefix'),
-    ('Mr.', 'Mr.'),
-    ('Mrs.', 'Mrs.'),
-    ('Ms.', 'Ms.'),
-    ('Miss', 'Miss'),
-    ('Dr.', 'Dr.'),
-]
-
-
-SUFFIX = [
-    ('', 'Select Suffix'),
-    ('Jr.', 'Jr.'),
-    ('Sr.', 'Sr.'),
-    ('I', 'I'),
-    ('II', 'II'),
-    ('III', 'III'),
-    ('CPA', 'CPA'),
-    ('M.D.', 'M.D.'),
-    ('PhD', 'PhD.'),
-]
-
 
 class ThePopUpUserAddressForm(forms.ModelForm):
     prefix = forms.ChoiceField(
         label='Prefix',
-        choices=PREFIX, required=False,
+        choices=[("", "Select Prefix")] + PopUpCustomerAddress.PREFIX_CHOICES, required=False,
         widget=forms.Select(attrs={
-            'class': '',
-            'id': 'prefix',
+            'class': 'personal_info_input_prefix',
+            'id': 'prefix', # prefix
             'name': 'prefix',
         })
     )
@@ -131,7 +109,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     first_name = forms.CharField(
         label='First Name', min_length=2, max_length=50, required=False,
         widget=forms.TextInput(attrs={
-            'class': 'personal_info_first_name_input',
+            'class': 'personal_info_input_first_name', # personal_info_first_name_input
             'placeholder': 'First Name',
             'id': '',
             'name': 'first_name'
@@ -141,9 +119,9 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     middle_name = forms.CharField(
         label='Middle Name', min_length=2, max_length=50, required=False,
         widget=forms.TextInput(attrs={
-            'class': 'personal_info_first_name_input',
-            'placeholder': 'Middle Name',
+            'class': 'personal_info_input_middle_name', # personal_info_first_name_input
             'id': '',
+            'placeholder': 'Middle Name',
             'name': 'middle_name'
         })
     )
@@ -151,7 +129,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     last_name = forms.CharField(
         label='Last Name', min_length=2, max_length=50, required=False,
         widget=forms.TextInput(attrs={
-            'class': 'personal_info_last_name_input',
+            'class': 'personal_info_input_last_name', # personal_info_last_name_input
             'placeholder': 'Last Name',
             'id': '',
             'name': 'last_name'
@@ -159,24 +137,12 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     )
 
     suffix = forms.ChoiceField(
-        label='Prefix',
-        choices=SUFFIX, required=False,
+        label='Suffix',
+        choices=[("", "Select Suffix")] + PopUpCustomerAddress.SUFFIX_CHOICES, required=False,
         widget=forms.Select(attrs={
-            'class': '',
-            'id': 'suffix',
+            'class': 'personal_info_input_suffix',
+            'id': '', # suffix
             'name': 'suffix',
-        })
-    )
-
-    
-    phone_number = forms.CharField(
-        label = "Phone Number", min_length=10, max_length=50, required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'modal_address_phone_input',
-            'id': 'modal_address_phone_input',
-            'placeholder': 'Mobile Phone (xxx-xxx-xxxx)',
-            'name': 'phone'
-
         })
     )
 
@@ -205,7 +171,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     apt_ste_no = forms.CharField(
         label='Apt/Ste', max_length=200, required=False,
         widget=forms.TextInput(attrs={
-            'class': 'personal_info_apt_inputs',
+            'class': 'personal_info_apt_inputs', # personal_info_apt_inputs
             'id': '',
             'placeholder': 'Apt/Ste',
             'type': 'text',
@@ -216,7 +182,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     city_town = forms.CharField(
         label='City/Town', min_length=2, max_length=200, required=True,
         widget=forms.TextInput(attrs={
-            'class': 'personal_info_address_city_input',
+            'class': 'personal_info_address_city_input', #personal_info_address_city_input
             'id': '',
             'placeholder': 'City',
             'type': 'text',
@@ -229,10 +195,9 @@ class ThePopUpUserAddressForm(forms.ModelForm):
         label='State', required=True,
         choices=STATES_SELELCTION, 
         widget=forms.Select(attrs={
-            'class': 'personal_info_address_state',
+            'class': 'personal_info_address_state', # personal_info_address_state
             'id': '',
             'placeholder': 'State',
-            'type': 'text',
             'name': 'state'
         }
     ))
@@ -240,7 +205,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     postcode = forms.CharField(
         label='Postal Code', max_length=50, required=True,
         widget=forms.TextInput(attrs={
-            'class': 'personal_info_address_zip_input',
+            'class': 'personal_info_address_zip_input', # personal_info_address_zip_input
             'id': '',
             'placeholder': 'Postal Code',
             'type': 'text',
@@ -263,7 +228,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
         label = 'Default Address',
         required=False,
         widget = forms.CheckboxInput(attrs={
-            'class': 'personal_info_default_address',
+            'class': 'personal_info_default_address', # personal_info_default_address
             'id': ''
         })  
     )
@@ -271,7 +236,8 @@ class ThePopUpUserAddressForm(forms.ModelForm):
 
     class Meta:
         model = PopUpCustomerAddress
-        fields = ['street_address_1', 'street_address_2', 'apt_ste_no', 'city_town', 'state', 'postcode', 'delivery_instructions']
+        fields = ['prefix', 'first_name', 'middle_name', 'last_name', 'suffix', 'street_address_1', 
+                  'street_address_2', 'apt_ste_no', 'city_town', 'state', 'postcode', 'delivery_instructions']
 
 
 
@@ -631,8 +597,8 @@ class PopUpUserEditForm(forms.Form):
     )
 
     class Meta:
-        # model = PopUpCustomer
-        fields = ('first_name', 'last_name', 'middle_mane', 'suffix', 'shoe_size', 'size_gender', 'favorite_brand')
+        model = PopUpCustomer
+        fields = ('first_name', 'last_name', 'middle_mane', 'shoe_size', 'size_gender', 'favorite_brand', 'mobile_notification')
     
 
 
@@ -641,7 +607,7 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
 
     prefix = forms.ChoiceField(
         label='Prefix',
-        choices=PREFIX, required=False,
+        choices=[("", "Select Prefix")] + PopUpCustomerAddress.PREFIX_CHOICES, required=False,
         widget=forms.Select(attrs={
             'class': '',
             'id': 'prefix',
@@ -680,8 +646,8 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
     )
 
     suffix = forms.ChoiceField(
-        label='Prefix',
-        choices=SUFFIX, required=False,
+        label='Suffix',
+        choices=[("", "Select Suffix")] + PopUpCustomerAddress.SUFFIX_CHOICES, required=False,
         widget=forms.Select(attrs={
             'class': '',
             'id': 'suffix',
@@ -768,17 +734,6 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
         }
     ))
 
-    phone_number = forms.CharField(
-        label = "Phone Number", min_length=10, max_length=50, required=False,
-        widget=forms.TextInput(attrs={
-            'class': 'modal_address_phone_input',
-            'id': 'modal_address_phone_input',
-            'placeholder': 'Mobile Phone (xxx-xxx-xxxx)',
-            'name': 'phone'
-
-        })
-    )
-
 
     address_default = forms.BooleanField(
         label = 'Default Address',
@@ -789,17 +744,6 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
         }
     ))
 
-    
-
-    mobile_notification = forms.BooleanField(
-        label = 'Permission to Text',
-        required = False,
-        widget = forms.CheckboxInput(attrs={
-            'class': 'mobile_notification',
-            'id': 'mobile_notification'
-        }
-        
-    ))
 
 
     class Meta:
@@ -807,5 +751,5 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
         fields = ['first_name', 'middle_name', 'last_name',
             'address_line', 'address_line2', 'apartment_suite_number', 
             'town_city', 'state', 'postcode', 'delivery_instructions',
-            'phone_number']
+            ]
     

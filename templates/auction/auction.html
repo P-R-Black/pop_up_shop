@@ -26,7 +26,7 @@ Auction
                     <div class="auct_img_container">
                         {% for image in i.product_image.all %}
                         {% if image.is_feature %}
-                        <img class="min_img_fluid" src="{{ image.image.url }}" alt="{{ image.alt_text }}">
+                        <img class="min_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}">
                         {% endif %}
                         {% endfor %}
                     </div>

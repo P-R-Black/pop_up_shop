@@ -1043,7 +1043,7 @@ subtotalExpand.addEventListener("click", function () {
 
 
 // shipping button options
-var shippingButtons = document.querySelectorAll(".button_long_option")
+var shippingButtons = document.querySelectorAll(".shippingButtons")
 const shippingCost = document.getElementById('shippingCost')
 const orderQuantity = document.getElementById('purchaseQuantity').innerHTML
 const processingFee = document.getElementById('processingFee').innerHTML
@@ -1058,7 +1058,10 @@ let shipping;
 shippingButtons.forEach((button) => {
 
     shippingMath = 1499 * Number(orderQuantity)
+    console.log('shippingMath', shippingMath)
+
     shippingCost.innerText = `$${shippingMath / 100}`
+    console.log('shippingCost', shippingCost)
 
 
     button.addEventListener("click", function (e) {
@@ -1075,30 +1078,32 @@ shippingButtons.forEach((button) => {
         let processFee = processingFee.replace("$", "").replace(",", "")
         let tax = salesTax.replace("$", "").replace(",", "")
 
-        if (button.name == "standard") {
+        if (button.name == "standard" && orderQuantity > 0) {
             shippingMath = 1499 * Number(orderQuantity)
             shippingCost.innerText = `$${shippingMath / 100}`
             shipping = shippingCost.innerText.replace("$", "").replace(",", "")
             calculateSubtotal(processFee, shipping, tax)
         }
 
-        if (button.name == "express") {
-            shippingMath = 2999 * Number(orderQuantity)
+        if (button.name == "express" && orderQuantity > 0) {
+            shippingMath = 2499 * Number(orderQuantity)
             shippingCost.innerText = `$${shippingMath / 100}`
             shipping = shippingCost.innerText.replace("$", "").replace(",", "")
             calculateSubtotal(processFee, shipping, tax)
         }
-
-
 
     });
 
 
 });
 
+
+
 function numberWithCommas(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
+
+
 
 // update primary payment button
 document.addEventListener('DOMContentLoaded', function () {
@@ -1306,6 +1311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(target).classList.add('activated')
         })
     })
+
 
 })
 
