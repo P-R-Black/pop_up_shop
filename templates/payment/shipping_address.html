@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+Payment
+{% endblock %}
+
+{% block main %}
+<section class="product_buy_section container">
+    {% if user.is_authenticated %}
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Shipping Address</h2>
+        </div>
+        <div class="billing_address_container">
+            <!-- Button Navigation -->
+            <div class="billing_address_buttons">
+                <button type="button" class="billing_address_button activated" data-tab="edit-tab">Edit
+                    Address</button>
+                <button type="button" class="billing_address_button" data-tab="choose-tab">Choose
+                    Other</button>
+                <button type="button" class="billing_address_button" data-tab="new-tab">Add
+                    new</button>
+            </div>
+            <!-- Edit Address Tab -->
+            <form action="{% url 'payment:shipping_address' %}" method="post" class="billing_address_content activated"
+                id="edit-tab">
+                {% csrf_token %}
+
+                <input type="hidden" name="address_id" value="{{ address_form.instance.id }}">
+
+                <div class="ship_to_name_update_modal_container">
+                    <div class="billing_address_inputs">
+                        {{ address_form.prefix }}
+                    </div>
+                    <div class="personal_info_names_container">
+                        <div class="personal_info_add_medium">
+                            {{ address_form.first_name }}
+                        </div>
+                        <div class="personal_info_add_medium">
+                            {{ address_form.middle_name}}
+                        </div>
+                        <div class="personal_info_add_medium">
+                            {{ address_form.last_name }}
+                        </div>
+                    </div>
+                    <div class="billing_address_inputs">
+                        {{ address_form.suffix }}
+                    </div>
+                </div>
+                <div class="ship_to_address_update_modal_container">
+                    <div class="personal_info_add_long">
+                        {{ address_form.address_line }}
+                    </div>
+                    <div class="personal_info_add_long">
+                        {{ address_form.address_line2 }}
+                    </div>
+                    <div class="personal_info_add_small">
+                        {{ address_form.apartment_suite_number }}
+                    </div>
+                    <div class="personal_info_city_state_zip_container">
+                        <div class="personal_info_add_medium">
+                            {{ address_form.town_city }}
+                        </div>
+                        <div class="personal_info_choice_inputs">
+                            {{ address_form.state}}
+                        </div>
+                        <div class="personal_info_add_small">
+                            {{ address_form.postcode }}
+                        </div>
+                    </div>
+
+                    <div class="billing_address_delivery_instructions">
+                        {{ address_form.delivery_instructions }}
+                    </div>
+                </div>
+                <div class="default_billing_address_container">
+                    {{ edit_address_form.is_default_shipping.label }}
+                    {{ edit_address_form.is_default_shipping }}
+                </div>
+                <input class="button_medium" type="submit" value="Save"></input>
+            </form>
+
+            <div class="billing_add_address_tab billing_address_content" id="choose-tab">
+                <p>Select from Your Saved Addresses:</p>
+                <form action="{% url 'payment:shipping_address' %}" class="select_address_form" method="POST">
+                    {% csrf_token %}
+                    {% for addy in saved_addresses %}
+                    <label>
+                        <input type="radio" name="selected_address" value="{{ addy.id }}">
+                        {% if addy.first_name == None or not addy.first_name %}
+                        <h4 class="shipping_to_name">{{ user }}</h4>
+                        {% else %}
+                        <h4 class="shipping_to_name">{{ addy.first_name }} {{ addy.last_name }}
+                        </h4>
+                        {% endif %}
+                        <h4 class="shipping_street_address">{{ addy.address_line }}</h4>
+                        {% if address.address_line2 %}
+                        <h4 class="shipping_street_address">{{ addy.address_line2 }}</h4>
+                        {% endif %}
+                        {% if addy.apartment_suite_number and addy.apartment_suite_number != "N/A"%}
+                        <h4 class="shipping_street_address">
+                            Apt/Ste: {{ addy.apartment_suite_number }}
+                        </h4>
+                        {% endif %}
+                        <h4 class="shipping_city_state_zip">{{ addy.town_city }}, {{ addy.state }}
+                            {{ addy.postcode}}</h4>
+                        {% if addy.phone_number %}
+                        <h4 class="shipping_phone_number">{{ addy.phone_number }}</h4>
+                        {% else %}
+                        <h4 class="shipping_phone_number">{{ user.mobile_phone }}</h4>
+                        {% endif %}
+                    </label><br>
+                    {% endfor %}
+                    <button type="submit" class="address_change_button_long use-selected-address">Use Selected
+                        Address</button>
+                </form>
+            </div>
+
+            <!-- Add New Address Tab -->
+            <form action="{% url 'payment:shipping_address' %}" method="POST" class="billing_address_content"
+                id="new-tab">
+                {% csrf_token %}
+                <!-- Reuse the same form or a seperate one -->
+                <div class="ship_to_name_update_modal_container">
+                    <div class="billing_address_inputs">
+                        {{ edit_address_form.prefix }}
+                    </div>
+                    <div class="personal_info_names_container">
+                        <div class="personal_info_add_medium">
+                            {{ edit_address_form.first_name }}
+                        </div>
+                        <div class="personal_info_add_medium">
+                            {{ edit_address_form.middle_name}}
+                        </div>
+                        <div class="personal_info_add_medium">
+                            {{ edit_address_form.last_name }}
+                        </div>
+                    </div>
+                    <div class="billing_address_inputs">
+                        {{ edit_address_form.suffix }}
+                    </div>
+                </div>
+                <div class="ship_to_address_update_modal_container">
+                    <div class="personal_info_add_long">
+                        {{ edit_address_form.address_line }}
+                    </div>
+                    <div class="personal_info_add_long">
+                        {{ edit_address_form.address_line2 }}
+                    </div>
+                    <div class="personal_info_add_small">
+                        {{ edit_address_form.apartment_suite_number }}
+                    </div>
+                    <div class="personal_info_city_state_zip_container">
+                        <div class="personal_info_add_medium">
+                            {{ edit_address_form.town_city }}
+                        </div>
+                        <div class="personal_info_choice_inputs">
+                            {{ edit_address_form.state}}
+                        </div>
+                        <div class="personal_info_add_small">
+                            {{ edit_address_form.postcode }}
+                        </div>
+                    </div>
+                    <div class="billing_address_delivery_instructions">
+                        {{ edit_address_form.delivery_instructions }}
+                    </div>
+                </div>
+                <div class="default_billing_address_container">
+                    {{ edit_address_form.is_default_shipping.label }}
+                    {{ edit_address_form.is_default_shipping }}
+                </div>
+                <input type="submit" class="address_change_button_long" value="Save New Address">
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

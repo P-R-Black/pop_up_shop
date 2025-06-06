@@ -5,11 +5,19 @@ from .models import PopUpCustomerOrder, PopUpOrderItem
 
 # Create your views here.
 def add(request):
+    print('orders add called!')
     cart = Cart(request)
     if request.POST.get('action') == 'post':
         user_id = request.user.id
         order_key = request.POST.get('order_key')
         cart_total = cart.get_total_price()
+
+        print('cart', cart)
+        for c in cart:
+            print('c', c)
+        print('user_iduser_id', user_id)
+        print('order_key', order_key)
+        print('cart_total', cart_total)
 
         # Check if order exists
         if PopUpCustomerOrder.objects.filter(order_key=order_key).exists():

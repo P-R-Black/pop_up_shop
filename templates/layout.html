@@ -23,6 +23,7 @@
 
     <!-- BoxIcons -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
     <!-- Font Awesome -->
     <script src="https://kit.fontawesome.com/27e86509c5.js" crossorigin="anonymous"></script>
 
@@ -53,8 +54,6 @@
     <link rel="stylesheet" href="{% static 'css/auction/auction_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_auction.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_auction_mobile.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/product_buy.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/product_buy_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/products.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/products_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/coming_soon.css' %}">
@@ -110,6 +109,15 @@
     <link rel="stylesheet" href="{% static 'css/pop_accounts/login/login_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/login/password_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/login/password_reset_mobile.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/payment/payment_home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/payment/payment_home_mobile.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/payment/billing_address.css' %}">
+    <link rel="stylesheet" href="{% static 'css/payment/billing_address_mobile.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/payment/shipping_address.css' %}">
+    <link rel="stylesheet" href="{% static 'css/payment/shipping_address_mobile.css' %}">
 
     <link rel="stylesheet" href="{% static 'css/cart/cart.css' %}">
 
@@ -186,7 +194,7 @@
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a type="button" role="button" href="{% url 'auction:product_buy' %}">
+                        <a type="button" role="button" href="{% url 'payment:payment_home' %}">
 
                             <i class='bx bx-cart icon'></i>
                             <span class="text nav-text">Cart</span>

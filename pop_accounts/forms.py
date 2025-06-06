@@ -233,11 +233,29 @@ class ThePopUpUserAddressForm(forms.ModelForm):
         })  
     )
 
+    is_default_shipping = forms.BooleanField(
+        label = 'Default Shipping Address',
+        required=False,
+        widget = forms.CheckboxInput(attrs={
+            'class': 'personal_info_default_shipping_add', 
+            'id': ''
+        })  
+    )
+    is_default_billing = forms.BooleanField(
+        label = 'Default Billing Address',
+        required=False,
+        widget = forms.CheckboxInput(attrs={
+            'class': 'personal_info_default_billing_add',
+            'id': ''
+        })  
+    )
+
 
     class Meta:
         model = PopUpCustomerAddress
         fields = ['prefix', 'first_name', 'middle_name', 'last_name', 'suffix', 'street_address_1', 
-                  'street_address_2', 'apt_ste_no', 'city_town', 'state', 'postcode', 'delivery_instructions']
+                  'street_address_2', 'apt_ste_no', 'city_town', 'state', 'postcode', 'delivery_instructions',
+                  'is_default_shipping', 'is_default_billing']
 
 
 
@@ -744,6 +762,23 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
         }
     ))
 
+    is_default_shipping = forms.BooleanField(
+        label = 'Default Shipping Address',
+        required=False,
+        widget = forms.CheckboxInput(attrs={
+            'class': 'modal_default_shipping_add', 
+            'id': ''
+        })  
+    )
+    is_default_billing = forms.BooleanField(
+        label = 'Default Billing Address',
+        required=False,
+        widget = forms.CheckboxInput(attrs={
+            'class': 'modal_default_billing_add',
+            'id': ''
+        })  
+    )
+
 
 
     class Meta:
@@ -751,5 +786,6 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
         fields = ['first_name', 'middle_name', 'last_name',
             'address_line', 'address_line2', 'apartment_suite_number', 
             'town_city', 'state', 'postcode', 'delivery_instructions',
+            'is_default_shipping', 'is_default_billing'
             ]
     

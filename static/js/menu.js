@@ -989,12 +989,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+
+
 // address change modal
 document.addEventListener('DOMContentLoaded', function () {
     // Get the modal, button, and close span
     const addressChangeModal = document.getElementById('addressChangeModal');
     const addressChangeBtn = document.getElementById('addressChangeButton');
     const addressChangeSpan = document.querySelector('.closeAddressModal');
+
+    const billingAddressChangeModal = document.getElementById('billingAddressChangeModal')
+    const billingAddressChangeSpan = document.querySelector('.closeBillingAddressModal')
+    const billingAddressChangeBtn = document.getElementById('billingAddressChangeButton');
 
     // Show the modal when the button is clicked
     addressChangeBtn.addEventListener('click', function () {
@@ -1012,195 +1018,112 @@ document.addEventListener('DOMContentLoaded', function () {
             addressChangeModal.style.display = 'none';
         }
     });
-});
 
 
+    // Billing Address
+    // Show the modal when the button is clicked
+    billingAddressChangeBtn.addEventListener('click', function () {
+        billingAddressChangeModal.style.display = 'block';
+    });
+
+    // Close the modal when the close span is clicked
+    billingAddressChangeSpan.addEventListener('click', function () {
+        billingAddressChangeModal.style.display = 'none';
+    });
+
+    // Close the modal when clicking outside of it
+    window.addEventListener('click', function (event) {
+        if (event.target === billingAddressChangeModal) {
+            billingAddressChangeModal.style.display = 'none';
+        }
+    });
 
 
-
-// payment options dropdown
-var expandButton = document.querySelector(".expandButton");
-var checkoutOptionsContainer = document.querySelector('.checkout_options_container')
-
-expandButton.addEventListener("click", function () {
-    /* Toggle between adding and removing the "active" class,
-    to highlight the button that controls the panel */
-    this.classList.toggle("active");
-    checkoutOptionsContainer.classList.toggle('show')
-
-});
-
-
-// subtotal options dropdown
-var subtotalExpand = document.querySelector(".subtotalExpand");
-var purchaseDetailsContainer = document.querySelector('.purchase_details_container')
-
-subtotalExpand.addEventListener("click", function () {
-    this.classList.toggle("subTotalactive");
-    purchaseDetailsContainer.classList.toggle('subTotalShow')
-
-});
-
-
-// shipping button options
-var shippingButtons = document.querySelectorAll(".shippingButtons")
-const shippingCost = document.getElementById('shippingCost')
-const orderQuantity = document.getElementById('purchaseQuantity').innerHTML
-const processingFee = document.getElementById('processingFee').innerHTML
-const salesTax = document.getElementById('purchaseTax').innerHTML
-const purchaseSubtotal = document.getElementById('purchaseSubtotal').innerHTML
-
-
-let shippingMath;
-let orderTotal;
-let shipping;
-
-shippingButtons.forEach((button) => {
-
-    shippingMath = 1499 * Number(orderQuantity)
-    console.log('shippingMath', shippingMath)
-
-    shippingCost.innerText = `$${shippingMath / 100}`
-    console.log('shippingCost', shippingCost)
-
-
-    button.addEventListener("click", function (e) {
+    document.getElementById('billingAddressChangeButton').addEventListener('click', (e) => {
         e.preventDefault();
-        // Loop through all buttons and remove "active" class if present
-        if (body) {
-            shippingButtons.forEach((btn) => btn.classList.remove("chosen"));
+        document.getElementById('billingAddressChangeModal').style.display = 'block';
+    })
 
-            // Add "active" class to the button that was clicked
-            this.classList.add("chosen");
-
+    document.getElementById('confirmBillingAddress').addEventListener('click', () => {
+        const selected = document.querySelector('input[name="billing_address_choice"]:checked');
+        if (selected) {
+            const addressId = selected.value;
+            fetch("{% url 'payment:set_billing_address' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ address_id: addressId })
+            }).then(res => {
+                if (res.ok) this.location.reload();
+            })
         }
-
-        let processFee = processingFee.replace("$", "").replace(",", "")
-        let tax = salesTax.replace("$", "").replace(",", "")
-
-        if (button.name == "standard" && orderQuantity > 0) {
-            shippingMath = 1499 * Number(orderQuantity)
-            shippingCost.innerText = `$${shippingMath / 100}`
-            shipping = shippingCost.innerText.replace("$", "").replace(",", "")
-            calculateSubtotal(processFee, shipping, tax)
-        }
-
-        if (button.name == "express" && orderQuantity > 0) {
-            shippingMath = 2499 * Number(orderQuantity)
-            shippingCost.innerText = `$${shippingMath / 100}`
-            shipping = shippingCost.innerText.replace("$", "").replace(",", "")
-            calculateSubtotal(processFee, shipping, tax)
-        }
-
-    });
-
-
+    })
 });
 
 
 
-function numberWithCommas(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
+
+// Billing Address Update in Checkout Page
+document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('.billing_address_button');
+    const tabContents = document.querySelectorAll('.billing_address_content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('clicked')
+            const target = button.getAttribute('data-tab');
+
+            // Remove "active" class from all;
+            tabButtons.forEach(btn => btn.classList.remove('activated'))
+            tabContents.forEach(content => content.classList.remove('activated'));
+
+            // Add active to selected
+            button.classList.add('activated');
+            document.getElementById(target).classList.add('activated')
+        })
+    })
+
+})
 
 
 
-// update primary payment button
-document.addEventListener('DOMContentLoaded', function () {
-    const selectedPaymentButton = document.getElementById('selectedPaymentButton');
-    const checkoutOptions = document.getElementById('checkoutOptions');
 
-    // Listen for clicks on payment buttons
-    checkoutOptions.addEventListener('click', function (event) {
-        const clickedButton = event.target.closest('.payment_option_buttons');
+// Shipping Address Update in Checkout Page
+document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('.modal_tab');
+    const tabContents = document.querySelectorAll('.modal_tab_content');
 
-        if (clickedButton) {
-            // Get the icon (either <i> or <img>) and text
-            const icon = clickedButton.querySelector('i, img');
-            const text = clickedButton.textContent.trim(); // Extract button text
+    tabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = button.getAttribute('data-tab');
 
-            // Update the primary payment button
-            selectedPaymentButton.innerHTML = ''; // Clear current content
+            // Remove "active" class from all;
+            tabButtons.forEach(btn => btn.classList.remove('activated'))
+            tabContents.forEach(content => content.classList.remove('activated'));
 
-            if (icon) {
-                // Clone the icon and append to the button
-                const newIcon = icon.cloneNode(true);
-                selectedPaymentButton.appendChild(newIcon);
-            }
+            // Add active to selected
+            button.classList.add('activated');
+            document.getElementById(target).classList.add('activated')
+        })
+    })
 
-            // Append the text
-            const newText = document.createTextNode(` ${text}`);
-            selectedPaymentButton.appendChild(newText);
-
-            // close dropdown
-            checkoutOptionsContainer.classList.toggle('show')
-        }
-    });
-});
-
-// update secondary payment button, bottom of checkout page
-document.addEventListener('DOMContentLoaded', function () {
-    const selectedPaymentButtonTwo = document.getElementById('selectedPaymentButtonTwo')
-    const checkoutOptions = document.getElementById('checkoutOptions');
-
-    // Listen for clicks on payment buttons
-    checkoutOptions.addEventListener('click', function (event) {
-        const clickedButton = event.target.closest('.payment_option_buttons');
-
-        if (clickedButton) {
-            // Get the icon (either <i> or <img>) and text
-            const icon = clickedButton.querySelector('i, img');
-            const text = clickedButton.textContent.trim(); // Extract button text
-
-            // Update the primary payment button
-            selectedPaymentButtonTwo.innerHTML = ''; // Clear current content
-
-            if (icon) {
-                // Clone the icon and append to the button
-                const newIcon = icon.cloneNode(true);
-                selectedPaymentButtonTwo.appendChild(newIcon);
-            }
-
-            // Append the text
-            const newText = document.createTextNode(` ${text}`);
-            selectedPaymentButtonTwo.appendChild(newText);
-        }
-    });
-});
+})
 
 
-// get subtotal and total
 
-const calculateSubtotal = (proccessFee, shippingCost, tax) => {
 
-    const purchaseSubtotal = document.getElementById('purchaseSubtotal').innerHTML.replace('$', '').replace(',', '')
-    const purchaseTotal = document.getElementById('purchaseTotal')
 
-    let totalCalculation = parseFloat(purchaseSubtotal) + parseFloat(proccessFee) + parseFloat(tax) + parseFloat(shipping)
-    purchaseTotal.innerHTML = `$${numberWithCommas(totalCalculation)}`
-
-    // const purchasePrice = document.getElementById('purchasePrice').innerHTML.replace('$', '')
-    // const purchaseQuantity = document.getElementById('purchaseQuantity').innerHTML
-    // const processingFee = document.getElementById('processingFee').innerHTML.replace('$', '')
-    // const shippingInnerHTML = shippingCost.innerHTML.replace('$', '')
-    // const purchaseTax = document.getElementById('purchaseTax')
-
-    // const merchandiseCost = Number(purchasePrice) * Number(purchaseQuantity)
-    // const workingSubtotal = merchandiseCost + Number(processingFee) + Number(shippingInnerHTML)
-    // const workingTaxAmount = workingSubtotal * .075
-    // purchaseTax.innerHTML = "$" + String(workingTaxAmount.toFixed(2))
-    // purchaseSubtotal.innerHTML = "$" + String(Number(workingTaxAmount.toFixed(2)) + workingSubtotal)
-}
 
 
 
 // Grab email for Password Reset
 window.addEventListener('DOMContentLoaded', () => {
     const urlParams = newURLSearchParams(window.location.search);
-    console.log('urlParams', urlParams)
-
     const email = urlParams.get('email')
-    console.log('email', email)
 
     if (email) {
         const emailInput = document.querySelector('#id_email_for_password_reset_one');
@@ -1249,14 +1172,8 @@ if (passwordResetForm) {
 
 // Password Reset Confirm
 const resetPasswordFormBtn = document.querySelector('.resetPasswordFormBtn');
-// const resetPasswordFormBtnTwo = document.getElementById('resetPasswordFormBtn');
-
-console.log('resetPasswordFormBtn', resetPasswordFormBtn)
-
-// console.log('resetPasswordFormBtnTwo', resetPasswordFormBtnTwo)
 
 const resetPasswordForm = document.getElementById('resetPasswordForm');
-console.log('resetPasswordForm', resetPasswordForm)
 
 if (resetPasswordForm) {
     resetPasswordForm.addEventListener('submit', (e) => {
@@ -1291,27 +1208,4 @@ if (resetPasswordForm) {
     });
 }
 
-
-// Shipping Address Update in Checkout Page
-document.addEventListener('DOMContentLoaded', () => {
-    const tabButtons = document.querySelectorAll('.modal_tab');
-    const tabContents = document.querySelectorAll('.modal_tab_content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = button.getAttribute('data-tab');
-
-            // Remove "active" class from all;
-            tabButtons.forEach(btn => btn.classList.remove('activated'))
-            tabContents.forEach(content => content.classList.remove('activated'));
-
-            // Add active to selected
-            button.classList.add('activated');
-            document.getElementById(target).classList.add('activated')
-        })
-    })
-
-
-})
 

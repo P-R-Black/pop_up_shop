@@ -102,7 +102,7 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50, blank=True)
     mobile_phone = models.CharField(max_length=20, blank=True)
     mobile_notification = models.BooleanField(default=True)
-    # stripe_customer_id = models.CharField(max_length=40, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=40, blank=True, null=True)
     shoe_size = models.CharField(max_length=10)
     size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200)
     favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default='nike')
@@ -240,6 +240,8 @@ class PopUpCustomerAddress(models.Model):
     created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated at"), auto_now=True)
     default = models.BooleanField(_("Default"), default=False)
+    is_default_shipping = models.BooleanField(default=False)
+    is_default_billing = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     objects = SoftDeleteManager()
