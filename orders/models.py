@@ -1,5 +1,5 @@
 from django.db import models
-from pop_accounts.models import PopUpCustomer
+from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
 from auction.models import PopUpProduct
 from coupon.models import PopUpCoupon
 import uuid
@@ -39,7 +39,7 @@ class PopUpCustomerOrder(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='order_user')
+    user = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name='order_user')
     full_name = models.CharField(max_length=50)
     email = models.EmailField(_('email'))
     address1 = models.CharField(_('address'), max_length=250)
@@ -49,12 +49,13 @@ class PopUpCustomerOrder(models.Model):
     city = models.CharField(_('city'), max_length=100)
     state = models.CharField(_("State"), max_length=100)
     phone = models.CharField(max_length=100)
-    # customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name='orders')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     total_paid = models.DecimalField(max_digits=10, decimal_places=2)
     order_key = models.CharField(max_length=200)
     billing_status = models.BooleanField(default=False)
+    shipping_address = models.ForeignKey(PopUpCustomerAddress, on_delete=models.SET_NULL, null=True, related_name="order_shipping")
+    billing_address = models.ForeignKey(PopUpCustomerAddress, on_delete=models.SET_NULL, null=True, related_name="order_billing")
     stripe_id = models.CharField(max_length=150, blank=True)
     coupon = models.ForeignKey(PopUpCoupon, related_name='orders', null=True, blank=True, on_delete=models.SET_NULL)
     discount = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])

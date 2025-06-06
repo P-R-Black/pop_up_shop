@@ -14,7 +14,8 @@ from decimal import Decimal
 from django.db import transaction
 from cart.cart import Cart
 from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
-from .utils import get_state_tax_rate
+# from .utils import get_state_tax_rate
+
 
 # Create your views here.
 class AllAuctionView(View):
@@ -111,7 +112,6 @@ class PlaceBidView(AjaxLoginRequiredMixin, View):
       
 
 
-
 class ProductAuctionView(DetailView):
     model = PopUpProduct
     template_name = 'auction/product_auction.html'
@@ -132,235 +132,235 @@ class ProductAuctionView(DetailView):
     
 
 
-class OptionalLoginMixin(AccessMixin):
-    """
-    Allow both authenticated and anonymous users.
-    Provides 'self.request.user.is_authenticated' for view logic.
-    """
-    def dispatch(self, request, *args, **kwargs):
-        # Dont redirect
-        return super().dispatch(request, *args, **kwargs)
+# class OptionalLoginMixin(AccessMixin):
+#     """
+#     Allow both authenticated and anonymous users.
+#     Provides 'self.request.user.is_authenticated' for view logic.
+#     """
+#     def dispatch(self, request, *args, **kwargs):
+#         # Dont redirect
+#         return super().dispatch(request, *args, **kwargs)
 
 
-class ProductBuyView(OptionalLoginMixin, View):
-    template_name = 'auction/product_buy.html'
+# class ProductBuyView(OptionalLoginMixin, View):
+#     template_name = 'auction/product_buy.html'
     
-    def get(self, request):
-        if not request.user.is_authenticated:
-            cart = Cart(request)
-            # 1. Collect product IDs in the cart
-            ids_in_cart = [int(pid) for pid in cart.cart.keys()]
+#     def get(self, request):
+#         if not request.user.is_authenticated:
+#             cart = Cart(request)
+#             # 1. Collect product IDs in the cart
+#             ids_in_cart = [int(pid) for pid in cart.cart.keys()]
 
-            # 2 Fetch products ounce with needed data
-            products = (
-                PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status='in_inventory')
-                .prefetch_related('popupproductspecificationvalue_set')
-            )
+#             # 2 Fetch products ounce with needed data
+#             products = (
+#                 PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status='in_inventory')
+#                 .prefetch_related('popupproductspecificationvalue_set')
+#             )
 
-            product_map = {p.id: p for p in products}
+#             product_map = {p.id: p for p in products}
 
-            # 3 Build "enriched" cart rows
-            enriched_cart = []
-            for pid, item in cart.cart.items():
-                pid_int = int(pid)
-                product = product_map.get(pid_int)
-                if not product:
-                    continue # shouldn't happen, but just to be safe
+#             # 3 Build "enriched" cart rows
+#             enriched_cart = []
+#             for pid, item in cart.cart.items():
+#                 pid_int = int(pid)
+#                 product = product_map.get(pid_int)
+#                 if not product:
+#                     continue # shouldn't happen, but just to be safe
 
-                enriched_cart.append({
-                    "product": product,
-                    "specs": list(product.popupproductspecificationvalue_set.all()),
-                    "qty": item["qty"],
-                    "unit_price": Decimal(item["price"]),
-                    "line_total": Decimal(item["price"]) * item["qty"],
-                })
+#                 enriched_cart.append({
+#                     "product": product,
+#                     "specs": list(product.popupproductspecificationvalue_set.all()),
+#                     "qty": item["qty"],
+#                     "unit_price": Decimal(item["price"]),
+#                     "line_total": Decimal(item["price"]) * item["qty"],
+#                 })
 
             
-            # 4 Item quantity in cart
-            cart_length = len(cart)
+#             # 4 Item quantity in cart
+#             cart_length = len(cart)
 
-            # 5. Shipping Standard
-            standard_shipping = 1499
+#             # 5. Shipping Standard
+#             standard_shipping = 1499
         
-            # 6. Totals
-            subtotal = cart.get_subtotal_price()
+#             # 6. Totals
+#             subtotal = cart.get_subtotal_price()
             
-            # enriched_cart = build_enriched_cart(cart)  # helper you already have
-            cart_length = len(cart)
+#             # enriched_cart = build_enriched_cart(cart)  # helper you already have
+#             cart_length = len(cart)
 
-            # Shared context for everyone (guest or auth'd)
-            context = {
-                "cart_items": enriched_cart,
-                "cart_length": cart_length,
-                "cart_total": cart.get_total_price(),
-                "cart_subtotal": subtotal
-            }
-            return render(request, self.template_name, context)
+#             # Shared context for everyone (guest or auth'd)
+#             context = {
+#                 "cart_items": enriched_cart,
+#                 "cart_length": cart_length,
+#                 "cart_total": cart.get_total_price(),
+#                 "cart_subtotal": subtotal
+#             }
+#             return render(request, self.template_name, context)
         
-        if request.user.is_authenticated:
-            user = request.user
-            cart = Cart(request)
+#         if request.user.is_authenticated:
+#             user = request.user
+#             cart = Cart(request)
 
 
-            saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
-            default_address = saved_addresses.filter(default=True).first()
-            address_form = PopUpUpdateShippingInformationForm(instance=default_address)
-            edit_address_form = PopUpUpdateShippingInformationForm()
+#             saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
+#             default_address = saved_addresses.filter(default=True).first()
+#             address_form = PopUpUpdateShippingInformationForm(instance=default_address)
+#             edit_address_form = PopUpUpdateShippingInformationForm()
 
 
-            selected_address = None
-            selected_address_id = request.session.get('selected_address_id')
+#             selected_address = None
+#             selected_address_id = request.session.get('selected_address_id')
             
 
-            if selected_address_id:
-                try:
-                    selected_address = PopUpCustomerAddress.objects.get(id=selected_address_id, customer=user)
-                    address_form = PopUpUpdateShippingInformationForm(instance=selected_address)
-                except PopUpCustomerAddress.DoesNotExist:
-                    selected_address = None        
+#             if selected_address_id:
+#                 try:
+#                     selected_address = PopUpCustomerAddress.objects.get(id=selected_address_id, customer=user)
+#                     address_form = PopUpUpdateShippingInformationForm(instance=selected_address)
+#                 except PopUpCustomerAddress.DoesNotExist:
+#                     selected_address = None        
             
-            total = "{:.2f}".format(cart.get_total_price())
-            total = total.replace('.', '')
-            total = int(total)
+#             total = "{:.2f}".format(cart.get_total_price())
+#             total = total.replace('.', '')
+#             total = int(total)
 
 
-            # user_state = selected_address.state if selected_address else default_address.state
-            user_state = (selected_address or default_address).state if (selected_address or default_address) else "FL"
+#             # user_state = selected_address.state if selected_address else default_address.state
+#             user_state = (selected_address or default_address).state if (selected_address or default_address) else "FL"
 
-            tax_rate =  get_state_tax_rate(user_state)
+#             tax_rate =  get_state_tax_rate(user_state)
         
-            # 1. Collect product IDs in the cart
-            ids_in_cart = [int(pid) for pid in cart.cart.keys()]
+#             # 1. Collect product IDs in the cart
+#             ids_in_cart = [int(pid) for pid in cart.cart.keys()]
 
-            # 2 Fetch products ounce with needed data
-            products = (
-                PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status='in_inventory')
-                .prefetch_related('popupproductspecificationvalue_set')
-            )
+#             # 2 Fetch products ounce with needed data
+#             products = (
+#                 PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status='in_inventory')
+#                 .prefetch_related('popupproductspecificationvalue_set')
+#             )
 
-            product_map = {p.id: p for p in products}
+#             product_map = {p.id: p for p in products}
 
-            # 3 Build "enriched" cart rows
-            enriched_cart = []
-            for pid, item in cart.cart.items():
-                pid_int = int(pid)
-                product = product_map.get(pid_int)
-                if not product:
-                    continue # shouldn't happen, but just to be safe
+#             # 3 Build "enriched" cart rows
+#             enriched_cart = []
+#             for pid, item in cart.cart.items():
+#                 pid_int = int(pid)
+#                 product = product_map.get(pid_int)
+#                 if not product:
+#                     continue # shouldn't happen, but just to be safe
 
-                enriched_cart.append({
-                    "product": product,
-                    "specs": list(product.popupproductspecificationvalue_set.all()),
-                    "qty": item["qty"],
-                    "unit_price": Decimal(item["price"]),
-                    "line_total": Decimal(item["price"]) * item["qty"],
-                })
+#                 enriched_cart.append({
+#                     "product": product,
+#                     "specs": list(product.popupproductspecificationvalue_set.all()),
+#                     "qty": item["qty"],
+#                     "unit_price": Decimal(item["price"]),
+#                     "line_total": Decimal(item["price"]) * item["qty"],
+#                 })
 
             
-            # 4 Item quantity in cart
-            cart_length = len(cart)
+#             # 4 Item quantity in cart
+#             cart_length = len(cart)
 
-            # 5. Shipping Standard
-            standard_shipping = 1499
+#             # 5. Shipping Standard
+#             standard_shipping = 1499
         
-            # 6. Totals
-            subtotal = cart.get_subtotal_price()
+#             # 6. Totals
+#             subtotal = cart.get_subtotal_price()
             
-            processing_fee = Decimal(2.50) if cart_length > 0 else Decimal(0.00)
-            sales_tax = subtotal * Decimal(tax_rate)
-            subtotal_plus_tax = subtotal + sales_tax
-            order_shipping_chart = (Decimal((standard_shipping) / 100) * cart_length)
+#             processing_fee = Decimal(2.50) if cart_length > 0 else Decimal(0.00)
+#             sales_tax = subtotal * Decimal(tax_rate)
+#             subtotal_plus_tax = subtotal + sales_tax
+#             order_shipping_chart = (Decimal((standard_shipping) / 100) * cart_length)
 
-            grand_total =  subtotal_plus_tax +  order_shipping_chart + processing_fee if cart_length > 0 else 0
+#             grand_total =  subtotal_plus_tax +  order_shipping_chart + processing_fee if cart_length > 0 else 0
             
-            context = {"user": user, 
-                    "cart_items": enriched_cart, 
-                    "cart_subtotal": subtotal, 
-                    "shipping_cost": standard_shipping, 
-                    "cart_total": grand_total,
-                    "cart_length": cart_length,
-                    "sales_tax": f'{sales_tax:.2f}',
-                    "processing_fee": f'{processing_fee:.2f}',
-                    "grand_total": f"{grand_total:.2f}",
-                    "address": default_address,
-                    "address_form": address_form,
-                    "edit_address_form":edit_address_form,
-                    "saved_addresses": saved_addresses,
-                    "selected_address": selected_address,
-                    "tax_rate":tax_rate
-                    }
+#             context = {"user": user, 
+#                     "cart_items": enriched_cart, 
+#                     "cart_subtotal": subtotal, 
+#                     "shipping_cost": standard_shipping, 
+#                     "cart_total": grand_total,
+#                     "cart_length": cart_length,
+#                     "sales_tax": f'{sales_tax:.2f}',
+#                     "processing_fee": f'{processing_fee:.2f}',
+#                     "grand_total": f"{grand_total:.2f}",
+#                     "address": default_address,
+#                     "address_form": address_form,
+#                     "edit_address_form":edit_address_form,
+#                     "saved_addresses": saved_addresses,
+#                     "selected_address": selected_address,
+#                     "tax_rate":tax_rate
+#                     }
             
             
-            return render(request, self.template_name, context)
+#             return render(request, self.template_name, context)
     
 
-    def post(self, request):
-        user = request.user
-        address_instance = None
-        address_id = request.POST.get('address_id')
+#     def post(self, request):
+#         user = request.user
+#         address_instance = None
+#         address_id = request.POST.get('address_id')
 
-        shipping_choice = request.POST.get('shipping_choice')
+#         shipping_choice = request.POST.get('shipping_choice')
 
-        # Case 1: User selected an existing address
-        selected_address_id = request.POST.get('selected_address')
+#         # Case 1: User selected an existing address
+#         selected_address_id = request.POST.get('selected_address')
         
        
-        if selected_address_id:
-            try:
-                selected_address = PopUpCustomerAddress.objects.get(id=selected_address_id, customer=user)
-                request.session['selected_address_id'] = str(selected_address.id)
-                messages.success(request, "Address selected successfully")
-            except PopUpCustomerAddress.DoesNotExist:
-                messages.error(request, "The selected address could not be found.")
-            return redirect('auction:product_buy')
+#         if selected_address_id:
+#             try:
+#                 selected_address = PopUpCustomerAddress.objects.get(id=selected_address_id, customer=user)
+#                 request.session['selected_address_id'] = str(selected_address.id)
+#                 messages.success(request, "Address selected successfully")
+#             except PopUpCustomerAddress.DoesNotExist:
+#                 messages.error(request, "The selected address could not be found.")
+#             return redirect('auction:product_buy')
        
-        # Case 2: User updates an existing address
-        if address_id:
-            try:
-                address_instance = PopUpCustomerAddress.objects.get(id=address_id, customer=user)
-            except PopUpCustomerAddress.DoesNotExist:
-                messages.error(request, "Address not found")
-                return redirect('auction:product_buy')
+#         # Case 2: User updates an existing address
+#         if address_id:
+#             try:
+#                 address_instance = PopUpCustomerAddress.objects.get(id=address_id, customer=user)
+#             except PopUpCustomerAddress.DoesNotExist:
+#                 messages.error(request, "Address not found")
+#                 return redirect('auction:product_buy')
             
-            form =  PopUpUpdateShippingInformationForm(request.POST, instance=address_instance)
-            if form.is_valid():
-                print('"==== updating address ===', address_id)
-                updated_address = form.save()
-                request.session['selected_address_id'] = str(updated_address.id)
-                messages.success(request, "Address updated successfully.")
-                return redirect('auction:product_buy')
-            else:
-                print('"==== Form errors ===', form.errors)
-                messages.error(request, "Please correct the errors below.")
-        else:
-            # Case 3: User adds a new address
-            form = PopUpUpdateShippingInformationForm(request.POST)
-            if form.is_valid():
-                new_address = form.save(commit=False)
-                new_address.customer = user
-                new_address.save()
-                request.session["selected_address_id"] = str(new_address.id)
-                messages.success(request, "Address added successfully.")
-                return redirect('auction:product_buy')
-            else:
-                messages.error(request, "Please correct the errors below.")
+#             form =  PopUpUpdateShippingInformationForm(request.POST, instance=address_instance)
+#             if form.is_valid():
+#                 print('"==== updating address ===', address_id)
+#                 updated_address = form.save()
+#                 request.session['selected_address_id'] = str(updated_address.id)
+#                 messages.success(request, "Address updated successfully.")
+#                 return redirect('auction:product_buy')
+#             else:
+#                 print('"==== Form errors ===', form.errors)
+#                 messages.error(request, "Please correct the errors below.")
+#         else:
+#             # Case 3: User adds a new address
+#             form = PopUpUpdateShippingInformationForm(request.POST)
+#             if form.is_valid():
+#                 new_address = form.save(commit=False)
+#                 new_address.customer = user
+#                 new_address.save()
+#                 request.session["selected_address_id"] = str(new_address.id)
+#                 messages.success(request, "Address added successfully.")
+#                 return redirect('auction:product_buy')
+#             else:
+#                 messages.error(request, "Please correct the errors below.")
         
 
-        # If the form isn't valid, re-render the page with the forms filled in
-        cart = Cart(request)
-        saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
-        address_form = PopUpUpdateShippingInformationForm(instance=address_instance)
-        edit_address_form = PopUpUpdateShippingInformationForm()
+#         # If the form isn't valid, re-render the page with the forms filled in
+#         cart = Cart(request)
+#         saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
+#         address_form = PopUpUpdateShippingInformationForm(instance=address_instance)
+#         edit_address_form = PopUpUpdateShippingInformationForm()
                 
 
-        context = {
-            "form": form,  # whichever one failed validation
-            "edit_address_form": edit_address_form,
-            "address_form": address_form,
-            "saved_addresses": saved_addresses,
-        # + other cart context
-        }
-        return render(request, self.template_name, context)
+#         context = {
+#             "form": form,  # whichever one failed validation
+#             "edit_address_form": edit_address_form,
+#             "address_form": address_form,
+#             "saved_addresses": saved_addresses,
+#         # + other cart context
+#         }
+#         return render(request, self.template_name, context)
         
 
 

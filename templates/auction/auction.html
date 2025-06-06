@@ -60,7 +60,7 @@ Auction
                     {% else %}
                     <button class="button_long loginPrompt">Sign in to Bid</button>
                     {% endif %}
-                    <a href="{% url 'auction:product_buy' %}" class="button_long buy-now-button">Buy
+                    <a href="{% url 'payment:payment_home' %}" class="button_long buy-now-button">Buy
                         ${{ i.starting_price|intcomma }}</a>
                 </div>
                 <div class="auction_product_auction_details">
