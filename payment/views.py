@@ -9,9 +9,11 @@ from pop_accounts.models import PopUpBid, PopUpCustomerAddress
 from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
 import stripe
 from django.conf import settings
+from django.views.decorators.http import require_http_methods
 import json
 from django.http.response import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from orders.views import payment_confirmation
 import os
 from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
@@ -19,7 +21,29 @@ from django.views import View
 from decimal import Decimal
 from .utils.tax_utils import get_state_tax_rate
 from .utils.address_form_handler import(handle_new_address, handle_selected_address, handle_update_address)
+import braintree
+import logging
+import requests
+import hmac
+import hashlib
 
+logger = logging.getLogger(__name__)
+
+
+gateway = braintree.BraintreeGateway(
+    braintree.Configuration(
+        braintree.Environment.Sandbox,
+        merchant_id=settings.BRAINTREE_MERCHANT_ID,
+        public_key=settings.BRAINTREE_PUBLIC_KEY,
+        private_key=settings.BRAINTREE_PRIVATE_KEY,
+    )
+)
+
+
+# NowPayments API configuration
+NOWPAYMENTS_API_KEY = getattr(settings, 'NOWPAYMENTS_API_KEY', settings.NOWPAYMENTS_API_KEY)
+NOWPAYMENTS_IPN_SECRET = getattr(settings, 'NOWPAYMENTS_IPN_SECRET', settings.NOWPAYMENTS_IPN_SECRET)
+NOWPAYMENTS_BASE_URL = 'https://api.nowpayments.io/v1'
 
 
 
@@ -90,16 +114,22 @@ class ProductBuyView(OptionalLoginMixin, View):
             # enriched_cart = build_enriched_cart(cart)  # helper you already have
             cart_length = len(cart)
 
+            # braintree client_token
+            client_token = gateway.client_token.generate()
+
 
             # Shared context for everyone (guest or auth'd)
             context = {
                 "cart_items": enriched_cart,
                 "cart_length": cart_length,
                 "cart_total": cart.get_total_price(),
-                "cart_subtotal": subtotal
+                "cart_subtotal": subtotal,
+                "client_token":  client_token,
+                'braintree_public_key': settings.BRAINTREE_PUBLIC_KEY
             }
             return render(request, self.template_name, context)
         
+
         """ Cart view for user who is signed in"""
         if request.user.is_authenticated:
             user = request.user
@@ -114,7 +144,6 @@ class ProductBuyView(OptionalLoginMixin, View):
             selected_address = None
             selected_address_id = request.session.get('selected_address_id')
 
-            
 
             if selected_address_id:
                 try:
@@ -179,34 +208,11 @@ class ProductBuyView(OptionalLoginMixin, View):
             grand_total =  subtotal_plus_tax +  order_shipping_chart + processing_fee if cart_length > 0 else 0
             grand_total_adjust_decimal = f"{grand_total:.2f}"
             grand_total_adjusted = grand_total_adjust_decimal.replace('.','')
-            # print('grand_total Decimal', f"{Decimal(grand_total):.2f}")
-            # print('grand_total int', int(grand_total * 100))
-            
-            stripe.api_key = settings.STRIPE_SECRET_KEY
 
-           
-            print('grand_total_adjusted', grand_total_adjusted)
 
-            # intent = stripe.PaymentIntent.create(
-            #     amount=grand_total_adjusted,
-            #     currency='usd',
-            #     # customer=user.stripe_customer_id,
-            #     payment_method_types=['card'],
-            #     metadata={'userid': request.user.id}
-            # )
+             # braintree client_token
+            client_token = gateway.client_token.generate()
 
-            # print('intent', intent.client_secret)
-
-            # setup_intent = stripe.SetupIntent.create(
-            #     usage="on_session",
-            #     amount=grand_total_adjusted,
-            #     currency='usd',
-            #     # customer=user.stripe_customer_id,
-            #     payment_method_types=['card'],
-            #     metadata={'userid': request.user.id}
-            # )
-
-            
             context = {"user": user, 
                     "cart_items": enriched_cart, 
                     "cart_subtotal": subtotal, 
@@ -221,8 +227,12 @@ class ProductBuyView(OptionalLoginMixin, View):
                     "saved_addresses": saved_addresses,
                     "selected_address": selected_address,
                     "tax_rate":tax_rate,
-                    # "client_secret": setup_intent.client_secret,
-                    "STRIPE_PUBLIC_KEY": os.environ.get('STRIPE_PUBLIC_KEY'),
+                    "STRIPE_PUBLISHABLE_KEY": os.environ.get('STRIPE_PUBLISHABLE_KEY'),
+                    "PAYPAL_CLIENT_ID": os.environ.get('PAYPAL_CLIENT_ID'),
+                    "USER": user,
+                    "USER_EMAIL": user.email,
+                    "client_token": client_token,
+                    'braintree_public_key': settings.BRAINTREE_PUBLIC_KEY
                     }
             
             
@@ -255,6 +265,9 @@ class ProductBuyView(OptionalLoginMixin, View):
         address_form = PopUpUpdateShippingInformationForm(instance=address_instance)
         edit_address_form = PopUpUpdateShippingInformationForm()
 
+        client_token = gateway.client_token.generate()
+
+
         context = {
             # "form": form,  # whichever one failed validation
             "billing_address":billing_address,
@@ -262,7 +275,9 @@ class ProductBuyView(OptionalLoginMixin, View):
             "address_form": address_form,
             "saved_addresses": saved_addresses,
             "selected_address": selected_address,
-            "use_billing_as_shipping": use_billing_as_shipping
+            "use_billing_as_shipping": use_billing_as_shipping,
+            "client_token": client_token,
+            "braintree_public_key": settings.BRAINTREE_PUBLIC_KEY
         }
         return render(request, self.template_name, context)
     
@@ -315,67 +330,6 @@ class ShippingAddressView(LoginRequiredMixin, View):
         address_form = PopUpUpdateShippingInformationForm()
         edit_address_form = PopUpUpdateShippingInformationForm(instance=updated_address if address_id else None)
 
-
-
-        # # Default to first saved address
-        # selected_address = saved_addresses.first()
-        
-
-
-        # # Case 1: User selected an existing address
-        # selected_address_id = request.POST.get('selected_address') 
-        # if selected_address_id:
-        #     try:
-        #         selected_address = PopUpCustomerAddress.objects.get(id=selected_address_id, customer=user)
-        #         request.session['selected_address_id'] = str(selected_address.id)
-        #         messages.success(request, "Shipping Address selected successfully")
-        #     except PopUpCustomerAddress.DoesNotExist:
-        #         messages.error(request, "The selected address could not be found.")
-        #     return redirect('payment:payment_home')
-       
-        # # Case 2: User updates an existing address
-        # if address_id:
-        #     try:
-        #         address_instance = PopUpCustomerAddress.objects.get(id=address_id, customer=user)
-        #     except PopUpCustomerAddress.DoesNotExist:
-        #         messages.error(request, "Address not found")
-        #         return redirect('payment:payment_home')
-            
-        #     form =  PopUpUpdateShippingInformationForm(request.POST, instance=address_instance)
-        #     if form.is_valid():
-        #         updated_address = form.save(commit=False)
-        #         if form.cleaned_data.get('is_default_shipping'):
-        #             # Unset previous default billing address for this user
-        #             PopUpCustomerAddress.objects.filter(customer=user, is_default_shipping=True).update(is_default_shipping=False)
-        #             updated_address.is_default_shipping = True
-        #         else:
-        #             updated_address.is_default_shipping = False
-                
-        #         updated_address.save()
-        #         request.session['selected_address_id'] = str(updated_address.id)
-        #         messages.success(request, "Shipping Address updated successfully.")
-        #         return redirect('payment:payment_home')
-        #     else:
-        #         messages.error(request, "Please correct the errors below.")
-        # else:
-        #     # Case 3: User adds a new address
-        #     form = PopUpUpdateShippingInformationForm(request.POST)
-        #     if form.is_valid():
-        #         new_address = form.save(commit=False)
-        #         new_address.customer = user
-        #         if form.cleaned_data.get('is_default_shipping'):
-        #             # Unset previous default billing address for this user
-        #             PopUpCustomerAddress.objects.filter(customer=user, is_default_shipping=True).update(is_default_shipping=False)
-        #             new_address.is_default_shipping = True
-        #         else:
-        #             new_address.is_default_shipping = False
-        #         new_address.save()
-        #         request.session["selected_address_id"] = str(new_address.id)
-        #         messages.success(request, "Shipping Address added successfully.")
-        #         return redirect('payment:payment_home')
-        #     else:
-        #         messages.error(request, "Please correct the errors below.")
-        
 
         # If the form isn't valid, re-render the page with the forms filled in
         cart = Cart(request)
@@ -458,73 +412,6 @@ class BillingAddressView(LoginRequiredMixin, View):
 
         use_billing_as_shipping = request.POST.get('use_billing_as_shipping') == "true"
         request.session['use_billing_as_shipping'] = use_billing_as_shipping
-
-        # user = request.user
-        # address_instance = None
-        # address_id = request.POST.get('address_id')
-        # saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
-
-        # # Default to first saved address
-        # selected_address = saved_addresses.first()
-        # use_billing_as_shipping = False
-        
-        # use_billing_as_shipping = request.POST.get('use_billing_as_shipping') == "true"
-        # request.session['use_billing_as_shipping'] = use_billing_as_shipping
-
-
-        # # Case 1: User selected an existing address
-        # selected_address_id = request.POST.get('selected_address') 
-        # if selected_address_id:
-        #     try:
-        #         selected_address = PopUpCustomerAddress.objects.get(id=selected_address_id, customer=user)
-        #         request.session['selected_billing_address_id'] = str(selected_address.id)
-        #         messages.success(request, "Billing Address selected successfully")
-        #     except PopUpCustomerAddress.DoesNotExist:
-        #         messages.error(request, "The selected address could not be found.")
-        #     return redirect('payment:payment_home')
-       
-        # # Case 2: User updates an existing address
-        # if address_id:
-        #     try:
-        #         address_instance = PopUpCustomerAddress.objects.get(id=address_id, customer=user)
-        #     except PopUpCustomerAddress.DoesNotExist:
-        #         messages.error(request, "Address not found")
-        #         return redirect('payment:payment_home')
-            
-        #     form =  PopUpUpdateShippingInformationForm(request.POST, instance=address_instance)
-        #     if form.is_valid():
-        #         updated_address = form.save(commit=False)
-        #         if form.cleaned_data.get('is_default_billing'):
-        #             # Unset previous default billing address for this user
-        #             PopUpCustomerAddress.objects.filter(customer=user, is_default_billing=True).update(is_default_billing=False)
-        #             updated_address.is_default_billing = True
-        #         else:
-        #             updated_address.is_default_billing = False
-                
-        #         updated_address.save()
-        #         request.session['selected_billing_address_id'] = str(updated_address.id)
-        #         messages.success(request, "Billing Address updated successfully.")
-        #         return redirect('payment:payment_home')
-        #     else:
-        #         messages.error(request, "Please correct the errors below.")
-        # else:
-        #     # Case 3: User adds a new address
-        #     form = PopUpUpdateShippingInformationForm(request.POST)
-        #     if form.is_valid():
-        #         new_address = form.save(commit=False)
-        #         new_address.customer = user
-        #         if form.cleaned_data.get('is_default_billing'):
-        #             # Unset previous default billing address for this user
-        #             PopUpCustomerAddress.objects.filter(customer=user, is_default_billing=True).update(is_default_billing=False)
-        #             new_address.is_default_billing = True
-        #         else:
-        #             new_address.is_default_billing = False
-        #         new_address.save()
-        #         request.session["selected_billing_address_id"] = str(new_address.id)
-        #         messages.success(request, "Address added successfully.")
-        #         return redirect('payment:payment_home')
-        #     else:
-        #         messages.error(request, "Please correct the errors below.")
         
 
         # If the form isn't valid, re-render the page with the forms filled in
@@ -575,7 +462,37 @@ def set_billling_address(request):
     request.user.save()
     return JsonResponse({"status": 'ok'})
 
+        
 
+@method_decorator(csrf_exempt, name='dispatch')
+class CreatePaymentIntentView(View):
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        customer_id = request.user.stripe_customer_id
+        cart = Cart(request)
+
+        try:
+            data = json.loads(request.body)
+        
+            amount = data.get('amount')
+            print('CreatePaymentIntentView amount', amount, '\n')
+
+            if not amount:
+                return JsonResponse({"error": "Missing amount"}, status=400)
+            
+            else:
+        
+                stripe.api_key = settings.STRIPE_SECRET_KEY
+                print('stripe.api_key', stripe.api_key)
+
+                intent = stripe.PaymentIntent.create(
+                    amount=amount,
+                    currency='usd',
+                    automatic_payment_methods={"enabled": True},  # Enable Apple Pay, Google Pay, etc.
+                )
+                return JsonResponse({'clientSecret': intent['client_secret']})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
 
 @csrf_exempt
@@ -598,7 +515,429 @@ def stripe_webhook(request):
     return HttpResponse(status=200)
 
 
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProcessVenmoPaymentView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            nonce = data.get('payment_method_nonce')
+            amount = data.get('amount') / 100
+            print('ProcessVenmoPaymentView: amount', amount)
+            
+            # Process payment with Braintree
+            result = gateway.transaction.sale({
+                "amount": str(amount),
+                "payment_method_nonce": nonce,
+                "options": {
+                    "submit_for_settlement": True
+                }
+            })
+            
+            if result.is_success:
+                transaction_id = result.transaction.id
+                return JsonResponse({
+                    'success': True, 
+                    'transaction_id': transaction_id
+                })
+            else:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Payment failed'
+                })
+                
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+
+class NowPaymentsService:
+    """Service class for NowPayments API Interactions"""
+    def __init__(self):
+        self.api_key = settings.NOWPAYMENTS_API_KEY
+        self.base_url = NOWPAYMENTS_BASE_URL
+        self.headers = {
+            'x-api-key': self.api_key,
+            'Content-Type': 'application/json'
+        }
+    
+    def get_available_currencies(self):
+        """Get list of available cryptocurrencies"""
+        try:
+            response = requests.get(f'{self.base_url}/currencies', headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f'Error Fetching Currencies: {e}')
+            return None
+    
+    def get_estimate(self, amount, currency_from='usd', currency_to='dai'):
+        """Get payment estiamte"""
+        try:
+            params = {
+                'amount': amount,
+                'currency_from': currency_from,
+                'currency_to': currency_to
+            }
+            response = requests.get(f'{self.base_url}/estimate', headers=self.headers, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Error getting estimate: {e}")
+            return None
+    
+    def create_payment(self, payment_data):
+        """Create a new payment"""
+        try:
+            response = requests.post(f'{self.base_url}/payment', headers=self.headers, json=payment_data)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Error creating payment: {e}")
+            return None
+    
+    def get_payment_status(self, payment_id):
+        """Get payment status"""
+        try:
+            response = requests.get(f'{self.base_url}/payment/{payment_id}', headers=self.headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Error getting payment status: {e}")
+            return None
+
+
+@login_required
+@require_http_methods(['POST'])
+def create_nowpayments_payment(request):
+    """Create Initial NowPayments Payment"""
+    try:
+        data = json.loads(request.body)
+        print('create_nowpayments_payment data', data)
+
+        #Validate required fields
+        required_fields = ['price_amount', 'price_currency', 'order_id']
+        for field in required_fields:
+            if field not in data:
+                return JsonResponse({ 'success': False, 'error': f'Missing required field: {field}'})
+        
+        # Intitialize NowPayments Service
+        np_service = NowPaymentsService()
+
+        # Get available currencies to verify DAI and USDC are supported
+        currencies = np_service.get_available_currencies()
+        if not currencies:
+            return JsonResponse({
+                'success': False, 'error': 'Unable to fetch available currencies'
+            })
+
+        # Check if DAI and USDC are available
+        available_currencies = currencies.get('currencies', [])
+        supported_stablecoins = ['dai', 'usdc']
+        available_stablecoins = [curr for curr in supported_stablecoins if curr in available_currencies]
+
+        if not available_stablecoins:
+            return JsonResponse({
+                'success': False,
+                'error': 'DAI and USDC are not currently available'
+            })
+        
+        # Store payment data in session for later user
+        request.session['pending_payment'] = {
+            'order_id': data['order_id'],
+            'price_amount': data['price_amount'],
+            'price_currency': data['price_currency'],
+            'user_id': data.get('user_id'),
+            'billing_address': data.get('billing_address'),
+            'shipping_address': data.get('shipping_address'),
+            'order_description': data.get('order_description', 'Purchase order')
+        }
+        return JsonResponse({
+            'success': True, 'payment_data': {
+                'available_currencies': available_stablecoins,
+                'order_id': data['order_id'],
+                'amount': data['price_amount']
+                }
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        logger.error(f'Error in create_nowpayments_payment: {e}')
+        return JsonResponse({"success": False, "error": "Internal server error"})
+
+
+@login_required
+@require_http_methods(["POST"])
+def finalize_nowpayments_payment(request):
+    """Finalize NowPayments Payment With Selected Currency"""
+    try:
+        data = json.loads(request.body)
+
+        # Get stored payment data from session
+        pending_payment = request.session.get('pending_payment')
+        if not pending_payment:
+            return JsonResponse({
+                'success': False,
+                'error': 'No pending payment found'
+            })
+        pay_currency = data.get('pay_currency', '').lower()
+        if pay_currency not in ['dai', 'usdc']:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid Payment Currency'
+            })
+        
+        # Initialize NowPayments service
+        np_service =NowPaymentsService()
+
+        # Get estimate for the payment
+        estiamte = np_service.get_estimate(
+            amount=pending_payment['price_amount'],
+            currency_from=pending_payment['price_currency'].lower(),
+            currency_to=pay_currency
+        )
+
+        if not estiamte:
+            return JsonResponse({
+                'success': False,
+                'error': 'Unable to get payment estimate'
+            })
+        
+        # Prepare payment data for NowPayments
+        payment_data = {
+            'price_amount': float(pending_payment['price_amount']),
+            'price_currency': pending_payment['price_currency'].lower(),
+            'pay_currency': pay_currency,
+            'order_id': pending_payment['order_id'],
+            'order_description': pending_payment['order_description'],
+            'success_url': request.build_absolute_uri('/payment/success/'),
+            'cancel_url': request.build_absolute_uri('/checkout/'),
+            'case': 'success'
+        }
+
+        payment_response = np_service.create_payment(payment_data)
+        if not payment_response:
+            return JsonResponse({
+                'success': False,
+                'error': 'Failed to create payment with NowPayments'
+            })
+        
+        # Store payment info in session
+        request.session['active_payment'] = {
+            'payment_id': payment_response['payment_id'],
+            'order_id':  pending_payment['order_id'],
+            'pay_currency': pay_currency,
+            'pay_amount': payment_response['pay_amount'],
+            'pay_address': payment_response['pay_address'],
+            'price_anount': pending_payment['price_amount'],
+            'user_id': pending_payment['user_id'],
+            'billing_address': pending_payment['billing_address'],
+            'shipping_address': pending_payment['shipping_address']
+        }
+
+        return JsonResponse({
+            'success': True,
+            'payment_info': {
+                'payment_id': payment_response['payment_id'],
+                'pay_amount': payment_response['pay_amount'],
+                'pay_currency': pay_currency.upper(),
+                'pay_address': payment_response['pay_address'],
+                'price_amount': pending_payment['price_amount'],
+                'time_limit': '15:00', # 15 minuts default
+                'qr_code_url': payment_response.get('qr_code_url') 
+
+            }
+        })
+    
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        logger.error(f"Error in finalize_nowpayments_payment: {e}")
+        return JsonResponse({'success': False, 'error': 'Internal server error'})
+
+
+@login_required
+@require_http_methods(["GET"])
+def check_nowpayments_status(request, payment_id):
+    """Check payment status"""
+    try:
+        # Verify this payment belongs to the current user's session
+        active_payment = request.session.get('active_payment')
+        
+        if not active_payment or active_payment['payment_id'] != payment_id:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Invalid payment ID'
+            })
+        
+        # Initialize NowPayments service
+        np_service = NowPaymentsService()
+        
+        # Get payment status from NowPayments
+        status_response = np_service.get_payment_status(payment_id)
+        
+        if not status_response:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Unable to check payment status'
+            })
+        
+        payment_status = status_response.get('payment_status', 'unknown')
+        
+        # Map NowPayments statuses to our frontend statuses
+        status_mapping = {
+            'waiting': 'waiting',
+            'confirming': 'confirming', 
+            'confirmed': 'confirmed',
+            'sending': 'confirming',
+            'partially_paid': 'waiting',
+            'finished': 'finished',
+            'failed': 'failed',
+            'refunded': 'failed',
+            'expired': 'expired'
+        }
+        
+        mapped_status = status_mapping.get(payment_status, payment_status)
+        
+        return JsonResponse({
+            'success': True,
+            'status': mapped_status,
+            'payment_info': {
+                'payment_id': payment_id,
+                'payment_status': payment_status,
+                'pay_amount': status_response.get('pay_amount'),
+                'actually_paid': status_response.get('actually_paid'),
+                'pay_currency': status_response.get('pay_currency'),
+                'created_at': status_response.get('created_at'),
+                'updated_at': status_response.get('updated_at')
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in check_nowpayments_status: {e}")
+        return JsonResponse({'success': False, 'error': 'Internal server error'})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def nowpayments_webhook(request):
+    """Handle NowPayments webhook notifications"""
+    try:
+        # Verify webhook signature
+        signature = request.headers.get('x-nowpayments-sig')
+        if not signature:
+            return JsonResponse({'error': 'Missing signature'}, status=400)
+        
+        # Calculate expected signature
+        payload = request.body
+        expected_signature = hmac.new(
+            NOWPAYMENTS_IPN_SECRET.encode('utf-8'),
+            payload,
+            hashlib.sha512
+        ).hexdigest()
+        
+        if not hmac.compare_digest(signature, expected_signature):
+            logger.warning("Invalid webhook signature")
+            return JsonResponse({'error': 'Invalid signature'}, status=400)
+        
+        # Parse webhook data
+        webhook_data = json.loads(payload.decode('utf-8'))
+        
+        payment_id = webhook_data.get('payment_id')
+        payment_status = webhook_data.get('payment_status')
+        order_id = webhook_data.get('order_id')
+        
+        logger.info(f"Webhook received: payment_id={payment_id}, status={payment_status}")
+        
+        # Handle different payment statuses
+        if payment_status in ['finished', 'confirmed']:
+            # Payment successful - you might want to trigger order creation here
+            # or update your database with the successful payment
+            pass
+        elif payment_status in ['failed', 'refunded', 'expired']:
+            # Payment failed - log and potentially notify user
+            logger.warning(f"Payment failed: {payment_id} - {payment_status}")
+        
+        # Always return 200 to acknowledge receipt
+        return JsonResponse({'status': 'ok'})
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error(f"Error in nowpayments_webhook: {e}")
+        return JsonResponse({'error': 'Internal server error'}, status=500)
+
+
+
+# Additional utility function for testing
+@login_required
+def test_nowpayments_connection(request):
+    """Test NowPayments API connection"""
+    try:
+        np_service = NowPaymentsService()
+        currencies = np_service.get_available_currencies()
+        
+        if currencies:
+            return JsonResponse({
+                'success': True,
+                'message': 'NowPayments connection successful',
+                'available_currencies': len(currencies.get('currencies', [])),
+                'dai_available': 'dai' in currencies.get('currencies', []),
+                'usdc_available': 'usdc' in currencies.get('currencies', [])
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Failed to connect to NowPayments API'
+            })
+            
+    except Exception as e:
+        logger.error(f"Error testing NowPayments connection: {e}")
+        return JsonResponse({
+            'success': False,
+            'message': f'Connection test failed: {str(e)}'
+        })
+    
+    
+
+
+
+def generate_client_token(request):
+    client_token = gateway.client_token.generate()
+    return JsonResponse({'client_token': client_token})
+
+
 def placed_order(request):
     cart = Cart(request)
     cart.clear()
     return render(request, 'payment/placed_order.html')
+
+
+
+# def create_customer(request):
+#     """Create a customer for testing (optional)"""
+#     try:
+#         result = braintree.Customer.create({
+#             "first_name": "Test",
+#             "last_name": "User",
+#             "email": "testuser@example.com",
+#             "phone": "555-123-4567"
+#         })
+        
+#         if result.is_success:
+#             customer = result.customer
+#             return JsonResponse({
+#                 'success': True,
+#                 'customer_id': customer.id,
+#                 'customer_info': {
+#                     'first_name': customer.first_name,
+#                     'last_name': customer.last_name,
+#                     'email': customer.email
+#                 }
+#             })
+#         else:
+#             return JsonResponse({
+#                 'success': False,
+#                 'error': result.message
+#             })
+#     except Exception as e:
+#         return JsonResponse({'success': False, 'error': str(e)})

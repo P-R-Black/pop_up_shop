@@ -116,7 +116,7 @@
 }
 
 
-.payment_option_buttons i {
+.payment_option_buttons_two i {
     font-size: 1.5rem;
 }
 
@@ -130,16 +130,13 @@
     /* position: absolute; */
 }
 
-.venmo-logo {
+.venmo-logo,
+.stable-coin-logo {
     height: 3rem;
     /* position: absolute; */
 }
 
-.visa_mc_disc_card_logo_container {
-    display: flex;
-    gap: .25rem;
-    position: absolute;
-}
+
 
 .visa-logo,
 .mc-logo,
@@ -148,17 +145,18 @@
 
 }
 
-.dai_usdc_logo_container {
-    display: flex;
-    gap: .5rem;
-    position: absolute;
+.cards-logo {
+    height: 2.25rem;
+    border: 2px solid black;
 }
+
 
 .dai-logo,
 .usdc-logo {
     height: 1.5rem;
 
 }
+
 
 .checkout_shipping_container {
     background: var(--databox-color);
@@ -471,6 +469,7 @@ select#suffix {
     background: var(--databox-color);
     border-radius: 5px;
     color: var(--text-color);
+    min-height: auto;
     padding: 1rem 1rem;
 }
 
@@ -538,9 +537,44 @@ select#suffix {
 }
 
 .purchase_details_confirm_pay {
+    align-items: center;
     display: flex;
+    flex-direction: column;
+    gap: 1rem;
     justify-content: center;
     margin-top: 2rem;
+
+    height: 12rem;
+}
+
+
+#card-payment-form {
+    background-color: #fff;
+    width: 100%;
+}
+
+
+
+#card-element {
+    height: 2rem;
+    width: 100%;
+}
+
+#apple-pay-button {
+    width: 100%;
+    height: 10rem;
+}
+
+
+#google-pay-button {
+    width: 100%;
+    height: 10rem;
+}
+
+#paypal-button-container {
+    width: 100%;
+    height: 10rem;
+
 }
 
 
@@ -713,3 +747,390 @@ select#suffix {
 
 
 /* =========== END OF BILLING ADDRESS CONTAINER & BILLING ADDRESS MODAL =========== */
+
+
+/* =========== NOWPAYMENT MODAL CSS =========== */
+
+/* NowPayments Modal Styles */
+.crypto-currency-modal,
+.payment-details-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.modal-close:hover {
+    background-color: #f5f5f5;
+}
+
+.modal-body {
+    padding: 20px 24px;
+}
+
+.modal-footer {
+    padding: 16px 24px 20px;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* Currency Selection Styles */
+.currency-options {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.currency-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    border: 2px solid #e5e5e5;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+}
+
+.currency-option:hover {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+    transform: translateY(-2px);
+}
+
+.currency-option:active {
+    transform: translateY(0);
+}
+
+.currency-logo {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+}
+
+.currency-option span {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+/* Payment Details Styles */
+.payment-modal {
+    max-width: 600px;
+}
+
+.payment-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-waiting,
+.status-pending {
+    color: #f59e0b;
+}
+
+.status-confirming {
+    color: #3b82f6;
+}
+
+.status-confirmed,
+.status-finished {
+    color: #10b981;
+}
+
+.status-failed,
+.status-expired {
+    color: #ef4444;
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.payment-amount {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.payment-amount h4 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.payment-amount p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.payment-address label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.address-container {
+    display: flex;
+    gap: 8px;
+}
+
+.payment-address-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 14px;
+    background: #f9fafb;
+}
+
+.copy-btn {
+    padding: 12px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.copy-btn:hover {
+    background: #0056b3;
+}
+
+.qr-code-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+}
+
+.qr-code-container img {
+    max-width: 200px;
+    height: auto;
+}
+
+.payment-timer {
+    text-align: center;
+    padding: 16px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+}
+
+.payment-timer p {
+    margin: 0;
+    font-weight: 600;
+    color: #856404;
+}
+
+.payment-instructions {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.payment-instructions h5 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.payment-instructions ol {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.payment-instructions li {
+    margin-bottom: 8px;
+    color: #4a5568;
+    line-height: 1.5;
+}
+
+/* Button Styles */
+.btn-primary {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+/* Loading and Error States */
+.payment-loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.payment-error {
+    background: #fee;
+    color: #c53030;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 16px;
+    border: 1px solid #fed7d7;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 20px;
+        max-height: calc(100vh - 40px);
+    }
+
+    .currency-options {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .currency-option {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .address-container {
+        flex-direction: column;
+    }
+
+    .payment-address-input {
+        font-size: 12px;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
+}
+
+/* Animation for status changes */
+.payment-status span {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* QR Code styling */
+#qrcode {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#qrcode img {
+    border: 4px solid white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}

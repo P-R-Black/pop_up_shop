@@ -19,37 +19,39 @@ var helpCenterDetailsContainerPayment = document.querySelector('.help_center_det
 var helpCenterDetailsContainerFee = document.querySelector('.help_center_details_container_fee');
 
 
+if (buyingBoxExpand) {
+    buyingBoxExpand.addEventListener(("click"), () => {
+        if (helpCenterDisplayContainer.classList.contains('hide')) {
+            helpCenterDisplayContainer.classList.add('show')
+            helpCenterDisplayContainer.classList.remove('hide')
 
-buyingBoxExpand.addEventListener(("click"), () => {
-    if (helpCenterDisplayContainer.classList.contains('hide')) {
-        helpCenterDisplayContainer.classList.add('show')
-        helpCenterDisplayContainer.classList.remove('hide')
+            helpCenterDetailsContainerBuy.classList.add('show')
+            helpCenterDetailsContainerBuy.classList.remove('hide')
+        } else if (helpCenterDisplayContainer.classList.contains('show') && helpCenterDetailsContainerSell.classList.contains('show') || helpCenterDetailsContainerAccount.classList.contains('show')) {
 
-        helpCenterDetailsContainerBuy.classList.add('show')
-        helpCenterDetailsContainerBuy.classList.remove('hide')
-    } else if (helpCenterDisplayContainer.classList.contains('show') && helpCenterDetailsContainerSell.classList.contains('show') || helpCenterDetailsContainerAccount.classList.contains('show')) {
+            helpCenterDetailsContainerSell.classList.remove('show')
+            helpCenterDetailsContainerSell.classList.add('hide')
 
-        helpCenterDetailsContainerSell.classList.remove('show')
-        helpCenterDetailsContainerSell.classList.add('hide')
+            helpCenterDetailsContainerAccount.classList.remove('show')
+            helpCenterDetailsContainerAccount.classList.add('hide')
 
-        helpCenterDetailsContainerAccount.classList.remove('show')
-        helpCenterDetailsContainerAccount.classList.add('hide')
+            helpCenterDetailsContainerBuy.classList.add('show')
+            helpCenterDetailsContainerBuy.classList.remove('hide')
 
-        helpCenterDetailsContainerBuy.classList.add('show')
-        helpCenterDetailsContainerBuy.classList.remove('hide')
+        } else {
+            if (helpCenterDisplayContainer.classList.contains('show') && helpCenterDetailsContainerBuy.classList.contains('show')) {
+                helpCenterDisplayContainer.classList.remove('show')
+                helpCenterDisplayContainer.classList.add('hide')
+                helpCenterDetailsContainerBuy.classList.remove('show')
+                helpCenterDetailsContainerBuy.classList.add('hide')
 
-    } else {
-        if (helpCenterDisplayContainer.classList.contains('show') && helpCenterDetailsContainerBuy.classList.contains('show')) {
-            helpCenterDisplayContainer.classList.remove('show')
-            helpCenterDisplayContainer.classList.add('hide')
-            helpCenterDetailsContainerBuy.classList.remove('show')
-            helpCenterDetailsContainerBuy.classList.add('hide')
+            }
 
         }
 
-    }
+    });
+}
 
-});
 
 sellingBoxExpand.addEventListener(("click"), () => {
     if (helpCenterDisplayContainer.classList.contains('hide')) {

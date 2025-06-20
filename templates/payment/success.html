@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+Payment
+{% endblock %}
+
+{% block main %}
+<section class="product_buy_section container">
+    {% if user.is_authenticated %}
+    <div class="section_container">
+        <div class="page_title">
+            <h2>Payment Success</h2>
+        </div>
+
+    </div>
+    {% endif %}
+
+</section>
+
+{% endblock %}
