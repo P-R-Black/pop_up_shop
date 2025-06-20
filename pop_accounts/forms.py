@@ -322,7 +322,7 @@ class PopUpPasswordOnlyForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={
             'class': 'sign_up_options_form_password',
             'placeholder': 'Password',
-            'id': 'id_password',
+            'id': '', #id_password
             'type': 'password',
             'name': 'password'
         }

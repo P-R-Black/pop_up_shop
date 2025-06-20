@@ -36,8 +36,17 @@ DEBUG=True
 # print('DEBUG TEST', DEBUG)
 #os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = ["*", "localhost:8000", "localhost"]
+ALLOWED_HOSTS = [
+    "*", 
+    "localhost:8000", 
+    "localhost",
+    "4b7e-2600-1700-1580-da40-f4f1-ff18-7d90-c31b.ngrok-free.app"
+    ]
 
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://4b7e-2600-1700-1580-da40-f4f1-ff18-7d90-c31b.ngrok-free.app"
+]
 
 # Application definition
 
@@ -75,9 +84,11 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend'
 ]
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = None
 SESSION_COOKIE_SECURE = False  # Set to True if using HTTPS
+SESSION_COOKIE_AGE = 3600
 
 ROOT_URLCONF = 'pop_up_shop.urls'
 
@@ -153,6 +164,15 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'settings/logs/security.log',
         },
+         'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'nowpayments.log',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
     },
     'loggers': {
         'security': {
@@ -160,8 +180,19 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        '__main__': {  # Your app's logger
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
+
 
 
 # Static files (CSS, JavaScript, Images)
@@ -203,3 +234,12 @@ STRIPE_SECRET_KEY =os.environ.get('STRIPE_SECRET_KEY')
 STRIPE_ENDPOINT_SECRET =os.environ.get('STRIPE_ENDPOINT_SECRET')
 
 # stripe listen --forward-to 127.0.0.1:8000/payment/webhook
+
+
+BRAINTREE_MERCHANT_ID=os.environ.get('BRAINTREE_MERCHANT_ID')
+BRAINTREE_PUBLIC_KEY=os.environ.get('BRAINTREE_PUBLIC_KEY')
+BRAINTREE_PRIVATE_KEY=os.environ.get('BRAINTREE_PRIVATE_KEY')
+
+NOWPAYMENTS_API_KEY = os.environ.get('NOWPAYMENTS_API_KEY', '')
+NOWPAYMENTS_IPN_SECRET = os.environ.get('NOWPAYMENTS_IPN_SECRET', '')
+NOWPAYMENTS_SANDBOX = os.environ.get('NOWPAYMENTS_SANDBOX', 'True').lower() == 'true'

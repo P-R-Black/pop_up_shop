@@ -33,6 +33,22 @@
     <!-- Stripe -->
     <script src="https://js.stripe.com/v3/"></script>
 
+    <!-- PayPal -->
+    <script src="https://www.paypal.com/sdk/js?client-id={{ PAYPAL_CLIENT_ID }}&currency=USD"></script>
+
+    <!-- Brantree / Venmo -->
+    <script src="https://js.braintreegateway.com/web/3.91.0/js/client.min.js"></script>
+    <script src="https://js.braintreegateway.com/web/3.91.0/js/venmo.min.js"></script>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
+
+
+    <!-- Your NowPayments integration script -->
+    <script src="{% static 'js/nowpayments_integration.js' %}"></script>
+
+
     <!-- Chart Js -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.3/dist/chart.umd.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

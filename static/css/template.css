@@ -286,7 +286,8 @@ body.dark {
 }
 
 
-.payment_option_buttons {
+.payment_option_buttons,
+.payment_option_buttons_two {
     align-items: center;
     background-color: black;
     border-radius: 5px;
@@ -368,6 +369,7 @@ body.dark {
 .button_medium:active,
 .button_long_small:active,
 .payment_option_buttons:active,
+.payment_option_buttons_two:active,
 .button_long_white:active,
 .button_smaller_white:active,
 .button_small_white:active,
