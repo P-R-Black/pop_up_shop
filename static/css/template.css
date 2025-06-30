@@ -98,9 +98,19 @@ body.dark {
 .page_title h3 {
     font-family: var(--text-font);
     font-size: clamp(2rem, 3.5rem, 10vw);
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-color);
     margin-top: -1rem;
+    text-align: center;
+    text-shadow: 3px 0px 4px rgba(0, 0, 0, 0.45);
+}
+
+.page_title h4 {
+    font-family: var(--text-font);
+    font-size: clamp(1.5rem, 3rem, 10vw);
+    font-weight: 400;
+    color: var(--text-color);
+    /* margin-top: -1rem; */
     text-align: center;
     text-shadow: 3px 0px 4px rgba(0, 0, 0, 0.45);
 }

@@ -392,7 +392,20 @@ label:after {
     padding-left: .5rem;
 }
 
+.outer_input_container input {
+    color: var(--text-color);
+    font-size: 1rem;
+    padding-left: 5px;
+    height: 100%;
+    width: 90%;
+}
+
+.outer_input_container input:focus {
+    outline: none;
+}
+
 .outer_input_container h4 {
+    color: var(--text-color);
     font-size: 1.1rem;
     margin-top: .20rem;
 
@@ -406,6 +419,7 @@ input#custom_bid {
     border-radius: 5px;
     margin-left: .05rem;
     width: 100%;
+
 }
 
 /* Chrome, Safari, Edge, Opera */

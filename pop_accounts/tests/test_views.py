@@ -1,7 +1,7 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
-from auction.utils import get_state_tax_rate
+from payment.utils.tax_utils import get_state_tax_rate
 from auction.models import PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType
 from unittest.mock import patch
 from django.utils import timezone
@@ -67,7 +67,7 @@ def create_product_type(name, is_active):
         )
 
 def create_test_product(product_type, category, product_title, secondary_product_title, description, slug, 
-                        starting_price, current_highest_bid, retail_price, brand, auction_start_date, 
+                        buy_now_price, current_highest_bid, retail_price, brand, auction_start_date, 
                         auction_end_date, inventory_status, bid_count, reserve_price, is_active
                         ):
         
@@ -78,7 +78,7 @@ def create_test_product(product_type, category, product_title, secondary_product
             secondary_product_title= secondary_product_title,
             description=description,
             slug=slug, 
-            starting_price=starting_price, 
+            buy_now_price=buy_now_price, 
             current_highest_bid=current_highest_bid, 
             retail_price=retail_price, 
             brand=brand, 
@@ -424,7 +424,7 @@ class MarkProductInterestedViewTests(TestCase):
             secondary_product_title = "Exclusive Drop",
             description="New Test Sneaker Exlusive Drop from the best sneaker makers out.",
             slug="test-sneaker-exclusive-drop", 
-            starting_price="150.00", 
+            buy_now_price="150.00", 
             current_highest_bid="0", 
             retail_price="100", 
             brand=self.brand, 
@@ -507,7 +507,7 @@ class MarkProductOnNoticeViewTests(TestCase):
             secondary_product_title = "Exclusive Drop",
             description="New Test Sneaker Exlusive Drop from the best sneaker makers out.",
             slug="test-sneaker-exclusive-drop", 
-            starting_price="150.00", 
+            buy_now_price="150.00", 
             current_highest_bid="0", 
             retail_price="100", 
             brand=self.brand, 
@@ -560,7 +560,7 @@ class ProductBuyViewGETTests(TestCase):
             secondary_product_title="Carolina Blue", 
             description="The most uncomfortable basketball shoe their is", 
             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-            starting_price="150.00", 
+            buy_now_price="150.00", 
             current_highest_bid="0", 
             retail_price="100", 
             brand=self.brand, 
@@ -633,7 +633,7 @@ class ProductBuyViewGETTests(TestCase):
 
         
         # Test tax rate and tax calculation
-        expected_subtotal = Decimal(self.product.starting_price)
+        expected_subtotal = Decimal(self.product.buy_now_price)
         expected_tax = expected_subtotal * Decimal(self.tax_rate)
         self.assertEqual(Decimal(context['sales_tax']), expected_tax.quantize(Decimal('0.01')))
 
@@ -661,7 +661,7 @@ class ProductBuyViewGETTests(TestCase):
 
         # make a cart entry directly into the session
         session = self.client.session
-        session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.starting_price)}}
+        session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.buy_now_price)}}
         session.save()
     
     def test_product_buy_view_get_selected_address_displayed(self):
@@ -771,7 +771,7 @@ class ProductBuyViewPOSTTests(TestCase):
             secondary_product_title="Carolina Blue", 
             description="The most uncomfortable basketball shoe their is", 
             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-            starting_price="150.00", 
+            buy_now_price="150.00", 
             current_highest_bid="0", 
             retail_price="100", 
             brand=self.brand, 
@@ -820,7 +820,7 @@ class ProductBuyViewPOSTTests(TestCase):
 
         # make a cart entry directly into the session
         session = self.client.session
-        session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.starting_price)}}
+        session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.buy_now_price)}}
         session.save()
 
     def test_post_select_existing_address_sets_session(self):
@@ -944,7 +944,7 @@ class ProductBuyGuestTest(TestCase):
             secondary_product_title="Carolina Blue", 
             description="The most uncomfortable basketball shoe their is", 
             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-            starting_price="150.00", 
+            buy_now_price="150.00", 
             current_highest_bid="0", 
             retail_price="100", 
             brand=self.brand, 
@@ -957,7 +957,7 @@ class ProductBuyGuestTest(TestCase):
         )
 
         session = self.client.session
-        session['cart'] = {str(self.product.id) : {"qty": 1, "price": str(self.product.starting_price)}}
+        session['cart'] = {str(self.product.id) : {"qty": 1, "price": str(self.product.buy_now_price)}}
         session.save()
     
     def test_guest_sees_cart_summary_only(self):
@@ -996,7 +996,7 @@ class ProductBuyAuthTest(TestCase):
             secondary_product_title="Carolina Blue", 
             description="The most uncomfortable basketball shoe their is", 
             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-            starting_price="150.00", 
+            buy_now_price="150.00", 
             current_highest_bid="0", 
             retail_price="100", 
             brand=self.brand, 
@@ -1023,7 +1023,7 @@ class ProductBuyAuthTest(TestCase):
 
         # seed cart
         session = self.client.session
-        session['cart'] = {str(self.product.id) : {"qty": 1, "price": str(self.product.starting_price)}}
+        session['cart'] = {str(self.product.id) : {"qty": 1, "price": str(self.product.buy_now_price)}}
         session.save()
     
     

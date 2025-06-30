@@ -77,7 +77,7 @@ class TestProducts(TestCase):
             description="Brand new sneakers",
             slug="jordan-3-retro-og-rare-air",
             retail_price="150.00",
-            starting_price="230.00",
+            buy_now_price="230.00",
             brand_id=1,
             auction_start_date=None,
             auction_end_date=None,
@@ -116,8 +116,8 @@ class TestProducts(TestCase):
         # Test retail_price
         self.assertEqual(str(prod_one.retail_price), "150.00")
 
-        # Test starting_price
-        self.assertEqual(str(prod_one.starting_price), "230.00")
+        # Test buy_now_price
+        self.assertEqual(str(prod_one.buy_now_price), "230.00")
 
         # Test brand_id
         self.assertEqual(int(prod_one.brand_id), 1)
@@ -170,7 +170,7 @@ class TestProductsActiveAuction(TestCase):
             description="Brand new sneakers",
             slug="jordan-3-retro-og-rare-air",
             retail_price="150.00",
-            starting_price="230.00",
+            buy_now_price="230.00",
             brand_id=1,
             auction_start_date=auction_start,
             auction_end_date=auction_end,
@@ -215,7 +215,7 @@ class TestProductsUpcomingAuction(TestCase):
             description="Brand new sneakers",
             slug="jordan-3-retro-og-rare-air",
             retail_price="150.00",
-            starting_price="230.00",
+            buy_now_price="230.00",
             brand_id=1,
             auction_start_date=auction_start,
             auction_end_date=auction_end,
@@ -255,7 +255,7 @@ class TestProductsFinishedAuction(TestCase):
             description="Brand new sneakers",
             slug="jordan-3-retro-og-rare-air",
             retail_price="150.00",
-            starting_price="230.00",
+            buy_now_price="230.00",
             brand_id=1,
             auction_start_date=auction_start,
             auction_end_date=auction_end,
@@ -316,7 +316,7 @@ class TestPopUpProductSpecificationValueModel(TestCase):
             description="Comfortable and stylish",
             slug="nike-air-max",
             retail_price="120.00",
-            starting_price="190.00",
+            buy_now_price="190.00",
             brand=self.brand,
             auction_start_date=now(),
             auction_end_date=now() + timedelta(days=5),

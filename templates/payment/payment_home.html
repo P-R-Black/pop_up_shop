@@ -314,8 +314,7 @@ Payment
                     {% endcomment %}
                     <div class="checkout_details_container">
                         <div class="checkout_subtotal_container">
-
-                            <p>Subtotal <span id="purchaseSubtotal">${{ cart_subtotal|intcomma }}.00</span></p>
+                            <p>Subtotal <span id="purchaseSubtotal">${{ cart_subtotal|intcomma }}</span></p>
                             <i class='bx bxs-chevron-down subtotalExpand' id="subtotalExpand"></i>
                         </div>
                         <div class="purchase_details_container">
@@ -326,7 +325,7 @@ Payment
                             <div class="purchase_details_item_price_container" data-index="{{ product.id }}">
 
                                 <p>{{ c.product.product_title }} {{ c.product.secondary_product_title }}</p>
-                                <p id="purchasePrice">${{ c.total_price|intcomma }}.00</p>
+                                <p id="purchasePrice">${{ c.total_price|intcomma }}</p>
 
                             </div>
                             {% endwith %}
@@ -455,7 +454,7 @@ Payment
                                 </span>
 
                             </button>
-                            <p>${{ c.price|intcomma }}.00</p>
+                            <p>${{ c.price|intcomma }}</p>
                         </div>
                     </div>
                 </div>
@@ -539,7 +538,7 @@ Payment
                     <div class="checkout_details_container">
                         <div class="checkout_subtotal_container">
 
-                            <p>Subtotal <span id="purchaseSubtotal">${{ cart_subtotal|intcomma }}.00</span></p>
+                            <p>Subtotal <span id="purchaseSubtotal">${{ cart_subtotal|intcomma }}</span></p>
                             <i class='bx bxs-chevron-down subtotalExpand' id="subtotalExpand"></i>
                         </div>
                         <div class="purchase_details_container">
@@ -550,7 +549,7 @@ Payment
                             <div class="purchase_details_item_price_container" data-index="{{ product.id }}">
 
                                 <p>{{ c.product.product_title }} {{ c.product.secondary_product_title }}</p>
-                                <p id="purchasePrice">${{ c.total_price|intcomma }}.00</p>
+                                <p id="purchasePrice">${{ c.total_price|intcomma }}</p>
 
                             </div>
                             {% endwith %}
@@ -642,7 +641,7 @@ Payment
                         <div class="checkout_details_condition_button_container">
                             <button class="button_small" id="remove_button"
                                 data-index="{{ product.id }}">Remove</button>
-                            <p>${{ c.price|intcomma }}.00</p>
+                            <p>${{ c.price|intcomma }}</p>
                         </div>
                     </div>
                 </div>
@@ -736,10 +735,12 @@ Payment
                     })}`
 
                     // to create new total, remove $$$ and commas to sum figures
-                    const subT = purchaseSubTotal.innerHTML.replace("$", "").replace(",", "")
-                    const procFee = processingFee.innerHTML.replace("$", "").replace(",", "")
-                    const ship = shippingCost.innerHTML.replace("$", "").replace(",", "")
-                    const taxes = taxOwed.innerHTML
+                    const subT = purchaseSubTotal.innerHTML.replace("$", "").replace(",", "");
+                    const procFee = processingFee.innerHTML.replace("$", "").replace(",", "");
+                    const ship = shippingCost.innerHTML.replace("$", "").replace(",", "");
+                    const taxes = taxOwed.innerHTML;
+
+                    console.log('purchaseSubTotal', purchaseSubTotal)
 
                     console.log('taxes', taxes)
 

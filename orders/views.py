@@ -4,7 +4,7 @@ from django.http.response import JsonResponse
 from cart.cart import Cart
 from .models import PopUpCustomerOrder, PopUpOrderItem
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
-from auction.models import PopUpProduct
+from auction.models import PopUpProduct, WinnerReservation
 from coupon.models import PopUpCoupon
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
@@ -16,18 +16,19 @@ import json
 from collections import defaultdict
 import braintree
 import re
+from django.db.models import Q
 
 # Create your views here.
 @method_decorator(csrf_exempt, name='dispatch')
 class CreateOrderAfterPaymentView(View):
     def post(self, request, *args, **kwargs):
         cart = Cart(request)
-        ids_in_cart = [int(pid) for pid in cart.cart.keys()]
+        ids_in_cart = cart.get_product_ids()
+        print('ids_in_cart', ids_in_cart)
 
-        product_qs = (
-                PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status='in_inventory')
-                .prefetch_related('popupproductspecificationvalue_set')
-            )
+        product_qs = PopUpProduct.objects.filter(Q(id__in=ids_in_cart), Q(is_active=True), Q(inventory_status__in=["reserved", "sold_out"]))
+        
+        print('product_qs', product_qs)
 
         # Build diction for lookup
         product_map = {}
@@ -51,12 +52,14 @@ class CreateOrderAfterPaymentView(View):
 
             order_key = data.get('order_key')
             user_id = data.get('user_id')
-            total_paid = Decimal(data.get('total_paid', '0.00'))
+            total_paid = Decimal(data.get('total_paid', '0.00')) 
+            # paypal total: $28308.99 should be $283.09
+            print('total_paid', total_paid)
             customer = PopUpCustomer.objects.get(id=user_id)
             shipping_address = PopUpCustomerAddress.objects.get(id=data.get('shippingAddressId'))
             billing_address = PopUpCustomerAddress.objects.get(id=data.get('billingAddressId'))
 
-            # not needed because payment_data_id = payload.nonce from Venmoe
+            # not needed because payment_data_id = payload.nonce from Venmo
             # nonce = data.get('payment_method_nonce') #braintree venmo
             # print('nonce', nonce)
             # if not nonce:
@@ -70,9 +73,6 @@ class CreateOrderAfterPaymentView(View):
                 phone = match.group(1)
             else:
                 phone = phone_number  # fallback if already plain
-
-
-            
 
             
             coupon = None
@@ -106,8 +106,14 @@ class CreateOrderAfterPaymentView(View):
 
             order_id = order.pk
 
+            print('cart', cart)
+            print('order_id', order_id)
+            print('product_map', product_map)
             for item in cart:
-                prod_data = product_map.get(item['product'].id)
+                print('item', item)
+                product_id = item['product'].id
+                prod_data = product_map.get(product_id)
+                print('prod_data', prod_data)
                 if not prod_data:
                     continue
                 PopUpOrderItem.objects.create(
@@ -120,7 +126,18 @@ class CreateOrderAfterPaymentView(View):
                     price=item['price'], 
                     quantity=item['qty']
                 )
-
+          
+            for id in ids_in_cart:
+                product = PopUpProduct.objects.get(id=id)
+                print('product in order', product)
+                product.inventory_status = 'sold_out'
+                product.save()
+            
+                reservation = WinnerReservation.objects.filter(user=customer, product=product, is_paid=False).first()
+                if reservation:
+                    reservation.is_paid = True
+                    reservation.save()
+           
             return JsonResponse({'success': True, 'order_id': str(order.id)})
         
         except (KeyError, ObjectDoesNotExist) as e:

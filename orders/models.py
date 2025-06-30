@@ -57,6 +57,10 @@ class PopUpCustomerOrder(models.Model):
 
     class Meta:
         ordering = ('-created_at',)
+        verbose_name = _("Pop Up Customer Order")
+        verbose_name_plural = _("Pop Up Customer Orders")
+
+    
 
     def mark_as_shipped(self, tracking_number, carrier, estiamted_delivery):
         """Mark the order as shipped and store tracking details."""
@@ -91,8 +95,8 @@ class PopUpOrderItem(models.Model):
 
     class Meta:
         ordering = ('-order',)
-        verbose_name = _("PopUpOrderItem")
-        verbose_name_plural = _("PopUpOrderItems")
+        verbose_name = _("PopUp Order Item")
+        verbose_name_plural = _("PopUp Order Items")
 
 
     def __str__(self):

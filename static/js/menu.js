@@ -216,6 +216,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // If email on file, take to password entry
     if (emailSubmitButton) {
         emailSubmitButton.addEventListener('click', (e) => {
+            console.log('button clicked!')
             e.preventDefault();
 
             const form = emailSubmitButton.closest('form');
@@ -226,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCSRFToken(),
                 },
                 body: formData
             })

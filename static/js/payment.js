@@ -68,7 +68,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (clickedButton) {
             // Get the icon (either <i> or <img>) and text
             const icons = clickedButton.querySelectorAll('i, img, .payBtnIcon img');
-            console.log('icons', icons)
             const text = clickedButton.textContent.trim(); // Extract button text
             const method = clickedButton.dataset.method;
             console.log('the method is', method)
@@ -80,12 +79,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
             if (icons) {
                 icons.forEach((icon) => {
-                    console.log('icon', icon)
                     newIcon = icon.cloneNode(true);
-                    console.log('newIcon', newIcon)
-
                     selectedPaymentButton.appendChild(newIcon);
-                    console.log('selectedPaymentButton', selectedPaymentButton)
                 })
             }
 
@@ -224,6 +219,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         const purchaseTotal = document.getElementById('purchaseTotal')
         let totalCalculation = parseFloat(purchaseSubtotal) + parseFloat(proccessFee) + parseFloat(tax) + parseFloat(shippingCost)
         let purchaseTotalCalc = totalCalculation.toFixed(2)
+
+        console.log('purchaseTotalCalc', purchaseTotalCalc)
         purchaseTotal.innerHTML = `$${parseFloat(purchaseTotalCalc).toLocaleString()}`
 
     }
@@ -387,15 +384,11 @@ window.addEventListener('DOMContentLoaded', async () => {
             discount: discount,
         }
 
-        console.log('post', 'userId', userId, 'payment_data_id', payment_data_id, 'clientSecret', clientSecret, 'total_paid', total_paid, 'shippingObject', shippingObject, 'billingObject', billingObject, 'couponId', couponId, 'discount', discount,)
-
-
         return orderPayLoad;
     }
 
 
     const makePaymentButton = (paymentOption, parent, className, idName, newIcon, newText) => {
-        console.log('makePaymentButton called')
         let paymentButton = document.createElement('button')
 
         if (paymentOption === 'paypal' || paymentOption === 'google_pay' || paymentOption === 'apple_pay') {
@@ -455,10 +448,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             paymentButton.appendChild(text)
 
             parent.appendChild(paymentButton)
+            initiateCryptoPayment(paymentButton)
             // nowPaymentsProcess()
 
-            console.log('paymentOption newText', newText)
-            console.log('paymentOption newText', newIcon)
 
 
         }
@@ -478,6 +470,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     const payPalPayProcess = () => {
         let amount = getFinalAmount();
+        console.log('amount Paypal', amount)
         let billingObject = getBillingAddressInfo();
         let shippingObject = getShippingAddressInfo();
         let userId = document.getElementById('userData').value
@@ -508,7 +501,8 @@ window.addEventListener('DOMContentLoaded', async () => {
                     fetch('/orders/create-after-payment/', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCsrfToken()
                         },
                         body: JSON.stringify(orderPayLoad)
                     })
@@ -638,6 +632,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                 // Get amount
                 const amount = getFinalAmount();
+                console.log('amount Venmo', amount)
 
                 // create paymentPayload to get a transaction id for venmoe
                 let paymentPayload = {
@@ -771,13 +766,16 @@ window.addEventListener('DOMContentLoaded', async () => {
             paymentButton.addEventListener('click', async (e) => {
 
                 const cleanAmount = purchaseTotal.innerHTML.replace('$', '').replace(',', '')
-                let amount = (parseFloat(cleanAmount) * 100).toString().split('.');
+                console.log('cleanAmount', cleanAmount)
+
+                let amount = getFinalAmount();
+                console.log('amount stripe credi card', amount)
 
 
                 const { clientSecret } = await fetch('create-payment-intent/', {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ amount: Number(amount[0]) }),
+                    headers: { "Content-Type": "application/json", 'X-CSRFToken': getCsrfToken() },
+                    body: JSON.stringify({ amount: amount }),
                 }).then(res => res.json());
 
                 let billingObject = getBillingAddressInfo();
@@ -801,7 +799,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                         }
                     });
 
-                    let orderPayLoad = createOrderPayLoad(userId, result.paymentIntent.id, clientSecret, Number(amount[0]) / 100, shippingObject, billingObject, "", 0)
+                    let orderPayLoad = createOrderPayLoad(userId, result.paymentIntent.id, clientSecret, amount, shippingObject, billingObject, "", 0)
 
                     if (result.error) {
                         console.log('Payment Failed:', result.error.message);
@@ -809,7 +807,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     } else if (result.paymentIntent && result.paymentIntent.status == 'succeeded') {
                         fetch('/orders/create-after-payment/', {
                             method: "POST",
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', },
                             body: JSON.stringify(orderPayLoad)
                         })
                             .then(res => res.json())
@@ -840,10 +838,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     ///////////// STRIPE GOOGLE PAY PAYMENTS ////////////////////
     //////////////////////////////////////////////////////////////
 
-    /**
-     * 
-     * 
-     */
+
     const stripeGooglePayProcess = () => {
         console.log('googlePayProcess has been called')
 
@@ -869,6 +864,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                 const elements = stripe.elements();
                 const amount = getFinalAmount();
+                console.log('amount google pay', amount)
 
                 const paymentRequest = stripe.paymentRequest({
                     country: 'US',
@@ -1067,6 +1063,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                 const elements = stripe.elements()
                 const amount = getFinalAmount()
+                console.log('amount apple pay', amount)
 
                 const paymentRequest = stripe.paymentRequest({
                     country: 'US',
@@ -1213,7 +1210,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     //////////////// NOWPAYMENTS STABLECOIN PAYMENTS ////////////
     //////////////////////////////////////////////////////////////
 
+    const initiateCryptoPayment = (paymentButton) => {
+        paymentButton.addEventListener('click', () => {
+            nowPaymentsProcess()
+        })
 
+    }
     const nowPaymentsProcess = () => {
         console.log('nowPaymentsProcess called')
 
@@ -1444,6 +1446,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('data', data)
                     updatePaymentStatus(data.status, data.payment_info);
 
                     if (data.status === 'finished' || data.status === 'confirmed') {
@@ -1538,6 +1541,19 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     const cancelPayment = (paymentId) => {
         console.log('cancelPayment called')
+
+        // Clear countdown timer
+        if (countdownTimer) {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+        }
+
+        // Remove the modal
+        const modal = document.querySelector('.payment-details-modal');
+        if (modal) {
+            modal.remove();
+        }
+
         if (confirm("Are you sure you want to cancel this payment?")) {
             // Clean up
             if (window.paymentCheckInterval) {
@@ -1566,19 +1582,37 @@ window.addEventListener('DOMContentLoaded', async () => {
             });
     };
 
+    let countdownTimer = null;
+
     const startCountdownTimer = (timeLimit) => {
         console.log('startCountdownTimer called', timeLimit)
+
+        // Clear any existing timer first
+        if (countdownTimer) {
+            clearInterval(countdownTimer)
+        }
 
         const [minutes, seconds] = timeLimit.split(':').map(Number);
         let totalSeconds = minutes * 60 + seconds;
 
-        const timer = setInterval(() => {
+        countdownTimer = setInterval(() => {
+            // Check if the countdown element still exists
+            const countdownElement = document.getElementById('countdown');
+            if (!countdownElement) {
+                clearInterval(countdownElement);
+                countdownTimer = null;
+                return;
+            }
+
             const mins = Math.floor(totalSeconds / 60);
             const secs = totalSeconds % 60;
-            document.getElementById('countdown').textContent = `${mins.toString().padStart(2, 0)}:${secs.toString().padStart(2, 0)}`;
+            countdownElement.textContent = document.getElementById('countdown').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            // document.getElementById('countdown').textContent = `${mins.toString().padStart(2, 0)}:${secs.toString().padStart(2, 0)}`;
 
             if (totalSeconds <= 0) {
-                clearInterval(timer);
+                clearInterval(countdownTimer);
+                countdownTimer = null;
                 handlePaymentFailure({ reason: 'expired' });
             }
             totalSeconds--;
@@ -1690,7 +1724,6 @@ window.addEventListener('DOMContentLoaded', async () => {
      * can be recalculated.
      */
     const buttonUnMount = () => {
-        console.log('unmount called')
         const stripeIds = ['google-pay-button', 'apple-pay-button', 'confirm-card-payment',
             'paypal-button-container', 'venmo-button-container']
 
@@ -1698,12 +1731,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             const currentId = stripeIds[i];
             let elementToUnMount = document.getElementById(currentId);
 
-            console.log(`Checking ${currentId}:`, elementToUnMount);
-
             if (elementToUnMount) {
                 // For Venmo Specifically
                 if (currentId === 'venmo-button-container') {
-                    console.log('Processing Venmo element:', elementToUnMount.tagName);
 
                     // Save Parement Element
                     const parentElement = elementToUnMount.parentNode;
@@ -1719,7 +1749,6 @@ window.addEventListener('DOMContentLoaded', async () => {
                     // Put the div back in the DOM
                     parentElement.appendChild(newDiv);
 
-                    console.log('Venmo container recreated as div');
                 } else {
                     // For the other elements
                     elementToUnMount.innerHTML = '';

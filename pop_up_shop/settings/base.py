@@ -17,6 +17,7 @@ import environ
 
 env = environ.Env()
 environ.Env.read_env()
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -40,12 +41,13 @@ ALLOWED_HOSTS = [
     "*", 
     "localhost:8000", 
     "localhost",
-    "4b7e-2600-1700-1580-da40-f4f1-ff18-7d90-c31b.ngrok-free.app"
+    "f4a6-2600-1700-1580-da40-1888-bb71-1d2d-2cd.ngrok-free.app",
+    "https://*.ngrok.io",
     ]
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://4b7e-2600-1700-1580-da40-f4f1-ff18-7d90-c31b.ngrok-free.app"
+    "https://f4a6-2600-1700-1580-da40-1888-bb71-1d2d-2cd.ngrok-free.app"
 ]
 
 # Application definition
@@ -61,12 +63,14 @@ INSTALLED_APPS = [
     'auction.apps.AuctionConfig',
     'home.apps.HomeConfig',
     'pop_accounts.apps.PopAccountsConfig',
+    'pop_up_email.apps.PopUpEmailConfig',
     'orders.apps.OrdersConfig',
     'payment.apps.PaymentConfig',
     'cart.apps.CartConfig',
     'coupon.apps.CouponConfig',
     'reward.apps.RewardConfig',
-    'mptt'
+    'mptt',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -213,6 +217,33 @@ AUTH_USER_MODEL = 'pop_accounts.PopUpCustomer'
 
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/'
+
+
+ADMINS = [("Your Name", "admin@example.com")]
+SERVER_EMAIL = "server@example.com"
+
+
+# REDIS
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
+
+
+# CELERY
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+CELERY_RESULT_SERIALIZER = 'json'
+
+CELERTY_BEAT_SCHEDULE = {
+    'check-expired-reservations-every-hour': {
+        'task': 'auction.tasks.mark_expired_reservations',
+        'schedule': crontab(minute=0)
+    }
+}
+
+CELERY_TIMEZONE = 'America/New_York'  # Set to your project's timezone
 
 
 # THIS SHOULD BE CHANGED TO A FEW HOURS

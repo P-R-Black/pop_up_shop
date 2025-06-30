@@ -39,7 +39,11 @@
 
 
 .pd_container_right {
-    width: 30%;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    width: 28%;
+
 
 }
 
@@ -74,7 +78,9 @@ p.pd_databox_assign_left {
 }
 
 .pd_buttons_container {
+
     display: flex;
+
     margin-top: 1rem;
 }
 

@@ -24,6 +24,7 @@ import debug_toolbar
 urlpatterns = [
     path('', include('home.urls')),
     path('pop_accounts/', include('pop_accounts.urls')),
+    path('pop_up_email/', include('pop_up_email.urls')),
     path('auction/', include('auction.urls')),
     path('orders/', include('orders.urls')),
     path('cart/', include('cart.urls')),
