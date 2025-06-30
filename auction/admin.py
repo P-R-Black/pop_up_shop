@@ -2,7 +2,7 @@ from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
 
 from .models import (PopUpProduct, PopUpCategory, PopUpProductSpecification, PopUpProductType, 
-                     PopUpProductSpecificationValue, PopUpProductImage, PopUpBrand
+                     PopUpProductSpecificationValue, PopUpProductImage, PopUpBrand, WinnerReservation
 )
 
 
@@ -44,3 +44,9 @@ class BrandAdmin(admin.ModelAdmin):
 
     def get_prepopulated_fields(self, request, obj=None):
         return {'slug': ('name',)}
+ 
+    
+@admin.register(WinnerReservation)
+class WinnerReservationAdmin(admin.ModelAdmin):
+    list_display = ("user", "product", "is_paid", "is_expired", "expires_at")
+    list_filter = ("is_expired", "is_paid")

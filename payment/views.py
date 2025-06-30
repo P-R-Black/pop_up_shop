@@ -6,6 +6,7 @@ from cart.cart import Cart
 from django.http import JsonResponse
 from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
 from pop_accounts.models import PopUpBid, PopUpCustomerAddress
+from cart.models import PopUpCartItem
 from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
 import stripe
 from django.conf import settings
@@ -19,6 +20,9 @@ import os
 from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
 from django.views import View
 from decimal import Decimal
+from django.utils.timezone import now
+from datetime import timedelta
+from dateutil.parser import parse as parse_datetime
 from .utils.tax_utils import get_state_tax_rate
 from .utils.address_form_handler import(handle_new_address, handle_selected_address, handle_update_address)
 import braintree
@@ -74,8 +78,11 @@ class ProductBuyView(OptionalLoginMixin, View):
         """Cart view for user if not signed in"""
         if not request.user.is_authenticated:
             cart = Cart(request)
+            session_cart = getattr(cart, "session_cart", {})
+           
             # 1. Collect product IDs in the cart
-            ids_in_cart = [int(pid) for pid in cart.cart.keys()]
+            # ids_in_cart = [int(pid) for pid in cart.session_cart.keys()]
+            ids_in_cart = cart.get_product_ids()
 
             # 2 Fetch products ounce with needed data
             products = (
@@ -87,7 +94,7 @@ class ProductBuyView(OptionalLoginMixin, View):
 
             # 3 Build "enriched" cart rows
             enriched_cart = []
-            for pid, item in cart.cart.items():
+            for pid, item in cart.session_cart.items():
                 pid_int = int(pid)
                 product = product_map.get(pid_int)
                 if not product:
@@ -134,6 +141,7 @@ class ProductBuyView(OptionalLoginMixin, View):
         if request.user.is_authenticated:
             user = request.user
             cart = Cart(request)
+            # cart = PopUpCartItem.objects.filter(user=request.user)
             saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
             default_address = saved_addresses.filter(default=True).first()
             billing_address_id = request.session.get("selected_billing_address_id")
@@ -157,14 +165,13 @@ class ProductBuyView(OptionalLoginMixin, View):
             total = total.replace('.', '')
             total = int(total)
 
-
             # user_state = selected_address.state if selected_address else default_address.state
             user_state = (selected_address or default_address).state if (selected_address or default_address) else "FL"
 
             tax_rate =  get_state_tax_rate(user_state)
         
             # 1. Collect product IDs in the cart
-            ids_in_cart = [int(pid) for pid in cart.cart.keys()]
+            ids_in_cart = cart.get_product_ids()
 
             # 2 Fetch products ounce with needed data
             products = (
@@ -176,7 +183,7 @@ class ProductBuyView(OptionalLoginMixin, View):
 
             # 3 Build "enriched" cart rows
             enriched_cart = []
-            for pid, item in cart.cart.items():
+            for pid, item in cart.get_items():
                 pid_int = int(pid)
                 product = product_map.get(pid_int)
                 if not product:
@@ -189,7 +196,6 @@ class ProductBuyView(OptionalLoginMixin, View):
                     "unit_price": Decimal(item["price"]),
                     "line_total": Decimal(item["price"]) * item["qty"],
                 })
-
             
             # 4 Item quantity in cart
             cart_length = len(cart)
@@ -250,23 +256,42 @@ class ProductBuyView(OptionalLoginMixin, View):
         selected_address = saved_addresses.first()
         use_billing_as_shipping = False
 
-        
         use_billing_as_shipping = request.POST.get('use_billing_as_shipping') == "true"
         request.session['use_billing_as_shipping'] = use_billing_as_shipping
 
         billing_address_id = request.session.get("selected_billing_address_id")
         billing_address = PopUpCustomerAddress.objects.filter(id=billing_address_id, customer=user).first()
+
+        # expiry time for user to buy product before it becomes available to others again
+        expiry_str = request.session.get('buy_now_expiry')
+        if expiry_str:
+            expiry_time = parse_datetime(expiry_str)
+            if now() > expiry_str:
+                # release product
+                for pid in cart.cart.keys():
+                    try:
+                        product = PopUpProduct.objects.get(id=pid)
+                        product.inventory_status = 'in_inventory'
+                        product.save()
+                    except PopUpProduct.DoesNotExist:
+                        continue
+                
+                # Clear session + cart
+                cart.clear()
+                del request.session['buy_now_expiry']
+                request.sesion.modified = True
+                messages.error(request, "Your reservation expired. Please try again")
+                return redirect('action:products')
         
 
 
         # If the form isn't valid, re-render the page with the forms filled in
-        cart = Cart(request)
+        # cart = Cart(request)
+        cart = PopUpCartItem.objects.filter(user=request.user)
         saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
         address_form = PopUpUpdateShippingInformationForm(instance=address_instance)
         edit_address_form = PopUpUpdateShippingInformationForm()
-
         client_token = gateway.client_token.generate()
-
 
         context = {
             # "form": form,  # whichever one failed validation
@@ -281,6 +306,29 @@ class ProductBuyView(OptionalLoginMixin, View):
         }
         return render(request, self.template_name, context)
     
+
+
+def buy_now_add_to_cart(request, slug):
+    product = get_object_or_404(PopUpProduct, slug=slug, is_active=True)
+    
+    # check if already sold/reserved | CREATE A PAGE FOR THIS - > ITEM HAS BEEN PURCHASED OR IN THE PROCESS OF BEING PURCHASED
+    if product.inventory_status != 'in_inventory':
+        return redirect('auction:product_detail', slug=slug)
+    
+    # Lock the product
+    product.inventory_status = 'reserved'
+    product.reserved_at = now()
+    product.save()
+
+    cart = Cart(request)
+    cart.add(product=product, qty=1, auction_locked=True, buy_now=True)
+    # cart.add(product=product, qty=1, buy_now=True) # need to add buy_now to cart
+
+    # Save a 10 min expirty in session
+    request.session['buy_now_expiry'] = (now() + timedelta(minutes=10)).isoformat()
+    request.session.modified = True
+
+    return redirect('payment:payment_home')
 
 
 
@@ -913,31 +961,3 @@ def placed_order(request):
 
 
 
-# def create_customer(request):
-#     """Create a customer for testing (optional)"""
-#     try:
-#         result = braintree.Customer.create({
-#             "first_name": "Test",
-#             "last_name": "User",
-#             "email": "testuser@example.com",
-#             "phone": "555-123-4567"
-#         })
-        
-#         if result.is_success:
-#             customer = result.customer
-#             return JsonResponse({
-#                 'success': True,
-#                 'customer_id': customer.id,
-#                 'customer_info': {
-#                     'first_name': customer.first_name,
-#                     'last_name': customer.last_name,
-#                     'email': customer.email
-#                 }
-#             })
-#         else:
-#             return JsonResponse({
-#                 'success': False,
-#                 'error': result.message
-#             })
-#     except Exception as e:
-#         return JsonResponse({'success': False, 'error': str(e)})

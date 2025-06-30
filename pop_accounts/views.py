@@ -168,6 +168,11 @@ class UserDashboardView(LoginRequiredMixin, View):
             .prefetch_related('popupproductspecificationvalue_set')
         )
 
+        orders = user_orders(request)
+        print('orders', orders)
+        for order in orders:
+            print('order', order)
+
         product_map = {p.id: p for p in products}
 
         enriched_data = []
@@ -482,10 +487,11 @@ class OpenBidsView(LoginRequiredMixin, View):
 def past_bids(request):
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_bids.html')
 
-# @login_required
+@login_required
 def past_purchases(request):
     orders = user_orders(request)
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_purchases.html')
+
 
 # ADMIN DASHBOARD
 # @login_required

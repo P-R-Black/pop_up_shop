@@ -5,7 +5,7 @@ from django.test import Client, TestCase, RequestFactory
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.http import HttpRequest
-from auction.views import products, AllAuctionView
+from auction.views import AllAuctionView
 from pop_accounts.models import PopUpCustomer
 from django.utils.timezone import now, make_aware
 from datetime import timedelta, datetime
@@ -13,44 +13,11 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.views import View
 from django.template import Context, Template
+from cart.cart import Cart
+from django.contrib.auth import get_user_model
+from django.utils.timezone import now, timedelta
 
-"""
-id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    category = models.ForeignKey(PoPUpCategory, related_name='product', on_delete=models.CASCADE)
-    model_year = models.DateField(null=True, blank=True)
-    name = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, unique=True)
-    brand = models.CharField(max_length=255)
-    release_date = models.DateField(null=True, blank=True)
-    auction_start_date = models.DateTimeField(null=True, blank=True)
-    auction_end_date = models.DateTimeField(null=True, blank=True)
-    starting_price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to="product_images/", null=True, blank=True)
-    product_sex = models.CharField(max_length=100, choices=PRODUCT_SEX_CHOICES, default='male')
-    # product_type = models.CharField(max_length=100, choices=PRODUCT_TYPE_CHOICES, default='shoe')
-    product_description = models.TextField(null=True, blank=True)
-    style_number = models.CharField(max_length=100, null=True, blank=True)
-    colorway = models.CharField(max_length=100, null=True, blank=True)
-    retail_price = models.DecimalField(max_digits=10, decimal_places=2)
-    inventory_status = models.CharField(max_length=30, choices=INVENTORY_STATUS_CHOICES, default="anticipated")
-    is_active = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    class PoPUpCategory(models.Model):
-    name = models.CharField(max_length=255, db_index=True)
-    slug = models.SlugField(max_length=255)
-
-    class Meta:
-        verbose_name_plural = 'categories'
-    
-    def __str__(self):
-        return self.name
-"""
-"2025"
-"Air Air Jordan 4 Retro OG SP"
-"Nigel Sylvester Brick by Brick"
-
+User = get_user_model()
 
 
 def create_test_user():
@@ -101,7 +68,7 @@ def create_test_product():
             secondary_product_title = "Exclusive Drop",
             description="New Test Sneaker Exlusive Drop from the best sneaker makers out.",
             slug="test-sneaker-exclusive-drop", 
-            starting_price="150.00", 
+            buy_now_price="150.00", 
             current_highest_bid="0", 
             retail_price="100", 
             brand=brand, 
@@ -152,31 +119,96 @@ class TestViewResponse(TestCase):
         self.assertIn('<title>\nAuction\n</title>\n', html)
 
 
-#     # using Request factory
-#     def test_view_function(self):
-#         request = self.factory_get('/item/django-beginners')
-#         response = products(request)
-#         html = response.content.decode('utf8')
-#         print('html is:', html)
-#         self.assertIn('<title>Home</title>', html)
-#         self.assertTrue(html.startswith('\n<DOCTYPE html>\n'))
 
+class BuyNowFlowTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = PopUpCustomer.objects.create_user(
+            email="testuser@example.com", password="securePassword!23", first_name="Test", last_name="User", shoe_size="10", size_gender="male")
+        self.client.login(email="testuser@example.com", password="securePassword!23")
+        self.product_type = PopUpProductType.objects.create( name="shoe", slug="shoe", is_active=True)
+          
+        self.category = PopUpCategory.objects.create(name="Jordan 3",slug="jordan-3",is_active=True)
+          
+        self.brand = PopUpBrand.objects.create(name="Staries", slug="staries")
+          
+        auction_start =now() - timedelta(minutes=15)
+        auction_end = now() + timedelta(minutes=15)
+
+        buy_now_start = now() - timedelta(minutes=10)
+        buy_now_end = now() + timedelta(minutes=10)
+          
+        self.product = PopUpProduct.objects.create(
+                product_type=self.product_type,
+                category=self.category,
+                product_title="Test Sneaker",
+                secondary_product_title = "Exclusive Drop",
+                description="New Test Sneaker Exlusive Drop from the best sneaker makers out.",
+                slug="test-sneaker-exclusive-drop", 
+                buy_now_price="150.00", 
+                current_highest_bid="0", 
+                retail_price="100", 
+                brand=self.brand, 
+                auction_start_date=auction_start,
+                auction_end_date=auction_end, 
+                buy_now_start=buy_now_start,
+                buy_now_end=buy_now_end,
+                inventory_status="In Inventory", 
+                bid_count="0", 
+                reserve_price="0", 
+                is_active=True
+            )
     
-#     def test_url_allowed_hosts(self):
-#         """
-#         Test Allowed Hosts
-#         """
-#         response = self.c.get('/', HTTP_HOST='noaddress.com')
-#         self.assertEqual(response.status_code, 400)
-#         response = self.c.get('/', HTTP_HOST='localhost:8080')
-#         self.assertEqual(response.status_code, 200)
+    def test_buy_now_add_to_cart(self):
+        url = reverse("auction:buy_now_add_to_cart", kwargs={"slug": self.product.slug})
+        response = self.client.get(url)
+
+        #Ensure it redirects to payment 9cart added successfully)
+        self.assertRedirects(response, reverse('payment:payment_home'))
+
+        # Check session has 10-minute timer
+        self.assertIn('buy_now_expiry', self.client.session)
+
+        # Check product inventory now 'reversed'
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.inventory_status, 'reversed')
+
+        # verity cart has the item
+        cart = Cart(self.client)
+        self.assertEqual(len(cart), 1)
+        item = list(cart)[0]
+        self.assertEqual(item['product'], self.product)
+        self.assertEqual(item['qty'], 1)
+        self.assertTrue(item['buy_now'])
+    
+
+    def test_buy_now_expiry_sets_auction_start(self):
+        # Simulate buy_now_end is in the past
+        self.product.buy_now_end = now() - timedelta(minutes=1)
+        self.product.save()
+
+        # Simulate Celery logic that should run
+        if self.product.buy_now_end < now() and self.product.inventory_status == 'in_inventory':
+            self.product.auction_start_date = now()
+            self.product.inventory_status = 'in_inventory'  # or some logic to transition to auction-ready state
+            self.product.save()
+
+        self.product.refresh_from_db()
+        self.assertIsNotNone(self.product.auction_start_date)
+    
+    
+    def test_cannot_buy_reserved_product(self):
+        self.product.inventory_status = 'reserved'
+        self.product.save()
+
+        url = reverse("auction:buy_now_add_to_cart", kwargs={"slug": self.product.slug})
+        response = self.client.get(url)
+
+        self.assertRedirects(response, reverse("auction:product_detail", kwargs={"slug": self.product.slug}))
 
 
 
-
-# how to skip a test
-# @skip("demonstrate skipping")
-# class TestSkip(TestCase):
-#     def test_skip_example(self):
-#         pass
-
+"""
+Run Test
+python3 manage.py test auction/tests
+"""

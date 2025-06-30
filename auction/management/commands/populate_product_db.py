@@ -27,7 +27,7 @@ from decimal import Decimal, InvalidOperation
 
     description = models.TextField(verbose_name=_("description"), help_text=_("Not Required"), blank=True)
     slug = models.SlugField(max_length=255, unique=True)
-    starting_price = models.DecimalField( verbose_name=_("Regular price"), max_digits=10, decimal_places=2)
+    buy_now_price = models.DecimalField( verbose_name=_("Regular price"), max_digits=10, decimal_places=2)
     current_highest_bid = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -98,7 +98,7 @@ class Command(BaseCommand):
                     secondary_product_title = tad['secondary_product_title'],
                     description = tad['description'],
                     slug = product_slug,
-                    starting_price = self.safe_decimal(tad['regular_price']),
+                    buy_now_price = self.safe_decimal(tad['regular_price']),
                     current_highest_bid = self.safe_decimal(0.00),
                     retail_price = self.safe_decimal(tad['retail_price']),
                     brand = brand,

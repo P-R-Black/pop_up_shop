@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% load static %}
+{% load humanize %}
 
 
 {% block title %}
@@ -12,7 +13,8 @@ Auction
     <div class="section_container">
         <div class="page_title">
             <h2>{{ product.product_title }}</h2>
-            <h3>{{ product.model_year }}</h3>
+            <h3>{{ product.secondary_product_title }}</h3>
+            <h4>{{ product_specifications.model_year }}</h4>
         </div>
         <div class="product_details_container">
             <div class="product_details_container_left">
@@ -45,12 +47,17 @@ Auction
                     </div>
                     <div class="pd_details_buy_now_container">
                         <p>Buy Now</p>
-                        <p class="pd_databox_assign_left">${{product.starting_price}}</p>
+                        <p class="pd_databox_assign_left">${{ product.buy_now_price|intcomma }}</p>
                     </div>
                 </div>
                 <div class="pd_buttons_container">
+                    <a class="button_long" href="{% url 'payment:buy_now' product.slug %}">Buy Now</a>
+
+                    {% comment %}
                     <a class="button_medium" href="/auction/product-buy">Buy Now</a>
                     <a class="button_medium" href="#">Add to Cart</a>
+                    {% endcomment %}
+
                 </div>
             </div>
         </div>

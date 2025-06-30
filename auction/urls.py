@@ -16,7 +16,6 @@ urlpatterns = [
     path('coming-soon/<slug:slug>/', ComingSoonView.as_view(), name='coming_soon'),
     path('future-releases/', FutureReleases.as_view(), name='future_releases'),
     path('future-releases/<slug:slug>/', FutureReleases.as_view(), name='future_releases'),
-    # path('<slug:slug>', views.product_detail, name='product_detail'),
     path('<slug:slug>', ProductDetailView.as_view(), name='product_detail'),
    
 ]

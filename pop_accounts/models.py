@@ -285,7 +285,7 @@ class PopUpBid(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="bids")
-    product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE, related_name="bids")
+    product = models.ForeignKey('auction.PopUpProduct', on_delete=models.CASCADE, related_name="bids")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
@@ -413,6 +413,8 @@ class PopUpPurchase(models.Model):
 
     class Meta:
         ordering = ["-purchased_at"]
+        verbose_name = _("PopUp Customer Purchase")
+        verbose_name_plural = _("PopUp Customer PopUp Purchases")
     
     def __str__(self):
         return f"{self.customer} - {self.product} - ${self.price}"
@@ -428,8 +430,8 @@ class PopUpCustomerIP(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Customer IP Address"
-        verbose_name_plural = "Customer IP Addresses"
+        verbose_name = "PopUp Customer IP Address"
+        verbose_name_plural = "PopUp Customer IP Addresses"
     
     def __str__(self):
         return f"{self.customer.email} - {self.ip_address} ({self.created_at})"
@@ -452,8 +454,8 @@ class PopUpPasswordResetRequestLog(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'PopUpPasswordResetRequestLog'
-        verbose_name_plural = 'PopUpPasswordResetRequestLog'
+        verbose_name = 'PopUp Password Reset Request Log'
+        verbose_name_plural = 'PopUp Password Reset Request Logs'
 
     def __str__(self):
         return f"{self.customer.email} - {self.ip_address} @ {self.requested_at}"

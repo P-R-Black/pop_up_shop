@@ -5,7 +5,10 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from mptt.models import MPTTModel, TreeForeignKey
 from django.utils.timezone import now
+from django.utils import timezone
 from django.utils.text import slugify
+from django.conf import settings
+from django.core.exceptions import ValidationError
 
 # from .managers import CustomPopUpAccountManager  # Assuming you have a custom user manager
 
@@ -89,8 +92,8 @@ class PopUpProductType(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = _("Product Type")
-        verbose_name_plural = _("Product Types")
+        verbose_name = _("PopUp Product Type")
+        verbose_name_plural = _("PopUp Product Types")
     
   
     def get_absolute_url(self):
@@ -121,8 +124,8 @@ class PopUpProductSpecification(models.Model):
     name = models.CharField(verbose_name=_("Name"), help_text=_("Required"), max_length=255)
 
     class Meta:
-        verbose_name = _("Product Specification")
-        verbose_name_plural = _("Product Specifications")
+        verbose_name = _("PopUp Product Specification")
+        verbose_name_plural = _("PopUp Product Specifications")
         unique_together = ("product_type", "name")
 
     def __str__(self):
@@ -139,6 +142,7 @@ class PopUpProduct(models.Model):
         ('anticipated', 'Anticipated'),
         ('in_transit', 'In Transit'),
         ('in_inventory', 'In Inventory'),
+        ('reserved', 'Reserved'),
         ('sold_out', 'Sold Out')
     )
 
@@ -160,10 +164,14 @@ class PopUpProduct(models.Model):
 
     description = models.TextField(verbose_name=_("description"), help_text=_("Not Required"), blank=True)
     slug = models.SlugField(max_length=255, unique=True)
-    # added starting_price, because although it's an auction site, users will have the 
+    # added buy_now_price -> updated to buy_now_price, because although it's an auction site, users will have the 
     # opportunity to buy the product outright, and that starting price will be calculated by using the retail 
     # price + shipping and handling + $50. 
-    starting_price = models.DecimalField( verbose_name=_("Regular price"), max_digits=10, decimal_places=2)
+    buy_now_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    buy_now_start = models.DateTimeField(null=True, blank=True)
+    buy_now_end = models.DateTimeField(null=True, blank=True)
+    bought_now = models.BooleanField(default=False)
+    reserved_until = models.DateTimeField(null=True, blank=True)
     current_highest_bid = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -179,6 +187,9 @@ class PopUpProduct(models.Model):
     auction_end_date = models.DateTimeField(null=True, blank=True)
     inventory_status = models.CharField(max_length=30, choices=INVENTORY_STATUS_CHOICES, default="anticipated")
     bid_count = models.PositiveIntegerField(default=0)
+    winner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='won_auction')
+    # bought_now = models.BooleanField(default=False) <= saved twice
+    auction_finalized = models.BooleanField(default=False)
     # reserve_price - I can set a minimum price below which they won’t sell, add:
     reserve_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
@@ -192,8 +203,8 @@ class PopUpProduct(models.Model):
 
     class Meta:
         ordering = ("-created_at",)
-        verbose_name = _("Product")
-        verbose_name_plural = _("Products")
+        verbose_name = _("PopUp Product")
+        verbose_name_plural = _("PopUp Products")
         indexes = [
             models.Index(fields=["auction_start_date"]),
             models.Index(fields=["auction_end_date"]),
@@ -202,10 +213,88 @@ class PopUpProduct(models.Model):
     
     def get_absolute_url(self):
         return reverse("auction:product_detail", args=[self.slug])
+    
 
     @property
-    def calculated_starting_price(self):
-        return self.retail_price + Decimal(70)
+    def is_buy_now_available(self):
+        now_ = now()
+        return (
+            self.buy_now_start and self.buy_now_end and
+            self.buy_now_start <= now_ <= self.buy_now_end and
+            not self.bought_now and not self.is_auction_phase()
+            )
+
+    def is_auction_phase(self):
+        now_ = now()
+        return (
+            self.auction_start_date and self.auction_end_date and
+            self.auction_start_date <= now_ <= self.auction_end_date and
+            not self.is_buy_now_available
+        )
+    
+    def is_reserved_expired(self):
+        return self.reserved_until and self.reserved_until < timezone.now()
+
+
+    def can_be_added_to_cart(self):
+        if self.inventory_status == 'in_inventory':
+            return True
+        if self.inventory_status == 'reserved' and self.is_reserved_expired():
+            return True
+        return False
+
+
+    def complete_buy_now_purchase(self, user):
+        self.inventory_status = 'sold_out'
+        self.bought_now = True
+        self.auction_finalized = True
+        self.winner = user
+        self.auction_end_date = timezone.now()
+        self.save()
+
+
+    def display_price(self):
+        """
+        Determines what price to show to users depending on sale phase.
+        """
+        if self.bought_now:
+            return self.buy_now_price
+        elif self.is_buy_now_available:
+            return self.buy_now_price
+        elif self.auction_status == 'Ongoing':
+            return self.current_highest_bid or self.reserve_price or self.retail_price
+        elif self.auction_status == "Ended" and self.auction_finalized:
+            return self.current_highest_bid if self.winner else None
+        return self.retail_price  
+
+
+    def finalize_auction(self):
+        if self.bought_now or self.auction_finalized:
+            return # Already sold
+        
+        highest_bid = self.bids.order_by('-amount').first()
+        if highest_bid:
+            self.winner = highest_bid.user
+            self.inventory_status = 'in_inventory'
+        else:
+            self.winner = None
+        
+        self.auction_finalized = True
+        self.save()
+    
+
+    # Status helper for template logic
+    @property
+    def sale_outcome(self):
+        if self.bought_now:
+            return 'Bought Now'
+        elif self.auction_finalized:
+            return 'Auction Finalized - Winner Pending Purchase' if self.winner else 'Auction Ended - No Bids'
+        return self.auction_status
+
+    # @property
+    # def calculated_buy_now_price(self):
+    #     return self.retail_price + Decimal(100)
     
     
     @property
@@ -232,6 +321,11 @@ class PopUpProduct(models.Model):
             return {"days": days, "hours": hours}
         return None
 
+
+    def clean(self):
+        if self.buy_now_end and self.auction_start_date:
+            if self.buy_now_end > self.auction_start_date:
+                raise ValidationError('Buy now must end before auction starts')
 
     def save(self, *args, **kwargs):
         # Generate slug if it's not provided
@@ -263,18 +357,12 @@ class PopUpProductSpecificationValue(models.Model):
     )
 
     class Meta:
-        verbose_name = _("Product Specification Value")
-        verbose_name_plural = _("Product Specification Values")
+        verbose_name = _("PopUp Product Specification Value")
+        verbose_name_plural = _("PopUp Product Specification Values")
 
     def __str__(self):
         return self.value
-    
-    class Meta:
-        verbose_name = _("Product Specification Value")
-        verbose_name_plural = _("Product Specification Values")
 
-    def __str__(self):
-        return self.value
 
 class PopUpProductImage(models.Model):
     """
@@ -300,5 +388,27 @@ class PopUpProductImage(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = _("Product Image")
-        verbose_name_plural = _("Product Images")
+        verbose_name = _("PopUp Product Image")
+        verbose_name_plural = _("PopUp Product Images")
+
+
+
+class WinnerReservation(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE)
+    expires_at = models.DateTimeField()
+    reserved_at = models.DateTimeField(auto_now_add=True)
+
+    is_paid = models.BooleanField(default=False)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    is_expired = models.BooleanField(default=False)  # For background tasks to update
+    notification_sent = models.BooleanField(default=False)
+
+    # New fields
+    reminder_24hr_sent = models.BooleanField(default=False)
+    reminder_1hr_sent = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("product", "user",)  # Prevents duplicates
+
