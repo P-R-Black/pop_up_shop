@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Email Confirmation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
+
+        .logo-font {
+            font-family: 'Birthstone', cursive;
+            color: #CB3A60;
+            font-size: 3.5rem;
+            font-weight: 500;
+        }
+
+        /* Mobile Styles */
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+                padding: 0 10px !important;
+            }
+
+            .stack {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .mobile-center {
+                text-align: center !important;
+            }
+
+        }
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f4">
+        <tr>
+            <td align="center" style="padding: 100px">
+                <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0"
+                    bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 600px; max-width: 600px">
+                    <tr border="0" width="600" style="width: 600px; max-width: 600px">
+                        <td align="left" width="600" style="background-color: #000; padding:20px;">
+                            <div class="image-text">
+                                <span class="image">
+                                    <div class="logo-font"
+                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                        The Pop Up
+                                    </div>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px">
+                            <h2 style="color: #CB3A60; font-size: 32px;">Welcome {{ user.first_name }}!</h2>
+                            <p style="color: #CB3A60; font-size: 20px;">Thanks for joining us! Please confirm your email
+                                to continue.</p>
+
+                            <!-- Button -->
+                            <div style="text-align: left; margin-top: 30px;">
+                                <a href="{% url 'payment:payment_home' %}"
+                                    style="background-color: #000; color: #CB3A60; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                                    Confirm Email
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td align="left"
+                            style="background-color: #f9f9f9; padding: 20px; font-size: 12px; color: #999; font-size: 12px">
+                            &copy {{ year }} The Pop Up
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>
