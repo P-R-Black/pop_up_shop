@@ -64,11 +64,13 @@ INSTALLED_APPS = [
     'home.apps.HomeConfig',
     'pop_accounts.apps.PopAccountsConfig',
     'pop_up_email.apps.PopUpEmailConfig',
+    'pop_up_shipping.apps.PopUpShippingConfig',
     'orders.apps.OrdersConfig',
     'payment.apps.PaymentConfig',
     'cart.apps.CartConfig',
     'coupon.apps.CouponConfig',
     'reward.apps.RewardConfig',
+    
     'mptt',
     'django_celery_beat',
 ]
