@@ -263,7 +263,7 @@ CART_SESSION_ID = 'cart'
 
 STRIPE_PUBLISHABLE_KEY=os.environ.get('STRIPE_PUBLISHABLE_KEY')
 STRIPE_SECRET_KEY =os.environ.get('STRIPE_SECRET_KEY')
-# STRIPE_WEBHOOK =os.environ.get ""
+STRIPE_WEBHOOK_SECRET =os.environ.get('STRIPE_WEBHOOK_SECRET')
 STRIPE_ENDPOINT_SECRET =os.environ.get('STRIPE_ENDPOINT_SECRET')
 
 # stripe listen --forward-to 127.0.0.1:8000/payment/webhook

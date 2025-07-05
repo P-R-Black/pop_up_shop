@@ -69,8 +69,8 @@
                                     <td width="120">
                                         {% for image in product.product_image.all %}
                                         {% if image.is_feature %}
-                                        <img src="{{ image.image }}" alt="{{ image.alt_text }}" width="100"
-                                            style="border-radius: 4px;">
+                                        <img src="{{ image.image }}" alt="{{ image.alt_text|default:'Product Image' }}"
+                                            width="100" style="border-radius: 4px;">
                                         {% endif %}
                                         {% endfor %}
                                     </td>

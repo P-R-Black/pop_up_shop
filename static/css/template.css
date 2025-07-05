@@ -253,6 +253,8 @@ body.dark {
     width: clamp(7rem, 12rem, 15vw)
 }
 
+
+
 .button_long:hover {
     transform: scale(1.05);
 }
@@ -339,10 +341,12 @@ body.dark {
 .button_long_small:hover,
 .button_small:hover,
 .button_medium:hover {
-    background: var(--body-color);
+    transform: scale(1.05);
+    transition: var(--tran-03);
+    /* background: var(--body-color);
     border: 1px solid var(--text-color);
     color: var(--text-color);
-    transition: var(--tran-03);
+    */
 }
 
 

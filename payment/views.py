@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
 from pop_accounts.models import PopUpBid, PopUpCustomerAddress
 from cart.models import PopUpCartItem
+from payment.models import PopUpPayment
 from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
 import stripe
 from django.conf import settings
@@ -14,8 +15,10 @@ from django.views.decorators.http import require_http_methods
 import json
 from django.http.response import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from django.utils.decorators import method_decorator
 from orders.views import payment_confirmation
+from pop_up_email.utils import send_dispute_alert_to_customer
 import os
 from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
 from django.views import View
@@ -523,7 +526,6 @@ class CreatePaymentIntentView(View):
             data = json.loads(request.body)
         
             amount = data.get('amount')
-            print('CreatePaymentIntentView amount', amount, '\n')
 
             if not amount:
                 return JsonResponse({"error": "Missing amount"}, status=400)
@@ -531,7 +533,6 @@ class CreatePaymentIntentView(View):
             else:
         
                 stripe.api_key = settings.STRIPE_SECRET_KEY
-                print('stripe.api_key', stripe.api_key)
 
                 intent = stripe.PaymentIntent.create(
                     amount=amount,
@@ -544,22 +545,82 @@ class CreatePaymentIntentView(View):
 
 
 @csrf_exempt
-def stripe_webhook(request):
+def stripe_webhook_view(request):
+    print('stripe_webhook_view called')
     payload = request.body
-    event = None
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
-    try: 
-        event = stripe.Event.construct_from(json.loads(payload), stripe.api_key)
-    except ValueError as e:
-        print(e)
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except (ValueError, stripe.error.SignatureVerificationError):
+        return HttpResponse(status=400)
+    
+    # Reject test events in live mode
+    if getattr(settings, "STRIPE_LIVE_MODE", False) and not event.get('livemode', False):
+        logger.warning("⚠️ Received test webhook in live mode — rejecting")
         return HttpResponse(status=400)
 
-    # Hande the event
-    if event.type == 'payment_intent.succeeded':
-        payment_confirmation(event.data.object.client_secret)
-    else:
-        print('Unhandled event type{}'.format(event.type))
+    # Handle successful payment
+    if event['type'] == 'payment_intent.succeeded':
+        intent = event['data']['object']
+        payment_reference = intent['id']
+        # 🛑 Warn if payment_reference not found in DB
+        if not PopUpPayment.objects.filter(payment_reference=payment_reference).exists():
+            logger.error(f"⚠️ Webhook received unknown payment_reference: {payment_reference}")
+
+         # 🟨 SAFELY Extract AVS Results
+        try:
+            charge_data = intent['charges']['data'][0]
+            checks = charge_data['payment_method_details']['card']['checks']
+            avs_result = checks.get('address_line1_check', 'unavailable')
+            zip_check = checks.get('address_postal_code_check', 'unavailable')
+        except (KeyError, IndexError, TypeError):
+            avs_result = 'unavailable'
+            zip_check = 'unavailable'
+
+        # 📝 Optionally: log/store/check AVS/ZIP results
+        logger.info(f"AVS Check: {avs_result}, ZIP Check: {zip_check}")        
+
+        # Update your payment record
+        try:
+            payment = PopUpPayment.objects.get(payment_reference=payment_reference)
+            if payment.is_suspicious():
+                payment.suspicious_flagged = payment.is_suspicious()
+                payment.save()
+                logger.warning(f"Suspicious payment: {payment.pk}")
+                
+            if payment.status != 'paid':
+                payment.status = 'paid'
+                # Optional: save AVS info
+                payment.avs_result = avs_result
+                payment.zip_check = zip_check
+                payment.save()
+        except PopUpPayment.DoesNotExist:
+            pass
+        
+            # Trigger shipping workflow, email, etc.
+
+    elif event['type'] == 'payment_intent.payment_failed':
+        intent = event['data']['object']
+        payment_reference = intent['id']
+        # 🛑 Warn if payment_reference not found in DB
+    if not PopUpPayment.objects.filter(payment_reference=payment_reference).exists():
+        logger.error(f"⚠️ Webhook received unknown payment_reference: {payment_reference}")
+        payment = PopUpPayment.objects.filter(payment_reference=payment_reference).first()
+
+        if payment:
+            payment.status = 'failed'
+            payment.save()
     
+    elif event['type'] == 'charge.dispute.created':
+        charge = event['data']['object']['charge']
+        payment = PopUpPayment.objects.filter(payment_reference=charge).first()
+        if payment:
+            payment.status = 'disputed'
+            payment.save()
+            send_dispute_alert_to_customer(payment.order)
+
     return HttpResponse(status=200)
 
 
@@ -945,8 +1006,6 @@ def test_nowpayments_connection(request):
             'message': f'Connection test failed: {str(e)}'
         })
     
-    
-
 
 
 def generate_client_token(request):
@@ -954,10 +1013,42 @@ def generate_client_token(request):
     return JsonResponse({'client_token': client_token})
 
 
+# class PlacedOrderView(LoginRequiredMixin, View):
+#     model = PopUpProduct
+#     template_name = 'payment/placed-order.html'
+#     context_object_name = 'product'
+
+#     def get_queryset(self):
+#         """Filter items based on slug if selected"""
+#         base_queryset = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
+#         slug = self.kwargs.get('slug')
+#         if slug:
+#             product_type = get_object_or_404(PopUpProduct, slug=slug)
+#             return base_queryset.filter(product_type=product_type)
+#         return base_queryset
+
+#     def get_context_data(self, **kwargs):
+#         """Add product type and product_types to context"""
+#         context =  super().get_context_data(**kwargs)
+
+#         """Always include all product_types"""
+#         context['product_type'] = PopUpProductType.objects.all()
+#         slug = self.kwargs.get('slug')
+#         if slug:
+#             context['product_type'] = get_object_or_404(PopUpProductType, slug=slug)
+#         else:
+#             context['product_type'] = None
+        
+#         return context
+
+
+
 def placed_order(request):
+    user = request.user
     cart = Cart(request)
     cart.clear()
-    return render(request, 'payment/placed_order.html')
+    base_queryset = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
+    return render(request, 'payment/placed_order.html', {'user': user, 'product': base_queryset})
 
 
 

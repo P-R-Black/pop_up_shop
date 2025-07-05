@@ -38,6 +38,10 @@ class AllAuctionView(View):
                     product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
 
         quick_bid_increments = [10, 20, 30]
+
+        for a in in_auction:
+            print('in_auct', a)
+
         context = {
             "in_auction": in_auction, "product_specifications": product_specifications, 
             "quick_bid_increments": quick_bid_increments, "user_zip":user_zip
@@ -145,14 +149,7 @@ class ProductsView(ListView):
     def get_queryset(self):
         """Filter products based on slug if provided"""
         current_time = now()
-        # base_queryset = PopUpProduct.objects.prefetch_related(
-        #     'popupproductspecificationvalue_set'
-        #     ).filter(
-        #         # This is the key update:
-        #         Q(inventory_status='in_inventory') | 
-        #         Q(inventory_status='reserved', reserved_until__lt=current_time),
-        #         is_active=True
-        #         )
+        
         base_queryset = PopUpProduct.objects.prefetch_related(
             'popupproductspecificationvalue_set'
         ).filter(

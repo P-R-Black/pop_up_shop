@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from datetime import timedelta
 
 # from .managers import CustomPopUpAccountManager  # Assuming you have a custom user manager
 
@@ -193,6 +194,21 @@ class PopUpProduct(models.Model):
     # reserve_price - I can set a minimum price below which they won’t sell, add:
     reserve_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
+    # product_weight_lbs added. Sneaker inside box weighed before being posted. Use weight with USPS API...
+    # ... to determine cost of shipping
+    product_weight_lbs = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True,
+        help_text="Weight in pounds for shipping calculation"
+    )
+
+    # zip_code_stored added. Whenre item being mailed from needed along with weight for USPS API to...
+    # ...provide shipping estimate
+    zip_code_stored = models.CharField(
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text="ZIP code of the storage or fulfillment location")
+
     is_active = models.BooleanField(
         verbose_name=_("Product visibility"),
         help_text=_("Change product visibility"),
@@ -307,9 +323,6 @@ class PopUpProduct(models.Model):
             else:
                 return "Ended"
         return "Not Available"
-
-    from datetime import timedelta
-
 
     @property
     def auction_duration(self):

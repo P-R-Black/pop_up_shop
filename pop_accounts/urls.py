@@ -3,7 +3,7 @@ from . import views
 from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, 
                     UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView,
                     UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
-                    UserOnNoticeView, OpenBidsView)
+                    UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -49,13 +49,18 @@ urlpatterns = [
     path('purchase-history/', views.past_purchases, name='past_purchases'),
 
     # admin dashboard
-    path('dashboard-admin',views.dashboard_admin, name='dashboard_admin'),
-    path('inventory-admin',views.inventory, name='inventory_admin'),
-    path('sales-admin', views.sales, name='sales_admin'),
-    path('most-on-notice-admin', views.most_on_notice, name='most_on_notice'),
-    path('most-interested-admin', views.most_interested, name='most_interested'),
-    path('total-open-bids-admin', views.total_open_bids, name='total_open_bids'),
-    path('total-accounts-admin', views.total_accounts, name='total_accounts'),
-    path('account-sizes-admin', views.account_sizes, name='account_sizes'),
+    path('dashboard-admin/',views.dashboard_admin, name='dashboard_admin'),
+    path('inventory-admin/', AdminInventoryView.as_view(), name='inventory_admin'),
+    path('inventory-admin/<slug:slug>/', AdminInventoryView.as_view(), name='inventory_admin'),
+    path('sales-admin/', views.sales, name='sales_admin'),
+    path('most-on-notice-admin/', views.most_on_notice, name='most_on_notice'),
+    path('most-interested-admin/', views.most_interested, name='most_interested'),
+    path('total-open-bids-admin/', views.total_open_bids, name='total_open_bids'),
+    path('total-accounts-admin/', views.total_accounts, name='total_accounts'),
+    path('account-sizes-admin/', views.account_sizes, name='account_sizes'),
+    path('update-shipping-admin/', views.update_shipping, name='update_shipping'),
+    path('shipments-admin/', views.view_shipments, name='shipments'),
+    path('dashboard-en-route/', EnRouteView.as_view(), name='enroute'),
+    path('dashboard-en-route/<slug:slug>/', EnRouteView.as_view(), name='enroute')
 
 ]

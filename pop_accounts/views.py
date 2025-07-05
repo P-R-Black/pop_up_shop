@@ -7,18 +7,20 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import authenticate, login, get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPassesTestMixin
+from django.views.generic import DetailView, ListView
 from .token import account_activation_token
 from orders.views import user_orders
 from django.http import JsonResponse, HttpResponse
 from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid, PopUpCustomerIP
-from auction.models import PopUpProduct, PopUpProductSpecificationValue
+from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .forms import PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, ThePopUpUserAddressForm
 import random
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
 import secrets
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -28,13 +30,15 @@ from django.core.cache import cache
 from django.utils.timezone import now
 from django.contrib.auth import logout
 from django.views import View
-from .utils import validate_email_address, get_client_ip
+from .utils import validate_email_address, get_client_ip, add_specs_to_products
 from django.conf import settings
 import hashlib
 import json
 import logging
 from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
+from .pop_accounts_copy.admin_copy.admin_copy import ADMIN_NAVIGATION_COPY
+from django.db.models import Count
 
 
 logger  = logging.getLogger('security')
@@ -494,37 +498,219 @@ def past_purchases(request):
 
 
 # ADMIN DASHBOARD
-# @login_required
+@staff_member_required
 def dashboard_admin(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/dashboard.html')
+    admin_navigation = ADMIN_NAVIGATION_COPY
+    # Get product inventory
+    product_inventory_qs = PopUpProduct.objects.prefetch_related(
+        'popupproductspecificationvalue_set__specification'
+    ).filter(
+        is_active=True,
+        inventory_status__in=['in_inventory', 'reserved']
+    )[:3]
+    
+    # Convert to list and add specs
+    product_inventory = add_specs_to_products(product_inventory_qs)
 
-# @login_required
-def inventory(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/inventory.html')
+    # Get en route products
+    en_route_qs = PopUpProduct.objects.prefetch_related(
+        'popupproductspecificationvalue_set__specification'
+    ).filter(
+        is_active=False, 
+        inventory_status="in_transit"
+    )[:3]
+    
+    # Convert to list and add specs
+    en_route = add_specs_to_products(en_route_qs)
 
-# @login_required
+    # Get products ordered by number of interested users (descending)
+    most_interested_products = PopUpProduct.objects.annotate(
+        interest_count=Count('interested_users')
+    ).order_by('-interest_count')
+
+    # If you want just the top 10
+    top_interested_products_qs = PopUpProduct.objects.annotate(
+        interest_count=Count('interested_users')
+    ).order_by('-interest_count')[:3]
+
+    # Get products ordered by number of users requesting notifications (descending)
+    most_notified_products = PopUpProduct.objects.annotate(
+        notification_count=Count('notified_users')
+    ).order_by('-notification_count')
+
+    # If you want just the top 10
+    top_notified_products_qs = PopUpProduct.objects.annotate(
+        notification_count=Count('notified_users')
+    ).order_by('-notification_count')[:3]
+
+
+    top_interested_products = add_specs_to_products(top_interested_products_qs)
+    top_notified_products = add_specs_to_products(top_notified_products_qs)
+
+    print('top_interested_products', top_interested_products)
+    print('top_notified_products', top_notified_products)
+
+
+    context = {
+        "admin_navigation": admin_navigation, 
+        'product_inventory': product_inventory, 
+        'en_route': en_route, 'top_interested_products': top_interested_products,
+        'top_notified_products':top_notified_products
+    }
+
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/dashboard.html', context)
+
+
+class AdminInventoryView(UserPassesTestMixin, ListView):
+    model = PopUpProduct
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/inventory.html"
+    context_object_name = 'inventory'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        base_queryset = PopUpProduct.objects.prefetch_related(
+        'popupproductspecificationvalue_set__specification'
+        ).filter(
+            is_active=True,
+            inventory_status__in=['in_inventory', 'reserved']
+        )
+
+    
+        slug = self.kwargs.get('slug')
+        if slug:
+            product_type = get_object_or_404(PopUpProductType, slug=slug)
+            base_queryset = base_queryset.filter(product_type=product_type)
+    
+        # Convert to list to force evaluation and add specs
+        products = list(base_queryset)
+        for product in products:
+            product.specs = {
+                spec.specification.name: spec.value
+                for spec in product.popupproductspecificationvalue_set.all()
+            }
+        
+        return products
+
+    def get_context_data(self, **kwargs):
+        """Add product_types, product_type, and coming_soon products to context"""
+        context = super().get_context_data(**kwargs)
+
+        # Get coming soon products
+        coming_soon_queryset = PopUpProduct.objects.prefetch_related(
+            'popupproductspecificationvalue_set'
+            ).filter(is_active=False, inventory_status="in_transit")
+
+
+        slug = self.kwargs.get('slug')
+        if slug:
+            product_type = get_object_or_404(PopUpProductType, slug=slug)
+            coming_soon_queryset = coming_soon_queryset.filter(product_type=product_type)
+            context['product_type'] = product_type
+        else:
+            context['product_type'] = None
+
+        # Add to context
+        context['product_types'] = PopUpProductType.objects.all()
+        
+        return context
+    
+
+class EnRouteView(UserPassesTestMixin, ListView):
+    model = PopUpProduct
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/en_route.html"
+    context_object_name = 'en_route'
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_queryset(self):
+        base_queryset = PopUpProduct.objects.prefetch_related(
+        'popupproductspecificationvalue_set'
+        ).filter(is_active=False, inventory_status="in_transit")
+    
+    
+        slug = self.kwargs.get('slug')
+        if slug:
+            product_type = get_object_or_404(PopUpProductType, slug=slug)
+            base_queryset = base_queryset.filter(product_type=product_type)
+    
+        # Convert to list to force evaluation and add specs
+        products = list(base_queryset)
+        for product in products:
+            product.specs = {
+                spec.specification.name: spec.value
+                for spec in product.popupproductspecificationvalue_set.all()
+            }
+        
+        return products
+
+    def get_context_data(self, **kwargs):
+        """Add product_types, product_type, and coming_soon products to context"""
+        context = super().get_context_data(**kwargs)
+
+        # Get coming soon products
+        coming_soon_queryset = PopUpProduct.objects.prefetch_related(
+            'popupproductspecificationvalue_set'
+            ).filter(is_active=False, inventory_status="in_transit")
+
+
+        slug = self.kwargs.get('slug')
+        if slug:
+            product_type = get_object_or_404(PopUpProductType, slug=slug)
+            coming_soon_queryset = coming_soon_queryset.filter(product_type=product_type)
+            context['product_type'] = product_type
+        else:
+            context['product_type'] = None
+
+        # Convert to list and add specs
+        coming_soon_products = list(coming_soon_queryset)
+        for csp in coming_soon_products:
+            csp.specs = {
+                spec.specification.name: spec.value
+                for spec in csp.popupproductspecificationvalue_set.all()
+            }
+
+        # Add to context
+        context['coming_soon'] = coming_soon_products
+        context['product_types'] = PopUpProductType.objects.all()
+        
+        return context
+    
+
+
+@staff_member_required
 def sales(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/sales.html')
 
-# @login_required
+@staff_member_required
 def most_on_notice(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_on_notice.html')
 
-# @login_required
+@staff_member_required
 def most_interested(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_interested.html')
 
-# @login_required
+@staff_member_required
 def total_open_bids(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html')
 
-# @login_required
+@staff_member_required
 def total_accounts(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_accounts.html')
 
-# @login_required
+@staff_member_required
 def account_sizes(request):
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/account_sizes.html')
+
+@staff_member_required
+def update_shipping(request):
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/update_shipping.html')
+
+@staff_member_required
+def view_shipments(request):
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/shipments.html')
 
 
 class EmailCheckView(View):

@@ -1,12 +1,16 @@
 from django.views import View
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http.response import JsonResponse
 from cart.cart import Cart
 from .models import PopUpCustomerOrder, PopUpOrderItem
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
 from auction.models import PopUpProduct, WinnerReservation
 from coupon.models import PopUpCoupon
+from payment.models import PopUpPayment
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.admin.views.decorators import staff_member_required
+from pop_up_email.utils import send_order_confirmation_email
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -17,6 +21,10 @@ from collections import defaultdict
 import braintree
 import re
 from django.db.models import Q
+from django.conf import settings
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+import weasyprint
 
 # Create your views here.
 @method_decorator(csrf_exempt, name='dispatch')
@@ -24,11 +32,8 @@ class CreateOrderAfterPaymentView(View):
     def post(self, request, *args, **kwargs):
         cart = Cart(request)
         ids_in_cart = cart.get_product_ids()
-        print('ids_in_cart', ids_in_cart)
-
         product_qs = PopUpProduct.objects.filter(Q(id__in=ids_in_cart), Q(is_active=True), Q(inventory_status__in=["reserved", "sold_out"]))
         
-        print('product_qs', product_qs)
 
         # Build diction for lookup
         product_map = {}
@@ -40,6 +45,7 @@ class CreateOrderAfterPaymentView(View):
                 'secondary_title': product.secondary_product_title,
                 'colorway': spec_values.get('colorway', ''),   # Make sure your spec names are consistent (e.g. "color", "size")
                 'size': spec_values.get('size', ''),
+                'product_sex': spec_values.get('product_sex', '')
             }
 
         try:
@@ -104,11 +110,21 @@ class CreateOrderAfterPaymentView(View):
                 discount=data.get('discount', 0)
             )
 
-            order_id = order.pk
+            # 2. Create payment object with "pending" status (will be updated by webhook)
+        
+            PopUpPayment.objects.create(
+                order=order,
+                amount=total_paid,
+                payment_reference=payment_data_id,
+                status='pending',
+                suspicious_flagged=False,
+                notified_ready_to_ship=False,
+            )
+          
 
-            print('cart', cart)
-            print('order_id', order_id)
-            print('product_map', product_map)
+
+            order_id = order.pk
+            order_items = []
             for item in cart:
                 print('item', item)
                 product_id = item['product'].id
@@ -116,7 +132,7 @@ class CreateOrderAfterPaymentView(View):
                 print('prod_data', prod_data)
                 if not prod_data:
                     continue
-                PopUpOrderItem.objects.create(
+                order_item = PopUpOrderItem.objects.create(
                     order_id=order_id, 
                     product=prod_data['product'],
                     product_title=prod_data['product_title'],
@@ -126,6 +142,10 @@ class CreateOrderAfterPaymentView(View):
                     price=item['price'], 
                     quantity=item['qty']
                 )
+
+                order_items.append(order_item)
+                        
+            send_order_confirmation_email(request.user, order_id, order_items, total_paid, payment_status="pending")
           
             for id in ids_in_cart:
                 product = PopUpProduct.objects.get(id=id)
@@ -154,3 +174,24 @@ def user_orders(request):
     user_id = request.user.id
     orders = PopUpCustomerOrder.objects.filter(user_id=user_id).filter(billing_status=True)
     return orders
+
+
+@staff_member_required
+def admin_order_detail(request, order_id):
+    order = get_object_or_404(PopUpCustomerOrder, id=order_id)
+    return render(request, 'orders/admin/details.html', {'order': order})
+
+
+# couldn't figure out issue with weasyprint and the
+# Additionally, ctypes.util.find_library() did not manage to locate a library called 'gobject-2.0-0' error
+
+@staff_member_required
+def admin_order_pdf(request, order_id):
+    order = get_object_or_404(PopUpCustomerOrder, id=order_id)
+    html = render_to_string('orders/order/pdf.html', {'order', order})
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename=order_{order.id}.pdf'
+    weasyprint.HTML(string=html).write_pdf(response, stylesheets=[weasyprint.CSS(
+        settings.STATIC_ROOT + 'css/pdf.css')
+    ])
+    return response
