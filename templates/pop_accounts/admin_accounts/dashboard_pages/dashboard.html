@@ -13,8 +13,40 @@ Dashboard
         <div class="page_title">
             <h2>Dashboard</h2>
         </div>
+        <div class="admin_navigation_section">
+            <div class="admin_navigation_container">
+                <ul>
+                    {% for item in admin_navigation %}
+                    <li class="button_medium">
+                        <a href="{% url 'pop_accounts:'|add:item.url %}">{{ item.label }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
         <div class="the_dashboard_container">
             <div class="personal_interest_notice_container">
+                <div class="dashboard_databox_small">
+                    <div class="dashboard_databox_title">
+                        <div class="blank_div"></div>
+                        <h2>En Route</h2>
+                        <div class="blank_div"></div>
+                    </div>
+                    <div class="dashboard_admin_inventory_container">
+                        <ul>
+                            {% for en in en_route %}
+                            <li>
+                                <a href="{{ pi.get_absolute_url }}"> {{ en.specs.model_year}} {{ en.product_title }}
+                                    {{ en.secondary_product_title}}
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="dashboard_admin_more_container">
+                        <a href="{% url 'pop_accounts:enroute' %}">See More</a>
+                    </div>
+                </div>
                 <div class="dashboard_databox_small">
                     <div class="dashboard_databox_title">
                         <div class="blank_div"></div>
@@ -23,25 +55,19 @@ Dashboard
                     </div>
                     <div class="dashboard_admin_inventory_container">
                         <ul>
-                            <li><a href="#">2024 Jordan 1 Retro Low OG SP</a></li>
-                            <li><a href="#">2024 Travis Scott Medium Olive</a></li>
+                            {% for pi in product_inventory %}
+                            {% for spec in pi.popupproductspecificationvalue_set.all|slice:"2:3" %}
+                            <li>
+                                <a href="{{ pi.get_absolute_url }}">{{ spec }} {{ pi.product_title }}
+                                    {{ pi.secondary_product_title}}
+                                </a>
+                            </li>
+                            {% endfor %}
+                            {% endfor %}
                         </ul>
                     </div>
                     <div class="dashboard_admin_more_container">
-                        <a href="inventory-admin">See More</a>
-                    </div>
-                </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Sales</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>$105,500.50</h2>
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="sales-admin">See More</a>
+                        <a href="{% url 'pop_accounts:inventory_admin' %}">See More</a>
                     </div>
                 </div>
                 <div class="dashboard_databox_small">
@@ -51,17 +77,22 @@ Dashboard
                         <div class="blank_div"></div>
                     </div>
                     <div class="dashboard_admin_inventory_container">
+                        {% if top_notified_products %}
                         <ul>
+                            {% for tnp in top_notified_products %}
                             <li>
-                                <a href="">2024 Air Force 3 Low x Nigo Blue Void and Tour Yellow</a>
+                                <a href="{{ tnp.get_absolute_url }}">
+                                    {{ tnp.specs.model_year }} {{ tnp.product_title }} {{tnp.secondary_product_title }}
+                                </a>
                             </li>
-                            <li>
-                                <a href="">2024 Nike SB Dunk Low Pro Light Carbon and Monarch</a>
-                            </li>
+                            {% endfor %}
                         </ul>
+                        {% else %}
+                        <p>Nothing in Notify Me List</p>
+                        {% endif %}
                     </div>
                     <div class="dashboard_admin_more_container">
-                        <a href="most-on-notice-admin">See More</a>
+                        <a href="{% url 'pop_accounts:most_on_notice' %}">See More</a>
                     </div>
                 </div>
                 <div class="dashboard_databox_small">
@@ -71,13 +102,23 @@ Dashboard
                         <div class="blank_div"></div>
                     </div>
                     <div class="dashboard_admin_inventory_container">
+                        {% if top_interested_products%}
                         <ul>
-                            <li><a href="#">2024 Jordan 1 Retro Low OG SP</a></li>
-                            <li><a href="#">2024 Travis Scott Medium Olive</a></li>
+                            {% for tip in top_interested_products %}
+                            <li>
+                                <a href="#">
+                                    {{ tip.specs.model_year }} {{ tip.product_title }} {{ tip.secondary_product_title }}
+
+                                </a>
+                            </li>
+                            {% endfor %}
                         </ul>
+                        {% else %}
+                        <p>Nothing in Most Interest List</p>
+                        {% endif %}
                     </div>
                     <div class="dashboard_admin_more_container">
-                        <a href="most-interested-admin">See More</a>
+                        <a href="{% url 'pop_accounts:most_interested' %}">See More</a>
                     </div>
                 </div>
                 <div class="dashboard_databox_small">
@@ -91,6 +132,19 @@ Dashboard
                     </div>
                     <div class="dashboard_admin_more_container">
                         <a href="personal-information">See More</a>
+                    </div>
+                </div>
+                <div class="dashboard_databox_small">
+                    <div class="dashboard_databox_title">
+                        <div class="blank_div"></div>
+                        <h2>Sales</h2>
+                        <div class="blank_div"></div>
+                    </div>
+                    <div class="dashboard_admin_sales_container">
+                        <h2>$105,500.50</h2>
+                    </div>
+                    <div class="dashboard_admin_more_container">
+                        <a href="{% url 'pop_accounts:sales_admin' %}">See More</a>
                     </div>
                 </div>
                 <div class="dashboard_databox_small">

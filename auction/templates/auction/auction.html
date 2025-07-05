@@ -34,9 +34,9 @@ Auction
 
                         <h4>Size</h4>
                         {% if product_specifications.product_sex == "Male" %}
-                        <h4>U.S. {{"Men's"}} {{product_specifications.size }}</h4>
+                        <h4>U.S. {{"Mens"}} {{product_specifications.size }}</h4>
                         {% else %}
-                        <h4>U.S. {{"Women's"}} {{product_specifications.size }}</h4>
+                        <h4>U.S. {{"Womens"}} {{product_specifications.size }}</h4>
                         {% endif %}
                     </div>
                     <div class="sub_auction_product_detail_container">
@@ -133,7 +133,7 @@ Auction
 
                                         <input type="number" step="0.01" id="custom_bid-{{ i.id }}" name="bid_amount"
                                             class="form-control" required
-                                            min="{{ i.current_highest_bid|compute_number:1|intcomma}}.00"
+                                            min="{{i.current_highest_bid|compute_number:1|intcomma}}.00"
                                             placeholder="Enter custom bid">
                                     </div>
                                     <div class="mt-3">

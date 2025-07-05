@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Order Confirmation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
+
+        .logo-font {
+            font-family: 'Birthstone', cursive;
+            color: #CB3A60;
+            font-size: 3.5rem;
+            font-weight: 500;
+        }
+
+        /* Mobile Styles */
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+                padding: 0 10px !important;
+            }
+
+            .stack {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .mobile-center {
+                text-align: center !important;
+            }
+
+        }
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f4">
+        <tr>
+            <td align="center" style="padding: 20px">
+                <table class="container" role="presentation" width="700" cellpadding="0" cellspacing="0" border="0"
+                    bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 700px; max-width: 700px">
+                    <!--Header-->
+                    <tr border="0" width="600" style="width: 600px; max-width: 600px">
+                        <td align="center" width="600" style="background-color: #000; padding:20px;">
+                            <div class="image-text">
+                                <span class="image">
+                                    <div class="logo-font"
+                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                        The Pop Up
+                                    </div>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Message -->
+                    <tr>
+                        <td style="padding: 20px 30px 0 30px;">
+                            <h4 style="color: #CB3A60">Hello {{ user.first_name }},</h4>
+                            <p style="color: #CB3A60">Your order, order #<a href="">{{ order_id}}</a>, is being
+                                processed.
+                            </p>
+                            <p style="color: #CB3A60">Thank you for shopping at The Pop Up. We’ll send a confirmation
+                                when
+                                your order ships.</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 0 30px 0 30px; line-height: 24px;" height="24">&nbsp;
+                            {% for item in items %}
+
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                style="margin-bottom: 16px; background-color: #F3F2F2; padding: 10px">
+                                <tr>
+                                    <td width="120" valign="top" align="center">
+                                        {% for image in item.product.product_image.all %}
+                                        {% if image.is_feature %}
+                                        <img src="{{ image.image }}" alt="{{ image.alt_text|default:'Product Image' }}"
+                                            width="90" style="border-radius: 4px;">
+                                        {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td width="250" valign="center" style="padding-left: 12px;" align="left">
+                                        <h4
+                                            style="margin: 0; color: #CB3A60; max-width: 230px; overflow-wrap: break-word;">
+                                            <strong>{{ item.product_title}}</strong>
+                                        </h4>
+                                        {% if item.secondary_product_title %}
+                                        <p
+                                            style="margin: 4px 0; color: #CB3A60; max-width: 230px; overflow-wrap: break-word;">
+                                            {{ item.secondary_product_title}}
+                                        </p>
+                                        {% endif %}
+                                    </td>
+                                    {% if item.product_sex %}
+                                    <td width="120" valign="center" style="padding-left: 12px;" align="center">
+                                        {% if item.product_sex == "Male" %}
+                                        <p style="margin: 0; color: #CB3A60">
+                                            <strong>U.S. {{"Mens"}}</strong>
+                                        </p>
+                                        {% else %}
+                                        <p style="margin: 0; color: #CB3A60">
+                                            <strong>U.S. {{"Womens"}}</strong>
+                                        </p>
+                                        {% endif %}
+                                        <p style="margin: 4px 0; color: #CB3A60">
+                                            {{ item.size}}
+                                        </p>
+                                    </td>
+                                    {% endif %}
+
+                                </tr>
+                            </table>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 30px 24px 30px;">
+                            <hr style="border: 0; height: 1px; background: #ddd;">
+                            <p style="color: #CB3A60; margin: 16px 0 0 0">Order Total: ${{total_paid}}
+                            </p>
+                            <p style="color: #CB3A60;">Status: Payment {{ payment_status|title }}</p>
+
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center"
+                            style="margin: 0; background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #999;">
+                            You're receiving this email because you made a purchase at <a href="https://thepopup.com"
+                                style="color: #999">The Pop Up</a>.<br>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

@@ -6,51 +6,7 @@ from django.utils.text import slugify
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
-"""
 
-"""
-
-"""
-    product_type = models.ForeignKey(PopUpProductType, on_delete=models.RESTRICT)
-    category = models.ForeignKey(PopUpCategory, on_delete=models.RESTRICT)
-    product_title = models.CharField(
-        verbose_name=_("name"),
-        help_text=_("Required"),
-        max_length=255,
-    )
-    secondary_product_title = models.CharField(
-        verbose_name=_("secondary_name"),
-        max_length=255,
-        blank=True,
-        unique=False
-    )
-
-    description = models.TextField(verbose_name=_("description"), help_text=_("Not Required"), blank=True)
-    slug = models.SlugField(max_length=255, unique=True)
-    buy_now_price = models.DecimalField( verbose_name=_("Regular price"), max_digits=10, decimal_places=2)
-    current_highest_bid = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Stores the current highest bid for this product."
-    )
-    
-    retail_price = models.DecimalField(verbose_name=_("Retail Price"), max_digits=10, decimal_places=2,)
-    brand = models.ForeignKey(PopUpBrand, related_name='products', on_delete=models.CASCADE)
-    auction_start_date = models.DateTimeField(null=True, blank=True)
-    auction_end_date = models.DateTimeField(null=True, blank=True)
-    inventory_status = models.CharField(max_length=30, choices=INVENTORY_STATUS_CHOICES, default="anticipated")
-    bid_count = models.PositiveIntegerField(default=0)
-    # reserve_price - I can set a minimum price below which they won’t sell, add:
-    reserve_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
-    is_active = models.BooleanField(
-        verbose_name=_("Product visibility"),
-        help_text=_("Change product visibility"),
-        default=True,
-    )
-"""
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         print('test')
@@ -98,7 +54,7 @@ class Command(BaseCommand):
                     secondary_product_title = tad['secondary_product_title'],
                     description = tad['description'],
                     slug = product_slug,
-                    buy_now_price = self.safe_decimal(tad['regular_price']),
+                    buy_now_price = self.safe_decimal(tad['buy_now_price']),
                     current_highest_bid = self.safe_decimal(0.00),
                     retail_price = self.safe_decimal(tad['retail_price']),
                     brand = brand,

@@ -1,10 +1,53 @@
-.dashboard_admin_inventory_container ul {
+.admin_navigation_section {
     align-items: center;
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+    width: 100%;
+}
+
+.admin_navigation_container {
+    width: 80%;
+}
+
+.admin_navigation_container ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    /* 
+    padding: 0;
+    margin: 0; */
+    list-style: none;
+
+}
+
+.admin_navigation_container li {
+    /* padding: 0.75rem 1.5rem;
+    border-radius: 8px; */
+    /* font-weight: 500; */
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+    transition: background-color 0.2s ease
+}
+
+.admin_navigation_container li:hover {
+    /* background-color: #e5e7eb; */
+    /* Slightly darker on hover */
+}
+
+.admin_navigation_container a {
+    text-decoration: none;
+    color: var(--body-color);
+}
+
+
+.dashboard_admin_inventory_container ul {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     transition: var(--tran-03);
     width: 100%;
+    text-align: left;
 }
 
 .dashboard_admin_inventory_container ul li a {

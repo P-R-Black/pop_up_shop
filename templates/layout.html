@@ -129,6 +129,9 @@
     <link rel="stylesheet" href="{% static 'css/payment/payment_home.css' %}">
     <link rel="stylesheet" href="{% static 'css/payment/payment_home_mobile.css' %}">
 
+    <link rel="stylesheet" href="{% static 'css/payment/placed_order.css' %}">
+    <link rel="stylesheet" href="{% static 'css/payment/placed_order_mobile.css' %}">
+
     <link rel="stylesheet" href="{% static 'css/payment/billing_address.css' %}">
     <link rel="stylesheet" href="{% static 'css/payment/billing_address_mobile.css' %}">
 
@@ -176,7 +179,15 @@
                             <span class="text nav-text">Home</span>
                         </a>
                     </li>
-                    {% if request.user.is_authenticated %}
+                    {% if request.user.is_authenticated and request.user.is_staff %}
+                    <li class="nav-link">
+                        <a href="{% url 'pop_accounts:dashboard_admin' %}">
+                            <!-- <i class='bx bxs-dashboard icon'></i> -->
+                            <i class='bx bxs-user-detail icon'></i>
+                            <span class="text nav-text">Dashboard</span>
+                        </a>
+                    </li>
+                    {% elif request.user.is_authenticated %}
                     <li class="nav-link">
                         <a href="{% url 'pop_accounts:dashboard' %}">
                             <!-- <i class='bx bxs-dashboard icon'></i> -->
@@ -184,6 +195,7 @@
                             <span class="text nav-text">Dashboard</span>
                         </a>
                     </li>
+
                     {% endif %}
                     <li class="nav-link">
                         <a href="{% url 'auction:products' %}">

@@ -40,3 +40,15 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+
+def add_specs_to_products(queryset):
+    """Helper function to add specs dictionary to each product"""
+    products = list(queryset)
+    for product in products:
+        product.specs = {
+            spec.specification.name: spec.value
+            for spec in product.popupproductspecificationvalue_set.all()
+        }
+    return products

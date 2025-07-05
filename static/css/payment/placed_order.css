@@ -1,0 +1,26 @@
+.order_placed_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem 1rem 4rem 1rem;
+}
+
+.order_placed_status_contaner {}
+
+.order_placed_status_contaner h3 {
+    color: var(--text-color);
+    font-size: clamp(2rem, 3rem, 10vw);
+    text-align: center;
+}
+
+.order_placed_status_contaner p {
+    color: var(--text-color);
+    font-size: clamp(.90rem, 1.25rem, 10vw);
+    text-align: center;
+}
+
+.order_placed_hr {
+    border: 3px solid var(--text-color);
+}

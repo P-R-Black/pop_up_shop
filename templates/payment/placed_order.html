@@ -13,6 +13,58 @@ Order Placed
         <div class="page_title">
             <h2>Order Placed</h2>
         </div>
+        <div class="order_placed_container">
+            <div class="order_placed_status_contaner">
+                <h3>Thanks {{ user.first_name }}!</h3>
+                <p>We've received your order and are confirming your payment.</p>
+                <p>You will receive an email shortly confirming your order</p>
+            </div>
+        </div>
+        <div class="order_placed_container">
+            <div class="order_placed_status_contaner">
+                <h3>Get Notified When These Items Available</h3>
+                <p>Just Press "Notify Me"</p>
+            </div>
+        </div>
+
+        <div class="cs_container">
+            {% if product %}
+            {% for prod in product %}
+            <div class="cs_display_container">
+                <div class="rectangle_image_container">
+                    <div class="background_rectangle"></div>
+                    {% for image in prod.product_image.all %}
+                    {% if image.is_feature %}
+                    <img class="img_fluid_cs" alt="{{ image.alt_text }}" src="{{ image.image }}"
+                        alt="{{ image.image.alt_text}}" />
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="cs_desc_container">
+                    {% for spec in prod.popupproductspecificationvalue_set.all|slice:"2:3" %}
+                    <h3>{{ spec }}</h3>
+                    {% endfor %}
+                    <h3>{{ prod.product_title }}</h3>
+                    <h3>{{ prod.secondary_product_title}}</h3>
+                </div>
+                <div class="cs_button_container">
+                    {% if user.is_authenticated and prod in user.prods_on_notice_for.all %}
+                    <button class="button_medium notify-me-button" data-product-id="{{ prod.id }}"
+                        data-interested="true">On Notice ❤️</button>
+                    {% else %}
+                    <button class="button_medium notify-me-button" data-product-id="{{ prod.id }}"
+                        data-interested="false">Notify
+                        Me
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <h4>Nothing to display</h4>
+            {% endif %}
+        </div>
     </div>
 </section>
 <script>

@@ -509,7 +509,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                         .then(res => res.json())
                         .then(data => {
                             if (data.success) {
-                                window.location.replace('/payment/placedorder/');
+                                window.location.replace('/payment/placed-order/');
                             } else {
                                 alert('Order creation failed after PayPal payment.');
                             }
@@ -676,7 +676,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 if (result.success) {
                     showMessage(`Payment successful! Transaction ID: ${result.transaction_id || 'N/A'}`, 'success');
                     setTimeout(() => {
-                        window.location.href = '/payment/placedorder/';
+                        window.location.href = '/payment/placed-order/';
                     }, 1500);
                 } else {
                     showMessage(`Payment failed: ${result.error || 'Unknown error'}`, 'error');
@@ -792,9 +792,14 @@ window.addEventListener('DOMContentLoaded', async () => {
                             billing_details: {
                                 address: {
                                     line1: billingObject.billingAddressLine,
-                                    line2: billingObject.billingAddressLine2
+                                    line2: billingObject.billingAddressLine2,
+                                    city: billingObject.billingCity,
+                                    state: billingObject.billingState,
+                                    postal_code: billingObject.billingPostCode
+
                                 },
-                                name: billingObject.billingCustName
+                                name: billingObject.billingCustName,
+                                email: billingObject.billingEmail
                             }
                         }
                     });
@@ -813,7 +818,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                             .then(res => res.json())
                             .then(data => {
                                 if (data.success) {
-                                    window.location.replace('/payment/placedorder/');
+                                    window.location.replace('/payment/placed-order/');
                                 } else {
                                     alert('Order creation failed.')
                                 }
@@ -991,7 +996,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 if (data.success) {
                     showMessage('Order created successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.replace('/payment/placedorder/');
+                        window.location.replace('/payment/placed-order/');
                     }, 1000);
                 } else {
                     showMessage('Order creation failed after successful payment', 'error');
@@ -1185,7 +1190,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 if (data.success) {
                     showMessage('Order created successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.replace('/payment/placedorder/');
+                        window.location.replace('/payment/placed-order/');
                     }, 1000);
                 } else {
                     showMessage('Order creation failed after successful payment', 'error');
@@ -1510,7 +1515,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 if (data.success) {
                     // Clean up and redirect
                     document.querySelector('.payment-details-modal').remove()
-                    window.location.replace('/payment/placedorder/');
+                    window.location.replace('/payment/placed-order/');
                 } else {
                     shwoPaymentError('Order creation failed after successful payment')
                 }
