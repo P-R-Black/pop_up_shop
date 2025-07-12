@@ -8,6 +8,7 @@ from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpPr
 from pop_accounts.models import PopUpBid, PopUpCustomerAddress
 from cart.models import PopUpCartItem
 from payment.models import PopUpPayment
+from orders.models import PopUpCustomerOrder
 from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
 import stripe
 from django.conf import settings
@@ -26,8 +27,8 @@ from decimal import Decimal
 from django.utils.timezone import now
 from datetime import timedelta
 from dateutil.parser import parse as parse_datetime
-from .utils.tax_utils import get_state_tax_rate
-from .utils.address_form_handler import(handle_new_address, handle_selected_address, handle_update_address)
+from payment.utils.tax_utils import get_state_tax_rate
+from payment.utils.address_form_handler import(handle_new_address, handle_selected_address, handle_update_address)
 import braintree
 import logging
 import requests
@@ -568,6 +569,8 @@ def stripe_webhook_view(request):
         # 🛑 Warn if payment_reference not found in DB
         if not PopUpPayment.objects.filter(payment_reference=payment_reference).exists():
             logger.error(f"⚠️ Webhook received unknown payment_reference: {payment_reference}")
+        
+
 
          # 🟨 SAFELY Extract AVS Results
         try:
@@ -604,6 +607,7 @@ def stripe_webhook_view(request):
     elif event['type'] == 'payment_intent.payment_failed':
         intent = event['data']['object']
         payment_reference = intent['id']
+
         # 🛑 Warn if payment_reference not found in DB
     if not PopUpPayment.objects.filter(payment_reference=payment_reference).exists():
         logger.error(f"⚠️ Webhook received unknown payment_reference: {payment_reference}")
@@ -632,7 +636,6 @@ class ProcessVenmoPaymentView(View):
             data = json.loads(request.body)
             nonce = data.get('payment_method_nonce')
             amount = data.get('amount') / 100
-            print('ProcessVenmoPaymentView: amount', amount)
             
             # Process payment with Braintree
             result = gateway.transaction.sale({
@@ -1047,8 +1050,13 @@ def placed_order(request):
     user = request.user
     cart = Cart(request)
     cart.clear()
+    order = PopUpCustomerOrder.objects.filter(user=user).first()
+    order_id = None
+    if order:
+        order_id = order.id
+    print('order_id', order_id)
     base_queryset = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
-    return render(request, 'payment/placed_order.html', {'user': user, 'product': base_queryset})
+    return render(request, 'payment/placed_order.html', {'user': user, 'order_id':order_id, 'product': base_queryset})
 
 
 

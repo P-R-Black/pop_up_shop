@@ -11,12 +11,12 @@ from django.conf import settings
 
 # Create your models here.
 class PopUpCustomerOrder(models.Model):
-    STATUS_CHOICES = [
-        ('processing', 'Processing'),
-        ('shipped', 'Shipped'),
-        ('delivered', 'Delivered'),
-        ('cancelled', 'Cancelled')
-    ]
+    # STATUS_CHOICES = [
+    #     ('processing', 'Processing'),
+    #     ('shipped', 'Shipped'),
+    #     ('delivered', 'Delivered'),
+    #     ('cancelled', 'Cancelled')
+    # ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name='order_user')
@@ -41,19 +41,6 @@ class PopUpCustomerOrder(models.Model):
     discount = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     
 
-    # These items below should probably go into model specifically for SHIPPING
-
-    # item = models.ManyToManyField(PopUpProduct, related_name='ordered_products')
-    # status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='processing')
-    # tracking_number = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    # carrier = models.CharField(max_length=50, blank=True, null=True)
-    # estimated_delivery_date = models.DateField(blank=True, null=True)
-    # created_at = models.DateTimeField(auto_now_add=True)
-    # updated_at = models.DateTimeField(auto_now=True)
-   
-
-    # total_paid = models.DecimalField(max_digits=5, decimal_places=2)
-    # order_key = models.CharField(max_length=200)
 
     class Meta:
         ordering = ('-created_at',)

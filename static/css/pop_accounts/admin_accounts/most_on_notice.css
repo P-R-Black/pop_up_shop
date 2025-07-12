@@ -32,3 +32,9 @@
     justify-content: space-between;
     margin-top: 2rem;
 }
+
+.data-line-break {
+    margin: 5% 10%;
+    width: 80%;
+    border: 2px dotted var(--text-color);
+}

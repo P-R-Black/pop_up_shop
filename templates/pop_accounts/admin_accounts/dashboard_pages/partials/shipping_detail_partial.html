@@ -1,0 +1,65 @@
+<div class="shipping_detail_update_section">
+
+    <div class="shipping_order_items_container">
+        <div class="shipping_order_items_container_title">
+            <h3>Order Items</h3>
+        </div>
+        <ul>
+            {% for item in order_item %}
+            <li>
+                {{ item.product_title }} {{ item.secondary_product_title }} | Size: {{ item.size }} | Color:
+                {{ item.color }} | Qty: {{ item.quantity }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="shipping_info_update_container">
+        <div class="shipping_info_update_title">
+            <h3>Update Shipping Info</h3>
+        </div>
+        <form method="POST" action="{% url 'pop_accounts:update_shipping_post' shipment.id %}"
+            class="shipping_info_form_container">
+            {% csrf_token %}
+            <div class="shipping_info_data_container">
+                <div class="ship_form_label"> {{ form.order.label }}</div>
+
+                {{ form.order}}
+            </div>
+            <div class="shipping_info_data_container">
+                <div class="ship_form_label"> {{ form.carrier.label }}</div>
+
+                {{ form.carrier}}
+            </div>
+            <div class="shipping_info_data_container">
+                <div class="ship_form_label">{{ form.tracking_number.label }}</div>
+
+                {{ form.tracking_number}}
+            </div>
+            <div class="shipping_info_data_container">
+                <div class="ship_form_label">{{ form.shipped_at.label }}</div>
+
+                {{ form.shipped_at}}
+            </div>
+            <div class="shipping_info_data_container">
+                <div class="ship_form_label">{{ form.estimated_delivery.label }}</div>
+
+                {{ form.estimated_delivery}}
+            </div>
+            {% comment%}
+            <div class="shipping_info_data_container">
+                <div class="ship_form_label"> {{ form.delivered_at.label }}</div>
+
+                {{ form.delivered_at}}
+            </div>
+            {% endcomment %}
+            <div class="shipping_info_data_container">
+                <div class="ship_form_label">{{ form.status.label }}</div>
+
+                {{ form.status}}
+            </div>
+
+            <button type="submit" class="button_medium">Update Shipping</button>
+        </form>
+    </div>
+</div>

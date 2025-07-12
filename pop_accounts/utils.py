@@ -52,3 +52,18 @@ def add_specs_to_products(queryset):
             for spec in product.popupproductspecificationvalue_set.all()
         }
     return products
+
+
+def calculate_auction_progress(product, now):
+    """Calculate what percentage of the auction time has passed"""
+    if not product.auction_start_date or not product.auction_end_date:
+        return 0
+    
+    total_duration = product.auction_end_date - product.auction_start_date
+    elapsed_time = now - product.auction_start_date
+    
+    if total_duration.total_seconds() == 0:
+        return 100
+    
+    progress = (elapsed_time.total_seconds() / total_duration.total_seconds()) * 100
+    return min(max(progress, 0), 100)  # Clamp between 0 and 100

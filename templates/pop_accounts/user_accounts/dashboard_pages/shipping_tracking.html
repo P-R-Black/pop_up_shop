@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+On Notice
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>{{ user_shipping_copy.page_title }}</h2>
+        </div>
+        <div class="shipping_tracking_container">
+            <div class="interested_in_open_bids_container">
+                <div class="ship_and_track_databox_headers">
+                    {% for header in tracking_categories %}
+                    <h3>{{ header.header }}</h3>
+                    {% endfor %}
+
+                </div>
+                <div class="shipping_tracking_info_container">
+                    {% for shipment in shipments %}
+                    <div class="ship_track_items_container">
+                        <div class=" interested_in_year">
+                            <p>{{ shipment.shipment.tracking_number }}</p>
+                        </div>
+                        <div class="interested_in_item">
+                            <a href="product-details">
+                                <p>{{ shipment.shipment.shipped_at|date:"M d, Y"}}</p>
+                            </a>
+                        </div>
+                        <div class="interested_in_size">
+                            {{ shipment.shipment.carrier|upper }}
+                        </div>
+                        <div class="interested_in_condition">
+                            <a href="{% url 'pop_accounts:customer_order' shipment.order_id%}">
+                                {{ shipment.order_id }}</a>
+                        </div>
+                        <div class="interested_in_condition">
+                            {% if shipment.shipment.delivered_at == None %}
+                            {% if shipment.shipment.shipped_at %}
+                            In Transit
+                            {% endif %}
+                            {% elif shipment.shipment.delivered_at %}
+                            {{ shipment.shipment.delivered_at }}
+                            {% endif %}
+                        </div>
+                        <div class="interested_in_condition">
+                            <p>{{ shipment.shipping_address.town_city }} {{ shipment.shipping_address.state }}
+                                {{ shipment.shipping_address.postcode }}
+                            </p>
+                        </div>
+                    </div>
+
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+
+</section>
+
+{% endblock %}

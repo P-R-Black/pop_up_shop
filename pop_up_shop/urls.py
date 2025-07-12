@@ -26,6 +26,7 @@ urlpatterns = [
     path('pop_accounts/', include('pop_accounts.urls')),
     path('pop_up_email/', include('pop_up_email.urls')),
     path('pop_up_shipping/', include('pop_up_shipping.urls')),
+    path('pop_up_finance/', include('pop_up_finance.urls')),
     path('auction/', include('auction.urls')),
     path('orders/', include('orders.urls')),
     path('cart/', include('cart.urls')),

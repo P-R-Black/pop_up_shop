@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Auction
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>{{ pending_shipping.page_title }}</h2>
+        </div>
+        <div class="the_update_shipping_section">
+            <div class="the_update_shipping_container">
+                {% if payment_status_pending %}
+                <ol>
+                    {% for shipment in payment_status_pending %}
+                    <li>
+                        <a href="{% url 'pop_accounts:get_order_details' shipment.order.id %}" class="load_shipment"
+                            data-shipment-id="{{ shipment.order.id }}">
+                            Order #{{ shipment.order.id }} - {{ shipment.order.full_name}}
+                        </a>
+                    </li>
+
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <h3>No Shipments Pending</h3>
+                {% endif %}
+            </div>
+
+            <!-- Placeholder for dynamic order details -->
+            <div class="shipment_detail_container" id="shipment_detail_container">
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const links = document.querySelectorAll('.load_shipment');
+        links.forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const shipmentId = this.dataset.shipmentId;
+                fetch(`/pop_accounts/get-pending-order-shipping-detail/${shipmentId}/`)
+                    .then(res => res.text())
+                    .then(html => {
+                        document.getElementById('shipment_detail_container').innerHTML = html;
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% load static %}
-
+{% load humanize %}
 
 {% block title %}
 Sales
@@ -26,21 +26,20 @@ Sales
                     <div class="dashboard_databox_smaller">
                         <div class="dashboard_databox_title">
                             <div class="blank_div"></div>
-                            <h3>2024 Sales</h3>
+                            <h3>{{ year }} Sales</h3>
                             <div class="blank_div"></div>
                         </div>
                         <div class="dashboard_admin_sales_container">
-                            <h3>$105,500.50</h3>
+                            <h3>${{ yearly_sales|intcomma }}</h3>
                         </div>
                     </div>
                     <div class="dashboard_databox_smaller">
+
                         <div class="dashboard_admin_sales_container">
-                            <h3>1100</h3>
+                            <h3>${{ monthly_sales|intcomma }}</h3>
                         </div>
                         <div class="dashboard_databox_title">
-                            <div class="blank_div"></div>
-                            <h3>Items Sold</h3>
-                            <div class="blank_div"></div>
+                            <h3>{{ month }} Sales</h3>
                         </div>
                     </div>
                 </div>

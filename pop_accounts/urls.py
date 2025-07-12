@@ -38,15 +38,15 @@ urlpatterns = [
     path('delete-address/<uuid:address_id>/', views.delete_address, name='delete_address'),
     path('set-default-address/<uuid:address_id>/', views.set_default_address, name='set_default_address'),
 
-    # path('interested-in/', views.interested_in, name='interested_in'),
     path('interested-in/', UserInterestedInView.as_view(), name='interested_in'),
     path('mark-interested/', MarkProductInterestedView.as_view(), name='mark_interested'),
     path('on-notice/', UserOnNoticeView.as_view(), name='on_notice'),
     path('mark-on-notice/', MarkProductOnNoticeView.as_view(), name='mark_on_notice'),
-    # path('open-bids/', views.open_bids, name='open_bids'),
     path('open-bids/', OpenBidsView.as_view(), name="open_bids"),
     path('bids-history/', views.past_bids, name='past_bids'),
     path('purchase-history/', views.past_purchases, name='past_purchases'),
+    path('shipping-tracking/', views.shipping_tracking, name='shipping_tracking'),
+    path('customer-order/<uuid:order_id>/', views.user_orders_page, name='customer_order'),
 
     # admin dashboard
     path('dashboard-admin/',views.dashboard_admin, name='dashboard_admin'),
@@ -58,7 +58,14 @@ urlpatterns = [
     path('total-open-bids-admin/', views.total_open_bids, name='total_open_bids'),
     path('total-accounts-admin/', views.total_accounts, name='total_accounts'),
     path('account-sizes-admin/', views.account_sizes, name='account_sizes'),
+
+    path('pending-okay-to-ship/', views.pending_okay_to_ship, name='pending_okay_to_ship'),
+    path('get-pending-order-shipping-detail/<uuid:order_no>/', views.get_pending_order_shipping_detail, name='get_order_details'),
+
     path('update-shipping-admin/', views.update_shipping, name='update_shipping'),
+    path('update-shipping-admin/<int:shipment_id>/', views.update_shipping_post, name='update_shipping_post'),
+    path('get-shipping-detail/<int:shipment_id>/', views.get_order_shipping_detail, name='get_shipping_detail'),
+
     path('shipments-admin/', views.view_shipments, name='shipments'),
     path('dashboard-en-route/', EnRouteView.as_view(), name='enroute'),
     path('dashboard-en-route/<slug:slug>/', EnRouteView.as_view(), name='enroute')

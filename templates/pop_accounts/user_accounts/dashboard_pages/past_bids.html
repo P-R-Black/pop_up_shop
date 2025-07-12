@@ -16,70 +16,48 @@ Past Bids
         <div class="interested_in_container">
             <div class="interested_in_open_bids_container">
                 <div class="interested_in_databox_headers">
-                    <h3>Year</h3>
+                    <h3>Date</h3>
                     <h3>Item</h3>
                     <h3>Size</h3>
                     <h3>Last Bid</h3>
                     <h3>Bid Status</h3>
                 </div>
                 <div class="interested_in_open_bids">
+                    {% for bid in bid_history %}
                     <div class="interested_in_items_container">
                         <div class="interested_in_year">
-                            <p>2004</p>
+                            <p>{{ bid.bid_time|date:"F d, Y"}}</p>
                         </div>
                         <div class="interested_in_item">
                             <a href="product-details">
-                                <p>Jordan 1 Retro Low OG SP Travis Scott Medium Olive</p>
+
+
+                                <p>{{ bid.mptt_specs.model_year }} {{ bid.product.product_title }} <br>
+                                    {{ bid.product.secondary_product_title }}
+                                </p>
                             </a>
                         </div>
                         <div class="interested_in_size">
-                            <p>8.5 US Men</p>
+                            {% if bid.mptt_specs.product_sex == "Male" %}
+                            <p>{{ bid.mptt_specs.size }} US Mens</p>
+                            {% elif bid.mptt_specs.product_sex == "Female" %}
+                            <p>{{ bid.mptt_specs.size }} US Womens</p>
+                            {% else %}
+                            <p>N/A</p>
+                            {% endif %}
                         </div>
                         <div class="interested_in_condition">
-                            <p>$550</p>
+                            <p>${{bid.bid_amount}}</p>
                         </div>
                         <div class="interested_in_condition">
+                            {% if bid.is_winning == True %}
                             <p>Winning Bid</p>
-                        </div>
-                    </div>
-                    <div class="interested_in_items_container">
-                        <div class="interested_in_year">
-                            <p>2024</p>
-                        </div>
-                        <div class="interested_in_item">
-                            <a href="product-details">
-                                <p>Nike Dunk Wu-Tang</p>
-                            </a>
-                        </div>
-                        <div class="interested_in_size">
-                            <p>8.5 US Men</p>
-                        </div>
-                        <div class="interested_in_condition">
-                            <p>$600</p>
-                        </div>
-                        <div class="interested_in_condition">
-                            <p>Winning Bid</p>
-                        </div>
-                    </div>
-                    <div class="interested_in_items_container">
-                        <div class="interested_in_year">
-                            <p>2023</p>
-                        </div>
-                        <div class="interested_in_item">
-                            <a href="product-details">
-                                <p>Jordan 11 Space Jam</p>
-                            </a>
-                        </div>
-                        <div class="interested_in_size">
-                            <p>9 US Men</p>
-                        </div>
-                        <div class="interested_in_condition">
-                            <p>$690</p>
-                        </div>
-                        <div class="interested_in_condition">
+                            {% else %}
                             <p>Losing Bid</p>
+                            {% endif %}
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
