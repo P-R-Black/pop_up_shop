@@ -42,11 +42,20 @@ class PopUpPayment(models.Model):
         ('paid', 'Paid'),
         ('failed', 'Failed'),
     ]
+
+    PAYMENT_METHOD_CHOICES = [
+        ('stripe', 'Stripe'),
+        ('paypal', 'PayPal'),
+        ('venmo', 'Venmo'),
+        ('apple_pay', 'Apple Pay'),
+        ('google_pay', 'Google Pay'),
+    ]
     
     order = models.OneToOneField(PopUpCustomerOrder, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     payment_reference = models.CharField(max_length=100, blank=True, null=True)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     suspicious_flagged = models.BooleanField(default=False)
     notified_ready_to_ship = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -104,4 +113,3 @@ class PopUpPayment(models.Model):
                 return (local_time + timedelta(days=5)).replace(hour=8, minute=0) # Wednesday AM
         else: # Friday after 5PM or weekend
             return (local_time + timedelta(days=(7 - weekday + 2))).replace(hour=8, minute=0)
-

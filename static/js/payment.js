@@ -359,10 +359,8 @@ window.addEventListener('DOMContentLoaded', async () => {
         return Number(amount[0])
     }
 
-    const createOrderPayLoad = (userId, payment_data_id, clientSecret, total_paid, shippingObject, billingObject, couponId, discount) => {
+    const createOrderPayLoad = (userId, payment_data_id, clientSecret, total_paid, shippingObject, billingObject, couponId, discount, paymentMethod) => {
         // userId: str, stripeId: str, total_paid: int, shippingObject: dict, billingObject: dict, couponId: str, discount: int
-        console.log('createOrderPayLoad called total_paid is', total_paid)
-        console.log('pre', 'userId', userId, 'payment_data_id', payment_data_id, 'clientSecret', clientSecret, 'total_paid', total_paid, 'shippingObject', shippingObject, 'billingObject', billingObject, 'couponId', couponId, 'discount', discount,)
 
         const orderPayLoad = {
             payment_data_id: payment_data_id,
@@ -382,6 +380,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             billingAddressId: billingObject.billingAddressId,
             coupon_id: couponId,
             discount: discount,
+            payment_method: paymentMethod
         }
 
         return orderPayLoad;
@@ -496,7 +495,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 return actions.order.capture().then(function (details) {
 
                     // ✅ Now send order info to your backend to create the order
-                    let orderPayLoad = createOrderPayLoad(userId, data.orderID, data.payerID, amount, shippingObject, billingObject, "", 0)
+                    let orderPayLoad = createOrderPayLoad(userId, data.orderID, data.payerID, amount, shippingObject, billingObject, "", 0, 'paypal')
 
                     fetch('/orders/create-after-payment/', {
                         method: 'POST',
@@ -655,7 +654,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                 const paymentResult = await paymentResponse.json();
 
-                let orderPayLoad = createOrderPayLoad(userId, paymentResult.transaction_id, paymentResult.transaction_id, amount, shippingObject, billingObject, "", 0);
+                let orderPayLoad = createOrderPayLoad(userId, paymentResult.transaction_id, paymentResult.transaction_id, amount, shippingObject, billingObject, "", 0, 'venmo');
 
 
                 // Send to Django backend
@@ -804,7 +803,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                         }
                     });
 
-                    let orderPayLoad = createOrderPayLoad(userId, result.paymentIntent.id, clientSecret, amount, shippingObject, billingObject, "", 0)
+                    let orderPayLoad = createOrderPayLoad(userId, result.paymentIntent.id, clientSecret, amount, shippingObject, billingObject, "", 0, 'stripe')
 
                     if (result.error) {
                         console.log('Payment Failed:', result.error.message);
@@ -977,7 +976,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 const shippingObject = getShippingAddressInfo();
                 const userId = document.getElementById('userData').value;
 
-                const orderPayLoad = createOrderPayLoad(userId, paymentIntentId, clientSecret, amount, shippingObject, billingObject, "", 0);
+                const orderPayLoad = createOrderPayLoad(userId, paymentIntentId, clientSecret, amount, shippingObject, billingObject, "", 0, 'google_pay');
 
                 const response = await fetch('/orders/create-after-payment/', {
                     method: "POST",
@@ -1173,7 +1172,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 const shippingObject = getShippingAddressInfo();
                 const userId = document.getElementById('userData').value;
 
-                const orderPayLoad = createOrderPayLoad(userId, paymentIntentId, clientSecret, amount, shippingObject, billingObject, "", 0);
+                const orderPayLoad = createOrderPayLoad(userId, paymentIntentId, clientSecret, amount, shippingObject, billingObject, "", 0, 'apple_pay');
 
                 const response = await fetch('/orders/create-after-payment/', {
                     method: "POST",
@@ -1500,7 +1499,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         let billingObject = getBillingAddressInfo();
         let shippingObject = getShippingAddressInfo();
 
-        let orderPayLoad = createOrderPayLoad(userId, paymentInfo.payment_id, paymentInfo.payment_id, amount, shippingObject, billingObject, "", 0);
+        let orderPayLoad = createOrderPayLoad(userId, paymentInfo.payment_id, paymentInfo.payment_id, amount, shippingObject, billingObject, "", 0, 'now_payment');
 
         fetch('/orders/create-after-payment/', {
             method: "POST",

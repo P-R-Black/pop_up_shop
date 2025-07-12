@@ -191,8 +191,12 @@ class PopUpProduct(models.Model):
     winner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='won_auction')
     # bought_now = models.BooleanField(default=False) <= saved twice
     auction_finalized = models.BooleanField(default=False)
+
     # reserve_price - I can set a minimum price below which they won’t sell, add:
     reserve_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    # ON NEXT MIGRATION / UPDATE INCLUDE BELOW 'acquistion_cost' this is the price i paid for item + shipping + tax
+    # acquisition_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     # product_weight_lbs added. Sneaker inside box weighed before being posted. Use weight with USPS API...
     # ... to determine cost of shipping
@@ -229,6 +233,7 @@ class PopUpProduct(models.Model):
     
     def get_absolute_url(self):
         return reverse("auction:product_detail", args=[self.slug])
+    
     
 
     @property
@@ -308,9 +313,6 @@ class PopUpProduct(models.Model):
             return 'Auction Finalized - Winner Pending Purchase' if self.winner else 'Auction Ended - No Bids'
         return self.auction_status
 
-    # @property
-    # def calculated_buy_now_price(self):
-    #     return self.retail_price + Decimal(100)
     
     
     @property

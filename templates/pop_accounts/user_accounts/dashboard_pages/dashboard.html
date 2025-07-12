@@ -104,16 +104,54 @@ Dashboard
                         <h2>Shipping & Tracking</h2>
                         <div class="blank_div"></div>
                     </div>
+                    {% for shipment in shipments %}
                     <div class="dashboard_interest_container">
                         <ul>
                             <li>
-                                <a href="/">2024 Air Force 3 Low x Nigo Blue Void and Tour Yellow</a>
-                                <a href="#">Shipped</a>
+
+                                <a href="{% url 'pop_accounts:shipping_tracking' %}">
+                                    {{ shipment.model_year }}
+                                    {{ shipment.product_title }}
+                                    {{ shipment.secondary_product_title }}
+                                </a>
+
+                                <a href="{% url 'pop_accounts:shipping_tracking' %}">
+                                    {{ shipment.shipment.status|title }}</a>
                             </li>
                         </ul>
                     </div>
+                    {% endfor %}
+
+                    {% comment %}
+                    {% for shipment_info in shipments %}
+                    <div class="shipment-card">
+                        <h3>Order #{{ shipment_info.order.id }}</h3>
+                        <p><strong>Status:</strong> {{ shipment_info.shipment.status }}</p>
+                        <p><strong>Carrier:</strong> {{ shipment_info.shipment.carrier }}</p>
+                        <p><strong>Tracking:</strong> {{ shipment_info.shipment.tracking_number }}</p>
+
+                        <h4>Products:</h4>
+                        {% for product in shipment_info.products %}
+                        <div class="product-info">
+                            <p><strong>{{ product.product_title }}</strong></p>
+                            <p>Model Year: {{ product.specs.model_year|default:"Not specified" }}</p>
+                        </div>
+                        {% endfor %}
+
+                        <h4>Shipping Address:</h4>
+                        <p>{{ shipment_info.order.full_name }}</p>
+                        <p>{{ shipment_info.order.address1 }}</p>
+                        {% if shipment_info.order.address2 %}
+                        <p>{{ shipment_info.order.address2 }}</p>
+                        {% endif %}
+                        <p>{{ shipment_info.order.city }}, {{ shipment_info.order.state }}
+                            {{shipment_info.order.postal_code }}</p>
+                    </div>
+                    {% endfor %}
+                    {% endcomment %}
+
                     <div class="dashboard_more_container">
-                        <a href="personal-information">More</a>
+                        <a href="{% url 'pop_accounts:shipping_tracking' %}">More</a>
                     </div>
 
                 </div>
@@ -283,36 +321,31 @@ Dashboard
                             <h3>Bid Status</h3>
                         </div>
                         <div class="dashboard_open_bids">
+                            {% for bid in bid_history %}
                             <div class="indi_past_bids">
                                 <div class="indi_past_bid_items">
-                                    <a href="#">
-                                        <p>Jordan 1 Retro Low OG SP Travis Scott Medium Olive</p>
+                                    <a href="{% url 'auction:past_product_details' bid.product.id %}">
+                                        <p>{{ bid.mptt_specs.model_year }} {{ bid.product.product_title }} <br>
+                                            {{ bid.product.secondary_product_title }}
+                                        </p>
                                     </a>
                                 </div>
                                 <div class="indi_past_bid_last_bid">
-                                    <p>$500</p>
+                                    <p>${{ bid.bid_amount}}</p>
                                 </div>
                                 <div class="indi_past_bid_bid_status">
+                                    {% if bid.is_winning == True %}
                                     <p>Winning Bid</p>
-                                </div>
-                            </div>
-                            <div class="indi_past_bids">
-                                <div class="indi_past_bid_items">
-                                    <a href="#">
-                                        <p>Jordan 1 Retro Low OG SP Travis Scott Medium Olive</p>
-                                    </a>
-                                </div>
-                                <div class="indi_past_bid_last_bid">
-                                    <p>$500</p>
-                                </div>
-                                <div class="indi_past_bid_bid_status">
+                                    {% else %}
                                     <p>Losing Bid</p>
+                                    {% endif %}
                                 </div>
                             </div>
+                            {% endfor %}
                         </div>
                     </div>
                     <div class="dashboard_more_container">
-                        <a href="bids-history">More</a>
+                        <a href="{% url 'pop_accounts:past_bids' %}">More</a>
                     </div>
                 </div>
                 <div class="dashboard_databox_large">
@@ -325,41 +358,35 @@ Dashboard
                         <div class="dashboard_databox_past_bids_headers">
                             <h3>Items</h3>
                             <h3>Date Purchased</h3>
-                            <h3>Delivered</h3>
+                            <h3>Shipped To</h3>
                         </div>
                         <div class="dashboard_open_bids">
+                            {% for order in orders %}
                             <div class="indi_past_purchases">
+
                                 <div class="indi_past_purchases_items">
-                                    <a href="#">
-                                        <p>Jordan 1 Retro Low OG SP Travis Scott Medium Olive</p>
+                                    {% for item in order.items.all %}
+                                    <a href="{% url 'auction:past_product_details' item.id %}">
+                                        <p>{{ item.product_title }} <br> {{ item.secondary_product_title}}</p>
                                     </a>
+                                    {% endfor %}
                                 </div>
                                 <div class="indi_past_bid_last_bid">
-                                    <p>6/20/2024</p>
+                                    <p>{{ order.created_at|date:"M d, Y"}}</p>
                                 </div>
 
                                 <div class="indi_past_bid_bid_status">
-                                    <p>St. Petersburg, FL 33711</p>
+                                    <p>{{ order.shipping_address.town_city}}
+                                        {{ order.shipping_address.state }}
+                                        {{ order.shipping_address.postcode }}
+                                    </p>
                                 </div>
                             </div>
-                            <div class="indi_past_purchases">
-                                <div class="indi_past_purchases_items">
-                                    <a href="#">
-                                        <p>Jordan 1 Retro Low OG SP Travis Scott Medium Olive</p>
-                                    </a>
-                                </div>
-                                <div class="indi_past_bid_last_bid">
-                                    <p>3/20/2024</p>
-                                </div>
-
-                                <div class="indi_past_bid_bid_status">
-                                    <p>South Ozone Park, NY 11434</p>
-                                </div>
-                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                     <div class="dashboard_more_container">
-                        <a href="purchase-history">More</a>
+                        <a href="{% url 'pop_accounts:past_purchases' %}">More</a>
                     </div>
                 </div>
             </div>

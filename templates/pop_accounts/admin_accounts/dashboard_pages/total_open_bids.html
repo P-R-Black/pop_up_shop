@@ -16,119 +16,94 @@ Interested In
         <div class="interested_in_container">
             <div class="admin_most_on_notice_container">
                 <div class="admin_most_on_notice_databox_headers">
-                    <h3>Accounts on Notice</h3>
+                    <h3>Number of Bids</h3>
                     <h3>Year</h3>
                     <h3>Item</h3>
                     <h3>Size</h3>
                 </div>
+                {% for product in open_auction_products %}
                 <div class="interested_in_open_bids">
                     <div class="admin_most_on_notice_items_container">
                         <div class="interested_in_year">
-                            <p>150</p>
+                            <p>{{ product.active_bid_count }}</p>
                         </div>
                         <div class="interested_in_year">
-                            <p>2024</p>
+                            <p>{{ product.specs.model_year }}</p>
                         </div>
                         <div class="interested_in_item">
                             <a href="product-details">
-                                <p>Air Force 3 Low x Nigo Blue Void and Tour Yellow</p>
+                                <p>{{ product.product_title }} {{ product.secondary_product_title }}</p>
                             </a>
                         </div>
                         <div class="interested_in_size">
-                            <p>8.5 US Men</p>
+                            {% if product.specs.size %}
+                            {% if product.specs.product_sex == "Male" %}
+                            <p>{{ product.specs.size }} US {{"Mens"}}</p>
+                            {% else %}
+                            <p> {{ product.specs.size }} US {{"Womens"}}</p>
+                            {% endif %}
+                            {% else %}
+                            <p>--</p>
+                            {% endif %}
+
                         </div>
                     </div>
                 </div>
-                <div class="interested_in_open_bids">
-                    <div class="admin_most_on_notice_items_container">
-                        <div class="interested_in_year">
-                            <p>100</p>
+                {% endfor %}
+                <hr class="data-line-break">
+                <div class="admin_bottom_data_container">
+                    <a href="{% url 'pop_accounts:most_on_notice' %}" class="dashboard_databox_smaller">
+                        <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
+                            <h3>Items on Notice</h3>
+                            <div class="blank_div"></div>
                         </div>
-                        <div class="interested_in_year">
-                            <p>2024</p>
+                        <div class="dashboard_admin_sales_container">
+                            <h2>{{ admin_stats.total_notification_instances }}</h2>
                         </div>
-                        <div class="interested_in_item">
-                            <a href="product-details">
-                                <p>2024 Air Jordan 1 Low Paris Saint-Germain Sail and Off Noir</p>
-                            </a>
+                    </a>
+                    <a href="{% url 'pop_accounts:most_interested' %}" class="dashboard_databox_smaller">
+                        <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
+                            <h3>Most Interesteds</h3>
+                            <div class="blank_div"></div>
                         </div>
-                        <div class="interested_in_size">
-                            <p>9 US Men</p>
+                        <div class="dashboard_admin_sales_container">
+                            <h2>{{ admin_stats.total_interest_instances }}</h2>
                         </div>
-                    </div>
-                </div>
-                <div class="interested_in_open_bids">
-                    <div class="admin_most_on_notice_items_container">
-                        <div class="interested_in_year">
-                            <p>300</p>
+                    </a>
+                    <a href="{% url 'pop_accounts:total_open_bids' %}" class="dashboard_databox_smaller">
+                        <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
+                            <h3>Total Open Bids</h3>
+                            <div class="blank_div"></div>
                         </div>
-                        <div class="interested_in_year">
-                            <p>2024</p>
+                        <div class="dashboard_admin_sales_container">
+                            <h2>{{ admin_stats.total_open_bids }}</h2>
                         </div>
-                        <div class="interested_in_item">
-                            <a href="product-details">
-                                <p>2023 Nike Dunk Low Zion Williomson Voodoo</p>
-                            </a>
+                    </a>
+                    <a href="{% url 'pop_accounts:total_accounts' %}" class="dashboard_databox_smaller">
+                        <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
+                            <h3>Total Active Accounts</h3>
+                            <div class="blank_div"></div>
                         </div>
-                        <div class="interested_in_size">
-                            <p>8.5 US Men</p>
+                        <div class="dashboard_admin_sales_container">
+                            <h2>{{ admin_stats.total_active_accounts }}</h2>
                         </div>
-                    </div>
+                    </a>
+                    <a href="{% url 'pop_accounts:account_sizes' %}" class="dashboard_databox_smaller">
+                        <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
+                            <h3>Account Sizes</h3>
+                            <div class="blank_div"></div>
+                        </div>
+                        <div class="dashboard_admin_sales_container">
+                            <h2>{{ admin_stats.most_common_size }}</h2>
+                        </div>
+                    </a>
                 </div>
             </div>
-            <div class="admin_bottom_data_container">
-                <a href="most-on-notice-admin" class="dashboard_databox_smaller">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h3>Items on Notice</h3>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>300</h2>
-                    </div>
-                </a>
-                <a href="most-interested-admin" class="dashboard_databox_smaller">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h3>Most Interesteds</h3>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>2400</h2>
-                    </div>
-                </a>
-                <a href="total-open-bids-admin" class="dashboard_databox_smaller">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h3>Total Open Bids</h3>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>450</h2>
-                    </div>
-                </a>
-                <a href="total-accounts-admin" class="dashboard_databox_smaller">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h3>Total Active Accounts</h3>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>1500</h2>
-                    </div>
-                </a>
-                <a href="account-sizes-admin" class="dashboard_databox_smaller">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h3>Account Sizes</h3>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>9</h2>
-                    </div>
-                </a>
-            </div>
-        </div>
 </section>
 
 {% endblock %}

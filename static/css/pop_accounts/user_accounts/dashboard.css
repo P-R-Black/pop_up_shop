@@ -40,6 +40,7 @@
 .dashboard_databox_title {
     align-items: center;
     display: flex;
+    /* flex-direction: column; */
     justify-content: space-between;
     margin-bottom: 1rem;
 }
@@ -269,6 +270,7 @@
 
 .indi_past_purchases_items a p {
     color: var(--body-color);
+    cursor: pointer;
 }
 
 .indi_past_purchases_items a p:hover {
@@ -333,3 +335,45 @@
 }
 
 /* ====== End of Payment Modal ====== */
+
+
+/* ========- Order Details ==-====== */
+.order_details_inner_container {
+    display: flex;
+    justify-content: space-evenly;
+    margin-top: 2rem;
+}
+
+.order_dets_min_img_fluid {
+    height: 4.5rem;
+    width: 6.25rem;
+    /* transform: rotate(0); */
+    position: relative;
+}
+
+.order_dets_product_desc_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.order_dets_sizing h4,
+.order_dets_colorway h4 {
+    font-weight: 300;
+}
+
+.order_dets_shipping_dets_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+
+}
+
+.order_dets_date_create_container {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+/* ====== End of Order Details ====== */

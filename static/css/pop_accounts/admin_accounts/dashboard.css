@@ -52,6 +52,7 @@
 
 .dashboard_admin_inventory_container ul li a {
     color: var(--body-color);
+    cursor: pointer;
     font-size: clamp(1rem, 1.15rem, 3vw);
 
 }

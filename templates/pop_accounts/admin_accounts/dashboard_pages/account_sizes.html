@@ -14,176 +14,72 @@ Account Sizes
             <h2>Account Sizes</h2>
         </div>
         <div class="account_sizes_container">
+            {% if size_counts %}
+            {% for sc in size_counts %}
             <div class="dashboard_databox_squared">
                 <div class="dashboard_account_size_container">
-                    <h2>6 US</h2>
+                    <h2>{{ sc.shoe_size}} US</h2>
                 </div>
                 <div class="dashboard_databox_sizes_title">
                     <div class="blank_div"></div>
-                    <h3>50 Accounts</h3>
+                    <h3>{{ sc.count }} Accounts</h3>
                     <div class="blank_div"></div>
                 </div>
             </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>6.5 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>30 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>7 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>20 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>7.5 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>200 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>8 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>55 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>8.5 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>100 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>9 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>220 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>9.5 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>320 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>10 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>25 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>10.5 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>125 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>11 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>15 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
-            <div class="dashboard_databox_squared">
-                <div class="dashboard_account_size_container">
-                    <h2>11.5 US</h2>
-                </div>
-                <div class="dashboard_databox_sizes_title">
-                    <div class="blank_div"></div>
-                    <h3>1 Accounts</h3>
-                    <div class="blank_div"></div>
-                </div>
-            </div>
+            {% endfor %}
+            {% endif %}
         </div>
+        <hr class="data-line-break">
+
         <div class="admin_bottom_data_container">
-            <a href="most-on-notice-admin" class="dashboard_databox_smaller">
+            <a href="{% url 'pop_accounts:most_on_notice' %}" class="dashboard_databox_smaller">
                 <div class="dashboard_databox_title">
                     <div class="blank_div"></div>
                     <h3>Items on Notice</h3>
                     <div class="blank_div"></div>
                 </div>
                 <div class="dashboard_admin_sales_container">
-                    <h2>300</h2>
+                    <h2>{{ admin_stats.total_notification_instances }}</h2>
                 </div>
             </a>
-            <a href="most-interested-admin" class="dashboard_databox_smaller">
+            <a href="{% url 'pop_accounts:most_interested' %}" class="dashboard_databox_smaller">
                 <div class="dashboard_databox_title">
                     <div class="blank_div"></div>
                     <h3>Most Interesteds</h3>
                     <div class="blank_div"></div>
                 </div>
                 <div class="dashboard_admin_sales_container">
-                    <h2>2400</h2>
+                    <h2>{{ admin_stats.total_interest_instances }}</h2>
                 </div>
             </a>
-            <a href="total-open-bids-admin" class="dashboard_databox_smaller">
+            <a href="{% url 'pop_accounts:total_open_bids' %}" class="dashboard_databox_smaller">
                 <div class="dashboard_databox_title">
                     <div class="blank_div"></div>
                     <h3>Total Open Bids</h3>
                     <div class="blank_div"></div>
                 </div>
                 <div class="dashboard_admin_sales_container">
-                    <h2>450</h2>
+                    <h2>{{ admin_stats.total_open_bids }}</h2>
                 </div>
             </a>
-            <a href="total-accounts-admin" class="dashboard_databox_smaller">
+            <a href="{% url 'pop_accounts:total_accounts' %}" class="dashboard_databox_smaller">
                 <div class="dashboard_databox_title">
                     <div class="blank_div"></div>
                     <h3>Total Active Accounts</h3>
                     <div class="blank_div"></div>
                 </div>
                 <div class="dashboard_admin_sales_container">
-                    <h2>1500</h2>
+                    <h2>{{ admin_stats.total_active_accounts }}</h2>
                 </div>
             </a>
-            <a href="account-sizes-admin" class="dashboard_databox_smaller">
+            <a href="{% url 'pop_accounts:account_sizes' %}" class="dashboard_databox_smaller">
                 <div class="dashboard_databox_title">
                     <div class="blank_div"></div>
                     <h3>Account Sizes</h3>
                     <div class="blank_div"></div>
                 </div>
                 <div class="dashboard_admin_sales_container">
-                    <h2>9</h2>
+                    <h2>{{ admin_stats.most_common_size }}</h2>
                 </div>
             </a>
         </div>

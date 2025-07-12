@@ -3,25 +3,35 @@ from django.utils.translation import gettext_lazy as _
 
 
 # Create your models here.
-class Shipment(models.Model):
-    CARRIER_CHOICES = (
+class PopUpShipment(models.Model):
+    CARRIER_CHOICES = [
+        ('n/a', 'N/A'),
         ('usps', 'USPS'),
         ('ups', 'UPS'),
         ('FedEx', 'FedEx')
-    )
+    ]
+
+    SHIPMENT_STATUS = [
+        ('cancelled', 'Cancelled'),
+        ('in_dispute', 'In Dispute'),
+        ('pending', 'Pending'),
+        ('shipped', 'Shipped'),
+        ('returned', 'Returned'),
+     
+    ]
+    
     order = models.OneToOneField('orders.PopUpCustomerOrder', on_delete=models.CASCADE, related_name='shipment')
-    carrier = models.CharField(max_length=50, choices=CARRIER_CHOICES, default='usps')
+    carrier = models.CharField(max_length=50, choices=CARRIER_CHOICES, default='n/a')
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
-    label_url = models.URLField(blank=True, null=True) # link to PDF if stored on S3 or Cloudinary
     shipped_at = models.DateTimeField(blank=True, null=True)
     estimated_delivery = models.DateTimeField(blank=True, null=True)
     delivered_at = models.DateTimeField(blank=True, null=True)
-    status = models.CharField(max_length=50, default='pending')
+    status = models.CharField(max_length=50, choices=SHIPMENT_STATUS, default='pending')
 
     class Meta:
         verbose_name = _("PopUp Shipment")
         verbose_name_plural = _("PopUp Shipments")
 
     def __str__(self):
-        return f"Shipment for Order {self.order_id}"
+        return f"{self.order_id}"
     

@@ -10,36 +10,44 @@ from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPassesTestMixin
 from django.views.generic import DetailView, ListView
 from .token import account_activation_token
-from orders.views import user_orders
+from orders.views import user_orders, user_shipments
+from orders.models import PopUpOrderItem, PopUpCustomerOrder
+from django.db.models import Prefetch
 from django.http import JsonResponse, HttpResponse
 from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid, PopUpCustomerIP
 from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
+from auction.utils.utils import get_customer_bid_history_context
+from payment.models import PopUpPayment
+from pop_up_finance.utils import get_yearly_revenue_aggregated, get_monthly_revenue
+from pop_up_shipping.models import PopUpShipment
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .forms import PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, ThePopUpUserAddressForm
+from pop_up_shipping.forms import ThePopUpShippingForm
 import random
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
 import secrets
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.contrib.auth.tokens import default_token_generator
 import time
 from django.core.cache import cache
 from django.utils.timezone import now
+
 from django.contrib.auth import logout
 from django.views import View
-from .utils import validate_email_address, get_client_ip, add_specs_to_products
+from .utils import validate_email_address, get_client_ip, add_specs_to_products, calculate_auction_progress
 from django.conf import settings
 import hashlib
 import json
 import logging
 from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
-from .pop_accounts_copy.admin_copy.admin_copy import ADMIN_NAVIGATION_COPY
-from django.db.models import Count
-
+from .pop_accounts_copy.admin_copy.admin_copy import ADMIN_NAVIGATION_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING
+from .pop_accounts_copy.user_copy.user_copy import USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE
+from django.db.models import Count, Max, Q
 
 logger  = logging.getLogger('security')
 
@@ -143,6 +151,7 @@ def user_password_reset_confirm(request, uidb64, token):
         return JsonResponse({'success': True, 'message': 'Password reset successful.'})
 
 
+from pop_up_shipping.models import PopUpShipment
 
 class UserDashboardView(LoginRequiredMixin, View):
     template_name = 'pop_accounts/user_accounts/dashboard_pages/dashboard.html'
@@ -172,10 +181,15 @@ class UserDashboardView(LoginRequiredMixin, View):
             .prefetch_related('popupproductspecificationvalue_set')
         )
 
+        # user orders
         orders = user_orders(request)
-        print('orders', orders)
-        for order in orders:
-            print('order', order)
+        # user shipments
+        shipments = user_shipments(request)
+
+        # past bids
+        bid_data = get_customer_bid_history_context(user.id)
+    
+       
 
         product_map = {p.id: p for p in products}
 
@@ -200,7 +214,9 @@ class UserDashboardView(LoginRequiredMixin, View):
         quick_bid_increments = [10, 20, 30]
         context = {'user': user, 'addresses': addresses, 'prod_interested_in': prod_interested_in, 
                    'prods_on_notice_for': prods_on_notice_for, 'highest_bid_objects': highest_bid_objects, 
-                   'quick_bid_increments':quick_bid_increments, 'open_bids':enriched_data
+                   'quick_bid_increments':quick_bid_increments, 'open_bids':enriched_data, 'orders': orders,
+                   'shipments': shipments, 'bid_history': bid_data['bid_history'],
+                   'statistics': bid_data['statistics']
                    }
         return render(request, self.template_name, context)
 
@@ -354,8 +370,6 @@ def personal_info(request):
             # It's the address form 
             try:         
                 if address_form.is_valid():
-                    print("address_form.cleaned_data['prefix']", address_form.cleaned_data['prefix'])
-                    print("address_form.cleaned_data['suffix']", address_form.cleaned_data['suffix'])
                     address = address_form.save(commit=False)
                     address.customer = user
                     address.prefix = address_form.cleaned_data['prefix']
@@ -487,20 +501,98 @@ class OpenBidsView(LoginRequiredMixin, View):
         return render(request, self.template_name)
     
 
-# @login_required
+@login_required
 def past_bids(request):
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_bids.html')
+    user = request.user
+    user_id = user.id
+    bid_data = get_customer_bid_history_context(user_id)
+    
+    context = {
+        'bid_history': bid_data['bid_history'],
+        'statistics': bid_data['statistics']}
+    return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_bids.html', context)
 
 @login_required
 def past_purchases(request):
     orders = user_orders(request)
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_purchases.html')
+    context = {'orders': orders}
+    return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_purchases.html', context)
+
+@login_required
+def shipping_tracking(request):
+    user_shipping_copy = USER_SHIPPING_TRACKING
+    tracking_categories = TRACKING_CATEGORIES
+    shipments = user_shipments(request)
+
+    context = {'shipments': shipments, 'user_shipping_copy': user_shipping_copy, 
+               'tracking_categories': tracking_categories}
+
+    return render(request, 'pop_accounts/user_accounts/dashboard_pages/shipping_tracking.html', context)
+
+
+
+@login_required
+def user_orders_page(request, order_id):
+    user_order_details_page = USER_ORDER_DETAILS_PAGE
+
+    user = request.user
+    
+    order = get_object_or_404(
+        PopUpCustomerOrder.objects.select_related(
+            'shipping_address',
+            'billing_address',
+            'coupon',
+            'shipment'
+        ).prefetch_related(
+            Prefetch(
+                'items__product',
+                queryset=PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set__specification'),
+            )
+        ),
+        id=order_id,
+        user=user
+    )
+    
+    # Get products with specs
+    products_in_order = [item.product for item in order.items.all()]
+    products_with_specs = add_specs_to_products(products_in_order)
+   
+    
+    # Combine order items with product details
+    items_with_details = []
+    for order_item in order.items.all():
+        product_with_specs = next(p for p in products_with_specs if p.id == order_item.product.id)
+        # Get the featured image
+        featured_image = order_item.product.product_image.filter(is_feature=True).first()
+        items_with_details.append({
+            'order_item': order_item,
+            'product': product_with_specs,
+            'model_year': product_with_specs.specs.get('model_year'),
+            'product_sex': product_with_specs.specs.get('product_sex'),
+            'featured_image': featured_image,
+            'item_total': order_item.get_cost(),
+        })
+
+    # Check if shipment exists
+    shipment = getattr(order, 'shipment', None)
+    
+    context = {
+        'order': order,
+        'items': items_with_details,
+        'total_cost': order.get_total_cost(),
+        'shipment': shipment,
+        'user_order_details_page': user_order_details_page
+    }
+
+
+    return render(request, 'pop_accounts/user_accounts/dashboard_pages/user_orders.html', context)
 
 
 # ADMIN DASHBOARD
 @staff_member_required
 def dashboard_admin(request):
     admin_navigation = ADMIN_NAVIGATION_COPY
+
     # Get product inventory
     product_inventory_qs = PopUpProduct.objects.prefetch_related(
         'popupproductspecificationvalue_set__specification'
@@ -523,39 +615,57 @@ def dashboard_admin(request):
     # Convert to list and add specs
     en_route = add_specs_to_products(en_route_qs)
 
-    # Get products ordered by number of interested users (descending)
+    # Most interested products - ONLY show products with at least 1 interested user
     most_interested_products = PopUpProduct.objects.annotate(
         interest_count=Count('interested_users')
-    ).order_by('-interest_count')
+    ).filter(
+        interest_count__gt=0  # Only products with actual interest
+    ).prefetch_related(
+        'popupproductspecificationvalue_set__specification'
+    ).order_by('-interest_count')[:3] 
 
-    # If you want just the top 10
-    top_interested_products_qs = PopUpProduct.objects.annotate(
-        interest_count=Count('interested_users')
-    ).order_by('-interest_count')[:3]
-
-    # Get products ordered by number of users requesting notifications (descending)
+    # Most notification requested products - ONLY show products with at least 1 notification request
     most_notified_products = PopUpProduct.objects.annotate(
         notification_count=Count('notified_users')
-    ).order_by('-notification_count')
-
-    # If you want just the top 10
-    top_notified_products_qs = PopUpProduct.objects.annotate(
-        notification_count=Count('notified_users')
+    ).filter(
+        notification_count__gt=0  # Only products with actual notification requests
+    ).prefetch_related(
+        'popupproductspecificationvalue_set__specification'
     ).order_by('-notification_count')[:3]
 
+    # Query to get counts grouped by shoe_size and size_gender
+    size_counts = PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
+        count=Count('id')
+    ).order_by('-count')[:3]
 
-    top_interested_products = add_specs_to_products(top_interested_products_qs)
-    top_notified_products = add_specs_to_products(top_notified_products_qs)
 
-    print('top_interested_products', top_interested_products)
-    print('top_notified_products', top_notified_products)
+    top_interested_products = add_specs_to_products(most_interested_products)
+    top_notified_products = add_specs_to_products(most_notified_products)
+    total_active_accounts = PopUpCustomer.objects.filter(is_active=True).count()
+    yearly_sales = get_yearly_revenue_aggregated()
+
+    # Pending 'Okay' to Ship
+    payment_status_pending = PopUpPayment.objects.filter(notified_ready_to_ship=False)[:3]
+
+    # Okay to Ship
+    payment_status_cleared = PopUpPayment.objects.filter(
+    notified_ready_to_ship=True
+        ).exclude(
+            order__shipment__status='shipped'
+        ).select_related('order')[:3]
+   
 
 
     context = {
         "admin_navigation": admin_navigation, 
         'product_inventory': product_inventory, 
         'en_route': en_route, 'top_interested_products': top_interested_products,
-        'top_notified_products':top_notified_products
+        'top_notified_products':top_notified_products,
+        'total_active_accounts': total_active_accounts,
+        'size_counts': size_counts,
+        'yearly_sales': yearly_sales,
+        'payment_status_pending': payment_status_pending,
+        'payment_status_cleared': payment_status_cleared
     }
 
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/dashboard.html', context)
@@ -682,31 +792,229 @@ class EnRouteView(UserPassesTestMixin, ListView):
 
 @staff_member_required
 def sales(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/sales.html')
+    current_date = date.today()
+    year = current_date.strftime("%Y")
+    month = current_date.strftime("%B")
+    yearly_sales = get_yearly_revenue_aggregated()
+    monthly_sales = get_monthly_revenue()
+
+    context = {'yearly_sales': yearly_sales, 'monthly_sales': monthly_sales ,'year': year, 'month': month}
+
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/sales.html', context)
+
 
 @staff_member_required
 def most_on_notice(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_on_notice.html')
+    # Get all products with notification counts, ordered by most requested
+    most_notified = PopUpProduct.objects.annotate(
+        notification_count=Count('notified_users')
+    ).filter(
+        notification_count__gt=0  # Only show products with at least 1 notification request
+    ).prefetch_related(
+        'popupproductspecificationvalue_set__specification'
+    ).order_by('-notification_count')
+    
+    # Add specs to products
+    most_notified = add_specs_to_products(most_notified)
+    
+    context = {
+        'most_notified': most_notified,
+    }
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_on_notice.html', context)
+
 
 @staff_member_required
 def most_interested(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_interested.html')
+    # Get all products with interest counts, ordered by most interested
+    most_interested = PopUpProduct.objects.annotate(
+        interest_count=Count('interested_users')
+    ).filter(
+        interest_count__gt=0  # Only show products with at least 1 interested user
+    ).prefetch_related(
+        'popupproductspecificationvalue_set__specification'
+    ).order_by('-interest_count')
+
+    
+    # Add specs to products
+    most_interested = add_specs_to_products(most_interested)
+
+    # Total number of interest instances across all products
+    total_interest_instances = sum(product.interest_count for product in most_interested)
+    
+    context = {
+        'most_interested': most_interested,
+        'total_interest_instances': total_interest_instances
+    }
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_interested.html', context)
+
 
 @staff_member_required
 def total_open_bids(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html')
+    """
+    Display all products currently in auction with their bid counts and details
+    """
+    now = timezone.now()
+    
+    # Get all products with ongoing auctions, annotated with bid counts
+    open_auction_products = PopUpProduct.objects.filter(
+        auction_start_date__isnull=False,
+        auction_end_date__isnull=False,
+        auction_start_date__lte=now,
+        auction_end_date__gte=now
+    ).annotate(
+        active_bid_count=Count('bids', filter=Q(bids__is_active=True)),
+        highest_bid=Max('bids__amount', filter=Q(bids__is_active=True))
+    ).prefetch_related(
+        'popupproductspecificationvalue_set__specification',
+        'bids__customer'  # For getting bidder info if needed
+    ).order_by('-active_bid_count', '-highest_bid')
+    
+    # Add specs to products
+    open_auction_products = add_specs_to_products(open_auction_products)
+    
+    # Add additional auction info to each product
+    for product in open_auction_products:
+        # Get the latest bid for this product
+        latest_bid = PopUpBid.objects.filter(
+            product=product,
+            is_active=True
+        ).order_by('-timestamp').first()
+        
+        product.latest_bid = latest_bid
+        product.time_remaining = product.auction_end_date - now
+        product.auction_progress = calculate_auction_progress(product, now)
+    
+    # Calculate totals
+    total_open_bids = sum(product.active_bid_count for product in open_auction_products)
+    total_auction_value = sum(product.highest_bid or 0 for product in open_auction_products)
+    
+    context = {
+        'open_auction_products': open_auction_products,
+        'total_open_bids': total_open_bids,
+        'total_auction_value': total_auction_value,
+        'total_products_in_auction': len(open_auction_products)
+    }
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html', context)
+
 
 @staff_member_required
 def total_accounts(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_accounts.html')
+    # Total active accounts
+    total_active_accounts = PopUpCustomer.objects.filter(is_active=True).count()
+    context = {
+        'total_active_accounts':total_active_accounts
+    }
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_accounts.html', context)
+
 
 @staff_member_required
 def account_sizes(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/account_sizes.html')
+    # Query to get counts grouped by shoe_size and size_gender
+    size_counts = PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
+        count=Count('id')
+    ).order_by('-count')
+
+    context = {
+        'size_counts':size_counts
+    }
+
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/account_sizes.html', context)
+
+
+@staff_member_required
+def pending_okay_to_ship(request):
+    """
+    Item paid for, but in waiting period to verify payment clears
+    """
+    pending_shipping = ADMIN_SHIPING_OKAY_PENDING
+
+    # Pending 'Okay' to Ship
+    payment_status_pending = PopUpPayment.objects.filter(notified_ready_to_ship=False)
+    
+    context = {
+        'pending_shipping': pending_shipping,
+        'payment_status_pending': payment_status_pending
+    }
+
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/pending_okay_to_ship.html', context)
+
+
+@staff_member_required
+def get_pending_order_shipping_detail(request, order_no):
+    order_item = PopUpOrderItem.objects.filter(order=order_no)
+    context = {
+        "order_item": order_item,
+    }
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/partials/pending_order_details.html', context)
+
 
 @staff_member_required
 def update_shipping(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/update_shipping.html')
+    """
+    - show orders that have not been shipped : do i need a shipped/fullfilled tag on the orders model or ..
+        can i get unshipped orders by querying PopUpShipment odrders with status 'pending'. That would require
+        creating a shipping instance at every order with just the order_no and pending status. 
+        All other fields left blank. Here, can query all pending orders
+    - able to click on order and see order info and add shipping details to order
+    """
+    admin_shipping = ADMIN_SHIPPING_UPDATE
+    pending_shipments = PopUpShipment.objects.filter(status='pending', order__popuppayment__notified_ready_to_ship=True).select_related('order')
+
+    context = {
+        "admin_shipping": admin_shipping,
+        "pending_shipments":pending_shipments
+        }
+    
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/update_shipping.html', context)
+
+
+@staff_member_required
+def get_order_shipping_detail(request, shipment_id):
+    shipment = get_object_or_404(PopUpShipment, pk=shipment_id)
+    order_item = PopUpOrderItem.objects.filter(order=shipment.order)
+    form = ThePopUpShippingForm(instance=shipment)
+
+    context = {
+        "shipment":  shipment,
+        "order_item": order_item,
+        'form': form
+        }
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html', context)
+
+
+
+@staff_member_required
+@require_POST
+def update_shipping_post(request, shipment_id):
+    shipment = get_object_or_404(PopUpShipment, pk=shipment_id)
+    form = ThePopUpShippingForm(request.POST, instance=shipment)
+    payment = PopUpPayment.objects.get(order=shipment.order)
+    
+     
+    if form.is_valid():
+        # update PopUpShipment to "shipped"
+        form.status = "shipped"
+        form.save()
+        
+        # update PopUpPayment to "paid"
+        try:
+            payment.status = 'paid'
+            payment.save()
+        except Exception as e:
+            print('payment status update failed', e)
+
+        messages.success(request, "Shipping Information Updated.")
+        return redirect('pop_accounts:update_shipping')
+    else:
+        order_items = PopUpOrderItem.objects.filter(order=shipment.order)
+        return render(request, 'pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html', {
+            'shipment': shipment,
+            'form': form,
+            'order_items': order_items
+        })
+    
+   
+    
 
 @staff_member_required
 def view_shipments(request):

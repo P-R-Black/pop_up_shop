@@ -14,9 +14,8 @@ from django.utils.timezone import now
 from django.db.models import Q
 from decimal import Decimal
 from django.db import transaction
-from cart.cart import Cart
-from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
-
+from pop_accounts.utils import  add_specs_to_products
+from orders.models import PopUpOrderItem
 
 # Create your views here.
 class AllAuctionView(View):
@@ -273,3 +272,25 @@ class ProductDetailView(DetailView):
             getattr(product, "bought_now", False)
         )
         return context
+
+
+
+def past_product_detail(request, item_id):
+
+    item = get_object_or_404(PopUpOrderItem, id=item_id, order__user=request.user)
+    product = item.product
+
+    product_with_specs = None
+    if product:
+        product_with_specs = add_specs_to_products([product])[0]
+    else:
+        product_with_specs = None
+    
+    print('product_with_specs', product_with_specs)
+    
+    context = {
+        'item': item, 'product': product_with_specs
+
+    }
+
+    return render(request, 'auction/past_purchase_detail.html', context)

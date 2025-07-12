@@ -1,0 +1,15 @@
+<div class="shipping_detail_update_section">
+    <div class="shipping_order_items_container">
+        <div class="shipping_order_items_container_title">
+            <h3>Order Items</h3>
+        </div>
+        <ul>
+            {% for item in order_item %}
+            <li>
+                {{ item.product_title }} {{ item.secondary_product_title }} | Size: {{ item.size }} | Color:
+                {{ item.color }} | Qty: {{ item.quantity }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

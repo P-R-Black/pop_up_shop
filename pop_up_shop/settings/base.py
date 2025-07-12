@@ -41,13 +41,13 @@ ALLOWED_HOSTS = [
     "*", 
     "localhost:8000", 
     "localhost",
-    "f4a6-2600-1700-1580-da40-1888-bb71-1d2d-2cd.ngrok-free.app",
+    "62c8-2600-1700-1580-da40-616a-580d-23e8-71e5.ngrok-free.app",
     "https://*.ngrok.io",
     ]
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://f4a6-2600-1700-1580-da40-1888-bb71-1d2d-2cd.ngrok-free.app"
+    "https://62c8-2600-1700-1580-da40-616a-580d-23e8-71e5.ngrok-free.app"
 ]
 
 # Application definition
@@ -65,12 +65,12 @@ INSTALLED_APPS = [
     'pop_accounts.apps.PopAccountsConfig',
     'pop_up_email.apps.PopUpEmailConfig',
     'pop_up_shipping.apps.PopUpShippingConfig',
+    'pop_up_finance.apps.PopUpFinanceConfig',
     'orders.apps.OrdersConfig',
     'payment.apps.PaymentConfig',
     'cart.apps.CartConfig',
     'coupon.apps.CouponConfig',
     'reward.apps.RewardConfig',
-    
     'mptt',
     'django_celery_beat',
 ]
@@ -111,6 +111,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'auction.context_processors.categories',
                 'pop_accounts.context_processors.auth_forms',
+                'pop_accounts.context_processors.admin_status',
                 'cart.context_processors.cart',
             ],
         },
