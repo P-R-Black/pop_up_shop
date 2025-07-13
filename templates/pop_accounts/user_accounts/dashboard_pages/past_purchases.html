@@ -25,7 +25,7 @@ Past Purchases
                     <div class="past_purchases_items_container">
                         <div class="interested_in_item">
                             {% for item in order.items.all %}
-                            <a href="product-details">
+                            <a href="{% url 'auction:past_product_details' item.id %}">
                                 <p>{{ item.product_title }} <br> {{ item.secondary_product_title}}</p>
                             </a>
                             {% endfor %}
@@ -33,7 +33,7 @@ Past Purchases
                         <div class="interested_in_size">
                             <p>{{ order.created_at|date:"F d, Y"}}</p>
                         </div>
-                        <div class="interested_in_condition">
+                        <div class="interested_in_item">
                             <a href="{% url 'pop_accounts:customer_order' order.id%}">
                                 <p>{{ order.id}}</p>
                             </a>

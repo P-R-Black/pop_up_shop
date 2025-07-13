@@ -29,9 +29,7 @@ Past Bids
                             <p>{{ bid.bid_time|date:"F d, Y"}}</p>
                         </div>
                         <div class="interested_in_item">
-                            <a href="product-details">
-
-
+                            <a href="{% url 'auction:past_bids_product_detail' bid.product.id%}">
                                 <p>{{ bid.mptt_specs.model_year }} {{ bid.product.product_title }} <br>
                                     {{ bid.product.secondary_product_title }}
                                 </p>
@@ -61,6 +59,7 @@ Past Bids
                 </div>
             </div>
         </div>
+    </div>
 </section>
 
 {% endblock %}

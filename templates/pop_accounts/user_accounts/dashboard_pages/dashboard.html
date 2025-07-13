@@ -324,7 +324,7 @@ Dashboard
                             {% for bid in bid_history %}
                             <div class="indi_past_bids">
                                 <div class="indi_past_bid_items">
-                                    <a href="{% url 'auction:past_product_details' bid.product.id %}">
+                                    <a href="{% url 'auction:past_bids_product_detail' bid.product.id%}">
                                         <p>{{ bid.mptt_specs.model_year }} {{ bid.product.product_title }} <br>
                                             {{ bid.product.secondary_product_title }}
                                         </p>

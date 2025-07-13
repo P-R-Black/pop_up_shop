@@ -40,7 +40,7 @@ On Notice
                         <div class="order_dets_product_desc_container">
                             <h4 class="order_dets_product_title">
                                 {{ item.model_year|default:"Not Specified" }}
-                                {{ item.order_item.product_title }}
+                                {{ item.order_item.product_title }} <br>
                                 {% if item.order_item.secondary_product_title %}
                                 {{ item.order_item.secondary_product_title }}
                                 {% endif %}
@@ -67,10 +67,10 @@ On Notice
                             <div class="shipping_dets">
                                 {% if shipment %}
                                 {% if shipment.delivered_at %}
-                                <h4>Delivered: {{ shipment.delivered_at|date:"F d, Y g:i A" }}</h4>
+                                <h4>Delivered: {{ shipment.delivered_at|date:"F d, Y" }}</h4>
 
                                 {% elif shipment.shipped_at %}
-                                <h4>Shipped: {{ shipment.shipped_at|date:"F d, Y g:i A"}}</h4>
+                                <h4>Shipped: {{ shipment.shipped_at|date:"F d, Y"}}</h4>
 
                                 {% else %}
                                 <h3 style="text-align: center;">Shipping Information<br>Not Available Yet</h3>
@@ -79,11 +79,15 @@ On Notice
                             </div>
                             <div class="order_dets_shipped_to_container">
                                 {% if shipment.shipped_at %}
+                                {% if order.shipping_address.first_name %}
                                 <h4>
                                     {{order.shipping_address.first_name }}
                                     {{order.shipping_address.middle_name }}
                                     {{order.shipping_address.last_name }}
                                 </h4>
+                                {% else %}
+                                <h4>{{ order.full_name }}</h4>
+                                {% endif %}
                                 <h4>{{ order.shipping_address.address_line }}</h4>
                                 {% if order.shipping_address.address_line2 %}
                                 <h4>{{ order.shipping_address.address_line2 }}</h4>
