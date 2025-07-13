@@ -16,6 +16,7 @@ from decimal import Decimal
 from django.db import transaction
 from pop_accounts.utils import  add_specs_to_products
 from orders.models import PopUpOrderItem
+from django.http import Http404
 
 # Create your views here.
 class AllAuctionView(View):
@@ -294,3 +295,41 @@ def past_product_detail(request, item_id):
     }
 
     return render(request, 'auction/past_purchase_detail.html', context)
+
+
+def past_bid_product_detail_by_product(request, product_id):
+    """
+    Alternative view that uses product_id.
+    Shows product details. Created for past bids view
+    """
+    user = request.user
+    user_id = user.id
+    product = get_object_or_404(PopUpProduct, id=product_id)
+
+    # Verify the user has bid on this product
+    user_bids = PopUpBid.objects.filter(customer=request.user,product=product).order_by('-timestamp')
+
+    if not user_bids.exists():
+        raise Http404("You haven't bid on this product")
+    
+    # Get the user's highest bid
+    highest_user_bid = user_bids.first()
+    
+    # Get product with specifications
+    product_with_specs = add_specs_to_products([product])[0]
+    
+    # Get the final winning bid
+    final_winning_bid = PopUpBid.objects.filter(
+        product=product,
+        is_winning_bid=True
+    ).first()
+    
+    context = {
+        'product': product_with_specs,
+        'user_bids': user_bids,
+        'highest_user_bid': highest_user_bid,
+        'final_winning_bid': final_winning_bid,
+        'is_past_bid': True,
+    }
+    
+    return render(request, 'auction/past_bid_detail.html', context)

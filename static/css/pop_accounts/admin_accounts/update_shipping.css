@@ -17,10 +17,12 @@
 }
 
 .the_update_shipping_container ol li {
+    color: var(--text-color);
     cursor: pointer;
 }
 
 .the_update_shipping_container ol li a {
+    color: var(--text-color);
     cursor: pointer;
 }
 
@@ -105,4 +107,21 @@ select#shipping_status {
     color: var(--text-color);
     font-size: 1rem;
     font-weight: bold;
+}
+
+/* Shipping Partial CSS */
+.shipping_order_items_container_title {
+    margin-bottom: 1rem;
+}
+
+.shipping_order_items_container ul {
+    background-color: var(--text-color);
+    border-radius: 5px;
+    color: var(--primary-color-light);
+    padding: .75rem .75rem;
+}
+
+.shipping_order_items_container ul li {
+    margin-bottom: .5rem;
+
 }

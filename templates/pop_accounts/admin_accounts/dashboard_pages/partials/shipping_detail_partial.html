@@ -1,15 +1,17 @@
 <div class="shipping_detail_update_section">
-
     <div class="shipping_order_items_container">
         <div class="shipping_order_items_container_title">
             <h3>Order Items</h3>
         </div>
         <ul>
             {% for item in order_item %}
-            <li>
-                {{ item.product_title }} {{ item.secondary_product_title }} | Size: {{ item.size }} | Color:
-                {{ item.color }} | Qty: {{ item.quantity }}
-            </li>
+
+            <li><span><strong>Order No.</strong></span> {{ item.order.id }}</li>
+            <li><span><strong>Product:</strong></span> {{ item.product_title }} {{ item.secondary_product_title }}</li>
+            <li><strong><span>Size:</span></strong> {{ item.size }} </li>
+            <li><strong><span>Color:</span></strong> {{ item.color }}</li>
+            <li><span><strong>Qty:</strong></span> {{ item.quantity }}</li>
+            <button class="button_long">Print Shipping Label</button>
             {% endfor %}
         </ul>
     </div>
