@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Shipping Labels
+{% endblock %}
+
+{% block main %}
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>{{ admin_shipping.page_title }}</h2>
+        </div>
+        <div class="shipping_label_section">
+            <div class="order_id_container">
+                <p>{{ order }}</p>
+            </div>
+            <div class="shipping_labels_container">
+                <div class="shipping_from_choice_container">
+                    <p>Select Where Item Shipping From</p>
+                    {% for item in admin_shipping.ship_from_options %}
+                    <div class="addresses_from_container">
+                        <input class="from_address_selection" type="radio" name="shipping_to"
+                            shipping-data="{{ item.zip_code }}"> <br>
+                        <address class="from_addy_container" id="{{item.zip_code}}">
+                            {{ item.organization }} <br>
+                            {{ item.street_address }} <br>
+                            {{ item.city }},
+                            {{ item.state }}
+                            {{ item.zip_code }}
+                        </address>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div id="print_section">
+                    <div class="shipping_from_container">
+                        <div class="shipping_label">
+
+                        </div>
+
+                    </div>
+
+                    <div class="shippnig_to_container">
+                        {% for order in order_details %}
+                        <p>{% if order.shipping_address.prefix %} {{ order.shipping_address.prefix }}{% endif %}
+                            {{ order.shipping_address.first_name }} {% if order.shipping_address.middle_name %} {{
+                            order.shipping_address.middle_name }}{% endif %}
+                            {{ order.shipping_address.last_name }} {% if order.shipping_address.suffix %}
+                            {{ order.shipping_address.suffix }}{% endif %}
+                        </p>
+                        <p>{{ order.shipping_address.address_line }} </p>
+                        {% if order.shipping_address.address_line2 %}
+                        <p>{{ order.shipping_address.address_line2 }} </p>
+                        {% endif %}
+                        {% if order.shipping_address.apartment_suite_number %}
+                        <p>{{ order.shipping_address.apartment_suite_number }} </p>
+                        {% endif %}
+                        <p>{{ order.shipping_address.town_city }}, {{ order.shipping_address.state }}
+                            {{ order.shipping_address.postcode }}
+                        </p>
+
+                        {% if order.shipping_address.delivery_instructions %}
+                        <p>{{ order.shipping_address.delivery_instructions }} </p>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                <button class="button_long_option" onclick="printDiv('print_section')">Print Shipping Info</button>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('HELP!')
+
+        const fromAddressInput = document.querySelectorAll('.from_address_selection')
+        console.log('fromAddress', fromAddressInput)
+
+        const shippingLabel = document.querySelector('.shipping_label')
+
+
+        fromAddressInput.forEach(btn => {
+            btn.addEventListener('change', (e) => {
+                e.preventDefault();
+
+                const target = btn.getAttribute('shipping-data');
+
+                const addySelected = document.getElementById(target)
+
+                shippingLabel.innerHTML = addySelected.innerHTML
+
+
+            })
+        });
+
+    });
+
+    function printDiv(divId) {
+        const printContents = document.getElementById(divId).innerHTML;
+        const originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+        window.print();
+
+        // Restore original contents after print
+        document.body.innerHTML = originalContents;
+        window.location.reload(); // Optional: refreshes to reset JS state
+    }
+
+
+</script>
+{% endblock %}

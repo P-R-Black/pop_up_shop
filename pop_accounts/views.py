@@ -45,7 +45,7 @@ import json
 import logging
 from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
-from .pop_accounts_copy.admin_copy.admin_copy import ADMIN_NAVIGATION_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING
+from .pop_accounts_copy.admin_copy.admin_copy import ADMIN_NAVIGATION_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS
 from .pop_accounts_copy.user_copy.user_copy import USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE
 from django.db.models import Count, Max, Q
 
@@ -183,6 +183,7 @@ class UserDashboardView(LoginRequiredMixin, View):
 
         # user orders
         orders = user_orders(request)
+        
         # user shipments
         shipments = user_shipments(request)
 
@@ -652,9 +653,8 @@ def dashboard_admin(request):
     notified_ready_to_ship=True
         ).exclude(
             order__shipment__status='shipped'
-        ).select_related('order')[:3]
+        ).exclude(order__shipment__status='delivered').select_related('order')[:3]
    
-
 
     context = {
         "admin_navigation": admin_navigation, 
@@ -989,12 +989,24 @@ def update_shipping_post(request, shipment_id):
     shipment = get_object_or_404(PopUpShipment, pk=shipment_id)
     form = ThePopUpShippingForm(request.POST, instance=shipment)
     payment = PopUpPayment.objects.get(order=shipment.order)
+
+    for pay in payment:
+            print('pay', pay)
     
      
     if form.is_valid():
         # update PopUpShipment to "shipped"
-        form.status = "shipped"
-        form.save()
+        updated_shipment = form.save(commit=False)
+
+        # Check if status is being updated to "delivered"
+        if updated_shipment.status == 'delivered' and not updated_shipment.delivered_at:
+            updated_shipment.delivered_at = timezone.now()
+        
+        # Clear delivered_at if the status is changed away from "delivered"
+        if updated_shipment.status != 'delivered' and updated_shipment.delivered_at:
+            updated_shipment.delivered_at = None
+        
+        updated_shipment.save()
         
         # update PopUpPayment to "paid"
         try:
@@ -1015,10 +1027,25 @@ def update_shipping_post(request, shipment_id):
     
    
     
-
 @staff_member_required
 def view_shipments(request):
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/shipments.html')
+    """
+    - show orders that have been shipped : admin can use this view to view shipped items
+    - shows order that have been shipped : admin can use this view to update delivery status
+    """
+    admin_shipping = ADMIN_SHIPMENTS
+    all_shipments = PopUpShipment.objects.filter(order__popuppayment__notified_ready_to_ship=True).select_related('order')
+    pending_delivery = PopUpShipment.objects.filter(status='shipped', order__popuppayment__notified_ready_to_ship=True).select_related('order')
+    delivered = PopUpShipment.objects.filter(status='delivered', order__popuppayment__notified_ready_to_ship=True).select_related('order')
+
+
+    context = {
+        "admin_shipping": admin_shipping,
+        "all_shipments": all_shipments,
+        "pending_delivery":pending_delivery,
+        "delivered": delivered,
+        }
+    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/shipments.html', context)
 
 
 class EmailCheckView(View):

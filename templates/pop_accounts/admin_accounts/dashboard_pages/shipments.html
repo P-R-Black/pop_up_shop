@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Shipments
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>{{ admin_shipping.page_title }}</h2>
+        </div>
+        <div class="admin_navigation_section">
+            <div class="admin_navigation_container">
+                <ul>
+                    {% for item in admin_shipping.shipment_status %}
+                    <li class="{{ item.class }}" id="{{ item.id }}" data-tab="{{ item.data }}">
+                        <a href="">{{ item.label }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="all_shipments_section active_shipment" id="ship-tab">
+            <div class="shipments_title_box_container">
+                <h2>{{ admin_shipping.order_no_title_box_shipment_title }}</h2>
+            </div>
+            <ol>
+                {% for shipment in all_shipments %}
+                <li>
+                    <a href="" class="load_shipment" data-shipment-id="{{ shipment.id }}">
+                        Order #{{ shipment.order.id }} - {{ shipment.order.full_name}} - {{shipment.status|title }}
+                    </a>
+
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <div class="all_shipments_section" id="pending-tab">
+            <div class="shipments_title_box_container">
+                <h2>{{ admin_shipping.order_no_title_box_pending_title }}</h2>
+            </div>
+            <ol>
+                {% for shipment in pending_delivery %}
+                <li>
+                    <a href="" class="load_shipment" data-shipment-id="{{ shipment.id }}">
+                        Order #{{ shipment.order.id }} - {{ shipment.order.full_name}} - {{shipment.status|title }}
+                    </a>
+
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+        <div class="all_shipments_section" id="deliv-tab">
+            <div class="shipments_title_box_container">
+                <h2>{{ admin_shipping.order_no_title_box_delivered_title }}</h2>
+            </div>
+            <ol>
+                {% for shipment in delivered %}
+                <li>
+                    <a href="" class="load_shipment" data-shipment-id="{{ shipment.id }}">
+                        Order #{{ shipment.order.id }} - {{ shipment.order.full_name}} - {{shipment.status|title }}
+                    </a>
+
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <div class="the_update_shipping_section">
+            <div class="the_update_shipping_container">
+                <div class="update_shipping_title">
+                    <h3>{{ admin_shipping.order_no_title_box }}</h3>
+                </div>
+                <ol>
+                    {% for shipment in pending_shipments %}
+                    {% if shipment.status == "pending" %}
+                    <li>
+                        <a href="{% url 'pop_accounts:get_shipping_detail' shipment.id %}" class="load_shipment"
+                            data-shipment-id="{{ shipment.id }}">
+                            Order #{{ shipment.order.id }} - {{ shipment.order.full_name}} - {{shipment.status|title }}
+                        </a>
+
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ol>
+            </div>
+
+            <!-- Placeholder for dynamic order details -->
+            <div class="shipment_detail_container" id="shipment_detail_container">
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const links = document.querySelectorAll('.load_shipment');
+        links.forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const shipmentId = this.dataset.shipmentId;
+                fetch(`/pop_accounts/get-shipping-detail/${shipmentId}/`)
+                    .then(res => res.text())
+                    .then(html => {
+                        document.getElementById('shipment_detail_container').innerHTML = html;
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}
