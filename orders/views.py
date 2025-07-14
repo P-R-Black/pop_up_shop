@@ -27,9 +27,7 @@ from collections import defaultdict
 import braintree
 import re
 from django.db.models import Q
-from django.conf import settings
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.db.models import Prefetch
 
 
@@ -311,18 +309,7 @@ def user_shipments(request):
     
     return result
 
-"""
-prefix
-first_name
-middle_name
-suffix
-address_line
-address_line2
-apartment_suite_number
-town_city
-state
-postcode
-"""
+
 
 @staff_member_required
 def admin_order_detail(request, order_id):

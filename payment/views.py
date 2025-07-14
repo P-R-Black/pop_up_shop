@@ -502,8 +502,6 @@ class BillingAddressView(LoginRequiredMixin, View):
 
 
 
-
-
 @require_POST
 @login_required
 def set_billling_address(request):

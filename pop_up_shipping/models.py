@@ -17,6 +17,7 @@ class PopUpShipment(models.Model):
         ('pending', 'Pending'),
         ('shipped', 'Shipped'),
         ('returned', 'Returned'),
+        ('delivered', 'Delivered')
      
     ]
     

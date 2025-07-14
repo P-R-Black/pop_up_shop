@@ -1075,7 +1075,6 @@ document.addEventListener('DOMContentLoaded', () => {
     tabButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('clicked')
             const target = button.getAttribute('data-tab');
 
             // Remove "active" class from all;
@@ -1086,7 +1085,30 @@ document.addEventListener('DOMContentLoaded', () => {
             button.classList.add('activated');
             document.getElementById(target).classList.add('activated')
         })
+    });
+
+
+    // Shipments in Admin Dashboard
+    const shipTabButtons = document.querySelectorAll('.shipment_status_button');
+    const shipTabContents = document.querySelectorAll('.all_shipments_section');
+
+    shipTabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = button.getAttribute('data-tab');
+
+            // Remove "active" class from all;
+            shipTabButtons.forEach(btn => btn.classList.remove('active_shipment'))
+            shipTabContents.forEach(content => content.classList.remove('active_shipment'));
+
+            // Add active to selected
+            button.classList.add('active_shipment');
+            document.getElementById(target).classList.add('active_shipment')
+        })
     })
+
+
+
 
 })
 
@@ -1129,7 +1151,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (email) {
         const emailInput = document.querySelector('#id_email_for_password_reset_one');
-        console.log('emailInput', emailInput)
         if (emailInput) {
             emailInput.value = email;
         }

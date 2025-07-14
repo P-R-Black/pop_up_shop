@@ -11,7 +11,8 @@
             <li><strong><span>Size:</span></strong> {{ item.size }} </li>
             <li><strong><span>Color:</span></strong> {{ item.color }}</li>
             <li><span><strong>Qty:</strong></span> {{ item.quantity }}</li>
-            <button class="button_long">Print Shipping Label</button>
+            <a href="{% url 'pop_up_shipping:generate_shipping_label' item.order.id %}" class="button_long">Print
+                Shipping Label</a>
             {% endfor %}
         </ul>
     </div>
