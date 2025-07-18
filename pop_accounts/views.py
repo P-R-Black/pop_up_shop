@@ -18,13 +18,15 @@ from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAd
 from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
 from auction.utils.utils import get_customer_bid_history_context
 from payment.models import PopUpPayment
-from pop_up_finance.utils import get_yearly_revenue_aggregated, get_monthly_revenue
+from pop_up_finance.utils import (get_yearly_revenue_aggregated, get_monthly_revenue, get_last_20_days_sales, 
+                                  get_last_12_months_sales, get_last_5_years_sales, get_yoy_day_sales, 
+                                  get_year_over_year_comparison, get_month_over_month_comparison, get_weekly_revenue)
+from pop_up_email.utils import send_customer_shipping_details
 from pop_up_shipping.models import PopUpShipment
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .forms import PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, ThePopUpUserAddressForm
 from pop_up_shipping.forms import ThePopUpShippingForm
-import random
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
@@ -35,13 +37,12 @@ from django.contrib.auth.tokens import default_token_generator
 import time
 from django.core.cache import cache
 from django.utils.timezone import now
-
 from django.contrib.auth import logout
 from django.views import View
 from .utils import validate_email_address, get_client_ip, add_specs_to_products, calculate_auction_progress
 from django.conf import settings
-import hashlib
 import json
+from django.utils.safestring import mark_safe
 import logging
 from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
@@ -152,6 +153,7 @@ def user_password_reset_confirm(request, uidb64, token):
 
 
 from pop_up_shipping.models import PopUpShipment
+
 
 class UserDashboardView(LoginRequiredMixin, View):
     template_name = 'pop_accounts/user_accounts/dashboard_pages/dashboard.html'
@@ -797,8 +799,21 @@ def sales(request):
     month = current_date.strftime("%B")
     yearly_sales = get_yearly_revenue_aggregated()
     monthly_sales = get_monthly_revenue()
+    weekly_sales = get_weekly_revenue()
+    past_twenty_day_sales = get_last_20_days_sales()
+    past_twelve_months_sales = get_last_12_months_sales()
+    past_five_years_sales = get_last_5_years_sales()
+    day_over_day_sales_comp = get_yoy_day_sales()
+    year_over_year_comp = get_year_over_year_comparison()
+    month_over_month_comp = get_month_over_month_comparison()
 
-    context = {'yearly_sales': yearly_sales, 'monthly_sales': monthly_sales ,'year': year, 'month': month}
+    context = {'yearly_sales': yearly_sales, 'monthly_sales': monthly_sales, 'weekly_sales': weekly_sales,
+               'year': year, 'month': month, 'past_twenty_day_sales_json': mark_safe(json.dumps(past_twenty_day_sales)),
+               'past_twelve_months_sales_json': mark_safe(json.dumps(past_twelve_months_sales)),
+               'past_five_years_sales_json': mark_safe(json.dumps(past_five_years_sales)),
+               'day_over_day_sales_comp_json': mark_safe(json.dumps(day_over_day_sales_comp)),
+               'year_over_year_comp_json': mark_safe(json.dumps(year_over_year_comp)),
+               'month_over_month_comp_json': mark_safe(json.dumps(month_over_month_comp))}
 
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/sales.html', context)
 
@@ -958,7 +973,9 @@ def update_shipping(request):
     - able to click on order and see order info and add shipping details to order
     """
     admin_shipping = ADMIN_SHIPPING_UPDATE
-    pending_shipments = PopUpShipment.objects.filter(status='pending', order__popuppayment__notified_ready_to_ship=True).select_related('order')
+    pending_shipments = PopUpShipment.objects.filter(
+        status='pending', order__popuppayment__notified_ready_to_ship=True
+        ).select_related('order')
 
     context = {
         "admin_shipping": admin_shipping,
@@ -990,11 +1007,19 @@ def update_shipping_post(request, shipment_id):
     form = ThePopUpShippingForm(request.POST, instance=shipment)
     payment = PopUpPayment.objects.get(order=shipment.order)
 
-    for pay in payment:
-            print('pay', pay)
+    print('shipment', shipment)
+    print('payment', payment)
+
     
-     
+    """
+    Figure out where to put this. Can I get this information from the "updated_shipment" form, or do I have to...
+    ... query database again after shipping info saved and updated?
+    send_customer_shipping_details(user, order=shipment, carrier, tracking_no, shipped_at=timezone.now(), estimated_deliv, status="shipped")
+    """
     if form.is_valid():
+        #Keep track of whether order was previously shipped
+        was_unshipped = shipment.status != 'shipped'
+
         # update PopUpShipment to "shipped"
         updated_shipment = form.save(commit=False)
 
@@ -1014,6 +1039,19 @@ def update_shipping_post(request, shipment_id):
             payment.save()
         except Exception as e:
             print('payment status update failed', e)
+        
+        # Send shipping email if shipment was recently marked as shipped
+        if was_unshipped and updated_shipment.status == 'shipped':
+            send_customer_shipping_details(
+                user=request.user,
+                order=shipment.order,
+                carrier=updated_shipment.carrier,
+                tracking_no=updated_shipment.tracking_number,
+                shipped_at=updated_shipment.shipped_at,
+                estimated_deliv=updated_shipment.estimated_delivery,
+                status=updated_shipment.status
+            )
+
 
         messages.success(request, "Shipping Information Updated.")
         return redirect('pop_accounts:update_shipping')

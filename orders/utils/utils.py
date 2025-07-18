@@ -18,6 +18,7 @@ def admin_orders(order_id):
     )
     return orders
 
+
 def admin_shipments(order_id):
 
     """Get shipped products for a specific user with specs, shipment info, and shipping address"""

@@ -84,14 +84,48 @@ def preview_order_confirmation(request):
     })
    
     
-    # user = {"first_name": "Maya", "last_name": "Lopez"}
-
-    # context = {
-    #     "user": user,
-    #     "order_id": order_id,
-    #     "items": items
-    # }
-        
-    # html = render_to_string('pop_up_email/order_confirmation.html', context)
     return HttpResponse(html)
 
+
+def preview_send_customer_shipping_details(request):
+
+    user = request.user
+    user_email = request.user.email  
+
+    order_id = "b62171e6-cb4b-48f6-be14-20d971393059"
+    carrier = "UPS"
+    tracking_no = "6547382910"
+    shipped_at = datetime(2025, 7, 11)
+    estimated_deliv = datetime(2025, 7, 15)
+    status = 'Shipped'
+
+    links_to_track_shipment = {
+            "USPS": "https://tools.usps.com/go/TrackConfirmAction_input?_gl=1*ctcvbi*_ga*MjA2NDExMTY3Ni4xNzUxNTA0NzI3*_ga_QM3XHZ2B95*czE3NTI3MDA0MzkkbzExJGcxJHQxNzUyNzAwNTM0JGo2MCRsMCRoMA..",
+            "UPS": "https://www.ups.com/us/en/home",
+            "FedEx": "https://www.fedex.com/en-us/tracking.html"
+    }
+
+  
+    html = render_to_string('pop_up_email/send_customer_shipping_details.html', {
+        'user': user,
+        'order_id': order_id,
+        'carrier': carrier,
+        'tracking_no': tracking_no,
+        'shipped_at':shipped_at,
+        'estimated_deliv': estimated_deliv,
+        'status':status,
+        'tracker_link': links_to_track_shipment[carrier]
+    })
+
+    return HttpResponse(html)
+
+
+def preview_invite_friend_email(request):
+    user = 'Peter'
+    invitee = 'Tom'
+    html = render_to_string('pop_up_email/invite_friend.html', {
+        'user': user,
+        'invite': invitee
+    
+    })
+    return HttpResponse(html)

@@ -41,13 +41,13 @@ ALLOWED_HOSTS = [
     "*", 
     "localhost:8000", 
     "localhost",
-    "62c8-2600-1700-1580-da40-616a-580d-23e8-71e5.ngrok-free.app",
+    "27bf11471981.ngrok-free.app",
     "https://*.ngrok.io",
     ]
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://62c8-2600-1700-1580-da40-616a-580d-23e8-71e5.ngrok-free.app"
+    "https://27bf11471981.ngrok-free.app",
 ]
 
 # Application definition

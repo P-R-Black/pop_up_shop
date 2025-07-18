@@ -15,10 +15,10 @@ Sales
         </div>
         <div class="the_inventory_container">
             <div class="inventory_item_select">
-                <ul>
-                    <li><a href="#">Day</a></li>
-                    <li><a href="#">Month</a></li>
-                    <li><a href="#">Year</a></li>
+                <ul id="sales_filter">
+                    <li><a href="#" data-view="day">Day</a></li>
+                    <li><a href="#" data-view="month">Month</a></li>
+                    <li><a href="#" data-view="year">Year</a></li>
                 </ul>
             </div>
             <div class="sales_items_graphs_container">
@@ -34,12 +34,23 @@ Sales
                         </div>
                     </div>
                     <div class="dashboard_databox_smaller">
-
                         <div class="dashboard_admin_sales_container">
                             <h3>${{ monthly_sales|intcomma }}</h3>
                         </div>
                         <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
                             <h3>{{ month }} Sales</h3>
+                            <div class="blank_div"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard_databox_smaller">
+                        <div class="dashboard_admin_sales_container">
+                            <h3>${{ weekly_sales|intcomma }}</h3>
+                        </div>
+                        <div class="dashboard_databox_title">
+                            <div class="blank_div"></div>
+                            <h3>This Week's Sales</h3>
+                            <div class="blank_div"></div>
                         </div>
                     </div>
                 </div>
@@ -54,5 +65,13 @@ Sales
             </div>
         </div>
 </section>
+<script>
+    var pastTwentyDaySalesJson = JSON.parse('{{ past_twenty_day_sales_json|safe }}')
+    var pastTwelveMonthsSalesJson = JSON.parse('{{ past_twelve_months_sales_json|safe }}')
+    var pastFiveYearsSalesJson = JSON.parse('{{ past_five_years_sales_json|safe }}')
+    var dayOverDaySalesCompJson = JSON.parse('{{ day_over_day_sales_comp_json|safe }}')
+    var yearOverYearCompJson = JSON.parse('{{ year_over_year_comp_json| safe }}')
+    var monthOverMonthCompJson = JSON.parse('{{ month_over_month_comp_json| safe }}')
+</script>
 
 {% endblock %}
