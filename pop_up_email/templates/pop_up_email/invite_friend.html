@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Friend Invite</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
+
+        .logo-font {
+            font-family: 'Birthstone', cursive;
+            color: #CB3A60;
+            font-size: 3.5rem;
+            font-weight: 500;
+        }
+
+        /* Mobile Styles */
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+                padding: 0 10px !important;
+            }
+
+            .stack {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .mobile-center {
+                text-align: center !important;
+            }
+
+        }
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f4">
+        <tr>
+            <td align="center" style="padding: 20px">
+                <table class="container" role="presentation" width="700" cellpadding="0" cellspacing="0" border="0"
+                    bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 700px; max-width: 700px">
+                    <!--Header-->
+                    <tr border="0" width="600" style="width: 600px; max-width: 600px">
+                        <td align="center" width="600" style="background-color: #000; padding:20px;">
+                            <div class="image-text">
+                                <span class="image">
+                                    <div class="logo-font"
+                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                        The Pop Up
+                                    </div>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <h4 style="color: #CB3A60; text-align: center; font-weight: 300; font-style: italic">There
+                                is no surer
+                                foundation for a
+                                beautiful friendship than
+                                a mutual taste in style. - Anonymous
+                            </h4>
+                        </td>
+                    </tr>
+                    <!-- Message -->
+                    <tr align="center">
+                        <td style="padding: 20px 30px 0 30px;">
+                            <h2 style="color: #333;">Congrats {{ invite }} 🎉</h2>
+                            <h3>You've got a real day one in {{ user }}.</h3>
+                            <h3 style="font-size: 20px; font-weight: 200;">
+                                {{ user }} thought you’d love
+                                <strong style="font-family: 'Birthstone', cursive; font-size: 28px; color: #CB3A60;">
+                                    The Pop Up
+                                </strong>, and we agree.
+                            </h3>
+                        </td>
+                    </tr>
+                    <tr align="center">
+                        <td style="padding: 20px 30px 0 30px;">
+                            <p style="font-size: 16px; color: #555;">
+                                Join now to explore:
+                            </p>
+                            <ul style="padding-left: 20px;">
+                                <li style="list-style: none;">🛍️ Authentic products</li>
+                                <li style="list-style: none;">🤝 A growing community</li>
+                                <li style="list-style: none;">💰 $10 off your first purchase over $50</li>
+                            </ul>
+
+                            <div style="margin: 30px 0;">
+                                <a href="{{ invite_link }}"
+                                    style="padding: 12px 24px; background-color: #CB3A60;; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                                    Accept Invite
+                                </a>
+                            </div>
+
+                            <p style="font-size: 14px; color: #888; text-align: center;">
+                                Already have an account? Just log in with your email.
+                            </p>
+
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center"
+                            style="margin: 0; background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #999;">
+                            You're receiving this email because someone you may know sent an invitation for you to join
+                            <a href="https://thepopup.com" style="color: #999">The Pop Up</a> community.<br>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+
+{% comment %}
+
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px;">
+
+        <h3>There is no surer foundation for a beautiful friendship than a mutual taste in style.</h3>
+
+        <h2 style="color: #333;">You've been invited to join The Pop Up by {{ user }} 🎉</h2>
+
+        <p style="font-size: 16px; color: #555;">
+            Hey there! {{ friend_name }} thought you’d love <strong>{{ platform_name }}</strong>, and we agree.
+        </p>
+
+        <p style="font-size: 16px; color: #555;">
+            Join now to explore:
+        <ul style="padding-left: 20px;">
+            <li>🛍️ Exclusive offers or discounts</li>
+            <li>🚀 Early access to new features</li>
+            <li>🤝 A growing community of awesome people</li>
+        </ul>
+        </p>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ invite_link }}"
+                style="padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">Accept
+                Invite</a>
+        </div>
+
+        <p style="font-size: 14px; color: #888; text-align: center;">
+            Already have an account? Just log in with your email.
+        </p>
+
+    </div>
+</body>
+
+</html>
+{% endcomment %}

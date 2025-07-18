@@ -43,12 +43,16 @@ Shipping Labels
 
                     <div class="shippnig_to_container">
                         {% for order in order_details %}
+                        {% if order.shipping_address.first_name %}
                         <p>{% if order.shipping_address.prefix %} {{ order.shipping_address.prefix }}{% endif %}
                             {{ order.shipping_address.first_name }} {% if order.shipping_address.middle_name %} {{
                             order.shipping_address.middle_name }}{% endif %}
                             {{ order.shipping_address.last_name }} {% if order.shipping_address.suffix %}
                             {{ order.shipping_address.suffix }}{% endif %}
                         </p>
+                        {% else %}
+                        {{ order.full_name }}
+                        {% endif %}
                         <p>{{ order.shipping_address.address_line }} </p>
                         {% if order.shipping_address.address_line2 %}
                         <p>{{ order.shipping_address.address_line2 }} </p>

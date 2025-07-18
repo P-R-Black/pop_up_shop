@@ -57,7 +57,8 @@
                     <tr>
                         <td style="padding: 20px 30px 0 30px;">
                             <h4 style="color: #CB3A60">Hello {{ user.first_name }},</h4>
-                            <p style="color: #CB3A60">Your order, order #<a href="">{{ order_id}}</a>, is being
+                            <p style="color: #CB3A60">Your order, order #
+                                <a href="{% url 'pop_accounts:customer_order' order_id %}">{{ order_id}}</a>, is being
                                 processed.
                             </p>
                             <p style="color: #CB3A60">Thank you for shopping at The Pop Up. We’ll send a confirmation

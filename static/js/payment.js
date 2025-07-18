@@ -200,16 +200,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
 
 
-    function numberWithCommas(num) {
-        console.log('numberWithCommas num', num)
-        if (num.toString().includes(',')) {
-            console.log('numberWithCommas', num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","))
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        } else {
-            return num;
-        }
-
-    }
 
     // get subtotal and total
     const calculateSubtotal = (proccessFee, shippingCost, taxRate) => {

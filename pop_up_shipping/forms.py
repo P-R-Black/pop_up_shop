@@ -47,7 +47,7 @@ class ThePopUpShippingForm(forms.ModelForm):
     shipped_at = forms.DateTimeField(
         label='Date Shipped',  required=False,
         widget=forms.DateTimeInput(attrs={
-            'type': 'date',
+            'type': 'datetime-local',
             'class': 'shipping_shipped_at', 
             'placeholder': 'Date Shipped',
             'id': '',
@@ -58,7 +58,7 @@ class ThePopUpShippingForm(forms.ModelForm):
     estimated_delivery = forms.DateTimeField(
         label='Estimated Delivery', required=False,
         widget=forms.DateTimeInput(attrs={
-            'type': 'date',
+            'type': 'datetime-local',
             'class': 'shipping_estimated_deliv',
             'id': '',
             'placeholder': 'Estimated Delivery',
@@ -69,7 +69,7 @@ class ThePopUpShippingForm(forms.ModelForm):
     delivered_at = forms.DateTimeField(
         label='Delivered At', required=False,
         widget=forms.DateTimeInput(attrs={
-            'type': 'date',
+            'type': 'datetime-local',
             'class': 'shipping_delivered_at',
             'id': '',
             'placeholder': 'Delivered On',

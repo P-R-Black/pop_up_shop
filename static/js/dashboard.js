@@ -381,242 +381,220 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
 
 
-// chart js
-// const DATA_COUNT = 7;
-// const NUMBER_CFG = { count: DATA_COUNT, min: -100, max: 100 };
 
-// const labels = Utils.months({ count: 7 });
-// const data = {
-//     labels: labels,
-//     datasets: [
-//         {
-//             label: 'Fully Rounded',
-//             data: Utils.numbers(NUMBER_CFG),
-//             borderColor: Utils.CHART_COLORS.red,
-//             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
-//             borderWidth: 2,
-//             borderRadius: Number.MAX_VALUE,
-//             borderSkipped: false,
-//         },
-//         {
-//             label: 'Small Radius',
-//             data: Utils.numbers(NUMBER_CFG),
-//             borderColor: Utils.CHART_COLORS.blue,
-//             backgroundColor: Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
-//             borderWidth: 2,
-//             borderRadius: 5,
-//             borderSkipped: false,
-//         }
-//     ]
-// };
+console.log('test for pastTwentyDaySalesJson.labels', pastTwentyDaySalesJson.labels)
+console.log('test for pastTwentyDaySalesJson["data"]', pastTwentyDaySalesJson.data)
 
-// const config = {
-//     type: 'bar',
-//     data: data,
-//     options: {
-//         responsive: true,
-//         plugins: {
-//             legend: {
-//                 position: 'top',
-//             },
-//             title: {
-//                 display: true,
-//                 text: 'Chart.js Bar Chart'
-//             }
-//         }
-//     },
-// };
+console.log('month test.labels', pastTwelveMonthsSalesJson.labels);
+console.log('month test.data', pastTwelveMonthsSalesJson.data);
 
-const indChartArea = document.getElementById('sales_chart_data');
+console.log('d-o-d dayOverDaySalesCompJson', dayOverDaySalesCompJson)
 
-// chart js
-const sales_stats = () => {
-    const currData = [10, 20, 30, 40, 50, 70, 55, 45, 65, 85, 75]
-    const data = {
-        labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
+
+
+
+const salesDataSets = {
+    day: {
+        labels: pastTwentyDaySalesJson.labels,
+        data: pastTwentyDaySalesJson.data,
+        label: 'Daily Sales'
+    },
+    month: {
+        labels: pastTwelveMonthsSalesJson.labels,
+        data: pastTwelveMonthsSalesJson.data,
+        label: 'Monthly Sales'
+    },
+    year: {
+        labels: pastFiveYearsSalesJson.labels,
+        data: pastFiveYearsSalesJson.data,
+        label: 'Yearly Sales'
+    }
+};
+
+const comparisonDataSets = {
+    day: {
+        labels: dayOverDaySalesCompJson.labels,
         datasets: [
             {
-                label: 'Daily Sales',
-                data: currData,
-                backgroundColor: ['rgb(203, 58, 96)'],
-                borderColor: 'red',
-                borderWidth: 2,
-                // pointRadius: 5,
+                label: "This Year",
+                data: dayOverDaySalesCompJson.current_year,
+                borderColor: 'rgba(76, 175, 80, 0.1)',
+                backgroundColor: "rgb(203, 58, 96)",
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
                 borderRadius: Number.MAX_VALUE,
-                borderSkipped: false,
-            }]
-    }
-
-    const legendMargin = {
-        id: 'legendMargin',
-        beforeInit(chart, legend, options) {
-            const fitValue = chart.legend.fit
-
-
-            chart.legend.fit = function fit() {
-                fitValue.bind(chart.legend)()
-                return this.height += 30;
-            }
-        }
-    };
-
-    const config = {
-        type: 'bar',
-        data,
-        options: {
-            maintainAspectRatio: false,
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    fullWidth: true,
-                    labels: {
-                        // usePointStyle: true,
-                        // pointStyle: 'dash',
-                        color: 'rgb(203, 58, 96)',
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        color: 'rgb(203, 58, 96)',
-                        font: {
-                            family: 'Libre Caslon Text',
-                        }
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: 'rgb(203, 58, 96)',
-                        font: {
-                            family: 'Libre Caslon Text',
-                        }
-                    },
-                    beginAtZero: true,
-                    afterTickToLabelConversion: (ctx) => {
-                        newTicks = []
-
-                        for (let i = 0; i < ctx.ticks.length; i++) {
-                            let theVal = ctx.ticks[i]['value']
-                            newTicks.push({ value: theVal, label: '$' + theVal })
-                        }
-                        ctx.ticks = newTicks
-
-                    }
-                }
-            }
-        },
-        plugins: [legendMargin]
-
-    };
-
-    let chartStatus = Chart.getChart('sales_chart_data');
-    if (chartStatus != undefined) {
-        chartStatus.destroy()
-    }
-    var ctx = new Chart(indChartArea, config);
-}
-
-
-
-
-const salesChartTwoData = document.getElementById('sales_chart_two_data');
-const yearOverYearStats = () => {
-    // chart js
-    const DATA_COUNT = 7;
-    const NUMBER_CFG = { count: DATA_COUNT, min: -100, max: 100 };
-
-    const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'] //Utils.months({ count: 7 });
-    const data = {
-        labels: labels,
-        datasets: [
-            {
-                label: 'Last Year Sales',
-                data: [5, 10, 15, 20, 25], //Utils.numbers(NUMBER_CFG),
-                borderColor: 'blue', //Utils.CHART_COLORS.red,
-                backgroundColor: 'lightblue', //Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
-                borderWidth: 2,
-                borderRadius: Number.MAX_VALUE,
-                borderSkipped: false,
             },
             {
-                label: 'This Year Sales',
-                data: [10, 20, 30, 40, 50],//Utils.numbers(NUMBER_CFG),
-                borderColor: 'red', //Utils.CHART_COLORS.blue,
-                backgroundColor: ['rgb(203, 58, 96)'], //Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
-                borderWidth: 2,
+                label: "Last Year",
+                data: dayOverDaySalesCompJson.previous_year,
+                borderColor: "rgba(244, 67, 54, 0.1)",
+                backgroundColor: "rgba(240, 160, 12, 1)",
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
                 borderRadius: Number.MAX_VALUE,
-                borderSkipped: false,
             }
         ]
-    };
-
-    const config = {
-        type: 'bar',
-        data: data,
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    fullWidth: true,
-                    labels: {
-                        // usePointStyle: true,
-                        // pointStyle: 'dash',
-                        color: 'rgb(203, 58, 96)',
-                    },
-                },
+    },
+    month: {
+        labels: monthOverMonthCompJson.labels,
+        datasets: [
+            {
+                label: "This Year",
+                data: monthOverMonthCompJson.current_year,
+                borderColor: "rgba(33, 150, 243, 0.1)",
+                backgroundColor: "rgb(203, 58, 96)",
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
+                borderRadius: Number.MAX_VALUE,
             },
-            scales: {
-                x: {
-                    ticks: {
-                        color: 'rgb(203, 58, 96)',
-                        font: {
-                            family: 'Libre Caslon Text',
-                        }
-                    }
-                },
-                y: {
-                    ticks: {
-                        color: 'rgb(203, 58, 96)',
-                        font: {
-                            family: 'Libre Caslon Text',
-                        }
-                    },
-                    beginAtZero: true,
-                    afterTickToLabelConversion: (ctx) => {
-                        newTicks = []
+            {
+                label: "Last Year",
+                data: monthOverMonthCompJson.previous_year,
+                borderColor: "rgba(33, 150, 243, 0.1)",
+                backgroundColor: "rgba(240, 160, 12, 1)",
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
+                borderRadius: Number.MAX_VALUE,
+            }
+        ]
+    },
+    year: {
+        labels: yearOverYearCompJson.labels,
+        datasets: [
+            {
+                label: "This 5 Years",
+                data: yearOverYearCompJson.current_year,
+                borderColor: "rgba(243, 7, 7, 0.1)",
+                backgroundColor: "rgb(203, 58, 96)",
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
+                borderRadius: Number.MAX_VALUE,
+            },
+            {
+                label: "Last 5 Years",
+                data: yearOverYearCompJson.current_previous_year,
+                borderColor: "rgba(103, 58, 183, 0.1)",
+                backgroundColor: "rgba(240, 160, 12, 1)",
+                tension: 0.3,
+                fill: true,
+                pointRadius: 4,
+                borderRadius: Number.MAX_VALUE,
+            }
+        ]
+    }
+};
 
-                        for (let i = 0; i < ctx.ticks.length; i++) {
-                            let theVal = ctx.ticks[i]['value']
-                            newTicks.push({ value: theVal, label: '$' + theVal })
-                        }
-                        ctx.ticks = newTicks
 
+const salesCtx = document.getElementById('sales_chart_data').getContext('2d');
+const comparisonCtx = document.getElementById('sales_chart_two_data').getContext('2d');
+
+let salesChart = new Chart(salesCtx, {
+    type: 'bar',
+    data: {
+        labels: salesDataSets.day.labels,
+        datasets: [{
+            label: salesDataSets.day.label,
+            data: salesDataSets.day.data,
+            borderColor: 'rgba(103, 58, 183, 0.1)',
+            backgroundColor: 'rgb(203, 58, 96)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            borderRadius: Number.MAX_VALUE,
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: {
+            legend: {
+                display: true,
+                labels: {
+                    color: 'rgb(203, 58, 96)'
+                }
+            },
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: 'rgb(203, 58, 96)',
+                    font: { family: 'Libre Carlson Text' }
+                }
+            },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    color: 'rgb(203, 58, 96)',
+                    font: { family: 'Libre Carlson Text' },
+                    callback: function (value) {
+                        return `$${value}`
                     }
                 }
             }
+        }
+    }
+});
+
+let comparisonChart = new Chart(comparisonCtx, {
+    type: 'bar',
+    data: {
+        labels: comparisonDataSets.day.labels,
+        datasets: comparisonDataSets.day.datasets
+    },
+    options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: {
+            legend: {
+                display: true,
+                labels: {
+                    color: 'rgb(203, 58, 96)'
+                }
+            },
         },
-    };
-
-    let chartStatus = Chart.getChart('sales_chart_two_data');
-    if (chartStatus != undefined) {
-        chartStatus.destroy()
+        scales: {
+            x: {
+                ticks: {
+                    color: 'rgb(203, 58, 96)',
+                    font: { family: 'Libre Carlson Text' }
+                }
+            },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    color: 'rgb(203, 58, 96)',
+                    font: { family: 'Libre Carlson Text' },
+                    callback: function (value) {
+                        return `$${value}`
+                    }
+                }
+            }
+        }
     }
-    var ctx = new Chart(salesChartTwoData, config);
-}
+});
 
 
-window.onload = function () {
+document.querySelectorAll('#sales_filter a').forEach(link => {
+    link.addEventListener('click', function (e) {
+        e.preventDefault();
+        const view = this.dataset.view;
 
-    if (window.innerWidth <= 600) {
-        Chart.defaults.font.size = 10;
-    } else if (window.innerWidth >= 601 && window.innerWidth <= 1024) {
-        Chart.defaults.font.size = 16;
-    } else {
-        Chart.defaults.font.size = 22;
-    }
-    sales_stats()
-    yearOverYearStats()
-}
+        // Update sales chart
+        const salesData = salesDataSets[view];
+        salesChart.data.labels = salesData.labels;
+        salesChart.data.datasets[0].data = salesData.data;
+        salesChart.data.datasets[0].label = salesData.label;
+        salesChart.update();
+
+        // Update comparison chart
+        const comparisonData = comparisonDataSets[view];
+        comparisonChart.data.labels = comparisonData.labels;
+        comparisonChart.data.datasets = comparisonData.datasets;
+        comparisonChart.update();
+    });
+});
