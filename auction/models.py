@@ -14,7 +14,6 @@ from datetime import timedelta
 # from .managers import CustomPopUpAccountManager  # Assuming you have a custom user manager
 
 # Create your models here.
-
 class PopUpBrand(models.Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)
     slug = models.SlugField(max_length=255)
@@ -28,7 +27,7 @@ class PopUpBrand(models.Model):
     def save(self, *args, **kwargs):
         # Generate slug if it's not provided
         if not self.slug:
-            base_slug = slugify(self.product_title)
+            base_slug = slugify(self.name)
             slug = base_slug
             counter = 1
             while PopUpBrand.objects.filter(slug=slug).exists():
@@ -107,7 +106,7 @@ class PopUpProductType(models.Model):
     def save(self, *args, **kwargs):
         # Generate slug if it's not provided
         if not self.slug:
-            base_slug = slugify(self.product_title)
+            base_slug = slugify(self.name)
             slug = base_slug
             counter = 1
             while PopUpProductType.objects.filter(slug=slug).exists():
@@ -358,6 +357,7 @@ class PopUpProduct(models.Model):
         return self.product_title
 
 
+
 class PopUpProductSpecificationValue(models.Model):
     """
     The Product Specification Value table holds each of the products individual specificaiton or bespoke features
@@ -379,6 +379,7 @@ class PopUpProductSpecificationValue(models.Model):
         return self.value
 
 
+
 class PopUpProductImage(models.Model):
     """
     The Product Image table.
@@ -389,6 +390,16 @@ class PopUpProductImage(models.Model):
         help_text=_("Upload a product image"),
         upload_to="images/",
         default="images/default.png",
+        null=True,
+        blank=True
+    )
+
+    # External URL
+    image_url = models.URLField(
+        verbose_name=_("External Image URL"),
+        help_text=_("Paste the URL of the image (e.g. S3, Cloudinary)"),
+        blank=True,
+        null=True,
     )
 
     alt_text = models.CharField(
@@ -405,7 +416,31 @@ class PopUpProductImage(models.Model):
     class Meta:
         verbose_name = _("PopUp Product Image")
         verbose_name_plural = _("PopUp Product Images")
+    
 
+    def get_image_url(self):
+        # D'abord vérifier image_url (URLs externes)
+        if self.image_url:
+            return self.image_url
+        
+        # Ensuite vérifier les fichiers uploadés
+        if self.image and hasattr(self.image, 'url'):
+            try:
+                return self.image.url
+            except ValueError:
+                pass
+        
+        # Default fallback
+        return settings.STATIC_URL + 'images/default.png'
+    
+
+    @property
+    def resolved_image_url(self):
+        return self.get_image_url()
+
+
+    def __str__(self):
+        return self.image.url if self.image and hasattr(self.image, 'url') else self.image_url or "No image"
 
 
 class WinnerReservation(models.Model):

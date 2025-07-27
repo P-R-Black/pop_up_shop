@@ -1,7 +1,7 @@
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 from .models import PopUpCustomerIP
-from .utils import get_client_ip 
+from .utils.utils import get_client_ip 
 
 # @receiver(user_logged_in)
 # def track_login_ip(sender, request, user, **kwargs):

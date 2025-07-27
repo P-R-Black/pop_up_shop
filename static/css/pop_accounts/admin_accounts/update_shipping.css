@@ -42,12 +42,12 @@
     text-decoration: underline;
 }
 
-. ol li {
+/* ol li {
     color: var(--text-color);
     font-size: clamp(.85rem, 1.10rem, 5vw);
     list-style: decimal;
     margin-bottom: .5rem;
-}
+} */
 
 
 .shipping_info_update_container,

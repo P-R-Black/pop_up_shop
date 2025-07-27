@@ -24,7 +24,7 @@ Past Product Detail
 
                     {% for image in product.product_image.all %}
                     {% if image.is_feature %}
-                    <img class="img_fluid_product_details" alt="{{ image.alt_text }}" src="{{ image.image }}"
+                    <img class="img_fluid_product_details" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}"
                         alt="{{ image.image.alt_text}}" />
                     {% endif %}
                     {% endfor %}

@@ -382,16 +382,6 @@ document.addEventListener('DOMContentLoaded', function (e) {
 
 
 
-console.log('test for pastTwentyDaySalesJson.labels', pastTwentyDaySalesJson.labels)
-console.log('test for pastTwentyDaySalesJson["data"]', pastTwentyDaySalesJson.data)
-
-console.log('month test.labels', pastTwelveMonthsSalesJson.labels);
-console.log('month test.data', pastTwelveMonthsSalesJson.data);
-
-console.log('d-o-d dayOverDaySalesCompJson', dayOverDaySalesCompJson)
-
-
-
 
 const salesDataSets = {
     day: {

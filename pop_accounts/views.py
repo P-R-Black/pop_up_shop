@@ -15,13 +15,20 @@ from orders.models import PopUpOrderItem, PopUpCustomerOrder
 from django.db.models import Prefetch
 from django.http import JsonResponse, HttpResponse
 from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid, PopUpCustomerIP
-from auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
+from auction.models import PopUpProduct, PopUpProductSpecification, PopUpProductSpecificationValue, PopUpProductType
 from auction.utils.utils import get_customer_bid_history_context
+from django.views.decorators.http import require_http_methods
 from payment.models import PopUpPayment
 from pop_up_finance.utils import (get_yearly_revenue_aggregated, get_monthly_revenue, get_last_20_days_sales, 
                                   get_last_12_months_sales, get_last_5_years_sales, get_yoy_day_sales, 
                                   get_year_over_year_comparison, get_month_over_month_comparison, get_weekly_revenue)
 from pop_up_email.utils import send_customer_shipping_details
+
+from .utils.add_products_util import  handle_simple_form_submission, handle_full_product_save
+from .utils.edit_products_util import save_existing_specifications, save_custom_specifications
+
+from auction.forms import (PopUpBrandForm, PopUpCategoryForm, PopUpProductTypeForm, PopUpProductSpecificationForm, 
+                           PopUpAddProductForm, PopUpProductSpecificationValueForm, PopUpProductImageForm)
 from pop_up_shipping.models import PopUpShipment
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
@@ -34,19 +41,21 @@ import secrets
 from django.utils import timezone
 from datetime import datetime, timedelta, date
 from django.contrib.auth.tokens import default_token_generator
+from django.db import IntegrityError
 import time
 from django.core.cache import cache
 from django.utils.timezone import now
 from django.contrib.auth import logout
 from django.views import View
-from .utils import validate_email_address, get_client_ip, add_specs_to_products, calculate_auction_progress
+from .utils.utils import validate_email_address, get_client_ip, add_specs_to_products, calculate_auction_progress
 from django.conf import settings
 import json
 from django.utils.safestring import mark_safe
 import logging
 from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
-from .pop_accounts_copy.admin_copy.admin_copy import ADMIN_NAVIGATION_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS
+from .pop_accounts_copy.admin_copy.admin_copy import (ADMIN_NAVIGATION_COPY, ADMIN_SHIPPING_UPDATE, 
+                                                      ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE)
 from .pop_accounts_copy.user_copy.user_copy import USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE
 from django.db.models import Count, Max, Q
 
@@ -1007,9 +1016,6 @@ def update_shipping_post(request, shipment_id):
     form = ThePopUpShippingForm(request.POST, instance=shipment)
     payment = PopUpPayment.objects.get(order=shipment.order)
 
-    print('shipment', shipment)
-    print('payment', payment)
-
     
     """
     Figure out where to put this. Can I get this information from the "updated_shipment" form, or do I have to...
@@ -1084,6 +1090,239 @@ def view_shipments(request):
         "delivered": delivered,
         }
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/shipments.html', context)
+
+
+
+class UpdateProductView(UserPassesTestMixin, View):
+    """
+    - shows all products added to database.
+    - shows all products that are comming soon.
+    - shows all products in inventory.
+    - Can update status from "coming soon" to "in inventory"
+    - Displays form for specific product
+    """
+    template_name = 'pop_accounts/admin_accounts/dashboard_pages/update_product.html'
+    product_copy = ADMIN_PRODUCT_UPDATE
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get(self, request, product_id=None):
+        context = self.get_context_data(product_id)
+        return render(request, self.template_name, context)
+    
+    def post(self, request, product_id=None):
+        print('UpdateProductView post method hit!')
+        if product_id:
+            # Handle form submission for updating a product
+            product = get_object_or_404(PopUpProduct, id=product_id)
+            form = PopUpAddProductForm(request.POST, instance=product)
+            image_form = PopUpProductImageForm(request.POST, request.FILES, instance=product)
+
+            if form.is_valid():
+                form.save()
+
+
+
+                # save image if present
+                image_file = request.FILES.get('image')  # or whatever field name you use
+                image_url = request.POST.get('image_url') 
+                if image_file or image_url:
+                    if image_form.is_valid():
+                        image_instance = image_form.save(commit=False)
+                        image_instance.product = product
+                        image_instance.save()
+                    else:
+                        messages.error(request, "There was an error with the image upload.")
+                        print("Product Image Form Errors", image_form.errors)
+
+                # Handle specifications if they exist
+                self._handle_specifications(request, product)
+
+                # Redirect or show success message
+                context =self.get_context_data(product_id)
+                context['success_message'] = 'Product updated successfully.'
+                return render(request, self.template_name, context)
+            else:
+                # One or both forms has errors, show them
+                if not image_form_valid:
+                    messages.error(request, 'Please check the image form for errors.')
+                context = self.get_context_data(product_id)
+                context['form'] = form # This will contain the errors
+                context['product_image_form'] = image_form # Include image form with errors
+                return render(request, self.template_name, context)
+        else:
+            # No product selected, just show the lsit
+            context = self.get_context_data()
+            return render(request, self.template_name, context)
+        
+    
+    def get_context_data(self, product_id=None):
+        all_products = PopUpProduct.objects.all()
+        products_coming_soon = PopUpProduct.objects.filter(inventory_status="in_transit")
+        products_in_inventory = PopUpProduct.objects.filter(inventory_status="in_inventory")
+
+        
+        context = {
+            'product_copy': self.product_copy,
+            'all_products': all_products,
+            'products_coming_soon': products_coming_soon,
+            'products_in_inventory': products_in_inventory
+        }
+    
+        # If a product is selected, add form data
+        if product_id:
+            try:
+                product = PopUpProduct.objects.get(id=product_id)
+                form = PopUpAddProductForm(instance=product)
+                product_image_form = PopUpProductImageForm(instance=product)
+
+                # Get existing specifications
+                existing_specs = PopUpProductSpecificationValue.objects.filter(
+                    product=product
+                ).select_related('specification')
+
+                existing_spec_values = {
+                    spec_value.specification.id: spec_value.value for spec_value in existing_specs
+                }
+
+                context.update({
+                    'selected_product': product,
+                    'form': form,
+                    'product_image_form': product_image_form,
+                    'existing_spec_values': existing_spec_values,
+                    'existing_spec_values_json': json.dumps(existing_spec_values),
+                    'product_type_id': product.product_type.id if product.product_type else None,
+                    'show_form': True
+                })
+            except PopUpProduct.DoesNotExist:
+                context['error_message'] = 'Product note found'
+        return context
+    
+    def _handle_specifications(self, request, product):
+        """Handle updating product specifications"""
+        # Get all specification fields from the POST data
+        for key, value in request.POST.items():
+            if key.startswith('spec_') and value.strip():
+                try:
+                    spec_id = int(key.replace('spec_', ''))
+                    
+                    # Get or create the specification value
+                    spec_value, created = PopUpProductSpecificationValue.objects.get_or_create(
+                        product=product,
+                        specification_id=spec_id,
+                        defaults={'value': value}
+                    )
+                    
+                    if not created:
+                        spec_value.value = value
+                        spec_value.save()
+                        
+                except (ValueError, TypeError):
+                    continue  # Skip invalid specification IDs
+
+
+
+class UpdateProductPostView(UserPassesTestMixin, View):
+    """
+    View for product updates
+    """
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def post(self, request, product_id):
+        product = get_object_or_404(PopUpProduct, id=product_id)
+        form = PopUpAddProductForm(request.POST, instance=product)
+
+        if form.is_valid():
+            try:
+                updated_product = form.save()
+
+                PopUpProductSpecificationValue.objects.filter(product=updated_product).delete()
+
+                # Save the new specifications
+                self.save_existing_specifications(request, updated_product)
+                self.save_custom_specifications(request, updated_product)
+                messages.success(request, f'Product "{updated_product.product_title} {updated_product.secondary_product_title} updated successfully!')
+                return redirect('pop_accounts:update_product')
+            except Exception as e:
+                messages.error(request, 'An error occurred while updating the product.')
+                print('Update error:', e)
+        else:
+            messages.error(request, 'Please correct the errors in the form.')
+            print('Form errors', form.errors)
+        return redirect('pop_accounts:updated_product')
+
+
+   
+
+
+class AddProductsView(UserPassesTestMixin, View):
+    template_name = 'pop_accounts/admin_accounts/dashboard_pages/add_product.html'
+    product_copy = ADMIN_PRODUCTS_PAGE
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+
+    def get(self, request): 
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
+    
+    def post(self, request):
+        form_type = request.POST.get('form_type')
+
+        if form_type == "Add Product Type":
+            success, _ = handle_simple_form_submission(request, PopUpProductTypeForm, "Product type", "Product type {name} added successfully")
+            if success:
+                return redirect('pop_accounts:add_products')
+        
+        elif form_type == "Add Category":
+            success, _ = handle_simple_form_submission(request, PopUpCategoryForm, "Category", "Category {name} added successfully")
+            if success:
+                return redirect('pop_account:add_products')
+        elif form_type == "Add Brand":
+            success, _ = handle_simple_form_submission(request, PopUpBrandForm, "Brand", "Brand {name} added successfully")
+            if success:
+                return redirect('pop_account:add_products')
+        elif form_type == "Save Product":
+            success = handle_full_product_save(request)
+            if success:
+                return redirect('pop_accounts:add_products')
+        
+        # If we reach here, return context with forms populated
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
+
+    def get_context_data(self):
+        return {
+            'brand_form': PopUpBrandForm(), 
+            'category_form': PopUpCategoryForm(),
+            'product_type_form': PopUpProductTypeForm(),
+            'product_specification_form': PopUpProductSpecificationForm(),
+            'product_add_form': PopUpAddProductForm(),
+            'product_specification_value_form': PopUpProductSpecificationValueForm(),
+            'product_image_form': PopUpProductImageForm(),
+            'product_copy': self.product_copy
+        }
+
+
+
+@require_http_methods(['GET'])
+def add_products_get(request, product_type_id):
+    try:
+        specifications = PopUpProductSpecification.objects.filter(
+            product_type_id=product_type_id).values('id', 'name')
+        return JsonResponse({
+            'success': True,
+            'specifications': list(specifications)
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+            })
+
 
 
 class EmailCheckView(View):
