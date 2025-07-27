@@ -39,8 +39,7 @@ Auction
                     <div class="background_rectangle"></div>
                     {% for image in prod.product_image.all %}
                     {% if image.is_feature %}
-                    <img class="img_fluid_cs" alt="{{ image.alt_text }}" src="{{ image.image }}"
-                        alt="{{ image.image.alt_text}}" />
+                    <img class="img_fluid_cs" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}" />
                     {% endif %}
                     {% endfor %}
                 </div>

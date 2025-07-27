@@ -442,4 +442,36 @@ test_account_data = [
         "is_feature": "True"
 
      },
+     {
+        "id": "125374012",
+        "product_type": "shoe",
+        "category": "Jordan 5",
+        "product_title": "Jordan 5 Retro OG",
+        "secondary_product_title": "Black Metallic Reimagined",
+        "description": "The Air Jordan 5 Retro OG Black Metallic Reimagined pays homage to one of Jordan Brand’s most iconic designs, first debuted in 1990. This updated version reimagines the timeless sneaker with subtle yet impactful modern tweaks, staying true to its legendary roots. Featuring a sleek black nubuck upper, reflective metallic silver tongues, and bold fire red accents on the Jumpman logo, this sneaker effortlessly blends heritage with innovation.",
+        "slug": "jordan-5-retro-og-black-metallic-reimagined",
+        "buy_now_price": "310",
+        "retail_price":"210.00",
+        "brand":"Jordan",
+        "auction_start_date":"",
+        "auction_end_date":"",
+        "buy_now_start":"",
+        "buy_now_end":"",
+        "inventory_status": "in_inventory",
+        "current_highest_bid": "",
+        "bid_count": "0",
+        "reserve_price": "",
+        "is_active": True,
+        "style_number": "HF3975-001",
+        "colorway": "Black/White-Metallic Silver-Fire Red",
+        "model_year": "2025",
+        "release_date": "02/08/2025",
+        "size": "9",
+        "product_sex": "Male",
+        "condition": "new",
+        "image": "https://res.cloudinary.com/prblack/image/upload/v1744430267/the_pop_up/snkr6_qv4fc8.png",
+        "alternative_text": "Jordan 5 Retro OG Black Metallic Reimagined",
+        "is_feature": "True"
+
+     },
 ]

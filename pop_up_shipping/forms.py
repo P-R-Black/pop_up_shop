@@ -3,16 +3,6 @@ from .models import PopUpShipment
 
 # Shipping Choices
 
-"""
-order = models.OneToOneField('orders.PopUpCustomerOrder', on_delete=models.CASCADE, related_name='shipment')
-carrier = models.CharField(max_length=50, choices=CARRIER_CHOICES, default='usps')
-tracking_number = models.CharField(max_length=100, blank=True, null=True)
-shipped_at = models.DateTimeField(blank=True, null=True)
-estimated_delivery = models.DateTimeField(blank=True, null=True)
-delivered_at = models.DateTimeField(blank=True, null=True)
-status = models.CharField(max_length=50, default='pending')
-"""
-
 class ThePopUpShippingForm(forms.ModelForm):
     order = forms.CharField(
         label='Order No.',  min_length=2, max_length=100, required=False,

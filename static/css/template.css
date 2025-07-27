@@ -244,7 +244,7 @@ body.dark {
     color: var(--primary-color-light);
     cursor: pointer;
     display: flex;
-    font-size: clamp(.70rem, 1rem, 2vw);
+    font-size: clamp(.70rem, .95rem, 2vw);
     height: 2.25rem;
     justify-content: center;
     padding: 0 .5rem 0 .5rem;

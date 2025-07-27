@@ -6,7 +6,7 @@ from .models import PopUpCustomerOrder, PopUpOrderItem
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
 from auction.models import PopUpProduct, WinnerReservation
 from pop_up_shipping.models import PopUpShipment
-from pop_accounts.utils import add_specs_to_products
+from pop_accounts.utils.utils import add_specs_to_products
 from coupon.models import PopUpCoupon
 from payment.models import PopUpPayment
 from pop_up_shipping.models import PopUpShipment

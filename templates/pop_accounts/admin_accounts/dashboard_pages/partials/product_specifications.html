@@ -1,0 +1,22 @@
+<!-- templates/partials/product_specifications.html -->
+<div class="product_add_pricing" id="specifications-container" style="display: none;">
+    <div class="add_pricing_title">
+        <h4>Product Specifications</h4>
+    </div>
+    <div id="existing-specifications">
+        <!-- Existing specifications will be loaded here -->
+    </div>
+
+    <div id="custom-specifications">
+        <div class="add_pricing_title">
+            <h4>Add Custom Specification</h4>
+        </div>
+        <div class="spec-input-group">
+            <input type="text" name="custom_spec_name[]" placeholder="Specification Name"
+                class="form-control form-control-add-specs">
+            <input type="text" name="custom_spec_value[]" placeholder="Specification Value"
+                class="form-control form-control-add-specs">
+            <button type="button" class="add_specs_button" onclick="addSpecificationField()">Add Another</button>
+        </div>
+    </div>
+</div>

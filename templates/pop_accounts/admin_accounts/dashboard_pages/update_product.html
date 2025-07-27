@@ -1,0 +1,406 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}
+Update Product
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <div class="section_container">
+        <div class="page_title">
+            <h2>{{ product_copy.page_title }}</h2>
+        </div>
+
+        <!-- Success/Error Messages -->
+        {% if success_message %}
+        <div class="alert alert-success">{{ success_message }}</div>
+        {% endif %}
+        {% if error_message %}
+        <div class="alert alert-error">{{ error_message }}</div>
+        {% endif %}
+
+        <div class="admin_navigation_section">
+            <div class="admin_navigation_container">
+                <ul>
+                    {% for item in product_copy.product_status %}
+                    <li class="{{ item.class }}" id="{{ item.id }}" data-tab="{{ item.data }}">
+                        <a href="">{{ item.label }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="all_products_section active_product" id="prod-tab">
+            <div class="shipments_title_box_container">
+                <h2>{{ product_copy.product_title_box_all_prods_title }}</h2>
+            </div>
+            <ol>
+                {% for prod in all_products %}
+                <li>
+                    <a href="{% url 'pop_accounts:update_product_detail' prod.id %}"
+                        class="product-link {% if selected_product.id == prod.id %}active{% endif %}">
+                        {{ prod.product_title }} {{ prod.secondary_product_title }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <div class="all_products_section" id="coming-tab">
+            <div class="shipments_title_box_container">
+                <h2>{{ product_copy.product_title_box_coming_soon_title }}</h2>
+            </div>
+            <ol>
+                {% for prod in products_coming_soon %}
+                <li>
+                    <a href="{% url 'pop_accounts:update_product_detail' prod.id %}"
+                        class="product-link {% if selected_product.id == prod.id %}active{% endif %}">
+                        {{ prod.product_title }} {{ prod.secondary_product_title }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <div class="all_products_section" id="inventory-tab">
+            <div class="shipments_title_box_container">
+                <h2>{{ product_copy.product_title_box_in_inventory_title }}</h2>
+            </div>
+            <ol>
+                {% for prod in products_in_inventory %}
+                <li>
+                    <a href="{% url 'pop_accounts:update_product_detail' prod.id %}"
+                        class="product-link {% if selected_product.id == prod.id %}active{% endif %}">
+                        {{ prod.product_title }} {{ prod.secondary_product_title }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <!-- Product Update Form Section -->
+        {% if show_form %}
+        <div class="the_update_shipping_section">
+            <div class="shipping_detail_update_section">
+                <div class="shipping_info_update_container">
+                    <div class="shipping_info_update_title">
+                        <h3>Update Product Info - {{ selected_product.product_title }}
+                            {{ selected_product.secondary_product_title }}</h3>
+                    </div>
+
+                    <form method="POST" action="{% url 'pop_accounts:update_product_detail' selected_product.id %}"
+                        class="update_prod_form_container">
+                        {% csrf_token %}
+                        <div class="product_edit_type_cat_brand_container">
+                            <div class="product_add_image_elements"> {{ form.product_type.label_tag }}
+                                {{ form.product_type }}
+                            </div>
+                            <div class="product_add_image_elements"> {{ form.category.label_tag }}
+                                {{ form.category }}
+                            </div>
+                            <div class="product_add_image_elements"> {{ form.brand.label_tag }}
+                                {{ form.brand }}
+                            </div>
+                        </div>
+                        <div class="product_add_product_titles_container">
+                            <div class="product_edit_info_data_container">
+                                <div class=""> {{ form.product_title }}</div>
+                            </div>
+                            <div class="product_edit_info_data_container">
+                                <div class="">{{ form.secondary_product_title }}</div>
+                            </div>
+
+                            <div class="product_edit_info_data_container">
+                                <div class="">{{ form.description }}</div>
+                            </div>
+                            <div class="product_edit_info_data_container">
+                                <div class="">
+                                    {{ form.inventory_status.label_tag }}
+                                </div>
+                                {{ form.inventory_status }}
+                            </div>
+                            <div class="product_edit_info_data_container">
+                                <span class="checkmark">
+                                    {{ form.is_active }}&nbsp
+                                    {{form.is_active.label_tag }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="product_add_product_titles_container">
+                            <div class="product_edit_image_elements">
+                                <div> {{ product_image_form.image.label_tag }}</div>
+
+                                {{ product_image_form.image }}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div class="">{{ product_image_form.image_url.label_tag }}</div>
+
+                                {{ product_image_form.image_url }}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div> {{ product_image_form.alt_text.label_tag }}</div>
+                                {{ product_image_form.alt_text }}
+                            </div>
+                            <div class="product_edit_image_elements">
+                                <span class="checkmark">
+                                    {{ product_image_form.is_feature.label_tag}}&nbsp
+                                    {{ product_image_form.is_feature }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="product_add_product_titles_container">
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.retail_price.label_tag }}</div>
+                                {{ form.retail_price}}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.reserve_price.label_tag }}</div>
+                                {{ form.reserve_price}}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.buy_now_price.label_tag }}</div>
+                                {{ form.buy_now_price}}
+                            </div>
+
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.buy_now_start.label_tag }}</div>
+                                {{ form.buy_now_start}}
+                            </div>
+
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.buy_now_end.label_tag }}</div>
+                                {{ form.buy_now_end}}
+                            </div>
+                            <div class="product_edit_image_elements">
+                                <span class="checkmark">
+                                    {{ form.bought_now.label_tag }}&nbsp
+                                    {{ form.bought_now}}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="product_add_product_titles_container">
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.auction_start_date.label_tag }}</div>
+                                {{ form.auction_start_date}}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.auction_end_date.label_tag }}</div>
+                                {{ form.auction_end_date}}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.current_highest_bid.label_tag }}</div>
+                                {{ form.current_highest_bid}}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.bid_count.label_tag }}</div>
+                                {{ form.bid_count }}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.winner.label_tag }}</div>
+                                {{ form.winner }}
+                            </div>
+                            <div class="product_edit_image_elements">
+                                <span class="checkmark">
+                                    {{ form.auction_finalized.label_tag }}&nbsp
+                                    {{ form.auction_finalized}}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="product_add_product_titles_container">
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.reserved_until.label_tag }}</div>
+                                {{ form.reserved_until }}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.product_weight_lbs.label_tag }}</div>
+                                {{ form.product_weight_lbs }}
+                            </div>
+                            <div class="product_edit_image_url_elements">
+                                <div>{{ form.zip_code_stored.label_tag }}</div>
+                                {{ form.zip_code_stored }}
+                            </div>
+                        </div>
+                        <!-- Include the specifications partial -->
+                        {% include 'pop_accounts/admin_accounts/dashboard_pages/partials/product_specifications.html' %}
+                        <div class="product_add_product_titles_container">
+                            <div class="product_edit_image_url_elements">
+
+                                <input class="button_long save_prod_button" type="submit" name="form_type"
+                                    value="Update Product">
+                            </div>
+                        </div>
+
+                    </form>
+                    <div class="add_type_brand_cat_messages_container">
+                        {% if messages %}
+                        <div class="messages">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="the_update_shipping_section">
+            <div class="no-product-selected">
+                <h3>Select a product from the list above to edit</h3>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <script>
+        // Include the specifications JavaScript
+        let currentProductType = null;
+
+        // Main initialization function for edit product page
+        function initializeProductSpecifications(productTypeId, existingValues = {}) {
+            console.log('Initializing product specifications for edit');
+            console.log('Product Type ID:', productTypeId);
+            console.log('Existing Values:', existingValues);
+
+            if (productTypeId) {
+                currentProductType = productTypeId;
+                loadProductSpecifications(productTypeId, existingValues);
+
+                const specificationsContainer = document.getElementById('specifications-container');
+                if (specificationsContainer) {
+                    specificationsContainer.style.display = 'block';
+                }
+            }
+
+            // Set up the product type change listener
+            setupProductTypeListener();
+        }
+
+        // Function to handle product type selection changes
+        function handleProductTypeChange() {
+            const productTypeSelect = document.querySelector('select[name="product_type"]');
+            const specificationsContainer = document.getElementById('specifications-container');
+
+            if (!productTypeSelect || !specificationsContainer) return;
+
+            const selectedProductType = productTypeSelect.value;
+
+            if (selectedProductType && selectedProductType !== currentProductType) {
+                currentProductType = selectedProductType;
+                console.log('Product type changed to:', selectedProductType);
+                // When product type changes, don't pre-fill with existing values (start fresh)
+                loadProductSpecifications(selectedProductType, {});
+                specificationsContainer.style.display = 'block';
+            } else if (!selectedProductType) {
+                specificationsContainer.style.display = 'none';
+                currentProductType = null;
+            }
+        }
+
+        // Function to load specifications via AJAX
+        function loadProductSpecifications(productTypeId, existingValues = {}) {
+            fetch(`/pop_accounts/add-products-admin/${productTypeId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displaySpecifications(data.specifications, existingValues);
+                    } else {
+                        console.error('Error loading specifications:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Network error:', error);
+                });
+        }
+
+        // Function to display specifications with existing values
+        function displaySpecifications(specifications, existingValues = {}) {
+            const container = document.getElementById('existing-specifications');
+            if (!container) {
+                console.error('existing-specifications container not found');
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (specifications.length === 0) {
+                container.innerHTML = '<p>No existing specifications for this product type.</p>';
+                return;
+            }
+
+            // Render specifications with existing values pre-filled
+            const html = specifications.map(spec => {
+                const existingValue = existingValues[spec.id] || '';
+                return `
+                <div class="product_edit_info_data_container">
+                    <div class="ship_form_label">${escapeHtml(spec.name)}</div>
+                    <input type="text"
+                           id="spec_${spec.id}"
+                           name="spec_${spec.id}" 
+                           value="${escapeHtml(existingValue)}"
+                           placeholder="Enter ${escapeHtml(spec.name)}" 
+                           class="form-control specification-form-control">
+                </div>
+            `;
+            }).join('');
+
+            container.innerHTML = html;
+            console.log(`Displayed ${specifications.length} specifications with existing values`);
+        }
+
+        // Set up product type change listener
+        function setupProductTypeListener() {
+            const productTypeSelect = document.querySelector('select[name="product_type"]');
+            if (productTypeSelect) {
+                // Remove existing listener to avoid duplicates
+                productTypeSelect.removeEventListener('change', handleProductTypeChange);
+                // Add the listener
+                productTypeSelect.addEventListener('change', handleProductTypeChange);
+            } else {
+                console.warn('Product type select field not found');
+            }
+        }
+
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.toString().replace(/[&<>"']/g, function (m) { return map[m]; });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Page loaded');
+
+            // Initialize product specifications if a product is selected
+            // {% if show_form and product_type_id %}
+            console.log('Initializing product specifications');
+
+            const existingValues = JSON.parse('{{existing_spec_values_json|safe}}')
+            console.log('existingValues:', existingValues ? existingValues : "No existingValues");
+
+            const productTypeId = "{{product_type_id}}";
+            console.log('productTypeId test:', productTypeId);
+
+            // Call your initialization function if it exists
+            if (typeof initializeProductSpecifications === 'function') {
+                initializeProductSpecifications(productTypeId, existingValues);
+            }
+            // {% endif %}
+        });
+    </script>
+
+</section>
+
+
+{% endblock %}

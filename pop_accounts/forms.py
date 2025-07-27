@@ -3,7 +3,7 @@ from .models import PopUpCustomer, PopUpCustomerAddress
 from django.contrib.auth.forms import (AuthenticationForm, PasswordResetForm, SetPasswordForm)
 import re
 from django.core.exceptions import ValidationError
-from .utils import validate_password_strength
+from .utils.utils import validate_password_strength
 
 # from django_countries.data import COUNTRIES
 

@@ -44,7 +44,7 @@ def cart_delete(request):
                 item_data = item
                 break
 
-        is_buy_now = item_data._et('buy_now', False) if item_data else False
+        is_buy_now = item_data.get('buy_now', False) if item_data else False
 
         # Delete from cart
         cart.delete(product_id)

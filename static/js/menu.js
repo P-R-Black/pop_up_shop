@@ -1108,6 +1108,25 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
 
+    // Products in Update Product Info
+    const prodTabButtons = document.querySelectorAll('.product_status_button');
+    const prodTabContents = document.querySelectorAll('.all_products_section');
+
+    prodTabButtons.forEach(prodButton => {
+        prodButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = prodButton.getAttribute('data-tab');
+
+            prodTabButtons.forEach(btn => btn.classList.remove('active_product'));
+            prodTabContents.forEach(content => content.classList.remove('active_product'));
+
+            // Add active to selected
+            prodButton.classList.add('active_product');
+            document.getElementById(target).classList.add('active_product')
+        })
+    })
+
+
 
 
 })
@@ -1230,5 +1249,3 @@ if (resetPasswordForm) {
             });
     });
 }
-
-

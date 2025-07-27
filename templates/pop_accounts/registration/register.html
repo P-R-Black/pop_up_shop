@@ -21,6 +21,7 @@ Register
             </div>
             <div class="login_input_container">
                 <form action="" method="post">
+                    {% csrf_token %}
                     <input class="login_input" type="text" name="email" placeholder="name">
                     <input class="login_input" type="text" name="password" placeholder="password">
                     <input type="submit" value="Sign In" class="button_medium">

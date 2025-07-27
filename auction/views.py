@@ -14,7 +14,7 @@ from django.utils.timezone import now
 from django.db.models import Q
 from decimal import Decimal
 from django.db import transaction
-from pop_accounts.utils import  add_specs_to_products
+from pop_accounts.utils.utils import  add_specs_to_products
 from orders.models import PopUpOrderItem
 from django.http import Http404
 

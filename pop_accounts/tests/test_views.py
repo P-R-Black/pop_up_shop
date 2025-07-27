@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.test import RequestFactory
 from django.http import JsonResponse
 from django.core import mail
-from pop_accounts.utils import validate_password_strength
+from pop_accounts.utils.utils import validate_password_strength
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from cart.cart import Cart

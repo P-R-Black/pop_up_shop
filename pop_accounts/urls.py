@@ -3,7 +3,8 @@ from . import views
 from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, 
                     UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView,
                     UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
-                    UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView)
+                    UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
+                    UpdateProductView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -58,6 +59,21 @@ urlpatterns = [
     path('total-open-bids-admin/', views.total_open_bids, name='total_open_bids'),
     path('total-accounts-admin/', views.total_accounts, name='total_accounts'),
     path('account-sizes-admin/', views.account_sizes, name='account_sizes'),
+
+    # Adding products
+    path('add-products-admin/', AddProductsView.as_view(), name='add_products'),
+    path('add-products-admin/<int:product_type_id>/', views.add_products_get, name='add_products_get'),
+
+    # Updating products
+    path('update-product-admin/', UpdateProductView.as_view(), name='update_product'),
+    path('update-product-admin/<int:product_id>/', UpdateProductView.as_view(), name='update_product_detail'),
+    # path('get-product-detail/<int:product_id>/<int:product_type_id>/', ProductDetailView.as_view(), name='get_product_detail'),
+    # path('update-product-post/<int:product_id>/', UpdateProductPostView.as_view(), name='update_product_post'),
+
+
+
+    # path('update-product-admin/<int:product_id>/', views.update_product_post, name='update_product_post'),
+    # path('get-product-detail/<int:product_id>/', views.get_order_product_detail, name='get_product_detail'),
 
     path('pending-okay-to-ship/', views.pending_okay_to_ship, name='pending_okay_to_ship'),
     path('get-pending-order-shipping-detail/<uuid:order_no>/', views.get_pending_order_shipping_detail, name='get_order_details'),
