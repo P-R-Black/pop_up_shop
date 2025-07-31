@@ -16,16 +16,20 @@
 }
 
 .product_type_item_select ul {
-    align-items: center;
+    /* align-items: center;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; */
+
+    display: grid;
+    gap: .25rem;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     width: 100%;
 
 }
 
 .product_type_item_select ul li a {
     color: var(--text-color);
-    font-size: clamp(.90rem, 1.25rem, 6vw);
+    font-size: clamp(.85rem, 1.15rem, 6vw);
     font-weight: 500;
 }
 

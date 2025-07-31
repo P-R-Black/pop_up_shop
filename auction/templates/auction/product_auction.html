@@ -5,7 +5,7 @@
 {% load humanize %}
 
 {% block title %}
-Auction
+{{ product.product_title }} Auction
 {% endblock %}
 
 {% block main %}
@@ -14,6 +14,8 @@ Auction
     <div class="section_container">
         <div class="page_title">
             <h2>Open Auction</h2>
+            <h3>{{ product.product_title }}</h3>
+            <h4>{{ product.secondary_product_title }}</h4>
         </div>
 
         <div class="auction_container">
@@ -21,13 +23,14 @@ Auction
                 <div class="auction_product_image_container">
                     {% for image in product.product_image.all %}
                     {% if image.is_feature %}
-                    <img class="img_fluid" alt="{{ image.alt_text }}" src="{{ image.get_image_url  }}"
-                        alt="{{ image.image.alt_text}}" />
+                    <img class="img_fluid"
+                        src="{% if image.image %} {{ image.image }} {% else %} {{ image.get_image_url }} {% endif %}"
+                        alt="{{ image.alt_text }}" />
                     {% endif %}
                     {% endfor %}
                 </div>
                 <div class="auction_product_desc_container">
-                    <h3>{{ product.model_year }}</h3>
+                    <h3>{{ product.specs.model_year }}</h3>
                     <h3>{{ product.product_title }} {{ product.secondary_product_title }}</h3>
                 </div>
                 <div class="auction_product_links_container">
@@ -147,15 +150,17 @@ Auction
                 <div class="auction_product_details_container databox">
                     <div class="details_size_container">
                         <p>Size:</p>
-                        {% if product_specifications.product_sex == "Male" %}
-                        <p class="databox_assign_left">US {{"Men's"}} {{product_specifications.size }}</p>
+                        {% if product.specs.product_sex == "Male" %}
+                        <p class="databox_assign_left">US {{"Men's"}} {{product.specs.size }}</p>
+                        {% elif product.specs.product_sex == "Female" %}
+                        <p class="databox_assign_left">US {{"Women's"}} {{product.specs.size }}</p>
                         {% else %}
-                        <p class="databox_assign_left">US {{"Women's"}} {{product_specifications.size }}</p>
+                        <p>N/A</p>
                         {% endif %}
                     </div>
                     <div class="details_condition_container">
                         <p>Condition:</p>
-                        <p class="databox_assign_left">{{product_specifications.condition|capfirst }}</p>
+                        <p class="databox_assign_left">{{ product.specs.condition|capfirst }}</p>
                     </div>
                     <div class="details_condition_container">
                         <p>Highest Bid:</p>
@@ -201,15 +206,15 @@ Auction
             <div class="prod_auct_details_container">
                 <div class="auct_details_style_container">
                     <h4 class="prod_auct_details_title">Style</h4>
-                    <p>{{ product_specifications.style_number }}</p>
+                    <p>{{ product.specs.style_number }}</p>
                 </div>
                 <div class="auct_details_colorway_container">
                     <h4 class="prod_auct_details_title">Colorway</h4>
-                    <p>{{product_specifications.colorway }}</p>
+                    <p>{{product.specs.colorway }}</p>
                 </div>
                 <div class="auct_details_release_container">
                     <h4 class="prod_auct_details_title">Release Date</h4>
-                    <p>{{ product_specifications.release_date }}</p>
+                    <p>{{ product.specs.release_date }}</p>
                 </div>
                 <div class="auct_details_retail_container">
                     <h4 class="prod_auct_details_title">Retail</h4>

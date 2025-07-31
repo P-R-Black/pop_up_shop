@@ -63,7 +63,15 @@ En Route
                             {% endif %}
 
                             {% endif %}
-                            <button class="button_small">Edit</button>
+
+
+                            <button class="button_small">
+                                <a href="{% url 'pop_accounts:update_product_detail' i.id %}"
+                                    class="product-link {% if selected_product.id == i.id %}active{% endif %}">
+                                    Edit
+                                </a>
+                            </button>
+
                         </li>
                         {% endfor %}
                         {% else %}

@@ -1,0 +1,19 @@
+.account_deleted_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 80vh;
+}
+
+.account_deleted_container h2 {
+    color: var(--text-color);
+    font-size: 2rem;
+}
+
+.account_deleted_container h3 {
+    color: var(--text-color);
+    font-family: "Birthstone", cursive;
+    font-size: 3rem;
+    font-weight: 300;
+}

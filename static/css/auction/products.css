@@ -49,6 +49,16 @@
     margin-bottom: 3rem;
 }
 
+.img_fluid_product_non_shoe {
+    aspect-ratio: 3/2.25;
+    /* bottom: 30%; */
+    left: 5%;
+    position: relative;
+    width: 45%;
+    margin-bottom: 3rem;
+
+}
+
 .products_desc_container {
     margin-top: 1rem;
 }

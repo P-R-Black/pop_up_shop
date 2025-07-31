@@ -92,6 +92,7 @@ class PopUpProductType(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
+        ordering = ("name",)
         verbose_name = _("PopUp Product Type")
         verbose_name_plural = _("PopUp Product Types")
     

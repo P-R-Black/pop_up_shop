@@ -14,7 +14,15 @@ from django.contrib.auth.models import UserManager
 
 
 # Create your models here.
-class CustomPopUpAccountManager(BaseUserManager):
+class ActiveUserManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_at__isnull=True)
+
+class AllUserManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset()
+    
+class CustomPopUpAccountManager(ActiveUserManager, BaseUserManager):
 
     def get_queryset(self):
         return super().get_queryset().filter(deleted_at__isnull=True)
@@ -34,26 +42,9 @@ class CustomPopUpAccountManager(BaseUserManager):
         if other_fields.get('is_superuser') is not True:
             raise ValueError(_('Superuser must be assigned to is_superuser=True.'))
 
-        # if not email:
-        #     raise ValueError(_('An email address is required.'))
-
-        # if not first_name:
-        #     raise ValueError(_('An user first name is required.'))
-
-        # if not last_name:
-        #     raise ValueError(_('An user last name is required.'))
-
-        # if not password:
-        #     raise ValueError(_('A user password is required.'))
-
-        # user = self.create_superuser(email, user_name, first_name, password, **other_fields)
-        # user.is_superuser = True
-        # user.is_staff = True
-        # user.save()
 
         return self.create_user(email, first_name, last_name, password, **other_fields)
 
-    # def create_user(self, email, password=None, **other_fields):
     def create_user(self, email, first_name=None, last_name=None, password=None, **other_fields):
         if not email:
             raise ValueError(_('An email address is required.'))
@@ -112,10 +103,6 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     prods_interested_in = models.ManyToManyField(PopUpProduct, related_name="interested_users", blank=True)
     prods_on_notice_for = models.ManyToManyField(PopUpProduct, related_name="notified_users", blank=True)
 
-    # Bidding Information
-    # open_bids = models.ManyToManyField("PopUpBid", related_name="active_bids", blank=True)
-    # past_bids = models.ManyToManyField("PopUpBid", related_name="past_bids", blank=True)
-    # past_purchases = models.ManyToManyField("PopUpPurchase", related_name="user_purchases", blank=True)
 
     # User Status
     is_active = models.BooleanField(default=False)
@@ -125,9 +112,8 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
 
     last_password_reset = models.DateTimeField(null=True, blank=True)
 
-    objects = CustomPopUpAccountManager()
-    # objects = SoftDeleteUserManager()
-    all_objects = models.Manager()
+    objects = CustomPopUpAccountManager() # only active users (soft-delete-aware)
+    all_objects = AllUserManager() # includes deleted
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -172,6 +158,8 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     def hard_delete(self):
         """Permanently delete the account (only for admin use)."""
         super().delete()
+    
+
 
 
     def email_user(self, subject, message):

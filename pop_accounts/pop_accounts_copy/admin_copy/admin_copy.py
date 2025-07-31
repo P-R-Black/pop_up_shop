@@ -1,10 +1,10 @@
 ADMIN_NAVIGATION_COPY = [
     {"label":"Account Sizes","url": "account_sizes"}, 
+    {"label": "Add Products", "url": "add_products"},
     {"label":"En Route", "url":"enroute"},
     {"label":"Inventory", "url":"inventory_admin"},
     {"label":"Most Interested","url": "most_interested"},
     {"label":"On Notice", "url": "most_on_notice"}, 
-    {"label": "Add Products", "url": "add_products"},
     {"label":"Sales", "url": "sales_admin"}, 
     {"label":"Shipments", "url": "shipments"},
     {"label":"Total Accounts","url": "total_accounts"},

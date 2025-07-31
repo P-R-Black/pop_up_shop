@@ -44,6 +44,7 @@ def get_client_ip(request):
 
 
 def add_specs_to_products(queryset):
+    print('add_specs_to_products queryset', queryset)
     """Helper function to add specs dictionary to each product"""
     products = list(queryset)
     for product in products:

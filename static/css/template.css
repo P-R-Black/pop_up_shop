@@ -253,9 +253,27 @@ body.dark {
     width: clamp(7rem, 12rem, 15vw)
 }
 
+.button_long_red {
+    align-items: center;
+    background: #ff0000;
+    border: 1px solid var(--body-color);
+    border-radius: 5px;
+    color: var(--primary-color-light);
+    cursor: pointer;
+    display: flex;
+    font-size: clamp(.70rem, .95rem, 2vw);
+    height: 2.25rem;
+    justify-content: center;
+    padding: 0 .5rem 0 .5rem;
+    text-align: center;
+    transition: var(--tran-03);
+    width: clamp(7rem, 12rem, 15vw)
+}
 
 
-.button_long:hover {
+
+.button_long:hover,
+.button_long_red:hover {
     transform: scale(1.05);
 }
 
@@ -510,25 +528,39 @@ text font: inter
     position: relative;
 }
 
+
+
 .sidebar .logo-text {
     color: var(--text-color);
     font-family: var(--logo-font);
     font-size: 3rem;
     font-weight: 600;
     text-align: left;
-    transition: var(--tran-03);
     width: 16rem;
+
+    opacity: 1;
+    transition: opacity 0.3s ease, font-size 0.3s ease;
 }
 
-.sidebar .logo-text.abbrev {
-    font-size: 2rem;
+.sidebar .logo-text.fade-out {
+    opacity: 0;
 }
+
+.sidebar .logo-text.fade-in {
+    opacity: 1;
+}
+
+/* .sidebar .logo-text.abbrev {
+    font-size: 2rem;
+    border: 2px solid red;
+} */
 
 
 .sidebar .logo-text .sidebar header .logo-text {
     display: flex;
     align-items: center;
     justify-content: center;
+
 }
 
 header .logo-text .header-text {
