@@ -1,25 +1,4 @@
-"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(_('email address'), unique=True, db_index=True)
-    first_name = models.CharField(max_length=50, blank=True)
-    middle_name = models.CharField(max_length=50, blank=True)
-    last_name = models.CharField(max_length=50, blank=True)
-    mobile_phone = models.CharField(max_length=20, blank=True)
-    mobile_notification = models.BooleanField(default=False)
-    shoe_size = models.CharField(max_length=6)
-    size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200)
-    favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default='nike')
-    deleted_at = models.DateTimeField(null=True, blank=True)  
 
-    // Address
-    postcode = models.CharField(_("Postcode"), max_length=50)
-    address_line = models.CharField(_("Address Line 1"), max_length=255)
-    address_line2 = models.CharField(_("Address Line 2"), max_length=255, blank=True)
-    apartment_suite_number = models.CharField(_("Apartment/Suite"), max_length=50)
-    town_city = models.CharField(_("Town/City/State"), max_length=150)
-    state  = models.CharField(_("State"), max_length=100)
-    delivery_instructions = models.TextField(_("Deliver Instructions"))
-"""
 
 test_account_data = [
     {
@@ -235,6 +214,46 @@ test_account_data = [
         "apartment_suite_number": "",
         "town_city": "Seattle",
         "state": "WA",
+        "delivery_instructions": "",
+    },
+     {
+        "id": "02937621336",
+        "email": "bwayne@wayneenterprise.com",
+        "password": 'batsInA!1Black',
+        "first_name":"Bruce",
+        "middle_name":"",
+        "last_name":"Wayne",
+        "mobile_phone":"212-443-2983",
+        "mobile_notification":"True",
+        "shoe_size":"10.5",
+        "size_gender":"Male",
+        "favorite_brand":"Nike",
+        "postcode": "11005",
+        "address_line": "1 Wayne Place",
+        "address_line2": "",
+        "apartment_suite_number": "",
+        "town_city": "Gotham",
+        "state": "NY",
+        "delivery_instructions": "",
+    },
+    {
+        "id": "13957721339",
+        "email": "ckent@justiceleague.com",
+        "password": '$onOfKrypton!',
+        "first_name":"Clark",
+        "middle_name":"",
+        "last_name":"Kent",
+        "mobile_phone":"312-334-9238",
+        "mobile_notification":"True",
+        "shoe_size":"10.5",
+        "size_gender":"Male",
+        "favorite_brand":"Puma",
+        "postcode": "60054",
+        "address_line": "311 W Illinois St.",
+        "address_line2": "",
+        "apartment_suite_number": "12G",
+        "town_city": "Metropolis",
+        "state": "IL",
         "delivery_instructions": "",
     },
 ]

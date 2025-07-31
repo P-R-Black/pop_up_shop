@@ -285,6 +285,20 @@ Auction
                         </div>
                     </div>
                 </div>
+                <div class="account_payment_container">
+                    <div class="personal_info_title_container">
+                        <h3>Delete Account</h3>
+                    </div>
+                    <div class="delete_account_container">
+                        <p>To delete your account, click below. This action is irreversible.</p>
+                        <form method="POST" action="{% url 'pop_accounts:delete_account' %}"
+                            onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
+                            {% csrf_token %}
+                            <button type="submit" class="button_long_red">Delete Account</button>
+                        </form>
+
+                    </div>
+                </div>
 
             </div>
         </div>

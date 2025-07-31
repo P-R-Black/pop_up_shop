@@ -775,15 +775,40 @@ document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
 });
 
 // Adjust Logo in Navbar
+// toggle.addEventListener('click', () => {
+//     sidebar.classList.toggle('close');
+//     navLogoText.classList.toggle('abbrev')
+//     if (navLogoText.classList.contains('abbrev')) {
+//         navLogoText.innerHTML = "TPU"
+//     } else {
+//         navLogoText.innerHTML = "The Pop Up"
+//     }
+
+// });
+
+
 toggle.addEventListener('click', () => {
     sidebar.classList.toggle('close');
-    navLogoText.classList.toggle('abbrev')
-    if (navLogoText.classList.contains('abbrev')) {
-        navLogoText.innerHTML = "TPU"
-    } else {
-        navLogoText.innerHTML = "The Pop Up"
-    }
 
+    navLogoText.classList.add('fade-out'); // Start fade-out
+
+    setTimeout(() => {
+        if (sidebar.classList.contains('close')) {
+            navLogoText.innerText = 'TPU';
+            navLogoText.style.fontSize = '32px';
+        } else {
+            navLogoText.innerText = 'The Pop Up';
+            navLogoText.style.fontSize = '48px';
+        }
+
+        navLogoText.classList.remove('fade-out');
+        navLogoText.classList.add('fade-in');
+
+        // Remove the fade-in class after animation completes
+        setTimeout(() => {
+            navLogoText.classList.remove('fade-in');
+        }, 300); // Match this to your CSS transition time
+    }, 150); // Wait for fade-out before changing text
 });
 
 searchBtn.addEventListener('click', () => {

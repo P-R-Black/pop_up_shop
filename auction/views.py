@@ -130,13 +130,23 @@ class ProductAuctionView(DetailView):
 
     def get_object(self, queryset=None):
         """Override to add the is_active filter"""
-        return get_object_or_404(PopUpProduct, slug=self.kwargs['slug'], is_active=True)
+        return get_object_or_404(PopUpProduct.objects.prefetch_related(
+                'popupproductspecificationvalue_set__specification'
+            ), 
+            slug=self.kwargs['slug'], 
+            is_active=True)
     
     def get_context_data(self, **kwargs):
         """Add product specification to the context"""
         context = super().get_context_data(**kwargs)
+        
+        # Apply the utility function to a single-item queryset
+        products_with_specs = add_specs_to_products([self.object])
+        context['product'] = products_with_specs[0]  # Get the single product back
+
         product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=self.object)}
         context['product_specifications'] = product_specifications
+        
         return context
     
         
@@ -147,8 +157,7 @@ class ProductsView(ListView):
     context_object_name = 'product'
 
     def get_queryset(self):
-        """Filter products based on slug if provided"""
-        current_time = now()
+        """Filter products based on slug if provided"""        
         
         base_queryset = PopUpProduct.objects.prefetch_related(
             'popupproductspecificationvalue_set'
@@ -159,15 +168,22 @@ class ProductsView(ListView):
             buy_now_start__lte=now(),
             buy_now_end__gte=now()
         )
+            
+            
+
         slug = self.kwargs.get('slug')
         if slug:
             product_type = get_object_or_404(PopUpProductType, slug=slug)
+            # return product_with_specs.filter(product_type=product_type)
             return base_queryset.filter(product_type=product_type)
         return base_queryset
     
     def get_context_data(self, **kwargs):
         """Add product_types and product_type to context"""
         context = super().get_context_data(**kwargs)
+
+        # Apply add_specs_to_products utility function
+        context['product'] = add_specs_to_products(context['product'])
 
         # Always include all product types
         context['product_types'] = PopUpProductType.objects.all()
@@ -193,7 +209,7 @@ class ComingSoonView(ListView):
         base_queryset = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
         slug = self.kwargs.get('slug')
         if slug:
-            product_type = get_object_or_404(PopUpProduct, slug=slug)
+            product_type = get_object_or_404(PopUpProductType, slug=slug)
             return base_queryset.filter(product_type=product_type)
         return base_queryset
 
@@ -202,7 +218,7 @@ class ComingSoonView(ListView):
         context =  super().get_context_data(**kwargs)
 
         """Always include all product_types"""
-        context['product_type'] = PopUpProductType.objects.all()
+        context['product_types'] = PopUpProductType.objects.all()
         slug = self.kwargs.get('slug')
         if slug:
             context['product_type'] = get_object_or_404(PopUpProductType, slug=slug)
@@ -231,12 +247,13 @@ class FutureReleases(ListView):
         context = super().get_context_data(**kwargs)
 
         """Always include all product_types"""
-        context['product_type'] = PopUpProductType.objects.all()
+        context['product_types'] = PopUpProductType.objects.all()
         slug = self.kwargs.get('slug')
         if slug:
             context['product_type'] = get_object_or_404(PopUpProductType, slug=slug)
         else:
-            context['product_typ'] = None
+            context['product_type'] = None
+        
         
         return context
 

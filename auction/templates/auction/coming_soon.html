@@ -19,6 +19,7 @@ Auction
                     <li {% if not product_type %} class="selected" {% endif %}>
                         <a href="{% url 'auction:coming_soon' %}">All</a>
                     </li>
+
                     {% for c in product_types %}
                     {% if product_type and product_type.slug == c.slug %}
                     <li class="selected">

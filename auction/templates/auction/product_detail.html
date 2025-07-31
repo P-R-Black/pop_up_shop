@@ -4,7 +4,7 @@
 
 
 {% block title %}
-Auction
+{{ product.product_title }}
 {% endblock %}
 
 {% block main %}
@@ -37,8 +37,10 @@ Auction
                         <p>Size</p>
                         {% if product_specifications.product_sex == "Male" %}
                         <p class="pd_databox_assign_left">US {{"Men's"}} {{product_specifications.size }}</p>
-                        {% else %}
+                        {% elif product_specifications.product_sex == "Female" %}
                         <p class="pd_databox_assign_left">US {{"Women's"}} {{product_specifications.size }}</p>
+                        {% else %}
+                        <p class="pd_databox_assign_left">N/A</p>
                         {% endif %}
                     </div>
                     <div class="pd_details_condition_container">

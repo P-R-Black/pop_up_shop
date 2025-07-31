@@ -41,13 +41,13 @@ ALLOWED_HOSTS = [
     "*", 
     "localhost:8000", 
     "localhost",
-    "27bf11471981.ngrok-free.app",
+    "7c90b7218718.ngrok-free.app",
     "https://*.ngrok.io",
     ]
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://27bf11471981.ngrok-free.app",
+    "https://7c90b7218718.ngrok-free.app",
 ]
 
 # Application definition
@@ -250,7 +250,7 @@ CELERY_TIMEZONE = 'America/New_York'  # Set to your project's timezone
 
 
 # THIS SHOULD BE CHANGED TO A FEW HOURS
-PASSWORD_RESET_TIMEOUT = 3600
+PASSWORD_RESET_TIMEOUT = 7200 # 2-hour timeout (in seconds)
 
 # Email Setting
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

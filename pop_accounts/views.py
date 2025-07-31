@@ -453,6 +453,20 @@ def set_default_address(request, address_id):
     except PopUpCustomerAddress.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Address not found'}, status=404)
 
+@login_required
+def delete_account(request):
+    if request.method == "POST":
+        print('delete_account called on user', request.user)
+        user = request.user
+        user.soft_delete()
+        logout(request)
+        return redirect('pop_accounts:account_deleted')
+    
+
+
+def account_deleted(request):
+    return render(request, 'pop_accounts/user_accounts/dashboard_pages/account_deleted.html')
+
 
 
 class OpenBidsView(LoginRequiredMixin, View):
@@ -1145,7 +1159,7 @@ class UpdateProductView(UserPassesTestMixin, View):
                 return render(request, self.template_name, context)
             else:
                 # One or both forms has errors, show them
-                if not image_form_valid:
+                if not image_form:
                     messages.error(request, 'Please check the image form for errors.')
                 context = self.get_context_data(product_id)
                 context['form'] = form # This will contain the errors
