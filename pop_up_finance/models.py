@@ -1,6 +1,6 @@
 from django.db import models
-from orders.models import PopUpCustomerOrder
-from auction.models import PopUpProduct
+from pop_up_order.models import PopUpCustomerOrder
+from pop_up_auction.models import PopUpProduct
 from django.utils.translation import gettext_lazy as _
 
 

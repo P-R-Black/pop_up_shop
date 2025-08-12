@@ -1,7 +1,7 @@
 from django.db import IntegrityError
 from django.contrib import messages
-from auction.models import PopUpProductSpecification, PopUpProductSpecificationValue
-from auction.forms import (PopUpAddProductForm, PopUpProductImageForm)
+from pop_up_auction.models import PopUpProductSpecification, PopUpProductSpecificationValue
+from pop_up_auction.forms import (PopUpAddProductForm, PopUpProductImageForm)
 
 def save_existing_specifications(self, request, product_instance):
     """

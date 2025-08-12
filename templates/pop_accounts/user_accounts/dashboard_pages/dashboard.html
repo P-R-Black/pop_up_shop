@@ -174,7 +174,7 @@ Dashboard
                             {% for hb in open_bids %}
                             <div class="indi_bids">
                                 <div class="indi_bids_item">
-                                    <a href="{% url 'auction:product_auction' hb.product.slug %}">
+                                    <a href="{% url 'pop_up_auction:product_auction' hb.product.slug %}">
                                         <p>{{ hb.product }} {{ hb.product.secondary_product_title }}</p>
                                     </a>
                                 </div>
@@ -224,7 +224,7 @@ Dashboard
                                     <div class="modal_body">
                                         <form class="bidForm" id="bidForm-{{ hb.product.id }}" method="post"
                                             data-product-id="{{ hb.product.id }}"
-                                            action="{% url 'auction:place_bid' %}">
+                                            action="{% url 'pop_up_auction:place_bid' %}">
                                             {% csrf_token %}
                                             <div id="predefined_bids-{{ hb.id }}" class="predefined_bids"
                                                 data-product-id="{{ hb.product.id }}">
@@ -324,7 +324,7 @@ Dashboard
                             {% for bid in bid_history %}
                             <div class="indi_past_bids">
                                 <div class="indi_past_bid_items">
-                                    <a href="{% url 'auction:past_bids_product_detail' bid.product.id%}">
+                                    <a href="{% url 'pop_up_auction:past_bids_product_detail' bid.product.id%}">
                                         <p>{{ bid.mptt_specs.model_year }} {{ bid.product.product_title }} <br>
                                             {{ bid.product.secondary_product_title }}
                                         </p>
@@ -366,7 +366,7 @@ Dashboard
 
                                 <div class="indi_past_purchases_items">
                                     {% for item in order.items.all %}
-                                    <a href="{% url 'auction:past_product_details' item.id %}">
+                                    <a href="{% url 'pop_up_auction:past_product_details' item.id %}">
                                         <p>{{ item.product_title }} <br> {{ item.secondary_product_title}}</p>
                                     </a>
                                     {% endfor %}

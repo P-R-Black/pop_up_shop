@@ -10,24 +10,25 @@ from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPassesTestMixin
 from django.views.generic import DetailView, ListView
 from .token import account_activation_token
-from orders.views import user_orders, user_shipments
-from orders.models import PopUpOrderItem, PopUpCustomerOrder
+from pop_up_order.views import user_orders, user_shipments
+from pop_up_order.models import PopUpOrderItem, PopUpCustomerOrder
 from django.db.models import Prefetch
 from django.http import JsonResponse, HttpResponse
 from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid, PopUpCustomerIP
-from auction.models import PopUpProduct, PopUpProductSpecification, PopUpProductSpecificationValue, PopUpProductType
-from auction.utils.utils import get_customer_bid_history_context
+from pop_up_auction.models import PopUpProduct, PopUpProductSpecification, PopUpProductSpecificationValue, PopUpProductType
+from pop_up_auction.utils.utils import get_customer_bid_history_context
 from django.views.decorators.http import require_http_methods
-from payment.models import PopUpPayment
+from pop_up_payment.models import PopUpPayment
+from pop_up_shipping.models import PopUpShipment
 from pop_up_finance.utils import (get_yearly_revenue_aggregated, get_monthly_revenue, get_last_20_days_sales, 
                                   get_last_12_months_sales, get_last_5_years_sales, get_yoy_day_sales, 
                                   get_year_over_year_comparison, get_month_over_month_comparison, get_weekly_revenue)
-from pop_up_email.utils import send_customer_shipping_details
+from pop_up_email.utils import (send_customer_shipping_details, send_interested_in_and_coming_soon_product_update_to_users)
 
 from .utils.add_products_util import  handle_simple_form_submission, handle_full_product_save
 from .utils.edit_products_util import save_existing_specifications, save_custom_specifications
 
-from auction.forms import (PopUpBrandForm, PopUpCategoryForm, PopUpProductTypeForm, PopUpProductSpecificationForm, 
+from pop_up_auction.forms import (PopUpBrandForm, PopUpCategoryForm, PopUpProductTypeForm, PopUpProductSpecificationForm, 
                            PopUpAddProductForm, PopUpProductSpecificationValueForm, PopUpProductImageForm)
 from pop_up_shipping.models import PopUpShipment
 from django.core.validators import validate_email
@@ -161,7 +162,7 @@ def user_password_reset_confirm(request, uidb64, token):
         return JsonResponse({'success': True, 'message': 'Password reset successful.'})
 
 
-from pop_up_shipping.models import PopUpShipment
+
 
 
 class UserDashboardView(LoginRequiredMixin, View):
@@ -1030,7 +1031,6 @@ def update_shipping_post(request, shipment_id):
     form = ThePopUpShippingForm(request.POST, instance=shipment)
     payment = PopUpPayment.objects.get(order=shipment.order)
 
-    
     """
     Figure out where to put this. Can I get this information from the "updated_shipment" form, or do I have to...
     ... query database again after shipping info saved and updated?
@@ -1133,9 +1133,11 @@ class UpdateProductView(UserPassesTestMixin, View):
             form = PopUpAddProductForm(request.POST, instance=product)
             image_form = PopUpProductImageForm(request.POST, request.FILES, instance=product)
 
+            old_buy_now_start = product.buy_now_start                
+            old_auction_start = product.auction_start_date
+
             if form.is_valid():
                 form.save()
-
 
 
                 # save image if present
@@ -1152,6 +1154,20 @@ class UpdateProductView(UserPassesTestMixin, View):
 
                 # Handle specifications if they exist
                 self._handle_specifications(request, product)
+
+                # notify interested users based on changes
+                print('product.buy_now_start', product.buy_now_start)
+                if product.buy_now_start and product.buy_now_start != old_buy_now_start:
+                    send_interested_in_and_coming_soon_product_update_to_users(
+                        product=product,
+                        buy_now_start_date=product.buy_now_start
+                    )
+                
+                if product.auction_start_date and product.auction_start_date != old_auction_start:
+                    send_interested_in_and_coming_soon_product_update_to_users(
+                        product=product,
+                        auction_start_date=product.auction_start_date
+                    )
 
                 # Redirect or show success message
                 context =self.get_context_data(product_id)
@@ -1266,9 +1282,6 @@ class UpdateProductPostView(UserPassesTestMixin, View):
             messages.error(request, 'Please correct the errors in the form.')
             print('Form errors', form.errors)
         return redirect('pop_accounts:updated_product')
-
-
-   
 
 
 class AddProductsView(UserPassesTestMixin, View):

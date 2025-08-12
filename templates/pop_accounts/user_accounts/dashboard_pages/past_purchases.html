@@ -25,7 +25,7 @@ Past Purchases
                     <div class="past_purchases_items_container">
                         <div class="interested_in_item">
                             {% for item in order.items.all %}
-                            <a href="{% url 'auction:past_product_details' item.id %}">
+                            <a href="{% url 'pop_up_auction:past_product_details' item.id %}">
                                 <p>{{ item.product_title }} <br> {{ item.secondary_product_title}}</p>
                             </a>
                             {% endfor %}

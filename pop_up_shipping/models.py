@@ -21,7 +21,7 @@ class PopUpShipment(models.Model):
      
     ]
     
-    order = models.OneToOneField('orders.PopUpCustomerOrder', on_delete=models.CASCADE, related_name='shipment')
+    order = models.OneToOneField('pop_up_order.PopUpCustomerOrder', on_delete=models.CASCADE, related_name='shipment')
     carrier = models.CharField(max_length=50, choices=CARRIER_CHOICES, default='n/a')
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
     shipped_at = models.DateTimeField(blank=True, null=True)

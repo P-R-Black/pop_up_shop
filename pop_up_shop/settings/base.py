@@ -41,13 +41,13 @@ ALLOWED_HOSTS = [
     "*", 
     "localhost:8000", 
     "localhost",
-    "7c90b7218718.ngrok-free.app",
+    "9de9e9cedc9f.ngrok-free.app",
     "https://*.ngrok.io",
     ]
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://7c90b7218718.ngrok-free.app",
+    "https://9de9e9cedc9f.ngrok-free.app",
 ]
 
 # Application definition
@@ -60,19 +60,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'auction.apps.AuctionConfig',
-    'home.apps.HomeConfig',
+    'django_celery_beat',
+    'mptt',
+    'pop_up_home.apps.PopUpHomeConfig',
+    'pop_up_auction.apps.PopUpAuctionConfig',
     'pop_accounts.apps.PopAccountsConfig',
     'pop_up_email.apps.PopUpEmailConfig',
     'pop_up_shipping.apps.PopUpShippingConfig',
     'pop_up_finance.apps.PopUpFinanceConfig',
-    'orders.apps.OrdersConfig',
-    'payment.apps.PaymentConfig',
-    'cart.apps.CartConfig',
-    'coupon.apps.CouponConfig',
-    'reward.apps.RewardConfig',
-    'mptt',
-    'django_celery_beat',
+    'pop_up_order.apps.PopUpOrderConfig',
+    'pop_up_payment.apps.PopUpPaymentConfig',
+    'pop_up_cart.apps.PopUpCartConfig',
+    'pop_up_coupon.apps.PopUpCouponConfig',
+    'pop_up_reward.apps.PopUpRewardConfig',
 ]
 
 MIDDLEWARE = [
@@ -109,10 +109,10 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'auction.context_processors.categories',
+                'pop_up_auction.context_processors.categories',
                 'pop_accounts.context_processors.auth_forms',
                 'pop_accounts.context_processors.admin_status',
-                'cart.context_processors.cart',
+                'pop_up_cart.context_processors.cart',
             ],
         },
     },
@@ -241,7 +241,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 CELERTY_BEAT_SCHEDULE = {
     'check-expired-reservations-every-hour': {
-        'task': 'auction.tasks.mark_expired_reservations',
+        'task': 'pop_up_auction.tasks.mark_expired_reservations',
         'schedule': crontab(minute=0)
     }
 }
@@ -257,7 +257,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # Cart Session Id
-CART_SESSION_ID = 'cart'
+CART_SESSION_ID = 'pop_up_cart' 
 
 # Stripe Data
 # os.environ.setdefault('STRIPE_PUBLIC_KEY', "pk_test_dL4uFuUsLi4Gll22DK9qc96h00rBjrjF9S")

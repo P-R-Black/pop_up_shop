@@ -8,7 +8,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin, BaseUserManager)
 # from django_countries.fields import CountryField
 import uuid
-from auction.models import PopUpProduct
+from pop_up_auction.models import PopUpProduct
 from django.contrib.auth.models import UserManager
 # from .managers import CustomPopUpAccountManager  # Assuming you have a custom user manager
 
@@ -273,7 +273,7 @@ class PopUpBid(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="bids")
-    product = models.ForeignKey('auction.PopUpProduct', on_delete=models.CASCADE, related_name="bids")
+    product = models.ForeignKey('pop_up_auction.PopUpProduct', on_delete=models.CASCADE, related_name="bids")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)

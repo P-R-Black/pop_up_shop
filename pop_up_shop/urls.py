@@ -22,17 +22,17 @@ import debug_toolbar
 
 
 urlpatterns = [
-    path('', include('home.urls')),
+    path('', include('pop_up_home.urls')),
     path('pop_accounts/', include('pop_accounts.urls')),
     path('pop_up_email/', include('pop_up_email.urls')),
     path('pop_up_shipping/', include('pop_up_shipping.urls')),
     path('pop_up_finance/', include('pop_up_finance.urls')),
-    path('auction/', include('auction.urls')),
-    path('orders/', include('orders.urls')),
-    path('cart/', include('cart.urls')),
-    path('coupon/', include('coupon.urls')),
-    path('reward/', include('reward.urls')),
-    path('payment/', include('payment.urls')),
+    path('pop_up_auction/', include('pop_up_auction.urls')),
+    path('pop_up_order/', include('pop_up_order.urls')),
+    path('pop_up_cart/', include('pop_up_cart.urls')),
+    path('pop_up_coupon/', include('pop_up_coupon.urls')),
+    path('pop_up_reward/', include('pop_up_reward.urls')),
+    path('pop_up_payment/', include('pop_up_payment.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
    

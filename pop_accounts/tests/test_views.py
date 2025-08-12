@@ -1,8 +1,8 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
-from payment.utils.tax_utils import get_state_tax_rate
-from auction.models import PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType
+from pop_up_payment.utils.tax_utils import get_state_tax_rate
+from pop_up_auction.models import PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType
 from unittest.mock import patch
 from django.utils import timezone
 from django.utils.timezone import now, make_aware
@@ -17,7 +17,7 @@ from django.core import mail
 from pop_accounts.utils.utils import validate_password_strength
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from cart.cart import Cart
+from pop_up_cart.cart import Cart
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import HttpRequest
 from django.utils.text import slugify
@@ -618,7 +618,7 @@ class ProductBuyViewGETTests(TestCase):
         
 
     def test_product_buy_view_get_basic_cart_data(self):
-        response = self.client.get(reverse('auction:product_buy'))
+        response = self.client.get(reverse('pop_up_auction:product_buy'))
         self.assertEqual(response.status_code, 200)
 
         context = response.context
@@ -649,7 +649,7 @@ class ProductBuyViewGETTests(TestCase):
         session['selected_address_id'] = str(self.address.id)
         session.save()
 
-        response = self.client.get(reverse('auction:product_buy'))
+        response = self.client.get(reverse('pop_up_auction:product_buy'))
         self.assertEqual(response.context['selected_address'], self.address)
         self.assertEqual(response.context['address_form'].instance, self.address)
     
@@ -676,7 +676,7 @@ class ProductBuyViewGETTests(TestCase):
         session['selected_address_id'] = str(self.address.id)
         session.save()
 
-        response = self.client.get(reverse('auction:product_buy'))
+        response = self.client.get(reverse('pop_up_auction:product_buy'))
         self.assertEqual(response.status_code, 200)
 
         # the view should echo back exactly *that* address as selected
@@ -695,7 +695,7 @@ class ProductBuyViewGETTests(TestCase):
         session['selected_address_id'] = str(self.address.id)
         session.save()
 
-        response = self.client.get(reverse('auction:product_buy'))
+        response = self.client.get(reverse('pop_up_auction:product_buy'))
         self.assertEqual(response.status_code, 200)
 
         # the view should echo back exactly *that* address as selected
@@ -710,7 +710,7 @@ class ProductBuyViewGETTests(TestCase):
         """
         self._login_and_seed_cart()          # qty = 1
 
-        response = self.client.get(reverse('auction:product_buy'))
+        response = self.client.get(reverse('pop_up_auction:product_buy'))
         ctx      = response.context
 
         # --- compute what we EXPECT -----------------
@@ -826,7 +826,7 @@ class ProductBuyViewPOSTTests(TestCase):
     def test_post_select_existing_address_sets_session(self):
         self._login_and_seed_cart()
         post_data = {"selected_address": str(self.address.id),}
-        response = self.client.post(reverse('auction:product_buy'), post_data, follow=True)
+        response = self.client.post(reverse('pop_up_auction:product_buy'), post_data, follow=True)
         session = self.client.session
 
         self.assertEqual(response.status_code, 200)
@@ -850,7 +850,7 @@ class ProductBuyViewPOSTTests(TestCase):
             'delivery_instructions': 'New instructions',
         }
 
-        response = self.client.post(reverse('auction:product_buy'), updated_data, follow=True)
+        response = self.client.post(reverse('pop_up_auction:product_buy'), updated_data, follow=True)
         self.address.refresh_from_db()
         
         self.assertEqual(response.status_code, 200)
@@ -874,7 +874,7 @@ class ProductBuyViewPOSTTests(TestCase):
             'delivery_instructions': 'Ring bell',
         }
 
-        response = self.client.post(reverse('auction:product_buy'), new_data, follow=True)
+        response = self.client.post(reverse('pop_up_auction:product_buy'), new_data, follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(PopUpCustomerAddress.objects.filter(first_name='New', customer=self.user).exists())
@@ -893,7 +893,7 @@ class ProductBuyViewPOSTTests(TestCase):
             'postcode': '',
         }
 
-        response = self.client.post(reverse('auction:product_buy'), invalid_data)
+        response = self.client.post(reverse('pop_up_auction:product_buy'), invalid_data)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Please correct the errors below.")
 
@@ -905,7 +905,7 @@ class ProductBuyViewPOSTTests(TestCase):
         self.product.inventory_status = 'sold'
         self.product.save()
 
-        response = self.client.get(reverse('auction:product_buy'))
+        response = self.client.get(reverse('pop_up_auction:product_buy'))
         cart_items = response.context['cart_items']
 
         self.assertEqual(len(cart_items), 0)
@@ -917,7 +917,7 @@ class ProductBuyViewPOSTTests(TestCase):
         session['cart'] = {}  # Empty cart
         session.save()
 
-        response = self.client.get(reverse('auction:product_buy'))
+        response = self.client.get(reverse('pop_up_auction:product_buy'))
 
         self.assertEqual(response.context['cart_total'], 0)
         self.assertEqual(response.context['grand_total'], "0.00")
@@ -961,7 +961,7 @@ class ProductBuyGuestTest(TestCase):
         session.save()
     
     def test_guest_sees_cart_summary_only(self):
-        resp = self.client.get(reverse('auction:product_buy'))
+        resp = self.client.get(reverse('pop_up_auction:product_buy'))
         self.assertEqual(resp.status_code, 200)
 
         # Cart bits should be present

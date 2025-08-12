@@ -4,7 +4,11 @@ from django.utils.timezone import now
 from django.conf import settings
 from datetime import timedelta
 from django.contrib.auth import get_user_model
-
+from django.urls import reverse
+from django.conf import settings
+from pop_accounts.models import PopUpCustomer
+from pop_up_auction.models import PopUpProduct
+from django.db.models import Q
 
 def send_auction_winner_email(user, product):
     """
@@ -130,13 +134,13 @@ def send_customer_shipping_details(user, order, carrier, tracking_no, shipped_at
 
     }
 
-
-
     subject = f"Your order has shipped Order #{order.id}."
     html_message = render_to_string('emails/send_customer_shipping_details.html', {
         'order': order, 'carrier': carrier,
         'tracking_no': tracking_no, 'shipped_at': shipped_at,
-        'estimated_deliv': estimated_deliv, 'status': status, 'tracke_link': links_to_track_shipment[carrier]})
+        'estimated_deliv': estimated_deliv, 
+        'status': status, 
+        'tracker_link': links_to_track_shipment[carrier]})
     
     send_mail(
         subject = subject,
@@ -148,7 +152,96 @@ def send_customer_shipping_details(user, order, carrier, tracking_no, shipped_at
     
 
 
+def send_friend_invite_email(user, user_email, friend_name, friend_email):
+    """
+    Emails invitation from member to member's friend
+    """
+    subject = f"{user} invited you to join The Pop Up!"
+    # invite_link = reverse('account_signup')
+ 
+    full_invite_url = f"{settings.SITE_DOMAIN}/?show_auth_modal=true"
+    html_message = render_to_string('pop_up_email/invite_friend.html', {
+        'user': user, 
+        'user_email': user_email, 
+        'friend_name': friend_name, 
+        'friend_email': friend_email, 
+        'invite': friend_name,
+        'invite_link': full_invite_url
+    })
+
+    send_mail(
+        subject = subject,
+        message = "",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[friend_email],
+        html_message=html_message
+    )
+
+
 
 def get_admin_users():
     User = get_user_model()
     return User.objects.filter(is_staff=True, is_active=True)
+
+
+def interested_in_products_update_and_notify_me_products_update(product_id):
+    """
+    Finds all users interested in a product and notifies them via email.
+    """
+    
+    try:
+        product = PopUpProduct.objects.get(id=product_id)
+    except PopUpProduct.DoesNotExist:
+        return []
+
+    # Fetch all users who are either interested OR notified, without duplicates
+    users = PopUpCustomer.objects.filter(Q(prods_interested_in=product) | Q(prods_on_notice_for=product)
+    ).distinct()
+
+    # Return their emails
+    return list(users.values_list("email", flat=True))
+
+
+
+def send_interested_in_and_coming_soon_product_update_to_users(
+    product, 
+    buy_now_start_date=None,
+    auction_start_date=None,
+    ):
+    """
+    Emails Users who have marked a product "interested in" of udpate with product
+    """
+    
+    users = PopUpCustomer.objects.filter(
+        Q(prods_interested_in=product) | Q(prods_on_notice_for=product)
+        ).distinct()
+    
+    if not users.exists():
+        return
+    
+    # Choose subject & plan text message
+    subject = f"Update on {product.product_title} {product.secondary_product_title}"
+
+    from_email = settings.DEFAULT_FROM_EMAIL
+
+    # Send Individually for personalization
+    for user in users:
+        html_message = render_to_string(
+            'pop_up_email/update_interested_users.html', 
+            {
+                'user': user,
+                'product': product, 
+                'buy_now_start_date': buy_now_start_date if buy_now_start_date else "", 
+                'auction_start_date': auction_start_date if auction_start_date else "", 
+
+            }
+        )
+
+        send_mail(
+            subject=subject,
+            message = "",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email], # sent to single user for a more personalized email
+            html_message=html_message,
+            fail_silently=False
+        )

@@ -1370,11 +1370,89 @@ p.email_provided_signin_popup {
 }
 
 
-
 /* ===== end of forgot_password_email_check_container ===== */
 
 
 /* ==================================== End of Sign Up Modal =================================== */
+
+
+
+/*  ====== Invite Friend Modal ===== */
+
+/* Modal background */
+.inviteFriendModal {
+    /* Hidden by default */
+    display: none;
+
+    /* Enable scroll if needed */
+    position: fixed;
+    z-index: 1000;
+    left: 20%;
+    top: 0;
+
+    width: 75%;
+    height: 90%;
+    overflow: auto;
+
+    /* Black background with opacity */
+    background-color: rgba(0, 0, 0, 0.4);
+
+}
+
+/* Modal content */
+.invite_friend_modal_content {
+    background-color: #fff;
+    /* margin: 15% auto; */
+    /* Center it */
+    padding: 1rem 1rem;
+    border: 1px solid #888;
+    width: 65%;
+    /* Adjust width */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+
+    border: 2px solid var(--text-color);
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 90%;
+    margin: 2.5% auto;
+}
+
+
+.invite_friend_form_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    margin-top: 4rem;
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+}
+
+.invite_friend_form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+}
+
+
+.friendInviteInput {
+    background-color: transparent;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 60%
+}
+
+/* ==================================== End of Invite Friend Modal =================================== */
+
 
 
 /*  ====== Start of Footer ===== */

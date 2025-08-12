@@ -1,12 +1,12 @@
 from django.shortcuts import render, get_object_or_404
-from orders.models import PopUpCustomerOrder, PopUpOrderItem
+from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from weasyprint import HTML
 import weasyprint
 from django.conf import settings
 from pop_up_shipping.pop_shipping_copy.pop_up_shipping_copy import ADMIN_SHIPPING
-from orders.utils.utils import admin_shipments, admin_orders
+from pop_up_order.utils.utils import admin_shipments, admin_orders
 
 # Create your views here.
 
