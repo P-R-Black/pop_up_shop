@@ -1,0 +1,11 @@
+from django.urls import path
+from . import views
+from .views import (CreateOrderAfterPaymentView)
+
+app_name ='pop_up_order'
+
+urlpatterns = [
+    path('create-after-payment/', CreateOrderAfterPaymentView.as_view(), name='create_after_payment'),
+    path('admin/order/<int:order_id>/', views.admin_order_detail, name='admin_order_detail'),
+    
+]

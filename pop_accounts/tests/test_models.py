@@ -1,6 +1,6 @@
 from django.test import TestCase
 from pop_accounts.models import (PopUpCustomer,PopUpBid, CustomPopUpAccountManager, SoftDeleteManager, PopUpCustomerAddress)
-from auction.models import (PopUpProduct, PopUpCategory, PopUpBrand, PopUpProductType)
+from pop_up_auction.models import (PopUpProduct, PopUpCategory, PopUpBrand, PopUpProductType)
 from django.utils.timezone import now
 from datetime import datetime, timedelta
 from django.utils.timezone import make_aware

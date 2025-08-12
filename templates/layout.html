@@ -213,31 +213,31 @@
 
                     {% endif %}
                     <li class="nav-link">
-                        <a href="{% url 'auction:products' %}">
+                        <a href="{% url 'pop_up_auction:products' %}">
                             <i class='bx bx-package icon'></i>
                             <span class="text nav-text">Products</span>
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="{% url 'auction:auction' %}">
+                        <a href="{% url 'pop_up_auction:auction' %}">
                             <i class="fa-solid fa-gavel icon"></i>
                             <span class="text nav-text">Auction</span>
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="{% url 'auction:coming_soon' %}">
+                        <a href="{% url 'pop_up_auction:coming_soon' %}">
                             <i class="fa-solid fa-bullhorn icon"></i>
                             <span class="text nav-text">Coming Soon</span>
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a href="{% url 'auction:future_releases' %}">
+                        <a href="{% url 'pop_up_auction:future_releases' %}">
                             <i class='bx bxs-calendar icon'></i>
                             <span class="text nav-text">Future Releases</span>
                         </a>
                     </li>
                     <li class="nav-link">
-                        <a type="button" role="button" href="{% url 'payment:payment_home' %}">
+                        <a type="button" role="button" href="{% url 'pop_up_payment:payment_home' %}">
 
                             <i class='bx bx-cart icon'></i>
                             <span class="text nav-text">Cart</span>
@@ -252,11 +252,11 @@
                             {% endwith %}
                         </a>
                     </li>
-                    <li class="nav-link">
-                        <a href="#">
+                    <li class="nav-link inviteFriendBtn">
+                        <button href="#">
                             <i class='bx bx-mail-send icon'></i>
                             <span class="text nav-text">Invite a Friend</span>
-                        </a>
+                        </button>
                     </li>
 
                     {% if request.user.is_authenticated %}
@@ -304,7 +304,7 @@
                 </ul>
             </div>
         </div>
-        <!-- Size Sign Up Modal -->
+        <!-- Start of Sign Up Modal -->
         <div class="sign_up_modal fade" id="signUpModal" tabindex="-1" aria-labelledby="bidModalLabel"
             aria-hidden="true">
             <div class="sign_up_modal_content">
@@ -531,6 +531,31 @@
             </div>
         </div>
         <!-- End of Sign Up Modal -->
+
+        <!-- Invite Friend Modal -->
+        <div class="inviteFriendModal fade" id="inviteFriendModal" tabindex="-22" aria-labelledby="bidModalLabel"
+            aria-hidden="true">
+            <div class="invite_friend_modal_content">
+                <div class="modal_header">
+                    <div class="empty_div"></div>
+                    <button type="button" class="btn-close closeInviteModal" aria-label="Close">X</button>
+                </div>
+                <div class="invite_friend_form_container">
+                    <div class="sign_up_modal_title">
+                        <h3>Invite a Friend</h3>
+                        <p>Provide your friend's name and email, and we'll do the rest.</p>
+                    </div>
+                    <form method="POST" action="{% url 'pop_up_emails:invite' %}" class="invite_friend_form">
+                        {% csrf_token %}
+                        <input type="text" class="friendInviteInput" name="friend_name" placeholder="Friend's Name">
+                        <input type="text" class="friendInviteInput" name="friend_email" placeholder="Friend's Email">
+
+                        <input type="submit" class="button_small" value="Submit">
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- End of Invite Friend Modal -->
     </nav>
     {% block main %}
 
@@ -560,13 +585,13 @@
                     </div>
                     <ul class="footer_about_options">
                         <li>
-                            <a href="{% url 'home:about' %}">About Us</a>
+                            <a href="{% url 'pop_up_home:about' %}">About Us</a>
                         </li>
                         <li>
-                            <a href="{% url 'home:how-it-works' %}">How It Works</a>
+                            <a href="{% url 'pop_up_home:how-it-works' %}">How It Works</a>
                         </li>
                         <li>
-                            <a href="{% url 'home:verification' %}">Verification</a>
+                            <a href="{% url 'pop_up_home:verification' %}">Verification</a>
                         </li>
                     </ul>
                 </div>
@@ -576,11 +601,11 @@
                     </div>
                     <ul class="footer_about_options">
                         <li>
-                            <a href="{% url 'home:contact' %}">Contact Us</a>
+                            <a href="{% url 'pop_up_home:contact' %}">Contact Us</a>
                         </li>
 
                         <li>
-                            <a href="{% url 'home:help-center' %}">Help Center</a>
+                            <a href="{% url 'pop_up_home:help-center' %}">Help Center</a>
                         </li>
 
                         <li>
@@ -632,8 +657,8 @@
         <div class="bottom_footer">
             <div class="footer_terms_container">
                 <ul>
-                    <li><a href="{% url 'home:terms' %}">Terms</a></li>
-                    <li><a href="{% url 'home:privacy' %}">Privacy</a></li>
+                    <li><a href="{% url 'pop_up_home:terms' %}">Terms</a></li>
+                    <li><a href="{% url 'pop_up_home:privacy' %}">Privacy</a></li>
                     <li><a href="">Privacy Choices</a></li>
                     <li>©2025 The Pop Up</li>
                     <li>All Rights Reserved</li>

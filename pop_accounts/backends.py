@@ -19,11 +19,3 @@ class EmailBackend(BaseBackend):
             return PopUpCustomer.objects.get(pk=user_id)
         except PopUpCustomer.DoesNotExist:
             return None
-    
-    # def authenticate(self, request, username=None, password=None, **kwargs):
-    #     try:
-    #         user = PopUpCustomer.objects.get(email=username)
-    #         if user.check_password(password):
-    #             return user
-    #     except PopUpCustomer.DoesNotExist:
-    #         return None

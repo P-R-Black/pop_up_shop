@@ -3,8 +3,14 @@ from django.template.loader import render_to_string
 from django.utils.timezone import now
 from datetime import timedelta, date, datetime
 from django.http import HttpResponse
-from auction.models import PopUpProduct
-from pop_up_email.utils import send_auction_winner_email
+from pop_up_auction.models import PopUpProduct
+from pop_up_email.utils import send_auction_winner_email, send_friend_invite_email
+from django.views import View
+from django.http import JsonResponse, HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPassesTestMixin
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 
 # Create your views here.
 
@@ -58,7 +64,7 @@ def preview_two_factor_auth(request):
 
 
 def preview_order_confirmation(request):
-    from orders.models import PopUpOrderItem, PopUpCustomerOrder
+    from pop_up_order.models import PopUpOrderItem, PopUpCustomerOrder
     user = request.user
     order = PopUpCustomerOrder.objects.filter(user=user).last()
     # items = PopUpOrderItem.objects.filter(order=order)
@@ -122,10 +128,55 @@ def preview_send_customer_shipping_details(request):
 
 def preview_invite_friend_email(request):
     user = 'Peter'
-    invitee = 'Tom'
+    friend_name = 'Tom'
     html = render_to_string('pop_up_email/invite_friend.html', {
         'user': user,
-        'invite': invitee
+        'friend_name': friend_name,
+        'invite_link': "https://7c90b7218718.ngrok-free.app/?show_auth_modal=true"
     
     })
     return HttpResponse(html)
+
+def preview_send_interested_in_and_coming_soon_product_update_to_users_email(request):
+    product = PopUpProduct.objects.get(id=5)
+    user = request.user
+    product_id = 5
+    buy_now_start_date = ""
+    auction_start_date = datetime(2025, 8, 17, 18, 00)
+    message_key = 'buy_now_update'
+   
+
+    html = render_to_string('pop_up_email/update_interested_users.html', {
+       'user': user,
+        'product': product, 
+        'buy_now_start_date': buy_now_start_date if buy_now_start_date else "", 
+        'auction_start_date': auction_start_date if auction_start_date else "", 
+    
+    })
+    return HttpResponse(html)
+
+
+
+class InviteFriendView(LoginRequiredMixin, View):
+
+    def post(self, request):
+        friend_name = request.POST.get('friend_name')
+        friend_email = request.POST.get('friend_email')
+
+        # verifiy good email address
+        try:
+            validate_email(friend_email)
+        except ValidationError as e:
+            print('Email is invalid', {e})
+            return JsonResponse({'error': 'Invalid email address'}, status=400)
+        
+        send_friend_invite_email(
+            user=f"{request.user.first_name} {request.user.last_name}",
+            user_email=request.user.email, 
+            friend_name=friend_name, 
+            friend_email=friend_email
+            )
+        print('email sent')
+ 
+        return JsonResponse({'success': 'Invite sent successfully'}, status=200)
+       

@@ -97,7 +97,8 @@ Auction
                                 </div>
                                 <div class="modal_body">
                                     <form class="bidForm" id="bidForm-{{ hb.product.id }}" method="post"
-                                        data-product-id="{{ hb.product.id }}" action="{% url 'auction:place_bid' %}">
+                                        data-product-id="{{ hb.product.id }}"
+                                        action="{% url 'pop_up_auction:place_bid' %}">
                                         {% csrf_token %}
                                         <div id="predefined_bids-{{ hb.id }}" class="predefined_bids"
                                             data-product-id="{{ hb.product.id }}">

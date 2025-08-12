@@ -18,6 +18,12 @@ const closeSignUpModal = document.querySelector('.closeSignUpModal');
 
 const timerDisplay = document.querySelector('#code_timer');
 
+const inviteFriendModal = document.getElementById('inviteFriendModal');
+const inviteFriendModalBtn = document.querySelectorAll('.inviteFriendBtn');
+const closeInviteModal = document.querySelector('.closeInviteModal');
+
+
+
 
 // 2f auth confirmation
 const confirmSubmitBtn = document.querySelector('.confirm_submit_button');
@@ -122,6 +128,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const forgotPasswordEmailCheckContainer = document.querySelector('.forgot_password_email_check_container')
 
 
+
+
     if (signUpModalBtn) {
         signUpModalBtn.forEach((sub) => {
             sub.addEventListener('click', () => {
@@ -134,6 +142,14 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     } else {
         console.warn('bidButton not found in the DOM.');
+    }
+
+
+    // Opens Register Modal When Email Invite Clicks on Link
+    const params = new URLSearchParams(window.location.search);
+    console.log('params', params)
+    if (params.get("show_auth_modal") === "true") {
+        signUpModal.style.display = 'block';
     }
 
 
@@ -549,6 +565,40 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
         })
     }
+
+
+    // Invite Friend Modal
+    if (inviteFriendModalBtn) {
+        inviteFriendModalBtn.forEach((inv) => {
+            inv.addEventListener('click', () => {
+                inviteFriendModal.style.display = 'block';
+            })
+        })
+    } else {
+        console.warn('bidButton not found in the DOM.');
+    }
+    // Close Invite Friend Modal
+    if (closeInviteModal) {
+        // Close the modal when the close span is clicked
+        closeInviteModal.addEventListener('click', function () {
+            inviteFriendModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeInviteModal span not found in the DOM.');
+    }
+    // Close Invite Friend Modal If Outside of Modal Clicked
+    if (inviteFriendModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === inviteFriendModal) {
+                inviteFriendModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('inviteFriendModal not found in the DOM.');
+    }
+
+
+
 
 })
 

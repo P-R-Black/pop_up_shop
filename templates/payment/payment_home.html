@@ -110,7 +110,7 @@ Payment
                         {% endif %}
 
                         <div class="billing_choices_container">
-                            <form action="{% url 'payment:payment_home' %}" class="select_billing_address_form"
+                            <form action="{% url 'pop_up_payment:payment_home' %}" class="select_billing_address_form"
                                 method="POST">
                                 {% csrf_token %}
                                 <input type="checkbox" name="use_billing_as_shipping" value="true"
@@ -120,7 +120,7 @@ Payment
                                 <label for="same_as_shipping_check" class="confirm_billing">Same as Shipping Address
                                 </label>
                             </form>
-                            <a href="{% url 'payment:billing_address' %}" class="address_change_button_long">
+                            <a href="{% url 'pop_up_payment:billing_address' %}" class="address_change_button_long">
                                 Change Billing Address
                             </a>
                             {% comment %}
@@ -229,7 +229,7 @@ Payment
                         {% endwith %}
                         {% endif %}
 
-                        <a href="{% url 'payment:shipping_address' %}" class="address_change_button_long">
+                        <a href="{% url 'pop_up_payment:shipping_address' %}" class="address_change_button_long">
                             Change Shipping Address
                         </a>
                     </div>
@@ -240,7 +240,7 @@ Payment
 
                     <div class="checkout_shipping_options_container">
                         <h3>Shipping Choice</h3>
-                        <form action="{% url 'payment:payment_home' %}" method="GET"
+                        <form action="{% url 'pop_up_payment:payment_home' %}" method="GET"
                             class="checkout_shipping_options_button_container">
                             {% csrf_token %}
                             <input type="hidden" name="shipping_method" id="shippingMethodInput" value="1499" />
@@ -517,7 +517,7 @@ Payment
 
                     <div class="checkout_shipping_options_container">
                         <h3>Shipping Choice</h3>
-                        <form action="{% url 'payment:payment_home' %}" method="GET"
+                        <form action="{% url 'pop_up_payment:payment_home' %}" method="GET"
                             class="checkout_shipping_options_button_container">
                             {% csrf_token %}
 
@@ -690,7 +690,7 @@ Payment
 
         $.ajax({
             type: "POST",
-            url: '{% url "cart:cart_delete" %}',
+            url: '{% url "pop_up_cart:cart_delete" %}',
             data: {
                 productId: prodId,
                 csrfmiddlewaretoken: "{{csrf_token}}",

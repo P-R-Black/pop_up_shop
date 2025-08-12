@@ -24,8 +24,8 @@ Payment
                     new</button>
             </div>
             <!-- Edit Address Tab -->
-            <form action="{% url 'payment:shipping_address' %}" method="post" class="billing_address_content activated"
-                id="edit-tab">
+            <form action="{% url 'pop_up_payment:shipping_address' %}" method="post"
+                class="billing_address_content activated" id="edit-tab">
                 {% csrf_token %}
 
                 <input type="hidden" name="address_id" value="{{ address_form.instance.id }}">
@@ -84,7 +84,7 @@ Payment
 
             <div class="billing_add_address_tab billing_address_content" id="choose-tab">
                 <p>Select from Your Saved Addresses:</p>
-                <form action="{% url 'payment:shipping_address' %}" class="select_address_form" method="POST">
+                <form action="{% url 'pop_up_payment:shipping_address' %}" class="select_address_form" method="POST">
                     {% csrf_token %}
                     {% for addy in saved_addresses %}
                     <label>
@@ -119,7 +119,7 @@ Payment
             </div>
 
             <!-- Add New Address Tab -->
-            <form action="{% url 'payment:shipping_address' %}" method="POST" class="billing_address_content"
+            <form action="{% url 'pop_up_payment:shipping_address' %}" method="POST" class="billing_address_content"
                 id="new-tab">
                 {% csrf_token %}
                 <!-- Reuse the same form or a seperate one -->

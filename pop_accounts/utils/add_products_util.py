@@ -1,7 +1,7 @@
 from django.db import IntegrityError
 from django.contrib import messages
-from auction.models import (PopUpProductSpecification, PopUpProductSpecificationValue)
-from auction.forms import (PopUpAddProductForm, PopUpProductImageForm)
+from pop_up_auction.models import (PopUpProductSpecification, PopUpProductSpecificationValue)
+from pop_up_auction.forms import (PopUpAddProductForm, PopUpProductImageForm)
 
 
 def handle_simple_form_submission(request, FormClass, form_type_label, success_message):
