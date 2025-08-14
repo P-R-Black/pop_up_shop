@@ -47,3 +47,9 @@ def payment_help(request):
 
 def fees_help(request):
     return render(request, 'home/site_info/help_center_pages/fees_page.html')
+
+def friend_invite_success(request):
+    return render(request, 'home/confirmations/friend_invite_success.html')
+
+def friend_invite_failure(request):
+    return render(request, 'home/error/friend_invite_fail.html')

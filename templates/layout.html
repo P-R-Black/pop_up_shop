@@ -44,6 +44,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
 
+    <!-- Canvas-Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
 
     <!-- Your NowPayments integration script -->
     <script src="{% static 'js/nowpayments_integration.js' %}"></script>
@@ -66,6 +69,7 @@
     <link rel="stylesheet" href="{% static 'css/template_mobile.css' %}">
 
     <link rel="stylesheet" href="{% static 'css/home/home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/confirmations/friend_invite_success.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/auction.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/auction_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_auction.css' %}">
@@ -253,7 +257,7 @@
                         </a>
                     </li>
                     <li class="nav-link inviteFriendBtn">
-                        <button href="#">
+                        <button>
                             <i class='bx bx-mail-send icon'></i>
                             <span class="text nav-text">Invite a Friend</span>
                         </button>
@@ -548,7 +552,7 @@
                     <form method="POST" action="{% url 'pop_up_emails:invite' %}" class="invite_friend_form">
                         {% csrf_token %}
                         <input type="text" class="friendInviteInput" name="friend_name" placeholder="Friend's Name">
-                        <input type="text" class="friendInviteInput" name="friend_email" placeholder="Friend's Email">
+                        <input type="email" class="friendInviteInput" name="friend_email" placeholder="Friend's Email">
 
                         <input type="submit" class="button_small" value="Submit">
                     </form>
@@ -641,7 +645,7 @@
                 </div>
             </div>
             <div class="footer_invite_payment_container">
-                <button class="button_long">Invite Friend</button>
+                <button class="button_long inviteFriendBtn">Invite Friend</button>
                 <div class="footer_payment_options">
                     <img src="{% static 'img/paypal_card_icon.png' %}" class='footer_paypal-logo' />
                     <img src="{% static 'img/visa_icon.png' %}" class='footer_visa-logo' />

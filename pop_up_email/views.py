@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import reverse
+from django.shortcuts import redirect
 from django.utils.timezone import now
 from datetime import timedelta, date, datetime
 from django.http import HttpResponse
@@ -10,7 +12,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPassesTestMixin
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-
+from django.contrib import messages
 
 # Create your views here.
 
@@ -167,8 +169,7 @@ class InviteFriendView(LoginRequiredMixin, View):
         try:
             validate_email(friend_email)
         except ValidationError as e:
-            print('Email is invalid', {e})
-            return JsonResponse({'error': 'Invalid email address'}, status=400)
+            return redirect(reverse('pop_up_home:invite_failed'))
         
         send_friend_invite_email(
             user=f"{request.user.first_name} {request.user.last_name}",
@@ -176,7 +177,9 @@ class InviteFriendView(LoginRequiredMixin, View):
             friend_name=friend_name, 
             friend_email=friend_email
             )
-        print('email sent')
- 
-        return JsonResponse({'success': 'Invite sent successfully'}, status=200)
-       
+
+        messages.success(request, f'🎉  An invite has been sent to {friend_name}.  🎉')
+
+        # Render success HTML page
+        return redirect(reverse('pop_up_home:invite_success'))
+        

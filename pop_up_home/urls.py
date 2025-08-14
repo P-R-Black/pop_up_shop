@@ -19,5 +19,9 @@ urlpatterns = [
     path('shipping-help', views.shipping_help, name='shipping-help'),
     path('payment-help', views.payment_help, name='payment-help'),
     path('fees-help', views.fees_help, name='fees-help'),
+    path('friend-invite-success/', views.friend_invite_success, name='invite_success'),
+    path('friend-invite-fail/', views.friend_invite_failure, name='invite_failed')
 
 ]
+
+
