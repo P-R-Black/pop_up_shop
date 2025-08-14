@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% load static %}
+{% load custom_math %}
+{% load email_filters %}
+{% load humanize %}
+
+{% block title %}
+Friend Invite Confirmation
+{% endblock %}
+
+{% block main %}
+
+<section class="friend_invite_section container">
+
+    <div class="success_friend_invite">
+
+
+        {% if messages %}
+        {% for message in messages %}
+
+        <h2 class="friend_message_success">{{ message }}</h2>
+        <p>Thanks for spreading the word</p>
+
+
+        {% endfor %}
+        {% endif %}
+
+    </div>
+
+</section>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const duration = 3 * 1000; // 3 seconds
+        const end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0.20 }
+            });
+            confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        })();
+    });
+</script>
+{% endblock %}

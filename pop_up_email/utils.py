@@ -159,7 +159,8 @@ def send_friend_invite_email(user, user_email, friend_name, friend_email):
     subject = f"{user} invited you to join The Pop Up!"
     # invite_link = reverse('account_signup')
  
-    full_invite_url = f"{settings.SITE_DOMAIN}/?show_auth_modal=true"
+    # full_invite_url = f"{settings.SITE_DOMAIN}/?show_auth_modal=true"
+    full_invite_url = f"localhost:8000/?show_auth_modal=true"
     html_message = render_to_string('pop_up_email/invite_friend.html', {
         'user': user, 
         'user_email': user_email, 

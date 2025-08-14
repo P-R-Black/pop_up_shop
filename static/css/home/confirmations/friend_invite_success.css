@@ -1,0 +1,30 @@
+.friend_invite_section {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.success_friend_invite {
+    height: 100vh;
+    width: 100vw;
+
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.success_friend_invite h1,
+.success_friend_invite h2,
+.success_friend_invite p {
+    color: var(--text-color);
+}
+
+
+div.error-icon {
+    font-size: 5rem;
+}
+
+.success_friend_invite p {
+    font-size: 1.15rem;
+}

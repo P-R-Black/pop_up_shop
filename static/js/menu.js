@@ -147,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Opens Register Modal When Email Invite Clicks on Link
     const params = new URLSearchParams(window.location.search);
-    console.log('params', params)
     if (params.get("show_auth_modal") === "true") {
         signUpModal.style.display = 'block';
     }
