@@ -14,6 +14,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const processingFee = document.getElementById('processingFee').innerHTML
     const salesTax = document.getElementById('purchaseTax').innerHTML
     let orderQuantity;
+
     if (document.getElementById('purchaseQuantity')) {
         orderQuantity = document.getElementById('purchaseQuantity').innerHTML
     }

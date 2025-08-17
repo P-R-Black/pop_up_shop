@@ -29,7 +29,9 @@ import re
 from django.db.models import Q
 from django.http import HttpResponse
 from django.db.models import Prefetch
+import logging
 
+logger = logging.getLogger(__name__)
 
 
 
@@ -76,7 +78,11 @@ class CreateOrderAfterPaymentView(View):
 
             
             # Need to work on the get_fees_by_payment function
-            payment_fees = get_fees_by_payment(payment_method, payment_data_id)
+            try:
+                payment_fees = get_fees_by_payment(payment_method, payment_data_id)
+            except Exception as e:
+                logger.error('Failed to retrieve payment fees: {e}')
+                payment_fees = Decimal('0.00')
            
 
             # not needed because payment_data_id = payload.nonce from Venmo
@@ -192,7 +198,7 @@ class CreateOrderAfterPaymentView(View):
                         product=product,
                         reserve_price=product.reserve_price,
                         final_price=total_paid,
-                        fees=0.00,
+                        fees=payment_fees,
                         refunded_amount=0.00,
                         profit=Decimal(total_paid) - Decimal(product.reserve_price),
                         payment_method=payment_method,
