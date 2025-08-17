@@ -348,7 +348,8 @@
                         <div class="email_verification_container hide_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='backChevron'></i>
+                                    <i class='bx bx-chevron-left backChevron' id='backChevron'
+                                        onclick="moveBackwardSignInButton('show_email_verification_container', 'hide_container', 'hide_container', 'show_container', '.email_verification_container', '.sign_up_title_options_container')"></i>
                                     <h3>Continue with email</h3>
                                 </div>
 
@@ -414,7 +415,8 @@
                         <div class="email_login_container hide_email_login_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronThree'></i>
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronThree'
+                                        onclick="moveBackwardSignInButton('show_email_login_container', 'hide_email_login_container', 'shift_left', 'show_email_verification_container', '.email_login_container', '.email_verification_container')"></i>
                                     <h3>Login</h3>
                                 </div>
                             </div>
@@ -475,10 +477,14 @@
                             </div>
                         </div>
 
-                        <div class="sign_up_email_confirm_container hide_ign_up_email_confirm_container">
+                        <div class="sign_up_email_confirm_container hide_sign_up_email_confirm_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronSix'></i>
+                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronSix'
+                                        data-attribute="" {% comment %}
+                                        moveBackwardSignInButton(removeThisClass,addThisClass, removeNextClass,
+                                        addNextClass, nameOfContainerToHide, nameOfContainerToShow) {% endcomment %}
+                                        onclick="moveBackwardSignInButton('show_sign_up_email_confirm_container', 'hide_sign_up_email_confirm_container', 'hide_email_login_container_to_left', 'show_email_login_container', '.sign_up_email_confirm_container', '.email_login_container')"></i>
                                     <h3>Confirmation</h3>
                                 </div>
                             </div>
@@ -488,7 +494,6 @@
                                     <p>Enter confirmation code below.</p>
                                     <p><span id="code_timer">05:00</span></p>
                                 </div>
-
 
                                 <form method="post">
                                     {% csrf_token %}
@@ -500,7 +505,8 @@
                                         <input class="code-input" type="number" maxlength="1">
                                         <input class="code-input" type="number" maxlength="1">
                                     </div>
-                                    <button type="button" class="button_small_white confirm_submit_button">Submit
+                                    <button type="button" class="button_small_white confirm_submit_button"
+                                        id="confirmSubmitBtn">Submit
                                     </button>
                                 </form>
                                 <div class="resend_request_container">

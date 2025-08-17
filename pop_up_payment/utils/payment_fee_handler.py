@@ -1,30 +1,33 @@
 import stripe
 import braintree
+import paypalrestsdk
 from decimal import Decimal
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
 
-def get_fees_by_payment(payment_method, payment_data_id):
-    fees = 0
-    if payment_method == 'stripe':
-        return fetch_stripe_fees(payment_data_id)
-    if payment_method == 'paypal':
-        return fetch_paypal_fees(payment_data_id)
-    if payment_method == 'venmo':
-        return fetch_venmo_fees(payment_data_id)
-    if payment_method == 'google_pay':
-        return fetch_google_pay_fees(payment_data_id)
-    if payment_method == 'apple_pay':
-        return fetch_apple_pay_fees(payment_data_id)
-    if payment_method == 'now_payment':
-        return fetch_now_payments_fees(payment_data_id)
+def get_fees_by_payment(payment_method: str,  payment_data_id: str) -> Decimal:
+    """Get payment processing fees by payment method"""
+    fee_handlers = {
+        'stripe': fetch_stripe_fees,
+        'paypal': fetch_paypal_fees,
+        'venmo': fetch_venmo_fees,
+        'google_pay': fetch_paypal_fees,
+        'apple_pay': fetch_apple_pay_fees,
+        'now_payment': fetch_now_payments_fees,
+    }
+    
+    handler = fee_handlers.get(payment_method)
+    if handler:
+        return handler(payment_data_id)
     else:
+        logger.warning(f'Unknown payment method: {payment_method}')
         return Decimal('0.00')
 
 
 
-def fetch_stripe_fees(payment_data_id):
+def fetch_stripe_fees(payment_data_id: str) -> Decimal:
     try:
         # Retrieve the payment intent
         intent = stripe.PaymentIntent.retrieve(payment_data_id)
@@ -59,9 +62,6 @@ def fetch_apple_pay_fees(order_id):
     payment_fee = 0
     return payment_fee
 
-def fetch_google_pay_fees(order_id):
-    payment_fee = 0
-    return payment_fee
 
 def fetch_now_payments_fees(order_id):
     payment_fee = 0
@@ -79,3 +79,5 @@ def fetch_venmo_fees(payment_data_id):
     except Exception as e:
         logger.error(f"Error getting Braintree (Venmo) fee: {e}")
         return Decimal("0.00")
+
+

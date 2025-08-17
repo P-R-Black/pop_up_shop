@@ -48,9 +48,7 @@ Auction
                 </div>
 
                 <div class="fr_desc_container">
-                    {% for spec in prod.popupproductspecificationvalue_set.all|slice:"2:3" %}
-                    <h3>{{ spec }}</h3>
-                    {% endfor %}
+                    <h3>{{ prod.specs.model_year }}</h3>
                     <h3>{{ prod.product_title }}</h3>
                     <h3>{{ prod.secondary_product_title}}</h3>
                 </div>

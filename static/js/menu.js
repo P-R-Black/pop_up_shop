@@ -26,8 +26,8 @@ const closeInviteModal = document.querySelector('.closeInviteModal');
 
 
 // 2f auth confirmation
-const confirmSubmitBtn = document.querySelector('.confirm_submit_button');
-const confirmInputs = document.querySelectorAll('.confirmation_input input');
+// const confirmSubmitBtn = document.querySelector('.confirm_submit_button');
+// const confirmInputs = document.querySelectorAll('.confirmation_input input');
 
 
 
@@ -99,33 +99,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // sign up email modal 
 document.addEventListener('DOMContentLoaded', function () {
-    const backChevron = document.getElementById('backChevron');
-    const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
-    const emailVerificationContainer = document.querySelector('.email_verification_container');
-    const emailSignUpButton = document.querySelector('.emailSignUpButton');
+    // const backChevron = document.getElementById('backChevron');
+    // const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
+    // const emailVerificationContainer = document.querySelector('.email_verification_container');
+    // const emailSignUpButton = document.querySelector('.emailSignUpButton');
 
-    const signUpEmailContainer = document.querySelector('.sign_up_email_container');
-    const signUpEmailInput = document.querySelector('.sign_up_options_form_email');
-    const emailSubmitButton = document.querySelector('.emailSubmitButton');
+    // const signUpEmailContainer = document.querySelector('.sign_up_email_container');
+    // const signUpEmailInput = document.querySelector('.sign_up_options_form_email');
+    // const emailSubmitButton = document.querySelector('.emailSubmitButton');
 
-    const emailLoginContainer = document.querySelector('.email_login_container');
+    // const emailLoginContainer = document.querySelector('.email_login_container');
 
-    const confirmContainerBackChevron = document.getElementById('confirmContainerBackChevron');
+    // const confirmContainerBackChevron = document.getElementById('confirmContainerBackChevron');
 
-    const confirmContainerBackChevronTwo = document.getElementById('confirmContainerBackChevronTwo');
-    const confirmContainerBackChevronThree = document.getElementById('confirmContainerBackChevronThree');
-    const confirmContainerBackChevronFour = document.getElementById('confirmContainerBackChevronFour');
+    // const confirmContainerBackChevronTwo = document.getElementById('confirmContainerBackChevronTwo');
+    // const confirmContainerBackChevronThree = document.getElementById('confirmContainerBackChevronThree');
+    // const confirmContainerBackChevronFour = document.getElementById('confirmContainerBackChevronFour');
 
-    const confirmContainerBackChevronSix = document.getElementById('confirmContainerBackChevronSix');
-    const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container');
+    // const confirmContainerBackChevronSix = document.getElementById('confirmContainerBackChevronSix');
+    // const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container');
 
-    const signUpOptionsFormPasswordInput = document.querySelector('.sign_up_options_form_password')
+    // const signUpOptionsFormPasswordInput = document.querySelector('.sign_up_options_form_password')
     // const passwordSubmitButton = document.querySelector('.passwordSubmitButton');
-    const loginSubmitButton = document.querySelector('.loginSubmitButton');
+    // const loginSubmitButton = document.querySelector('.loginSubmitButton');
     // const modal = document.querySelector('.sign_up_modal');
 
-    const confirmContainerBackChevronFive = document.getElementById('confirmContainerBackChevronFive')
-    const forgotPasswordEmailCheckContainer = document.querySelector('.forgot_password_email_check_container')
+    // const confirmContainerBackChevronFive = document.getElementById('confirmContainerBackChevronFive')
+    // const forgotPasswordEmailCheckContainer = document.querySelector('.forgot_password_email_check_container')
 
 
 
@@ -181,104 +181,102 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //         signUpEmailConfirmContainer.classList.remove('hide_container')
     //         signUpEmailConfirmContainer.classList.add('show_container')
+    //     })
+    // }
+
+
+    // if (confirmContainerBackChevron) {
+    //     confirmContainerBackChevron.addEventListener('click', () => {
+    //         emailVerificationContainer.classList.add('show_container')
+    //         emailVerificationContainer.classList.remove('shift_left')
+    //         signUpEmailContainer.classList.add('hide_container')
+    //         signUpEmailContainer.classList.remove('show_container')
+    //     })
+    // }
+
+
+    // if (confirmContainerBackChevronTwo) {
+    //     confirmContainerBackChevronTwo.addEventListener('click', (e) => {
+    //         e.preventDefault();
+    //         signUpEmailContainer.classList.remove('show_container')
+    //         signUpEmailContainer.classList.add('hide_container')
+
+    //         emailVerificationContainer.classList.remove('shift_left')
+    //         emailVerificationContainer.classList.add('show_container')
+
+
+    //     })
+    // }
+
+    // if (confirmContainerBackChevronFive) {
+    //     confirmContainerBackChevronFive.addEventListener('click', (e) => {
+    //         e.preventDefault()
+    //         console.log('clicked on Five!')
+    //         passwordForgetContainer.classList.add('show_forgot_password_container')
+    //         passwordForgetContainer.classList.remove('hide_forgot_password_container')
+
+    //         forgotPasswordEmailCheckContainer.classList.remove('show_forgot_password_email_check_container')
+    //         forgotPasswordEmailCheckContainer.classList.add('forgot_password_email_check_container')
 
 
     //     })
     // }
 
 
-    if (confirmContainerBackChevron) {
-        confirmContainerBackChevron.addEventListener('click', () => {
-            emailVerificationContainer.classList.add('show_container')
-            emailVerificationContainer.classList.remove('shift_left')
-            signUpEmailContainer.classList.add('hide_container')
-            signUpEmailContainer.classList.remove('show_container')
-        })
-    }
-
-
-    if (confirmContainerBackChevronTwo) {
-        confirmContainerBackChevronTwo.addEventListener('click', (e) => {
-            e.preventDefault();
-            signUpEmailContainer.classList.remove('show_container')
-            signUpEmailContainer.classList.add('hide_container')
-
-            emailVerificationContainer.classList.remove('shift_left')
-            emailVerificationContainer.classList.add('show_container')
-
-
-        })
-    }
-
-    if (confirmContainerBackChevronFive) {
-        confirmContainerBackChevronFive.addEventListener('click', (e) => {
-            e.preventDefault()
-            console.log('clicked on Five!')
-            passwordForgetContainer.classList.add('show_forgot_password_container')
-            passwordForgetContainer.classList.remove('hide_forgot_password_container')
-
-            forgotPasswordEmailCheckContainer.classList.remove('show_forgot_password_email_check_container')
-            forgotPasswordEmailCheckContainer.classList.add('forgot_password_email_check_container')
-
-
-        })
-    }
-
-
 
     // Email submitted and checked if on file.
     // If not on file, take to register
     // If email on file, take to password entry
-    if (emailSubmitButton) {
-        emailSubmitButton.addEventListener('click', (e) => {
-            console.log('button clicked!')
-            e.preventDefault();
+    // if (emailSubmitButton) {
+    //     emailSubmitButton.addEventListener('click', (e) => {
+    //         console.log('button clicked!')
+    //         e.preventDefault();
 
-            const form = emailSubmitButton.closest('form');
-            const formData = new FormData(form);
-            const emailProvidedSigninPopup = document.querySelectorAll('.email_provided_signin_popup')
+    //         const form = emailSubmitButton.closest('form');
+    //         const formData = new FormData(form);
+    //         const emailProvidedSigninPopup = document.querySelectorAll('.email_provided_signin_popup')
 
-            fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': getCSRFToken(),
-                },
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === false) {
-                        // Go to password login container
-                        emailVerificationContainer.classList.remove('show_container');
-                        emailVerificationContainer.classList.add('shift_left');
-                        emailLoginContainer.classList.remove('hide_email_login_container');
-                        emailLoginContainer.classList.add('show_email_login_container');
+    //         fetch(form.action, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'X-Requested-With': 'XMLHttpRequest',
+    //                 'X-CSRFToken': getCSRFToken(),
+    //             },
+    //             body: formData
+    //         })
+    //             .then(response => response.json())
+    //             .then(data => {
+    //                 if (data.status === false) {
+    //                     // Go to password login container
+    //                     emailVerificationContainer.classList.remove('show_container');
+    //                     emailVerificationContainer.classList.add('shift_left');
+    //                     emailLoginContainer.classList.remove('hide_email_login_container');
+    //                     emailLoginContainer.classList.add('show_email_login_container');
 
-                        emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
-                    } else if (data.status === true) {
-                        const email = formData.get('email');
-                        sessionStorage.setItem('auth_email', email);
-                        // Go to registration container
-                        emailVerificationContainer.classList.remove('show_container');
-                        emailVerificationContainer.classList.add('shift_left');
-                        signUpEmailContainer.classList.remove('hide_container');
-                        signUpEmailContainer.classList.add('show_container');
-                        emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
-                        // Pre-fill email in registration form
-                        const registrationEmailInput = document.querySelector('#id_reg_email');
-                        if (registrationEmailInput) {
-                            registrationEmailInput.value = email;
-                        }
-                    } else {
-                        console.error('Unexpected response:', data);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error submitting email:', error);
-                });
-        });
-    }
+    //                     emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
+    //                 } else if (data.status === true) {
+    //                     const email = formData.get('email');
+    //                     sessionStorage.setItem('auth_email', email);
+    //                     // Go to registration container
+    //                     emailVerificationContainer.classList.remove('show_container');
+    //                     emailVerificationContainer.classList.add('shift_left');
+    //                     signUpEmailContainer.classList.remove('hide_container');
+    //                     signUpEmailContainer.classList.add('show_container');
+    //                     emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
+    //                     // Pre-fill email in registration form
+    //                     const registrationEmailInput = document.querySelector('#id_reg_email');
+    //                     if (registrationEmailInput) {
+    //                         registrationEmailInput.value = email;
+    //                     }
+    //                 } else {
+    //                     console.error('Unexpected response:', data);
+    //                 }
+    //             })
+    //             .catch(error => {
+    //                 console.error('Error submitting email:', error);
+    //             });
+    //     });
+    // }
 
 
 
@@ -294,186 +292,187 @@ document.addEventListener('DOMContentLoaded', function () {
     //     })
     // }
 
-    if (loginSubmitButton) {
-        loginSubmitButton.addEventListener('click', (e) => {
-            e.preventDefault()
-            console.log("I've been clicked!")
+    // if (loginSubmitButton) {
+    //     loginSubmitButton.addEventListener('click', (e) => {
+    //         e.preventDefault()
+    //         console.log("I've been clicked!")
 
-            const form = loginSubmitButton.closest('form');
-            const formData = new FormData(form);
-
-
-            fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('data from loginSubmitButton is', data)
-                    if (data['authenticated'] === true) {
-                        emailLoginContainer.classList.remove('show_email_login_container');
-                        emailLoginContainer.classList.add('hide_email_login_container_to_left');
-                        signUpEmailConfirmContainer.classList.remove('hide_ign_up_email_confirm_container')
-                        signUpEmailConfirmContainer.classList.add('show_sign_up_email_confirm_container')
-
-                        setTimeout(() => {
-                            const fiveMinutes = 1 * 60;
-                            startCodeTimer(fiveMinutes, timerDisplay)
-                        }, 100)
+    //         const form = loginSubmitButton.closest('form');
+    //         const formData = new FormData(form);
 
 
-                    } else if (data['authenticated'] === false) {
-                        console.error('Unexpected response:', data);
-                        console.error('Unexpected response2:', data.message);
-                        const loginUserOptionsError = document.querySelector('.login_user_options_error');
-                        loginUserOptionsError.style.display = "block";
-                        loginUserOptionsError.textContent = "Invalid Credentials Provided";
-                        loginUserOptionsError.style.fontSize = "20px"
-                        // if (data.error === "Invalid credentials. Attempt 5/5") {
-                        //     loginUserOptionsError.textContent = "Too many failed attempts. Try again in 15 minutes"
-                        // } else {
-                        //     loginUserOptionsError.textContent = "Invalid Credentials Provided"
-                        // }
-                    } else if (data['authenticated'] === false && data['locked_out'] === true) {
-                        loginUserOptionsError.style.textAlign = "center"
-                        loginUserOptionsError.textContent = data.error
+    //         fetch(form.action, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'X-Requested-With': 'XMLHttpRequest'
+    //             },
+    //             body: formData
+    //         })
+    //             .then(response => response.json())
+    //             .then(data => {
+    //                 console.log('data from loginSubmitButton is', data)
+    //                 if (data['authenticated'] === true) {
+    //                     emailLoginContainer.classList.remove('show_email_login_container');
+    //                     emailLoginContainer.classList.add('hide_email_login_container_to_left');
+    //                     signUpEmailConfirmContainer.classList.remove('hide_ign_up_email_confirm_container')
+    //                     signUpEmailConfirmContainer.classList.add('show_sign_up_email_confirm_container')
 
-                    }
-                })
-                .catch(error => {
-                    console.error('Error submitting password', error)
-                })
-        })
-    }
-
-    if (confirmContainerBackChevronSix) {
-        confirmContainerBackChevronSix.addEventListener('click', () => {
-            signUpEmailConfirmContainer.classList.remove('show_sign_up_email_confirm_container')
-            signUpEmailConfirmContainer.classList.add('hide_ign_up_email_confirm_container')
-            emailLoginContainer.classList.remove('hide_email_login_container_to_left');
-            emailLoginContainer.classList.add('show_email_login_container');
+    //                     setTimeout(() => {
+    //                         const fiveMinutes = 1 * 60;
+    //                         startCodeTimer(fiveMinutes, timerDisplay)
+    //                     }, 100)
 
 
-        })
-    }
+    //                 } else if (data['authenticated'] === false) {
+    //                     console.error('Unexpected response:', data);
+    //                     console.error('Unexpected response2:', data.message);
+    //                     const loginUserOptionsError = document.querySelector('.login_user_options_error');
+    //                     loginUserOptionsError.style.display = "block";
+    //                     loginUserOptionsError.textContent = "Invalid Credentials Provided";
+    //                     loginUserOptionsError.style.fontSize = "20px"
+    //                     // if (data.error === "Invalid credentials. Attempt 5/5") {
+    //                     //     loginUserOptionsError.textContent = "Too many failed attempts. Try again in 15 minutes"
+    //                     // } else {
+    //                     //     loginUserOptionsError.textContent = "Invalid Credentials Provided"
+    //                     // }
+    //                 } else if (data['authenticated'] === false && data['locked_out'] === true) {
+    //                     loginUserOptionsError.style.textAlign = "center"
+    //                     loginUserOptionsError.textContent = data.error
 
-    // 2f auth confirmation
-    if (confirmSubmitBtn) {
-        confirmSubmitBtn.addEventListener('click', (e) => {
-            e.preventDefault();
+    //                 }
+    //             })
+    //             .catch(error => {
+    //                 console.error('Error submitting password', error)
+    //             })
+    //     })
+    // }
 
-            const code = Array.from(confirmInputs).map(input => input.value.trim()).join('');
-
-            console.log('code', code)
-
-            if (code.length != 6) {
-                alert("Please enter the full 6-digit code.");
-                return;
-            }
-            // const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-            const csrfToken = getCookie('csrftoken'); // <- use cookie
-
-
-            if (!csrfToken) {
-                console.error('CSRF token not found.')
-                return;
-            }
-
-            fetch('/pop_accounts/auth/verify-code/', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken,
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({ code })
-            })
-                .then(async (response) => {
-                    console.log('response in confirmSubmitBtn', response)
-                    const data = await response.json();
-                    console.log('data', data)
-                    if (!response.ok) {
-                        throw new Error(data.error || `HTTP error! status: ${response.status}`);
-                    }
-                    return data;
-                })
-                .then(data => {
-                    if (data.verified) {
-                        if (signUpModal) signUpModal.style.display = 'none';
-                        window.location.reload()
-                    } else {
-                        alert(data.error || 'Invalid code.');
-                    }
-                })
-                .catch(err => {
-                    console.error('Two-Factor Authentication verification failed', err);
-                    alert(err.message || 'Something went wrong.')
-                });
-        });
-    }
+    // if (confirmContainerBackChevronSix) {
+    //     confirmContainerBackChevronSix.addEventListener('click', () => {
+    //         signUpEmailConfirmContainer.classList.remove('show_sign_up_email_confirm_container')
+    //         signUpEmailConfirmContainer.classList.add('hide_ign_up_email_confirm_container')
+    //         emailLoginContainer.classList.remove('hide_email_login_container_to_left');
+    //         emailLoginContainer.classList.add('show_email_login_container');
 
 
+    //     })
+    // }
+
+    // // 2f auth confirmation
+    // if (confirmSubmitBtn) {
+    //     confirmSubmitBtn.addEventListener('click', (e) => {
+    //         e.preventDefault();
+
+    //         const code = Array.from(confirmInputs).map(input => input.value.trim()).join('');
+
+    //         console.log('code', code)
+
+    //         if (code.length != 6) {
+    //             alert("Please enter the full 6-digit code.");
+    //             return;
+    //         }
+    //         // const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    //         const csrfToken = getCookie('csrftoken'); // <- use cookie
 
 
-    if (confirmContainerBackChevronThree) {
-        confirmContainerBackChevronThree.addEventListener('click', () => {
+    //         if (!csrfToken) {
+    //             console.error('CSRF token not found.')
+    //             return;
+    //         }
 
-            emailLoginContainer.classList.remove('show_email_login_container')
-            emailLoginContainer.classList.add('hide_email_login_container')
-
-            emailVerificationContainer.classList.remove('shift_left')
-            emailVerificationContainer.classList.add('show_container')
-
-
-        })
-    }
+    //         fetch('/pop_accounts/auth/verify-code/', {
+    //             method: 'POST',
+    //             credentials: 'same-origin',
+    //             headers: {
+    //                 'X-Requested-With': 'XMLHttpRequest',
+    //                 'X-CSRFToken': csrfToken,
+    //                 'Content-Type': 'application/x-www-form-urlencoded'
+    //             },
+    //             body: new URLSearchParams({ code })
+    //         })
+    //             .then(async (response) => {
+    //                 console.log('response in confirmSubmitBtn', response)
+    //                 const data = await response.json();
+    //                 console.log('data', data)
+    //                 if (!response.ok) {
+    //                     throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    //                 }
+    //                 return data;
+    //             })
+    //             .then(data => {
+    //                 if (data.verified) {
+    //                     if (signUpModal) signUpModal.style.display = 'none';
+    //                     window.location.reload()
+    //                 } else {
+    //                     alert(data.error || 'Invalid code.');
+    //                 }
+    //             })
+    //             .catch(err => {
+    //                 console.error('Two-Factor Authentication verification failed', err);
+    //                 alert(err.message || 'Something went wrong.')
+    //             });
+    //     });
+    // }
 
 
 
-    if (emailSignUpButton) {
-        emailSignUpButton.addEventListener('click', () => {
-            signUpTitleOptionsContainer.classList.remove('show_container')
-            signUpTitleOptionsContainer.classList.add('hide_container')
 
-            emailVerificationContainer.classList.remove('hide_container')
-            emailVerificationContainer.classList.add('show_container')
-        })
-    }
+    // if (confirmContainerBackChevronThree) {
+    //     confirmContainerBackChevronThree.addEventListener('click', () => {
 
-    if (backChevron) {
-        backChevron.addEventListener('click', () => {
-            emailVerificationContainer.classList.remove('show_container')
-            emailVerificationContainer.classList.add('hide_container')
-            signUpTitleOptionsContainer.classList.remove('hide_container')
-            signUpTitleOptionsContainer.classList.add('show_container')
-        })
-    }
+    //         emailLoginContainer.classList.remove('show_email_login_container')
+    //         emailLoginContainer.classList.add('hide_email_login_container')
+
+    //         emailVerificationContainer.classList.remove('shift_left')
+    //         emailVerificationContainer.classList.add('show_container')
+
+
+    //     })
+    // }
+
+
+
+    // if (emailSignUpButton) {
+    //     emailSignUpButton.addEventListener('click', () => {
+    //         signUpTitleOptionsContainer.classList.remove('show_container')
+    //         signUpTitleOptionsContainer.classList.add('hide_container')
+
+    //         emailVerificationContainer.classList.remove('hide_container')
+    //         emailVerificationContainer.classList.add('show_container')
+    //     })
+    // }
+
+    // if (backChevron) {
+    //     backChevron.addEventListener('click', () => {
+    //         emailVerificationContainer.classList.remove('show_container')
+    //         emailVerificationContainer.classList.add('hide_container')
+    //         signUpTitleOptionsContainer.classList.remove('hide_container')
+    //         signUpTitleOptionsContainer.classList.add('show_container')
+    //     })
+    // }
 
     // Disable Password Submit Button
-    const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
-    signUpOptionsFormPasswordInput.addEventListener('input', () => {
-        passwordSubmitBtn.disabled = signUpOptionsFormPasswordInput.value.length < 8;
-    });
+    // const signUpOptionsFormPasswordInput = document.querySelector('.sign_up_options_form_password')
+    // const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
+    // signUpOptionsFormPasswordInput.addEventListener('input', () => {
+    //     passwordSubmitBtn.disabled = signUpOptionsFormPasswordInput.value.length < 8;
+    // });
 
 
     // Disable Email Submit Button
-    const emailInput = document.getElementById('id_email_check');
-    const emailContinueBtn = document.getElementById('emailContinueBtn');
-    emailInput.addEventListener('input', () => {
-        emailContinueBtn.disabled = !emailInput.value.includes('@');
-    });
+    // const emailInput = document.getElementById('id_email_check');
+    // const emailContinueBtn = document.getElementById('emailContinueBtn');
+    // emailInput.addEventListener('input', () => {
+    //     emailContinueBtn.disabled = !emailInput.value.includes('@');
+    // });
 
     // Disable Password Reset Submit Button
-    const resetPasswordBtn = document.getElementById('resetPasswordBtn');
-    const resetPasswordInput = document.getElementById('id_email_password_reset_form');
+    // const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+    // const resetPasswordInput = document.getElementById('id_email_password_reset_form');
 
-    resetPasswordInput.addEventListener('input', () => {
-        resetPasswordBtn.disabled = !resetPasswordInput.value.includes('@');
-    });
+    // resetPasswordInput.addEventListener('input', () => {
+    //     resetPasswordBtn.disabled = !resetPasswordInput.value.includes('@');
+    // });
 
 
 
@@ -722,106 +721,106 @@ const displayFormErrors = (errors) => {
 
 
 // 2F Auth Timer
-const startCodeTimer = (duration, display) => {
-    let timer = duration;
-    const countdown = setInterval(() => {
-        const minutes = Math.floor(timer / 60)
-        const seconds = timer % 60;
+// const startCodeTimer = (duration, display) => {
+//     let timer = duration;
+//     const countdown = setInterval(() => {
+//         const minutes = Math.floor(timer / 60)
+//         const seconds = timer % 60;
 
-        display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+//         display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-        if (--timer < 0) {
-            clearInterval(countdown);
-            display.textContent = "Time Has Expired, Request Another";
-            display.style.textAlign = "center";
+//         if (--timer < 0) {
+//             clearInterval(countdown);
+//             display.textContent = "Time Has Expired, Request Another";
+//             display.style.textAlign = "center";
 
-            // Optional Disable from submissions or show a message
+//             // Optional Disable from submissions or show a message
 
-            if (confirmSubmitBtn) {
-                confirmSubmitBtn.disabled = true;
+//             if (confirmSubmitBtn) {
+//                 confirmSubmitBtn.disabled = true;
 
-                confirmSubmitBtn.innerText = "Code Expired";
-                confirmSubmitBtn.classList.add('disabled_button');
-                confirmSubmitBtn.style.width = "128px";
-            }
-        }
-    }, 1000);
-}
+//                 confirmSubmitBtn.innerText = "Code Expired";
+//                 confirmSubmitBtn.classList.add('disabled_button');
+//                 confirmSubmitBtn.style.width = "128px";
+//             }
+//         }
+//     }, 1000);
+// }
 
 
-const resendLink = document.getElementById('resend_code_link');
-const statusMessage = document.getElementById('resend_status_message');
-resendLink.addEventListener('click', (e) => {
-    e.preventDefault();
+// const resendLink = document.getElementById('resend_code_link');
+// const statusMessage = document.getElementById('resend_status_message');
+// resendLink.addEventListener('click', (e) => {
+//     e.preventDefault();
 
-    resendLink.style.pointerEvents = 'none';
-    resendLink.style.opacity = ' 0.5';
-    statusMessage.style.display = 'none';
+//     resendLink.style.pointerEvents = 'none';
+//     resendLink.style.opacity = ' 0.5';
+//     statusMessage.style.display = 'none';
 
-    fetch('/pop_accounts/resend-code/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCSRFToken(),
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                statusMessage.textContent = "A new code was sent!"
-                statusMessage.style.display = "block";
-                confirmSubmitBtn.classList.remove('disabled_button');
-                confirmSubmitBtn.disabled = false
-                confirmSubmitBtn.innerText = "Submit"
+//     fetch('/pop_accounts/resend-code/', {
+//         method: 'POST',
+//         headers: {
+//             'X-CSRFToken': getCSRFToken(),
+//             'X-Requested-With': 'XMLHttpRequest',
+//         },
+//     })
+//         .then(response => response.json())
+//         .then(data => {
+//             if (data.success) {
+//                 statusMessage.textContent = "A new code was sent!"
+//                 statusMessage.style.display = "block";
+//                 confirmSubmitBtn.classList.remove('disabled_button');
+//                 confirmSubmitBtn.disabled = false
+//                 confirmSubmitBtn.innerText = "Submit"
 
-                // Resetart the timer
-                startCodeTimer(1 * 60, timerDisplay);
+//                 // Resetart the timer
+//                 startCodeTimer(1 * 60, timerDisplay);
 
-                setTimeout(() => {
-                    resendLink.style.pointerEvents = 'auto';
-                    resendLink.style.opacity = '1';
-                    statusMessage.style.display = 'none'
-                }, 15000);
-            } else {
-                statusMessage.textContent = data.error || "Something went wrong."
-                statusMessage.style.color = 'red';
-                statusMessage.style.display = 'block';
-            }
-        }).catch(err => {
-            statusMessage.textContent = "Error resending code.";
-            statusMessage.style.color = "red";
-            statusMessage.style.display = "block"
-        })
-})
+//                 setTimeout(() => {
+//                     resendLink.style.pointerEvents = 'auto';
+//                     resendLink.style.opacity = '1';
+//                     statusMessage.style.display = 'none'
+//                 }, 15000);
+//             } else {
+//                 statusMessage.textContent = data.error || "Something went wrong."
+//                 statusMessage.style.color = 'red';
+//                 statusMessage.style.display = 'block';
+//             }
+//         }).catch(err => {
+//             statusMessage.textContent = "Error resending code.";
+//             statusMessage.style.color = "red";
+//             statusMessage.style.display = "block"
+//         })
+// })
 
 
 
 
 
 // 2FA Tab On Input Entry
-document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
-    input.addEventListener('input', () => {
-        if (input.value.length === input.maxLength && index < inputs.length - 1) {
-            inputs[index + 1].focus();
-        }
-    });
+// document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
+//     input.addEventListener('input', () => {
+//         if (input.value.length === input.maxLength && index < inputs.length - 1) {
+//             inputs[index + 1].focus();
+//         }
+//     });
 
-});
+// });
 
 // Backspace to empty input
-document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
-    input.addEventListener('input', () => {
-        if (input.value.length === input.maxLength && index < inputs.length - 1) {
-            inputs[index + 1].focus();
-        }
-    });
+// document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
+//     input.addEventListener('input', () => {
+//         if (input.value.length === input.maxLength && index < inputs.length - 1) {
+//             inputs[index + 1].focus();
+//         }
+//     });
 
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !input.value && index > 0) {
-            inputs[index - 1].focus();
-        }
-    });
-});
+//     input.addEventListener('keydown', (e) => {
+//         if (e.key === 'Backspace' && !input.value && index > 0) {
+//             inputs[index - 1].focus();
+//         }
+//     });
+// });
 
 // Adjust Logo in Navbar
 // toggle.addEventListener('click', () => {
