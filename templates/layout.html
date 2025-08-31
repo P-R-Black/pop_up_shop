@@ -24,6 +24,7 @@
     <!-- BoxIcons -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
+
     <!-- Font Awesome -->
     <script src="https://kit.fontawesome.com/27e86509c5.js" crossorigin="anonymous"></script>
 
@@ -55,6 +56,9 @@
     <!-- Chart Js -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.3/dist/chart.umd.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
 
     <!--Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -177,18 +181,24 @@
         <div class="menu-bar">
             <div class="menu">
                 {% if request.user.is_authenticated %}
-                <div class="greetings_box">
-                    <h4 class="greetings_box_name">Hello {{ request.user.first_name}}</h4>
+                <div class="greetings_box" id="greetings_container">
+                    <h4 class="greetings_box_name" id="greetings_box_name">Hello {{ request.user.first_name}}</h4>
+                </div>
+                {% else %}
+                <div class="greetings_box" id="greetings_container" style="display: none;">
+                    <h4 class="greetings_box_name" id="greetings_box_name"></h4>
                 </div>
                 {% endif %}
-                <li class="search-box">
-                    <i class='bx bx-search icon'></i>
-                    <input type="text" placeholder="Search...">
-                </li>
-                <li class="mobile-search-box hide-mobile-search-box">
-                    <input type="text" placeholder="Search...">
-                </li>
-                <ul class="menu-links">
+                <ul>
+                    <li class="search-box">
+                        <i class='bx bx-search icon'></i>
+                        <input type="text" placeholder="Search...">
+                    </li>
+                    <li class="mobile-search-box hide-mobile-search-box">
+                        <input type="text" placeholder="Search...">
+                    </li>
+                </ul>
+                <ul class="menu-links" id="menu-links">
                     <li class="nav-link nav-link-mobile">
                         <i class='bx bx-search icon' id="mobile-search-icon"></i>
                     </li>
@@ -214,8 +224,8 @@
                             <span class="text nav-text">Dashboard</span>
                         </a>
                     </li>
-
                     {% endif %}
+
                     <li class="nav-link">
                         <a href="{% url 'pop_up_auction:products' %}">
                             <i class='bx bx-package icon'></i>
@@ -264,7 +274,7 @@
                     </li>
 
                     {% if request.user.is_authenticated %}
-                    <form action="{% url 'pop_accounts:logout' %}" method="POST">
+                    <form action="{% url 'pop_accounts:logout' %}" method="POST" id="logout_form">
                         {% csrf_token %}
                         <li class="nav-link">
                             <button>
@@ -274,7 +284,7 @@
                         </li>
                     </form>
                     {% else %}
-                    <li class="signUpModalBtn">
+                    <li class="signUpModalBtn" id="login_button">
                         <button>
                             <i class='bx bx-log-in icon'></i>
                             <span class="text nav-text">Log in</span>
@@ -283,7 +293,7 @@
                     {% endif%}
 
                     {% if not request.user.is_authenticated %}
-                    <li class="signUpModalBtn">
+                    <li class="signUpModalBtn" id="signup_button">
                         <a href="#">
                             <i class='bx bx-user-plus icon'></i>
                             <span class="text nav-text">Sign Up</span>
@@ -332,8 +342,10 @@
                                     <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
                                     <p>Continue with Google</p>
                                 </button>
-                                <button class="sign_up_option_buttons">
+                                <input type="hidden" id="facebookLoginUrl" value="{% url 'social:begin' 'facebook' %}">
+                                <button class="sign_up_option_buttons facebookSignUpButton" id="facebookSignUpButton">
                                     <img src="{% static 'img/facebook.svg' %}" class='g-logo' />
+
                                     <p> Continue with Facebook</p>
                                 </button>
                                 <button class="sign_up_option_buttons emailSignUpButton">
@@ -411,6 +423,29 @@
                                 <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
                             </div>
                         </div>
+
+                        {% comment %}
+                        Register by using socials (Facebook or Google)
+                        {% endcomment %}
+                        {% comment %}
+                        <div class="social_registration_container hide_social_registration">
+                            <div class="sign_up_options_form_container">
+
+                                <form action="{% url 'pop_accounts:complete_profile' %}" method="POST"
+                                    class="registration_options_form">
+                                    {% csrf_token %}
+
+                                    {{ form.as_p }}
+
+                                    <button type="submit"
+                                        class="button_small_white registrationSubmitButton">Submit</button>
+                                </form>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                            </div>
+                        </div>
+                        {% endcomment %}
 
                         <div class="email_login_container hide_email_login_container">
                             <div class="email_sign_up_modal_title">

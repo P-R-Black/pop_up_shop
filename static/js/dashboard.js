@@ -134,18 +134,13 @@ document.addEventListener('DOMContentLoaded', function (e) {
             adae.addEventListener('click', function (e) {
                 e.preventDefault();
 
-                console.log('edit address modal opening!')
-
                 accountAddressEditModal.style.display = 'block';
-
                 const addressId = this.getAttribute('data-address-id')
-                console.log('addressId', addressId);
 
                 fetch(`/pop_accounts/get-address/${addressId}/`)
                     .then(response => response.json())
                     .then(data => {
 
-                        console.log('data', data)
                         // Populate the modal form fields with response data;
                         const streeAddressPrefix = document.querySelectorAll('.personal_info_input_prefix')
                         const streeAddressFirstName = document.querySelectorAll('.personal_info_input_first_name')
@@ -254,13 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', function (e) {
             e.preventDefault();
 
-
-            console.log('remove clicked!')
-
             const addressId = this.getAttribute('data-address-id');
-            console.log('addressId', addressId)
-
-
             const confirmed = confirm("Are you sure you want to remove this address?");
             if (!confirmed) return;
 
@@ -306,10 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', function () {
             // e.preventDefault();
 
-            console.log('defaultButtons called!')
-
             const addressId = this.getAttribute('data-address-id');
-            console.log('addressId', addressId);
 
             fetch(`/pop_accounts/set-default-address/${addressId}/`, {
                 method: 'POST',

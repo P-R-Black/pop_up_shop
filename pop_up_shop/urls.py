@@ -35,6 +35,7 @@ urlpatterns = [
     path('pop_up_payment/', include('pop_up_payment.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
+    path('social-auth/', include('social_django.urls', namespace='social'))
    
 ]
 

@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}
+Complete Profile
+{% endblock %}
+
+{% block main %}
+
+<section class="auction_section container">
+    <h2>This is the complete profile page for social sign ins</h2>
+    <form action="" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+
+        {% comment %}
+        {{ form.non_field_errors }}
+
+        <div>
+            {{ form.email.errors }}
+            {{ form.email }}
+        </div>
+        <div>
+            {{ form.first_name.errors }}
+            {{ form.first_name }}
+        </div>
+
+        {{ form.email }}
+        {{ form.first_name }}
+        {% endcomment %}
+        <button type="submit" class="button_small_white registrationSubmitButton">Submit</button>
+    </form>
+
+</section>
+
+{% endblock %}

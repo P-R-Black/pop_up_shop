@@ -9,6 +9,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPassesTestMixin
 from django.views.generic import DetailView, ListView
+from django.views.generic.edit import UpdateView
 from .token import account_activation_token
 from pop_up_order.views import user_orders, user_shipments
 from pop_up_order.models import PopUpOrderItem, PopUpCustomerOrder
@@ -33,7 +34,9 @@ from pop_up_auction.forms import (PopUpBrandForm, PopUpCategoryForm, PopUpProduc
 from pop_up_shipping.models import PopUpShipment
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-from .forms import PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, ThePopUpUserAddressForm
+from .forms import (PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, 
+                    ThePopUpUserAddressForm, SocialProfileCompletionForm
+                    )
 from pop_up_shipping.forms import ThePopUpShippingForm
 from django.core.mail import send_mail
 from django.views.decorators.http import require_POST
@@ -464,7 +467,7 @@ def delete_account(request):
         return redirect('pop_accounts:account_deleted')
     
 
-
+@login_required
 def account_deleted(request):
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/account_deleted.html')
 
@@ -1353,6 +1356,11 @@ def add_products_get(request, product_type_id):
 
 
 class EmailCheckView(View):
+    """
+    In login/registration modal, verifies that email is on file
+    if email on file, user taken to password entry screen
+    if email not on file, user taken to registration form.
+    """
     def post(self, request):
         NewUser = False
         email = request.POST.get('email')
@@ -1369,6 +1377,10 @@ class EmailCheckView(View):
 
 
 class RegisterView(View):
+    """
+    In login/ registration modal. This view is for the registration form for users registering with email
+    Email verification sent to user upon form submission
+    """
     def post(self, request):
         email = request.session.get('auth_email') or request.POST.get('email')
         password = request.POST.get('password')
@@ -1673,3 +1685,108 @@ class VerifyEmailView(View):
         
         return render(request, self.template_name, {'form': form, 'email_verified': True, 'login_failed': True, 'uidb64':  uidb64, 'token': token})
 
+
+from django.http import Http404
+from social_django.utils import load_strategy, load_backend
+from social_django.views import _do_login
+
+class CompleteProfileView(UpdateView):
+    model = PopUpCustomer
+    form_class = SocialProfileCompletionForm
+    template_name = 'pop_accounts/registration/complete_profile.html'
+
+    def get_object(self, queryset=None):
+        # Already authenticated? Use that instance
+        if self.request.user.is_authenticated:
+            return self.request.user
+
+        # Otherwise, get pending social user from session
+        user_id = self.request.session.get('social_profile_user_id')
+        if not user_id:
+            raise Http404("No social profile pending completion.")
+        try:
+            return PopUpCustomer.objects.get(pk=user_id)
+        except PopUpCustomer.DoesNotExist:
+            raise Http404("Pending social user not found.")
+
+    def form_valid(self, form):
+        # 1️⃣ Save form updates
+        user = form.save()
+
+        # Log in user immediately so they appear authenticated
+        if not user.is_active:
+            user.is_active = True  # mark as active
+            user.save(update_fields=['is_active'])
+
+        # 2️⃣ Try to resume the social-auth pipeline (if any)
+        strategy = load_strategy(self.request)
+        partial = strategy.session_get('partial_pipeline')
+        if partial:
+            backend_name = partial.get('backend')
+            if backend_name:
+                backend = load_backend(strategy, backend_name, redirect_uri=None)
+
+                # Remove our temp session key so it doesn’t loop
+                self.request.session.pop('social_profile_user_id', None)
+
+                # Continue pipeline; may return HttpResponse (redirect)
+                result = backend.continue_pipeline(partial)
+                if result:
+                    # If social-auth returns a redirect, use it
+                    # But we still log in the user afterward
+                    login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+                    return result
+
+        # 3️⃣ Fallback: if pipeline wasn’t present or didn’t redirect
+        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+        # Get response to incorporate into sign-in registratio modal
+        if self.request.headers.get("x-request-with") == "XMLHttpRequest":
+            return JsonResponse({
+                "success": True,
+                "next": "dashboard",
+                "user": {
+                    "id": user.id,
+                    "first_name": user.first_name,
+                    "email": user.email,
+                }
+            })
+        
+        return redirect(self.get_success_url())
+    
+    def form_invalid(self, form):
+        # If modal, send bck errors as JSON
+        if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "errors": form.errors}, status=400)
+        return super().form_invalid(form)
+
+    def get_success_url(self):
+        return reverse("pop_accounts:dashboard")
+
+
+def social_login_complete(request):
+    """
+    Final step for popup logins — closes the popup and refreshes parent.
+    """
+    print('social_login_complete has been called')
+    # Check if this is an AJAX request for user info
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        print('Yes, request.headers')
+        return JsonResponse({
+            'authenticated': request.user.is_authenticated,
+            'firstName': request.user.first_name if request.user.is_authenticated else '',
+            'isStaff': request.user.is_staff if request.user.is_authenticated else False
+        })
+    else:
+        print("No request.headers")
+    return render(request, "pop_accounts/registration/social_login_complete.html")
+
+
+def get_user_info(request):
+    if request.user.is_authenticated:
+        return JsonResponse({
+            'authenticated': True,
+            'firstName': request.user.first_name,
+            'isStaff': request.user.is_staff
+        })
+    return JsonResponse({'authenticated': False})

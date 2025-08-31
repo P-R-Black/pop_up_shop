@@ -4,16 +4,21 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView,
                     UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
                     UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
-                    UpdateProductView)
+                    UpdateProductView, CompleteProfileView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
 
-    #Auth register / login class based views
+    # Auth register / login class based views
     path('auth/check-email/', EmailCheckView.as_view(), name='check_email'),
     path('auth/register/', RegisterView.as_view(), name='register'),
     path('verify/<uidb64>/<token>/', VerifyEmailView.as_view(), name='verify_email'),
     path('auth/user-login/', Login2FAView.as_view(), name='user_login'),
+
+    # Social Auth / Social Login
+    path('auth/complete-profile/', CompleteProfileView.as_view(), name='complete_profile'),
+    path('social-login-complete/', views.social_login_complete, name='social_login_complete'),
+    path('get-user-info/', views.get_user_info, name="get_user_info"),
 
     
     # Auth register / login

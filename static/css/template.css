@@ -1123,7 +1123,33 @@ form.password_reset_sign_up_options_form input {
 
 }
 
-/* ===== end email_verification_container ====*/
+/* ===== end email_verification_container ==== */
+
+
+/* ===== start social_registration_container ==== */
+.social_registration_container {
+    left: 100%;
+    transform: translateX(0%);
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    height: 100%;
+}
+
+.social_registration_container.show_social_registration_container {
+    transform: translateX(-100%);
+
+}
+
+
+.social_registration_container.shift_left {
+    transform: translateX(-200%);
+}
+
+/* ===== end social_registration_container ==== */
 
 
 /* ======== start email_login_container | displayed if email on file ======== */

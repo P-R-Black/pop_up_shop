@@ -88,14 +88,14 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(_('email address'), unique=True, db_index=True)
-    first_name = models.CharField(max_length=50, blank=True)
-    middle_name = models.CharField(max_length=50, blank=True)
-    last_name = models.CharField(max_length=50, blank=True)
-    mobile_phone = models.CharField(max_length=20, blank=True)
+    first_name = models.CharField(max_length=50, blank=True, null=True)
+    middle_name = models.CharField(max_length=50, blank=True, null=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True)
+    mobile_phone = models.CharField(max_length=20, blank=True, null=True)
     mobile_notification = models.BooleanField(default=True)
     stripe_customer_id = models.CharField(max_length=40, blank=True, null=True)
-    shoe_size = models.CharField(max_length=10)
-    size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200)
+    shoe_size = models.CharField(max_length=10, null=True)
+    size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200, null=True)
     favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default='nike')
     deleted_at = models.DateTimeField(null=True, blank=True)  
 
@@ -116,7 +116,7 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     all_objects = AllUserManager() # includes deleted
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    REQUIRED_FIELDS = []
 
 
     class Meta:

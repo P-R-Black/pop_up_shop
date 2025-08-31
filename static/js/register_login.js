@@ -1,3 +1,6 @@
+// Sign-in / Registration modal flow
+// registred user, email sign-in | - sign-in option (google, facebook, email) -> enter email -> enter password -> enter 6-digit code from email
+
 // Variables For Signup/Register Modal Home
 const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
 const emailSignUpButton = document.querySelector('.emailSignUpButton');
@@ -10,8 +13,10 @@ const emailSubmitButton = document.querySelector('.emailSubmitButton');
 // Variables for Register/Login by Google
 // const googleSignUpButton = document.querySelector()
 
+
 // Variables for Register/Login by Facebook
-// const facebookSignUpButton = document.querySelector()
+const facebookSignUpButton = document.querySelector('.facebookSignUpButton');
+const socialVerificationContainer = document.querySelector('.social_registration_container')
 
 
 // Variable for Email Registration
@@ -49,7 +54,8 @@ if (emailSignUpButton) {
 // if (facebookSignUpButton) {
 //     facebookSignUpButton.addEventListener('click', () => {
 //         console.log('facebookSignUpButton clicked')
-//         moveForwardSignIn()
+//         // const moveForwardSignIn( addThisHideClass, removeThisShowClass, removeNextHideClass, addNextShowClass, containerToHide, containerToShow)
+//         moveForwardSignIn('hide_container', 'show_container', 'hide_container', 'show_social_registration_container', signUpTitleOptionsContainer, socialVerificationContainer) //socialVerificationContainer
 //     })
 // }
 
@@ -368,581 +374,313 @@ document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
 
 
 
+// Create PopUp for Facebook Login
+document.addEventListener("DOMContentLoaded", () => {
+    const fbBtn = document.getElementById("facebookSignUpButton");
+    console.log('fbBtn', fbBtn)
+
+    const fbUrl = document.getElementById("facebookLoginUrl").value;
+    console.log('fbUrl', fbUrl)
+
+    if (!fbBtn || !fbUrl) return;
+
+    // Define the function here so it's in scope
+    function updateNavigationWithUserData(userData) {
+        console.log('Updating navigation with user data:', userData);
+
+        // Update greeting
+        const greetingsBox = document.getElementById("greetings_box_name");
+        const greetingsContainer = document.getElementById("greetings_container");
+        if (greetingsBox && greetingsContainer) {
+            greetingsBox.textContent = `Hello ${userData.firstName}`;
+            greetingsContainer.style.display = "block";
+            console.log('Greeting updated to:', `Hello ${userData.firstName}`);
+        }
+
+        // Remove login/signup buttons
+        const loginBtn = document.getElementById("login_button");
+        const signupBtn = document.getElementById("signup_button");
+
+        if (loginBtn) {
+            loginBtn.remove();
+            console.log('Login button removed');
+        }
+        if (signupBtn) {
+            signupBtn.remove();
+            console.log('Signup button removed');
+        }
+
+        // Add logout button
+        const menuLinks = document.getElementById("menu-links");
+
+        if (menuLinks && !document.querySelector('a[href*="dashboard"]')) {
+            let dashboardLink;
+
+            if (userData.isStaff) {
+                dashboardLink = `
+                <li class="nav-link">
+                    <a href="/accounts/dashboard-admin/">
+                        <i class='bx bxs-user-detail icon'></i>
+                        <span class="text nav-text">Dashboard</span>
+                    </a>
+                </li>
+            `;
+                console.log('Adding admin dashboard link');
+            } else {
+                dashboardLink = `
+                <li class="nav-link">
+                    <a href="/accounts/dashboard/">
+                        <i class='bx bxs-user-detail icon'></i>
+                        <span class="text nav-text">Dashboard</span>
+                    </a>
+                </li>
+            `;
+                console.log('Adding regular dashboard link');
+            }
+
+            // Insert dashboard after Home (find the Home link and insert after it)
+            const homeLink = document.querySelector('a[href="/"]')?.closest('li');
+            if (homeLink) {
+                homeLink.insertAdjacentHTML("afterend", dashboardLink);
+                console.log('Dashboard link inserted after Home');
+            } else {
+                // Fallback: insert at beginning of menu
+                menuLinks.insertAdjacentHTML("afterbegin", dashboardLink);
+                console.log('Dashboard link inserted at beginning (Home not found)');
+            }
+        }
+
+        if (menuLinks && !document.getElementById("logout_form")) {
+            const csrfToken = getCSRFToken();
+
+            if (!csrfToken) {
+                console.error('CSRF token not found - logout may fail');
+                return;
+            }
+
+            const logoutForm = `
+                <form id="logout_form" action="/" method="POST">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <li class="nav-link">
+                        <button type="submit" onclick="performLogout()">
+                            <i class='bx bx-log-out icon'></i>
+                            <span class="text nav-text">Log out</span>
+                        </button>
+                    </li>
+                </form>
+            `;
+
+            // Insert before the Dark Mode li element instead of at the end
+            const darkModeElement = document.querySelector("li.mode");
+            if (darkModeElement) {
+                darkModeElement.insertAdjacentHTML("beforebegin", logoutForm);
+            } else {
+                // Fallback: add at end if Dark Mode element not found
+                menuLinks.insertAdjacentHTML("beforeend", logoutForm);
+            }
+
+        }
+
+
+        // Close login modal
+        if (typeof closeLoginModal === 'function') {
+            closeLoginModal();
+        }
+    }
+
+    fbBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+
+        const width = 550, height = 600;
+        const left = (screen.width - width) / 2;
+        const top = (screen.height - height) / 2;
+
+        const facebookPopup = window.open(
+            fbUrl,
+            "fbLoginPopup",
+            `width=${width},height=${height}, top=${top}, left=${left}`
+        );
+
+        if (!facebookPopup) {
+            return;
+        }
+
+        let loginProcessing = false;
+        let checkCount = 0;
+
+        // Poll for authentication status
+        const checkLoginStatus = setInterval(async () => {
+            checkCount++;
+
+            try {
+                const response = await fetch('/pop_accounts/social-login-complete/', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+
+                    if (userData.authenticated && !loginProcessing) {
+                        loginProcessing = true;
+                        clearInterval(checkLoginStatus);
+
+                        updateNavigationWithUserData(userData);
+
+                        // Close popup
+                        setTimeout(() => {
+                            try {
+                                facebookPopup.close();
+                                console.log('Facebook popup closed');
+                            } catch (error) {
+                                console.log('Could not close popup:', error);
+                            }
+                        }, 1500);
+                        return;
+                    }
+                } else {
+                    console.log(`Response not OK:`, response.status);
+                }
+            } catch (error) {
+                console.log(`Fetch error:`, error.message);
+            }
+
+            // Stop checking after 10 minutes
+            if (checkCount > 1200) {
+                console.log('Authentication checking timeout after 10 minutes');
+                clearInterval(checkLoginStatus);
+            }
+        }, 500);
+    });
+
+
+    // poll for popup close
+    // const checkPopup = setInterval(() => {
+    //     if (popup.closed) {
+    //         clearInterval(checkPopup);
+    //         console.log('Facebook login popup closed');
+    //         // window.location.reload();
+    //         updateNavigationAfterLogin();
+    //     }
+    // }, 500);
+
+})
+
+
+
+
+
+
+async function updateNavigationAfterLogin(userData) {
+    console.log('updateNavigationAfterLogin called!', userData)
+
+    // Update greeting
+    const greetingsBox = document.getElementById("greetings_box_name");
+    console.log('greetingsBox', greetingsBox)
+
+    const greetingsContainer = document.getElementById("greetings_container");
+    console.log('greetingsContainer', greetingsContainer)
+
+    if (greetingsBox && greetingsContainer) {
+        greetingsBox.textContent = `Hello ${userData.firstName}`;
+        greetingsContainer.style.display = "block";
+    }
+
+    // Remove login/signup buttons
+    const loginBtn = document.getElementById("login_button");
+    const signupBtn = document.getElementById("signup_button");
+
+    if (loginBtn) {
+        loginBtn.remove();
+        console.log('Login button removed');
+    }
+    if (signupBtn) {
+        signupBtn.remove();
+        console.log('Signup button removed');
+    }
+
+    // Add logout button
+    const menuLinks = document.getElementById("menu-links");
+    console.log('menuLinks', menuLinks)
+
+    if (menuLinks && !document.getElementById("logout_form")) {
+        const logoutForm = `
+                <form id="logout_form" action="/accounts/logout/" method="POST">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCSRFToken()}">
+                        <li class="nav-link">
+                            <button type="submit">
+                                <i class='bx bx-log-out icon'></i>
+                                <span class="text nav-text">Log out</span>
+                            </button>
+                        </li>
+                    </form>`;
+
+        menuLinks.insertAdjacentHTML("beforeend", logoutForm);
+    }
+
+    // Close any login modals
+    if (typeof closeLoginModal === "function") {
+        closeLoginModal()
+    }
+    console.log('Navigation update complete');
+}
+
+function getCSRFToken() {
+    // Method 1: From cookie
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+
+    // Method 2: From meta tag (fallback)
+    if (!cookieValue) {
+        const csrfMeta = document.querySelector('[name=csrfmiddlewaretoken]');
+        cookieValue = csrfMeta ? csrfMeta.getAttribute('content') : null;
+    }
+
+    return cookieValue;
+}
+
+
+
+
+async function performLogout() {
+    console.log('performLogout called')
+    try {
+        const csrfToken = getCSRFToken();
+
+        if (!csrfToken) {
+            window.location.href = '/';
+            return;
+        }
+
+        const response = await fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken,
+            },
+            body: `csrfmiddlewaretoken=${encodeURIComponent(csrfToken)}`,
+            credentials: 'same-origin'
+        });
+
+        // Always redirect, don't wait for response parsing
+        window.location.href = '/';
+
+    } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = '/';
+    }
+}
 
 
 
-// /*  ====== Sign Up Modal ===== */
-/* Modal background */
-// .sign_up_modal {
-//     /* Hidden by default */
-//     display: none;
-
-//     /* Enable scroll if needed */
-//     position: fixed;
-//     z-index: 1000;
-//     left: 20%;
-//     top: 0;
-
-//     width: 75%;
-//     height: 90%;
-//     overflow: auto;
-
-//     /* Black background with opacity */
-//     background-color: rgba(0, 0, 0, 0.4);
-
-// }
-
-// /* Modal content */
-// .sign_up_modal_content {
-//     background-color: #fff;
-//     /* margin: 15% auto; */
-//     /* Center it */
-//     padding: 1rem 1rem;
-//     border: 1px solid #888;
-//     width: 85%;
-//     /* Adjust width */
-//     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-//     border-radius: 5px;
-
-//     border: 2px solid var(--text-color);
-
-//     display: flex;
-//     flex-direction: column;
-//     gap: 1rem;
-//     height: 90%;
-//     margin: 2.5% auto;
-// }
-
-
-
-/* ===== sign_up_pic_form_container ===== */
-
-// .sign_up_pic_form_container {
-//     display: flex;
-
-//     overflow: hidden;
-//     width: 100%;
-//     position: relative;
-
-// }
-
-
-// .sign_up_image_container {
-//     background-color: white;
-//     display: flex;
-//     justify-content: flex-start;
-//     width: 50%;
-//     z-index: 1;
-
-// }
-
-
-// .img_sign_up {
-//     transform: rotate(-50deg);
-//     height: 58%;
-//     margin-left: -4rem;
-//     margin-top: 4.75rem;
-// }
-
-// .interntal_sign_up_container {
-//     display: flex;
-//     overflow: hidden;
-//     width: 100%;
-//     position: relative;
-
-// }
-
-/* ===== end sign_up_pic_form_container ===== */
-
-// /* ==== sign_up_title_options_container ==== */
-
-// .sign_up_title_options_container,
-// .email_verification_container,
-// .sign_up_email_container,
-// .email_login_container,
-// .sign_up_email_confirm_container,
-// .forgot_password_container,
-// .forgot_password_email_check_container {
-//     position: absolute;
-//     width: 50%;
-//     top: 0;
-//     transition: transform 0.5s ease-in-out;
-// }
-
-// .sign_up_title_options_container {
-//     right: 0%;
-//     transform: translateX(0%);
-//     width: 100%;
-
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-between;
-//     height: 100%;
-// }
-
-
-// .sign_up_title_options_container.hide_container {
-//     transform: translateX(-200%);
-// }
-
-
-
-// .sign_up_modal_title {
-//     display: flex;
-//     flex-direction: column;
-//     align-items: center;
-// }
-
-// .sign_up_modal_title h3 {
-//     font-size: clamp(1.25rem, 1.75rem, 3vw);
-//     margin-bottom: 1rem;
-//     text-align: center;
-// }
-
-// .sign_up_modal_title p {
-//     text-align: center;
-//     margin-bottom: 1rem;
-// }
-
-// .sign_up_options_container {
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-around;
-//     height: 40%;
-// }
-
-// .sign_up_options_form_container {
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-around;
-//     height: 60%;
-// }
-
-
-
-// .sign_up_option_buttons {
-//     align-items: center;
-//     background-color: transparent;
-//     border: 2px solid var(--text-color);
-//     border-radius: 5px;
-//     box-sizing: border-box;
-//     color: black;
-//     cursor: pointer;
-//     display: inline-flex;
-//     justify-content: space-around;
-//     height: 2.5rem;
-//     /* max-height: 3.5rem; */
-//     padding: 0px;
-//     position: relative;
-//     width: 90%;
-// }
-
-
-// .sign_up_option_buttons i,
-// .sign_up_option_buttons img {
-//     width: 3rem;
-// }
-
-// .sign_up_option_buttons i {
-//     font-size: 1.35rem;
-// }
-
-// .sign_up_option_buttons p {
-//     font-size: clamp(.90rem, 1rem, 6vw);
-//     font-weight: 600;
-//     width: 15rem;
-// }
-
-// .sign_up_modal_policy {
-//     margin-top: 2rem;
-// }
-
-// .sign_up_modal_policy p {
-//     font-size: clamp(.60rem, .80rem, 6vw);
-//     text-align: center;
-// }
-
-
-// /* ===== email_verification_container ====*/
-
-// .email_verification_container {
-//     left: 100%;
-//     transform: translateX(0%);
-//     width: 100%;
-
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-between;
-
-//     height: 100%;
-// }
-
-// .email_verification_container.show_container {
-//     transform: translateX(-100%);
-
-// }
-
-
-// .email_verification_container.shift_left {
-//     transform: translateX(-200%);
-// }
-
-
-
-// .sign_up_modal_title {
-//     display: flex;
-//     flex-direction: column;
-//     align-items: center;
-// }
-
-
-// .sign_up_modal_title p {
-//     text-align: center;
-//     margin-bottom: 1rem;
-//     width: 90%;
-// }
-
-// .email_sign_up_modal_title {
-//     display: flex;
-//     flex-direction: column;
-//     align-items: center;
-// }
-
-// .email_sign_up_modal_title p {
-//     text-align: center;
-//     width: 80%;
-// }
-
-// .email_sign_up_modal_container {
-//     align-items: center;
-//     display: flex;
-//     justify-content: center;
-//     margin-bottom: 1rem;
-// }
-
-
-
-// .email_sign_up_modal_container h3 {
-//     font-size: clamp(1.25rem, 1.75rem, 3vw);
-// }
-
-
-// .email_sign_up_modal_container i {
-//     font-size: 2.10rem;
-//     cursor: pointer;
-//     margin-bottom: .30rem;
-//     text-align: left;
-
-
-// }
-
-
-// .sign_up_options_form {
-//     display: flex;
-//     flex-direction: column;
-//     margin-top: 1rem;
-// }
-
-// .registration_options_form {
-//     display: flex;
-//     flex-direction: column;
-//     margin-top: 1rem;
-
-// }
-
-
-// .password_reest_sign_up_options_form {
-//     display: flex;
-//     flex-direction: column;
-//     margin-top: 1rem;
-// }
-
-
-// form.sign_up_options_form input,
-// form.registration_options_form input,
-// form.password_reset_sign_up_options_form input {
-//     border: 2px solid var(--text-color);
-//     border-radius: 5px;
-//     color: var(--text-color);
-//     font-size: 1rem;
-//     height: 2rem;
-//     padding-left: .5rem;
-//     width: clamp(18rem, 20rem, 5vw);
-//     margin-bottom: 1rem;
-// }
-
-
-// #id_email {
-//     width: 100%;
-//     height: 2rem;
-
-// }
-
-
-// /* ===== end of email_verification_container ===== */
-
-
-// /* ===== start sign_up_email_container / Register Screen ===== */
-// .sign_up_email_container {
-//     left: 200%;
-//     transform: translateX(0%);
-//     width: 100%;
-
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-between;
-//     height: 100%;
-// }
-
-
-// .sign_up_email_container.show_container {
-//     transform: translateX(-200%);
-
-// }
-
-// .sign_up_email_container.shift_left_again {
-//     transform: translateX(-300%);
-// }
-
-
-// .registration_form_errors {
-//     border: 2px solid green;
-//     height: auto;
-//     width: 100%;
-// }
-
-// /* ===== end sign_up_email_container / Register Screen ===== */
-
-
-
-
-// /* ===== start email_login_container | displayed if email on file ===== */
-
-// .email_login_container {
-//     left: 200%;
-//     transform: translateX(0%);
-//     width: 100%;
-
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-between;
-//     height: 100%;
-// }
-
-
-// .email_login_container.show_email_login_container {
-//     transform: translateX(-200%);
-
-// }
-
-// .email_login_container.hide_email_login_container_to_left {
-//     transform: translateX(-300%);
-// }
-
-
-
-// p.email_provided_signin_popup {
-//     color: var(--text-color);
-//     font-size: clamp(1rem, 1.50rem, 2.5vw);
-//     margin-bottom: 1rem;
-//     text-align: center;
-
-// }
-
-// /* ===== end email_login_container ===== */
-
-
-
-// /* ===== sign_up_email_confirm_container ===== */
-
-// .sign_up_email_confirm_container {
-//     left: 200%;
-//     transform: translateX(0%);
-//     width: 100%;
-
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-//     height: 100%;
-//     justify-content: space-between;
-// }
-
-
-// .sign_up_email_confirm_container.show_sign_up_email_confirm_container {
-//     transform: translateX(-200%);
-
-// }
-
-
-// /* .sign_up_email_confirm_container.shift_left_again {
-//     transform: translateX(-300%);
-// } */
-
-
-
-// .confirmation_input_container_text {
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-// }
-
-
-// .confirmation_input_container_text p:nth-child(1) {
-//     font-size: 1.25rem;
-//     text-align: center;
-//     margin-bottom: .5rem;
-//     width: 80%;
-// }
-
-// .confirmation_input_container_text p:nth-child(2) {
-//     font-size: 1.25rem;
-//     font-weight: bold;
-//     margin-bottom: .75rem;
-//     text-align: center;
-//     width: 80%;
-// }
-
-// .confirmation_input_container_text p:nth-child(3) {
-//     color: var(--text-color);
-//     font-size: 1.5rem;
-//     font-weight: 600;
-//     margin-bottom: .50rem;
-//     text-align: center;
-// }
-
-
-// .comfirmation_input_container form {
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-
-//     gap: 1rem;
-// }
-
-
-// .resend_request_container {
-//     display: flex;
-//     flex-direction: column;
-//     margin-top: 1.25rem;
-//     text-align: center;
-// }
-
-// #resend_status_message {
-//     margin-top: .5rem;
-// }
-
-// .inner_resend_request_container {
-//     align-items: center;
-//     display: flex;
-//     justify-content: center;
-//     gap: .5rem;
-// }
-
-// .confirmation_input {
-//     display: flex;
-//     justify-content: center;
-//     gap: .5rem
-// }
-
-// .confirmation_input input {
-//     border: 2px solid var(--text-color);
-//     border-radius: 5px;
-//     color: var(--text-color);
-//     font-size: 1.25rem;
-//     height: 3rem;
-//     text-align: center;
-//     width: 2rem;
-// }
-
-// /* ===== end of sign_up_email_confirm_container ===== */
-
-// /* ===== start of forgot_password_container ===== */
-// .forgot_password_container {
-//     left: 200%;
-//     transform: translateX(0%);
-//     width: 100%;
-
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-between;
-//     height: 100%;
-// }
-
-
-// .forgot_password_container.show_forgot_password_container {
-//     transform: translateX(-200%);
-
-
-// }
-
-
-
-// .forgot_password_container.hide_forgot_password_container {
-//     transform: translateX(-300%);
-// }
-
-
-// .forgot_password_options_container {
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-around;
-//     height: 100%;
-// }
-
-
-// .spinner {
-//     border: 4px solid #f3f3f3;
-//     /* Light grey */
-//     border-top: 4px solid #555;
-//     /* Black */
-//     border-radius: 50%;
-//     width: 30px;
-//     height: 30px;
-//     animation: spin 0.8s linear infinite;
-//     margin: auto;
-// }
-
-// @keyframes spin {
-//     0% {
-//         transform: rotate(0deg);
-//     }
-
-//     100% {
-//         transform: rotate(360deg);
-//     }
-// }
-
-
-// /* ===== end of forgot_password_container ===== */
-
-
-
-// /* ===== start of forgot_password_email_check_container ===== */
-// .forgot_password_email_check_container {
-//     left: 200%;
-//     transform: translateX(0%);
-//     width: 100%;
-
-//     align-items: center;
-//     display: flex;
-//     flex-direction: column;
-//     justify-content: space-between;
-//     height: 100%;
-// }
-
-
-// .forgot_password_email_check_container.show_forgot_password_email_check_container {
-//     transform: translateX(-200%);
-// }
-
-
-/* ===== end of forgot_password_email_check_container ===== */
-
-
-/* ==================================== End of Sign Up Modal =================================== */

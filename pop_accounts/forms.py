@@ -788,4 +788,20 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
             'town_city', 'state', 'postcode', 'delivery_instructions',
             'is_default_shipping', 'is_default_billing'
             ]
+
+
+
+class SocialProfileCompletionForm(forms.ModelForm):
+    class Meta:
+        model = PopUpCustomer
+        fields = ('email', 'first_name')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].widget.attrs.update(
+            {'placeholder': 'Email'}
+        )
+        self.fields['first_name'].widget.attrs.update(
+            {'placeholder': 'First Name'}
+        )
     
