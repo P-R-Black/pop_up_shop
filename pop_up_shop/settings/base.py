@@ -114,7 +114,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
-    'pop_accounts.pipeline.ensure_user_login',  # 🔥 CRITICAL FIX - Add this!
+    'pop_accounts.pipeline.ensure_user_login',  # Added this to get data from Google sign-in!
     'pop_accounts.pipeline.require_profile_completion',
 )
 

@@ -1768,29 +1768,9 @@ def social_login_complete(request):
     """
     Final step for popup logins — closes the popup and refreshes parent.
     """
-    print("Session ID:", request.session.session_key)
-    print("Cookies:", request.COOKIES)
-    
+
     # Check if this is an AJAX request for user info
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-       # Add debug logging
-        print(f"=== SOCIAL LOGIN DEBUG ===")
-        print(f"Request method: {request.method}")
-        print(f"Request path: {request.path}")
-        print(f"User authenticated: {request.user.is_authenticated}")
-        print(f"User: {request.user}")
-
-        if request.user.is_authenticated:
-            print(f"User authenticated: {request.user.is_authenticated}")
-            print(f"User: {request.user}")
-            print(f"User ID: {request.user.id if request.user.is_authenticated else 'None'}")
-            print(f"User first_name: '{request.user.first_name}' if request.user.is_authenticated else 'None'")
-            print(f"User last_name: '{request.user.last_name}' if request.user.is_authenticated else 'None'")
-            print(f"User email: '{request.user.email}' if request.user.is_authenticated else 'None'")
-            print(f"User is_staff: {request.user.is_staff if request.user.is_authenticated else False}")
-            print(f"Session key: {request.session.session_key}")
-            print(f"Session data: {dict(request.session)}")
-            print("========================")
         
         response_data = {
             'authenticated': request.user.is_authenticated,
@@ -1801,9 +1781,6 @@ def social_login_complete(request):
             'userId': request.user.id if request.user.is_authenticated else None,
         }
         
-        print(f"Returning JSON: {response_data}")
-        # return JsonResponse(response_data)
-
 
         return JsonResponse({
             'authenticated': request.user.is_authenticated,

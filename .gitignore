@@ -5,6 +5,8 @@
 *.pyc
 __pycache__/
 development.py
+*.sqlite3
+pop_up_shop/db.sqlite3
 db.sqlite3
 db.sqlite3-journal
 media
