@@ -23,7 +23,6 @@ urlpatterns = [
     
     # Auth register / login
     path('auth/verify-code/', Verify2FACodeView.as_view(), name='verify_2fa'),
-    # path('auth/verify-code/', views.verify_2fa_code, name='verify_2fa'),
     path('auth/send-reset-link/', views.send_password_reset_link, name='send_reset_link'),
     path('resend-code/', views.resend_2fa_code, name='resend_2fa_code'),
     path('password-reset/<uidb64>/<token>/', views.user_password_reset_confirm, name='password_reset_confirm'),

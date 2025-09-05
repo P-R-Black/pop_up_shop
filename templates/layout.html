@@ -338,10 +338,14 @@
                                 <p>Use your email or another service to contine with The Pop Up (It's Free).</p>
                             </div>
                             <div class="sign_up_options_container">
-                                <button class="sign_up_option_buttons">
+                                <a href="{% url 'social:begin' 'google-oauth2' %}">Google</a>
+                                <input type="hidden" id="googleLoginUrl"
+                                    value="{% url 'social:begin' 'google-oauth2' %}">
+                                <button class="sign_up_option_buttons googleSignUpButton" id="googleSignUpButton">
                                     <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
                                     <p>Continue with Google</p>
                                 </button>
+
                                 <input type="hidden" id="facebookLoginUrl" value="{% url 'social:begin' 'facebook' %}">
                                 <button class="sign_up_option_buttons facebookSignUpButton" id="facebookSignUpButton">
                                     <img src="{% static 'img/facebook.svg' %}" class='g-logo' />

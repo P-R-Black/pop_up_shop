@@ -54,8 +54,8 @@ if (emailSignUpButton) {
 // if (facebookSignUpButton) {
 //     facebookSignUpButton.addEventListener('click', () => {
 //         console.log('facebookSignUpButton clicked')
-//         // const moveForwardSignIn( addThisHideClass, removeThisShowClass, removeNextHideClass, addNextShowClass, containerToHide, containerToShow)
-//         moveForwardSignIn('hide_container', 'show_container', 'hide_container', 'show_social_registration_container', signUpTitleOptionsContainer, socialVerificationContainer) //socialVerificationContainer
+// const moveForwardSignIn( addThisHideClass, removeThisShowClass, removeNextHideClass, addNextShowClass, containerToHide, containerToShow)
+// moveForwardSignIn('hide_container', 'show_container', 'hide_container', 'show_social_registration_container', signUpTitleOptionsContainer, socialVerificationContainer) //socialVerificationContainer
 //     })
 // }
 
@@ -372,52 +372,268 @@ document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
 });
 
 
+function openPopUp(socialUrl) {
+    console.log('openPopUp called!')
+    const width = 550, height = 600;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+
+    const socialPopup = window.open(
+        socialUrl,
+        "socialPopUp",
+        `width=${width},height=${height}, top=${top}, left=${left}`
+    );
+
+    if (!socialPopup) {
+        return;
+    }
+
+    // let loginProcessing = false;
+    // let checkCount = 0;
+
+    pollLoginStatus(socialPopup)
+
+}
+
+
+function pollLoginStatus(socialPopup) {
+    let loginProcessing = false;
+    let checkCount = 0;
+
+    console.log('pollLoginStatus called ')
+
+    const checkLoginStatus = setInterval(async () => {
+        checkCount++;
+
+        console.log('checkLoginStatus called')
+
+        try {
+            const response = await fetch('/pop_accounts/social-login-complete/', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            console.log('response', response)
+
+            if (response.ok) {
+                const userData = await response.json();
+                console.log('userData', userData)
+
+                console.log(`${checkCount}: ${userData}`)
+
+                if (userData.authenticated && !loginProcessing) {
+                    loginProcessing = true;
+                    clearInterval(checkLoginStatus);
+
+                    updateNavigationWithUserData(userData);
+
+                    // Close popup
+                    setTimeout(() => {
+                        try {
+                            socialPopup.close();
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }, 1500);
+                    return;
+                }
+            } else {
+                console.log(`Response not OK:`, response.status);
+            }
+        } catch (error) {
+            console.log(`Fetch error:`, error.message);
+        }
+
+        // Stop checking after 5 minutes
+        if (checkCount > 600) {
+            console.log('Authentication checking timeout after 10 minutes');
+            clearInterval(checkLoginStatus);
+        }
+    }, 500);
+}
+
 
 
 // Create PopUp for Facebook Login
 document.addEventListener("DOMContentLoaded", () => {
+
     const fbBtn = document.getElementById("facebookSignUpButton");
-    console.log('fbBtn', fbBtn)
-
     const fbUrl = document.getElementById("facebookLoginUrl").value;
-    console.log('fbUrl', fbUrl)
 
-    if (!fbBtn || !fbUrl) return;
+    const googleBtn = document.getElementById("googleSignUpButton");
+    const googleUrl = document.getElementById("googleLoginUrl").value;
 
-    // Define the function here so it's in scope
-    function updateNavigationWithUserData(userData) {
-        console.log('Updating navigation with user data:', userData);
 
-        // Update greeting
-        const greetingsBox = document.getElementById("greetings_box_name");
-        const greetingsContainer = document.getElementById("greetings_container");
-        if (greetingsBox && greetingsContainer) {
-            greetingsBox.textContent = `Hello ${userData.firstName}`;
-            greetingsContainer.style.display = "block";
-            console.log('Greeting updated to:', `Hello ${userData.firstName}`);
-        }
+    if (!fbBtn || !fbUrl || !googleBtn || !googleUrl) return;
 
-        // Remove login/signup buttons
-        const loginBtn = document.getElementById("login_button");
-        const signupBtn = document.getElementById("signup_button");
 
-        if (loginBtn) {
-            loginBtn.remove();
-            console.log('Login button removed');
-        }
-        if (signupBtn) {
-            signupBtn.remove();
-            console.log('Signup button removed');
-        }
+    fbBtn.addEventListener("click", (e) => {
+        e.preventDefault();
 
-        // Add logout button
-        const menuLinks = document.getElementById("menu-links");
+        openPopUp(fbUrl)
 
-        if (menuLinks && !document.querySelector('a[href*="dashboard"]')) {
-            let dashboardLink;
+        // const width = 550, height = 600;
+        // const left = (screen.width - width) / 2;
+        // const top = (screen.height - height) / 2;
 
-            if (userData.isStaff) {
-                dashboardLink = `
+        // const facebookPopup = window.open(
+        //     fbUrl,
+        //     "fbLoginPopup",
+        //     `width=${width},height=${height}, top=${top}, left=${left}`
+        // );
+
+        // if (!facebookPopup) {
+        //     return;
+        // }
+
+        // let loginProcessing = false;
+        // let checkCount = 0;
+
+        // Poll for authentication status
+        // const checkLoginStatus = setInterval(async () => {
+        //     checkCount++;
+
+        //     try {
+        //         const response = await fetch('/pop_accounts/social-login-complete/', {
+        //             headers: {
+        //                 'X-Requested-With': 'XMLHttpRequest'
+        //             }
+        //         });
+
+        //         if (response.ok) {
+        //             const userData = await response.json();
+
+        //             if (userData.authenticated && !loginProcessing) {
+        //                 loginProcessing = true;
+        //                 clearInterval(checkLoginStatus);
+
+        //                 updateNavigationWithUserData(userData);
+
+        //                 // Close popup
+        //                 setTimeout(() => {
+        //                     try {
+        //                         facebookPopup.close();
+        //                     } catch (error) {
+        //                         console.error(error);
+        //                     }
+        //                 }, 1500);
+        //                 return;
+        //             }
+        //         } else {
+        //             console.log(`Response not OK:`, response.status);
+        //         }
+        //     } catch (error) {
+        //         console.log(`Fetch error:`, error.message);
+        //     }
+
+        //     // Stop checking after 10 minutes
+        //     if (checkCount > 1200) {
+        //         console.log('Authentication checking timeout after 10 minutes');
+        //         clearInterval(checkLoginStatus);
+        //     }
+        // }, 500);
+    });
+
+
+
+    googleBtn.addEventListener('click', (e) => {
+        e.preventDefault()
+        console.log('ggogle Button Clicked')
+        openPopUp(googleUrl)
+
+    })
+
+    const sModal = document.getElementById('signUpModal')
+
+
+    // poll for popup close
+    // const checkPopup = setInterval(() => {
+    //     if (sModal) {
+    //         clearInterval(checkPopup);
+    //         console.log('sModal is', sModal)
+    //         sModal.style.display = "none";
+    //         window.location.reload()
+    //     }
+    // if (popup.closed) {
+    //     clearInterval(checkPopup);
+    //     console.log('Facebook login popup closed');
+    //     // window.location.reload();
+    //     updateNavigationAfterLogin();
+    // }
+    // }, 500);
+
+})
+
+
+
+
+
+// document.addEventListener('DOMContentLoaded', () => {
+//     const googleBtn = document.getElementById("googleSignUpButton");
+//     const googleUrl = document.getElementById("googleLoginUrl").value;
+
+//     if (!googleBtn || !googleUrl) return;
+
+//     googleBtn.addEventListener('click', (e) => {
+//         e.preventDefault()
+//         console.log('google clicked')
+//         console.log('googleUrl', googleUrl)
+
+//         const width = 550, height = 600;
+//         const left = (screen.width - width) / 2;
+//         const top = (screen.height - height) / 2;
+
+//         const googlePopup = window.open(
+//             googleUrl,
+//             "googleLoginPopup",
+//             `width=${width},height=${height}, top=${top}, left=${left}`
+//         );
+
+//         if (!googlePopup) {
+//             return;
+//         }
+
+//         let loginProcessing = false;
+//         let checkCount = 0;
+
+//     })
+// })
+
+
+
+
+function updateNavigationWithUserData(userData) {
+    console.log('Updating navigation with user data:', userData);
+
+    // Update greeting
+    const greetingsBox = document.getElementById("greetings_box_name");
+    const greetingsContainer = document.getElementById("greetings_container");
+    if (greetingsBox && greetingsContainer) {
+        greetingsBox.textContent = `Hello ${userData.firstName}`;
+        greetingsContainer.style.display = "block";
+        console.log('Greeting updated to:', `Hello ${userData.firstName}`);
+    }
+
+    // Remove login/signup buttons
+    const loginBtn = document.getElementById("login_button");
+    const signupBtn = document.getElementById("signup_button");
+
+    if (loginBtn) {
+        loginBtn.remove();
+    }
+    if (signupBtn) {
+        signupBtn.remove();
+    }
+
+    // Add logout button
+    const menuLinks = document.getElementById("menu-links");
+
+    if (menuLinks && !document.querySelector('a[href*="dashboard"]')) {
+        let dashboardLink;
+
+        if (userData.isStaff) {
+            dashboardLink = `
                 <li class="nav-link">
                     <a href="/accounts/dashboard-admin/">
                         <i class='bx bxs-user-detail icon'></i>
@@ -425,9 +641,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     </a>
                 </li>
             `;
-                console.log('Adding admin dashboard link');
-            } else {
-                dashboardLink = `
+            console.log('Adding admin dashboard link');
+        } else {
+            dashboardLink = `
                 <li class="nav-link">
                     <a href="/accounts/dashboard/">
                         <i class='bx bxs-user-detail icon'></i>
@@ -435,30 +651,27 @@ document.addEventListener("DOMContentLoaded", () => {
                     </a>
                 </li>
             `;
-                console.log('Adding regular dashboard link');
-            }
-
-            // Insert dashboard after Home (find the Home link and insert after it)
-            const homeLink = document.querySelector('a[href="/"]')?.closest('li');
-            if (homeLink) {
-                homeLink.insertAdjacentHTML("afterend", dashboardLink);
-                console.log('Dashboard link inserted after Home');
-            } else {
-                // Fallback: insert at beginning of menu
-                menuLinks.insertAdjacentHTML("afterbegin", dashboardLink);
-                console.log('Dashboard link inserted at beginning (Home not found)');
-            }
         }
 
-        if (menuLinks && !document.getElementById("logout_form")) {
-            const csrfToken = getCSRFToken();
+        // Insert dashboard after Home (find the Home link and insert after it)
+        const homeLink = document.querySelector('a[href="/"]')?.closest('li');
+        if (homeLink) {
+            homeLink.insertAdjacentHTML("afterend", dashboardLink);
+        } else {
+            // Fallback: insert at beginning of menu
+            menuLinks.insertAdjacentHTML("afterbegin", dashboardLink);
+        }
+    }
 
-            if (!csrfToken) {
-                console.error('CSRF token not found - logout may fail');
-                return;
-            }
+    if (menuLinks && !document.getElementById("logout_form")) {
+        const csrfToken = getCSRFToken();
 
-            const logoutForm = `
+        if (!csrfToken) {
+            console.error('CSRF token not found - logout may fail');
+            return;
+        }
+
+        const logoutForm = `
                 <form id="logout_form" action="/" method="POST">
                     <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
                     <li class="nav-link">
@@ -470,161 +683,88 @@ document.addEventListener("DOMContentLoaded", () => {
                 </form>
             `;
 
-            // Insert before the Dark Mode li element instead of at the end
-            const darkModeElement = document.querySelector("li.mode");
-            if (darkModeElement) {
-                darkModeElement.insertAdjacentHTML("beforebegin", logoutForm);
-            } else {
-                // Fallback: add at end if Dark Mode element not found
-                menuLinks.insertAdjacentHTML("beforeend", logoutForm);
-            }
-
+        // Insert before the Dark Mode li element instead of at the end
+        const darkModeElement = document.querySelector("li.mode");
+        if (darkModeElement) {
+            darkModeElement.insertAdjacentHTML("beforebegin", logoutForm);
+        } else {
+            // Fallback: add at end if Dark Mode element not found
+            menuLinks.insertAdjacentHTML("beforeend", logoutForm);
         }
 
+    }
 
-        // Close login modal
-        if (typeof closeLoginModal === 'function') {
-            closeLoginModal();
+
+    // Close login modal
+    const signUpModal = document.getElementById('signUpModal');
+    if (signUpModal) {
+        signUpModal.style.display = 'none';
+        // Remove any modal backdrop if it exists
+        const modalBackdrop = document.querySelector('.modal-backdrop');
+        if (modalBackdrop) {
+            modalBackdrop.remove();
         }
+        // Remove fade class and hide modal
+        signUpModal.classList.remove('show');
+        signUpModal.setAttribute('aria-hidden', 'true');
+
+        console.log('Sign up modal closed');
     }
-
-    fbBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-
-        const width = 550, height = 600;
-        const left = (screen.width - width) / 2;
-        const top = (screen.height - height) / 2;
-
-        const facebookPopup = window.open(
-            fbUrl,
-            "fbLoginPopup",
-            `width=${width},height=${height}, top=${top}, left=${left}`
-        );
-
-        if (!facebookPopup) {
-            return;
-        }
-
-        let loginProcessing = false;
-        let checkCount = 0;
-
-        // Poll for authentication status
-        const checkLoginStatus = setInterval(async () => {
-            checkCount++;
-
-            try {
-                const response = await fetch('/pop_accounts/social-login-complete/', {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                if (response.ok) {
-                    const userData = await response.json();
-
-                    if (userData.authenticated && !loginProcessing) {
-                        loginProcessing = true;
-                        clearInterval(checkLoginStatus);
-
-                        updateNavigationWithUserData(userData);
-
-                        // Close popup
-                        setTimeout(() => {
-                            try {
-                                facebookPopup.close();
-                                console.log('Facebook popup closed');
-                            } catch (error) {
-                                console.log('Could not close popup:', error);
-                            }
-                        }, 1500);
-                        return;
-                    }
-                } else {
-                    console.log(`Response not OK:`, response.status);
-                }
-            } catch (error) {
-                console.log(`Fetch error:`, error.message);
-            }
-
-            // Stop checking after 10 minutes
-            if (checkCount > 1200) {
-                console.log('Authentication checking timeout after 10 minutes');
-                clearInterval(checkLoginStatus);
-            }
-        }, 500);
-    });
-
-
-    // poll for popup close
-    // const checkPopup = setInterval(() => {
-    //     if (popup.closed) {
-    //         clearInterval(checkPopup);
-    //         console.log('Facebook login popup closed');
-    //         // window.location.reload();
-    //         updateNavigationAfterLogin();
-    //     }
-    // }, 500);
-
-})
-
-
-
-
-
-
-async function updateNavigationAfterLogin(userData) {
-    console.log('updateNavigationAfterLogin called!', userData)
-
-    // Update greeting
-    const greetingsBox = document.getElementById("greetings_box_name");
-    console.log('greetingsBox', greetingsBox)
-
-    const greetingsContainer = document.getElementById("greetings_container");
-    console.log('greetingsContainer', greetingsContainer)
-
-    if (greetingsBox && greetingsContainer) {
-        greetingsBox.textContent = `Hello ${userData.firstName}`;
-        greetingsContainer.style.display = "block";
-    }
-
-    // Remove login/signup buttons
-    const loginBtn = document.getElementById("login_button");
-    const signupBtn = document.getElementById("signup_button");
-
-    if (loginBtn) {
-        loginBtn.remove();
-        console.log('Login button removed');
-    }
-    if (signupBtn) {
-        signupBtn.remove();
-        console.log('Signup button removed');
-    }
-
-    // Add logout button
-    const menuLinks = document.getElementById("menu-links");
-    console.log('menuLinks', menuLinks)
-
-    if (menuLinks && !document.getElementById("logout_form")) {
-        const logoutForm = `
-                <form id="logout_form" action="/accounts/logout/" method="POST">
-                        <input type="hidden" name="csrfmiddlewaretoken" value="${getCSRFToken()}">
-                        <li class="nav-link">
-                            <button type="submit">
-                                <i class='bx bx-log-out icon'></i>
-                                <span class="text nav-text">Log out</span>
-                            </button>
-                        </li>
-                    </form>`;
-
-        menuLinks.insertAdjacentHTML("beforeend", logoutForm);
-    }
-
-    // Close any login modals
-    if (typeof closeLoginModal === "function") {
-        closeLoginModal()
-    }
-    console.log('Navigation update complete');
 }
+
+
+
+// async function updateNavigationAfterLogin(userData) {
+//     console.log('updateNavigationAfterLogin called!', userData)
+
+//     // Update greeting
+//     const greetingsBox = document.getElementById("greetings_box_name");
+//     console.log('greetingsBox', greetingsBox)
+
+//     const greetingsContainer = document.getElementById("greetings_container");
+//     console.log('greetingsContainer', greetingsContainer)
+
+//     if (greetingsBox && greetingsContainer) {
+//         greetingsBox.textContent = `Hello ${userData.firstName}`;
+//         greetingsContainer.style.display = "block";
+//     }
+
+//     // Remove login/signup buttons
+//     const loginBtn = document.getElementById("login_button");
+//     const signupBtn = document.getElementById("signup_button");
+
+//     if (loginBtn) {
+//         loginBtn.remove();
+//     }
+//     if (signupBtn) {
+//         signupBtn.remove();
+//     }
+
+//     // Add logout button
+//     const menuLinks = document.getElementById("menu-links");
+//     console.log('menuLinks', menuLinks)
+
+//     if (menuLinks && !document.getElementById("logout_form")) {
+//         const logoutForm = `
+//                 <form id="logout_form" action="/" method="POST">
+//                         <input type="hidden" name="csrfmiddlewaretoken">
+//                         <li class="nav-link">
+//                             <button type="submit" onclick="{performLogout()}">
+//                                 <i class='bx bx-log-out icon'></i>
+//                                 <span class="text nav-text">Log out</span>
+//                             </button>
+//                         </li>
+//                     </form>`;
+
+//         menuLinks.insertAdjacentHTML("beforeend", logoutForm);
+//     }
+
+//     // Close any login modals
+//     if (typeof closeLoginModal === "function") {
+//         closeLoginModal()
+//     }
+//     console.log('Navigation update complete');
+// }
 
 function getCSRFToken() {
     // Method 1: From cookie
