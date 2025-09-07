@@ -62,6 +62,11 @@ from .pop_accounts_copy.admin_copy.admin_copy import (ADMIN_NAVIGATION_COPY, ADM
                                                       ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE)
 from .pop_accounts_copy.user_copy.user_copy import USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE
 from django.db.models import Count, Max, Q
+from django.http import Http404
+from social_django.utils import load_strategy, load_backend
+from social_django.views import _do_login
+
+
 
 logger  = logging.getLogger('security')
 
@@ -1650,11 +1655,13 @@ class VerifyEmailView(View):
     template_name = 'pop_accounts/registration/verify_email.html'
 
     def get(self, request, uidb64, token):
-        login_form = PopUpUserLoginForm()   
+        login_form = PopUpUserLoginForm()
+
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
-            user = get_user_model().objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+            user = PopUpCustomer.objects.get(pk=uid)
+
+        except (TypeError, ValueError, OverflowError, PopUpCustomer.DoesNotExist):
             user = None
 
         
@@ -1666,7 +1673,9 @@ class VerifyEmailView(View):
             return render(request, self.template_name, {'invalid_link': True, 'form': login_form})
     
     def post(self, request, uidb64, token):
-        form = PopUpUserLoginForm()
+     
+        form = PopUpUserLoginForm(request.POST)
+        
         email = request.session.get('auth_email') or request.POST.get('email')
         password = request.POST.get('password')
 
@@ -1674,7 +1683,6 @@ class VerifyEmailView(View):
 
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-
             user = authenticate(request, username=email, password=password)
 
             if user is not None:
@@ -1686,9 +1694,6 @@ class VerifyEmailView(View):
         return render(request, self.template_name, {'form': form, 'email_verified': True, 'login_failed': True, 'uidb64':  uidb64, 'token': token})
 
 
-from django.http import Http404
-from social_django.utils import load_strategy, load_backend
-from social_django.views import _do_login
 
 class CompleteProfileView(UpdateView):
     model = PopUpCustomer

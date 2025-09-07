@@ -632,5 +632,12 @@ select#gen_option {
 }
 
 
-
 /* ============  End Update Address Modal  ============ */
+
+
+/* ========== Start of Delete Account Section ========== */
+.delete_account_container p {
+    color: var(--text-color);
+}
+
+/* ========== End ofDelete Account Section ========== */

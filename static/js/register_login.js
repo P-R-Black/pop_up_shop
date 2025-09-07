@@ -10,6 +10,10 @@ const emailVerificationContainer = document.querySelector('.email_verification_c
 const emailInput = document.getElementById('id_email_check');
 const emailSubmitButton = document.querySelector('.emailSubmitButton');
 
+const emailRegistrationContainer = document.querySelector('.register_by_email_container')
+const registrationSubmitButton = document.querySelector('.registrationSubmitButton');
+const emailRegistrationCompleteContainer = document.querySelector('.register_by_email_complete_container')
+
 // Variables for Register/Login by Google
 // const googleSignUpButton = document.querySelector()
 
@@ -19,8 +23,6 @@ const facebookSignUpButton = document.querySelector('.facebookSignUpButton');
 const socialVerificationContainer = document.querySelector('.social_registration_container')
 
 
-// Variable for Email Registration
-const signUpEmailContainer = document.querySelector('.sign_up_email_container');
 
 
 // Variables for container to enter password and sign-in
@@ -35,18 +37,24 @@ const confirmSubmitBtn = document.querySelector('.confirm_submit_button');
 const confirmInputs = document.querySelectorAll('.confirmation_input input');
 
 
-// Create PopUp for Facebook Login
+// Sign Up Modal
+const signUpModal = document.getElementById('signUpModal');
+const signUpModalBtn = document.querySelectorAll('.signUpModalBtn');
+const closeSignUpModal = document.querySelector('.closeSignUpModal');
+
+// Facebook Sign Button and Values
+const fbBtn = document.getElementById("facebookSignUpButton");
+const fbUrl = document.getElementById("facebookLoginUrl").value;
+
+// Google Sign Button and Values
+const googleBtn = document.getElementById("googleSignUpButton");
+const googleUrl = document.getElementById("googleLoginUrl").value;
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
 
-    const fbBtn = document.getElementById("facebookSignUpButton");
-    const fbUrl = document.getElementById("facebookLoginUrl").value;
-
-    const googleBtn = document.getElementById("googleSignUpButton");
-    const googleUrl = document.getElementById("googleLoginUrl").value;
-
-
     if (!fbBtn || !fbUrl || !googleBtn || !googleUrl) return;
-
 
     fbBtn.addEventListener("click", (e) => {
         e.preventDefault();
@@ -55,7 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     });
-
 
 
     googleBtn.addEventListener('click', (e) => {
@@ -83,6 +90,38 @@ document.addEventListener("DOMContentLoaded", () => {
     //     updateNavigationAfterLogin();
     // }
     // }, 500);
+
+
+    // Opens Register / Login Modal
+    if (signUpModalBtn) {
+        signUpModalBtn.forEach((sub) => {
+            sub.addEventListener('click', () => {
+                signUpModal.style.display = 'block';
+            })
+        })
+    } else {
+        console.warn('signup button not found in the DOM.');
+    }
+
+    if (closeSignUpModal) {
+        // Close the modal when the close span is clicked
+        closeSignUpModal.addEventListener('click', function () {
+            signUpModal.style.display = 'none';
+        });
+    } else {
+        console.warn('closeModal span not found in the DOM.');
+    }
+
+    // Close the modal when clicking outside of it
+    if (signUpModal) {
+        window.addEventListener('click', function (event) {
+            if (event.target === signUpModal) {
+                signUpModal.style.display = 'none';
+            }
+        });
+    } else {
+        console.warn('bidModal not found in the DOM.');
+    }
 
 
     // From Sign in Modal Home
@@ -135,10 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         sessionStorage.setItem('auth_email', email);
 
                         // Go to registration container
-                        emailVerificationContainer.classList.remove('show_container');
-                        emailVerificationContainer.classList.add('shift_left');
-                        signUpEmailContainer.classList.remove('hide_container');
-                        signUpEmailContainer.classList.add('show_container');
+                        moveForwardSignIn('shift_left', 'show_container', 'hide_register_by_email_container', 'show_register_by_email_container', emailVerificationContainer, emailRegistrationContainer)
                         emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
 
                         // Pre-fill email in registration form
@@ -200,7 +236,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     } else if (data['authenticated'] === false) {
                         console.error('Unexpected response:', data);
-                        console.error('Unexpected response2:', data.message);
                         const loginUserOptionsError = document.querySelector('.login_user_options_error');
                         loginUserOptionsError.style.display = "block";
                         loginUserOptionsError.textContent = "Invalid Credentials Provided";
@@ -242,7 +277,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert("Please enter the full 6-digit code.");
                 return;
             }
-            // const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
             const csrfToken = getCookie('csrftoken'); // <- use cookie
 
 
@@ -309,6 +343,56 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+
+    // Submit Registration Form
+
+    if (registrationSubmitButton) {
+        registrationSubmitButton.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            console.log('registrationSubmitButton clicked!')
+
+            const form = registrationSubmitButton.closest('form');
+
+            console.log('form.action is:', form.action)
+
+            const formData = new FormData(form);
+
+            // Inject email from sessionStorage if not in form
+            const storedEmail = sessionStorage.getItem('auth_email');
+            console.log('storedEmail', storedEmail)
+
+            if (storedEmail) {
+                formData.set('email', storedEmail);  // Ensure it’s part of the POST data
+            }
+
+            fetch('/pop_accounts/auth/register/', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('data in js', data)
+                    if (data.registered) {
+                        // const moveForwardSignIn( addThisHideClass, removeThisShowClass,  | removeNextHideClass, addNextShowClass,  | containerToHide, containerToShow)
+                        moveForwardSignIn('register_by_email_container_shift_left', 'show_register_by_email_container', 'hide_register_by_email_complete_container', 'show_register_by_email_complete_container', emailRegistrationContainer, emailRegistrationCompleteContainer)
+
+                    } else if (data.errors) {
+                        displayFormErrorsTwo(data.errors);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting registration form:', error);
+                });
+        });
+    }
+
+
 })
 
 
@@ -400,7 +484,6 @@ const startCodeTimer = (duration, display) => {
 
 // Opens PopUp For Facebook & Google for Social Sign-in
 function openPopUp(socialUrl) {
-    console.log('openPopUp called!')
     const width = 550, height = 600;
     const left = (screen.width - width) / 2;
     const top = (screen.height - height) / 2;
@@ -435,11 +518,9 @@ function pollLoginStatus(socialPopup) {
                 }
             });
 
-            console.log('response', response)
 
             if (response.ok) {
                 const userData = await response.json();
-                console.log('userData', userData)
 
                 console.log(`${checkCount}: ${userData}`)
 
@@ -460,7 +541,7 @@ function pollLoginStatus(socialPopup) {
                     return;
                 }
             } else {
-                console.log(`Response not OK:`, response.status);
+                console.log(`Response not OK`);
             }
         } catch (error) {
             console.log(`Fetch error:`, error.message);
@@ -478,7 +559,6 @@ function pollLoginStatus(socialPopup) {
 
 // Updates UI After Social Log-in
 function updateNavigationWithUserData(userData) {
-    console.log('Updating navigation with user data:', userData);
 
     // Update greeting
     const greetingsBox = document.getElementById("greetings_box_name");
@@ -486,7 +566,6 @@ function updateNavigationWithUserData(userData) {
     if (greetingsBox && greetingsContainer) {
         greetingsBox.textContent = `Hello ${userData.firstName}`;
         greetingsContainer.style.display = "block";
-        console.log('Greeting updated to:', `Hello ${userData.firstName}`);
     }
 
     // Remove login/signup buttons
@@ -567,7 +646,7 @@ function updateNavigationWithUserData(userData) {
 
 
     // Close login modal
-    const signUpModal = document.getElementById('signUpModal');
+
     if (signUpModal) {
         signUpModal.style.display = 'none';
         // Remove any modal backdrop if it exists
@@ -635,10 +714,8 @@ async function performLogout(event) {
 
         // Always redirect, don't wait for response parsing
         if (response.ok) {
-            console.log('Logout successful');
             window.location.href = '/'; // redirect home
         } else {
-            console.error('Logout failed, status:', response.status);
             window.location.href = '/';
         }
 

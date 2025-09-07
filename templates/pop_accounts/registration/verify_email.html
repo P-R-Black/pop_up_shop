@@ -12,7 +12,8 @@ Email Verification
     <div class="login_section_container">
         <div class="login_page_login_container">
             <div class="login_title">
-                <h2>Congrats! Your Email Has Been Verified</h2>
+                <h2>Congrats!</h2>
+                <h2>Your Email Has Been Verified</h2>
             </div>
             {% if email_verified %}
             <div class="login_alert success" role="alert">
@@ -24,7 +25,6 @@ Email Verification
 
                     {{ form.email }}
                     {{ form.password }}
-
 
                     <input type="submit" value="Sign In" class="button_medium">
                 </form>
@@ -38,23 +38,6 @@ Email Verification
                 Error: Incorrect Username or Password.
             </div>
             {% endif %}
-
-            {% comment %}
-            <div class="login_input_container">
-                <form action="{%  url 'pop_accounts:verify_email' uidb64 token %}" method="POST" class="">
-                    {% csrf_token %}
-
-                    {{ form.email }}
-                    {{ form.password }}
-
-                    {% if form.errors %}
-                    <div class="login_alert" role="alert">Error: Incorrect Username or Password.</div>
-                    {% endif %}
-
-                    <input type="submit" value="Sign In" class="button_medium">
-                </form>
-            </div>
-            {% endcomment %}
         </div>
     </div>
 </section>

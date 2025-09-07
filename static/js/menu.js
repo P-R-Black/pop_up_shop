@@ -12,9 +12,6 @@ const mobileSearchBox = body.querySelector('.mobile-search-box')
 const mobileSearchIcon = body.querySelector('#mobile-search-icon')
 
 
-const signUpModal = document.getElementById('signUpModal');
-const signUpModalBtn = document.querySelectorAll('.signUpModalBtn');
-const closeSignUpModal = document.querySelector('.closeSignUpModal');
 
 const timerDisplay = document.querySelector('#code_timer');
 
@@ -23,11 +20,6 @@ const inviteFriendModalBtn = document.querySelectorAll('.inviteFriendBtn');
 const closeInviteModal = document.querySelector('.closeInviteModal');
 
 
-
-
-// 2f auth confirmation
-// const confirmSubmitBtn = document.querySelector('.confirm_submit_button');
-// const confirmInputs = document.querySelectorAll('.confirmation_input input');
 
 
 
@@ -63,7 +55,6 @@ function getCSRFToken() {
 
 // sign up email modal 
 document.addEventListener('DOMContentLoaded', function () {
-    // const backChevron = document.getElementById('backChevron');
     // const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
     // const emailVerificationContainer = document.querySelector('.email_verification_container');
     // const emailSignUpButton = document.querySelector('.emailSignUpButton');
@@ -74,13 +65,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // const emailLoginContainer = document.querySelector('.email_login_container');
 
-    // const confirmContainerBackChevron = document.getElementById('confirmContainerBackChevron');
-
-    // const confirmContainerBackChevronTwo = document.getElementById('confirmContainerBackChevronTwo');
-    // const confirmContainerBackChevronThree = document.getElementById('confirmContainerBackChevronThree');
-    // const confirmContainerBackChevronFour = document.getElementById('confirmContainerBackChevronFour');
-
-    // const confirmContainerBackChevronSix = document.getElementById('confirmContainerBackChevronSix');
     // const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container');
 
     // const signUpOptionsFormPasswordInput = document.querySelector('.sign_up_options_form_password')
@@ -94,19 +78,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-    if (signUpModalBtn) {
-        signUpModalBtn.forEach((sub) => {
-            sub.addEventListener('click', () => {
-                signUpModal.style.display = 'block';
-                // signUpTitleOptionsContainer.classList.add('show_container')
-                // signUpTitleOptionsContainer.classList.add('sign_up_title_options_container')
-                // emailVerificationContainer.classList.add('email_verification_container')
-                // emailVerificationContainer.classList.add('hide_container')
-            })
-        })
-    } else {
-        console.warn('bidButton not found in the DOM.');
-    }
+    // if (signUpModalBtn) {
+    //     signUpModalBtn.forEach((sub) => {
+    //         sub.addEventListener('click', () => {
+    //             signUpModal.style.display = 'block';
+    //             // signUpTitleOptionsContainer.classList.add('show_container')
+    //             // signUpTitleOptionsContainer.classList.add('sign_up_title_options_container')
+    //             // emailVerificationContainer.classList.add('email_verification_container')
+    //             // emailVerificationContainer.classList.add('hide_container')
+    //         })
+    //     })
+    // } else {
+    //     console.warn('bidButton not found in the DOM.');
+    // }
 
 
     // Opens Register Modal When Email Invite Clicks on Link
@@ -116,60 +100,34 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    if (closeSignUpModal) {
-        // Close the modal when the close span is clicked
-        closeSignUpModal.addEventListener('click', function () {
-            signUpModal.style.display = 'none';
-        });
-    } else {
-        console.warn('closeModal span not found in the DOM.');
-    }
-
-    // Close the modal when clicking outside of it
-    if (signUpModal) {
-        window.addEventListener('click', function (event) {
-            if (event.target === signUpModal) {
-                signUpModal.style.display = 'none';
-            }
-        });
-    } else {
-        console.warn('bidModal not found in the DOM.');
-    }
-
-
-
-
-
-
-
 
 
     // Forgot password
-    const passwordForgetLink = document.querySelector('.passwordForgetLink');
-    const passwordForgetContainer = document.querySelector('.forgot_password_container');
+    // const passwordForgetLink = document.querySelector('.passwordForgetLink');
+    // const passwordForgetContainer = document.querySelector('.forgot_password_container');
 
 
-    if (passwordForgetLink) {
-        passwordForgetLink.addEventListener('click', () => {
-            emailLoginContainer.classList.remove('show_email_login_container');
-            emailLoginContainer.classList.add('hide_email_login_container_to_left');
-            passwordForgetContainer.classList.add('show_forgot_password_container')
+    // if (passwordForgetLink) {
+    //     passwordForgetLink.addEventListener('click', () => {
+    //         emailLoginContainer.classList.remove('show_email_login_container');
+    //         emailLoginContainer.classList.add('hide_email_login_container_to_left');
+    //         passwordForgetContainer.classList.add('show_forgot_password_container')
 
 
-        })
-    }
+    //     })
+    // }
 
 
-    if (confirmContainerBackChevronFour) {
-        confirmContainerBackChevronFour.addEventListener('click', () => {
-            passwordForgetContainer.classList.remove('show_forgot_password_container')
-            passwordForgetContainer.classList.add('hide_forgot_password_container')
+    // if (confirmContainerBackChevronFour) {
+    //     confirmContainerBackChevronFour.addEventListener('click', () => {
+    //         passwordForgetContainer.classList.remove('show_forgot_password_container')
+    //         passwordForgetContainer.classList.add('hide_forgot_password_container')
 
-            emailLoginContainer.classList.remove('hide_email_login_container_to_left');
-            emailLoginContainer.classList.add('show_email_login_container');
+    //         emailLoginContainer.classList.remove('hide_email_login_container_to_left');
+    //         emailLoginContainer.classList.add('show_email_login_container');
 
-        })
-    }
+    //     })
+    // }
 
 
 
@@ -271,52 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-// Submit Registration Form
-const registrationSubmitButton = document.querySelector('.registrationSubmitButton');
 
-if (registrationSubmitButton) {
-    registrationSubmitButton.addEventListener('click', function (e) {
-        e.preventDefault();
-
-        console.log('registrationSubmitButton clicked!')
-
-        const form = registrationSubmitButton.closest('form');
-
-        console.log('form.action is:', form.action)
-
-        const formData = new FormData(form);
-
-        // Inject email from sessionStorage if not in form
-        const storedEmail = sessionStorage.getItem('auth_email');
-        console.log('storedEmail', storedEmail)
-
-        if (storedEmail) {
-            formData.set('email', storedEmail);  // Ensure it’s part of the POST data
-        }
-
-        fetch('/pop_accounts/auth/register/', {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
-            },
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('data in js', data)
-                if (data.registered) {
-                    // Show success UI or redirect
-                    console.log('User registered!');
-                } else if (data.errors) {
-                    displayFormErrorsTwo(data.errors);
-                }
-            })
-            .catch(error => {
-                console.error('Error submitting registration form:', error);
-            });
-    });
-}
 
 
 function displayFormErrorsTwo(errors) {
@@ -330,7 +243,6 @@ function displayFormErrorsTwo(errors) {
 
     try {
         parsedErrors = JSON.parse(errors);  // Try to parse Django-style JSON errors
-        console.log('parsedErrors', parsedErrors)
     } catch (e) {
         // If it fails, assume it's a simple string message
         const p = document.createElement('p');
@@ -387,33 +299,6 @@ const displayFormErrors = (errors) => {
 
 
 
-// 2F Auth Timer
-// const startCodeTimer = (duration, display) => {
-//     let timer = duration;
-//     const countdown = setInterval(() => {
-//         const minutes = Math.floor(timer / 60)
-//         const seconds = timer % 60;
-
-//         display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-//         if (--timer < 0) {
-//             clearInterval(countdown);
-//             display.textContent = "Time Has Expired, Request Another";
-//             display.style.textAlign = "center";
-
-//             // Optional Disable from submissions or show a message
-
-//             if (confirmSubmitBtn) {
-//                 confirmSubmitBtn.disabled = true;
-
-//                 confirmSubmitBtn.innerText = "Code Expired";
-//                 confirmSubmitBtn.classList.add('disabled_button');
-//                 confirmSubmitBtn.style.width = "128px";
-//             }
-//         }
-//     }, 1000);
-// }
-
 
 // const resendLink = document.getElementById('resend_code_link');
 // const statusMessage = document.getElementById('resend_status_message');
@@ -461,45 +346,6 @@ const displayFormErrors = (errors) => {
 // })
 
 
-
-
-
-// 2FA Tab On Input Entry
-// document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
-//     input.addEventListener('input', () => {
-//         if (input.value.length === input.maxLength && index < inputs.length - 1) {
-//             inputs[index + 1].focus();
-//         }
-//     });
-
-// });
-
-// Backspace to empty input
-// document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
-//     input.addEventListener('input', () => {
-//         if (input.value.length === input.maxLength && index < inputs.length - 1) {
-//             inputs[index + 1].focus();
-//         }
-//     });
-
-//     input.addEventListener('keydown', (e) => {
-//         if (e.key === 'Backspace' && !input.value && index > 0) {
-//             inputs[index - 1].focus();
-//         }
-//     });
-// });
-
-// Adjust Logo in Navbar
-// toggle.addEventListener('click', () => {
-//     sidebar.classList.toggle('close');
-//     navLogoText.classList.toggle('abbrev')
-//     if (navLogoText.classList.contains('abbrev')) {
-//         navLogoText.innerHTML = "TPU"
-//     } else {
-//         navLogoText.innerHTML = "The Pop Up"
-//     }
-
-// });
 
 
 toggle.addEventListener('click', () => {
@@ -593,8 +439,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log("I've been clicked the bidButton")
                 const productId = this.dataset.productId;
                 const modal = document.getElementById(`bidModal-${productId}`);
-                console.log('productId', productId)
-                console.log('modal', modal)
                 if (modal) {
                     modal.style.display = 'block';
                 }
@@ -726,8 +570,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 });
-
-
 
 
 
@@ -895,8 +737,6 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
 })
-
-
 
 
 

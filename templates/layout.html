@@ -392,13 +392,18 @@
 
                         {% comment %}
                         if email not on file and signing up for the first time show
-                        sign_up_email_container
+                        register_by_email_container
                         {% endcomment %}
 
-                        <div class="sign_up_email_container hide_container">
+                        <div class="register_by_email_container hide_register_by_email_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronTwo'></i>
+                                    <i class='bx bx-chevron-left backChevron'
+                                        onclick="moveBackwardSignInButton('show_register_by_email_container', 'hide_register_by_email_container', 'shift_left', 'show_email_verification_container', '.register_by_email_container', '.email_verification_container')"></i>
+                                    {% comment %}
+                                    moveBackwardSignInButton(removeShowThisContainer, addHideForThisContainer,
+                                    removeNextClass, addNextClass, nameOfContainerToHide,
+                                    nameOfContainerToShow) {% endcomment %}
                                     <h3>Create account with</h3>
                                 </div>
 
@@ -421,6 +426,25 @@
                                     <button type="submit"
                                         class="button_small_white registrationSubmitButton">Submit</button>
                                 </form>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
+                            </div>
+                        </div>
+
+                        {% comment %}
+                        After user registers by email
+                        {% endcomment %}
+
+                        <div class="register_by_email_complete_container hide_register_by_email_complete_container">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <h3>Check your email</h3>
+                                </div>
+                            </div>
+                            <div class="registration_notice_container">
+                                <h2>We've sent you a message to complete your registration.</h2>
+                                <h3>You can close this window.</h3>
                             </div>
                             <div class="sign_up_modal_policy">
                                 <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
@@ -482,7 +506,7 @@
                             </div>
                         </div>
 
-                        <!-- slides related to password reset -->
+
                         {% comment %}
                         if "forgotton password" selected show this slide
                         {% endcomment %}

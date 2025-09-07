@@ -36,6 +36,11 @@
     font-weight: 700;
 }
 
+h4.section_title {
+    color: var(--chevron-color);
+
+}
+
 .help_content p {
 
     color: var(--chevron-color);
