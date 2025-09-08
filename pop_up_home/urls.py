@@ -12,6 +12,7 @@ urlpatterns = [
     path('help-center/', views.help_center, name='help-center'),
     path('terms', views.terms_and_conditions, name='terms'),
     path('privacy', views.privacy_policy, name='privacy'),
+    path('privacy-choices', views.privacy_choice, name='privacy_choices'),
     # help center pages
     path('buying-help', views.buying_help, name='buying-help'),
     path('selling-help', views.selling_help, name='selling-help'),

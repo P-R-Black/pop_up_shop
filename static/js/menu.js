@@ -12,9 +12,6 @@ const mobileSearchBox = body.querySelector('.mobile-search-box')
 const mobileSearchIcon = body.querySelector('#mobile-search-icon')
 
 
-
-const timerDisplay = document.querySelector('#code_timer');
-
 const inviteFriendModal = document.getElementById('inviteFriendModal');
 const inviteFriendModalBtn = document.querySelectorAll('.inviteFriendBtn');
 const closeInviteModal = document.querySelector('.closeInviteModal');
@@ -52,143 +49,7 @@ function getCSRFToken() {
 
 
 
-
-// sign up email modal 
 document.addEventListener('DOMContentLoaded', function () {
-    // const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
-    // const emailVerificationContainer = document.querySelector('.email_verification_container');
-    // const emailSignUpButton = document.querySelector('.emailSignUpButton');
-
-    // const signUpEmailContainer = document.querySelector('.sign_up_email_container');
-    // const signUpEmailInput = document.querySelector('.sign_up_options_form_email');
-    // const emailSubmitButton = document.querySelector('.emailSubmitButton');
-
-    // const emailLoginContainer = document.querySelector('.email_login_container');
-
-    // const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confirm_container');
-
-    // const signUpOptionsFormPasswordInput = document.querySelector('.sign_up_options_form_password')
-    // const passwordSubmitButton = document.querySelector('.passwordSubmitButton');
-    // const loginSubmitButton = document.querySelector('.loginSubmitButton');
-    // const modal = document.querySelector('.sign_up_modal');
-
-    // const confirmContainerBackChevronFive = document.getElementById('confirmContainerBackChevronFive')
-    // const forgotPasswordEmailCheckContainer = document.querySelector('.forgot_password_email_check_container')
-
-
-
-
-    // if (signUpModalBtn) {
-    //     signUpModalBtn.forEach((sub) => {
-    //         sub.addEventListener('click', () => {
-    //             signUpModal.style.display = 'block';
-    //             // signUpTitleOptionsContainer.classList.add('show_container')
-    //             // signUpTitleOptionsContainer.classList.add('sign_up_title_options_container')
-    //             // emailVerificationContainer.classList.add('email_verification_container')
-    //             // emailVerificationContainer.classList.add('hide_container')
-    //         })
-    //     })
-    // } else {
-    //     console.warn('bidButton not found in the DOM.');
-    // }
-
-
-    // Opens Register Modal When Email Invite Clicks on Link
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("show_auth_modal") === "true") {
-        signUpModal.style.display = 'block';
-    }
-
-
-
-
-    // Forgot password
-    // const passwordForgetLink = document.querySelector('.passwordForgetLink');
-    // const passwordForgetContainer = document.querySelector('.forgot_password_container');
-
-
-    // if (passwordForgetLink) {
-    //     passwordForgetLink.addEventListener('click', () => {
-    //         emailLoginContainer.classList.remove('show_email_login_container');
-    //         emailLoginContainer.classList.add('hide_email_login_container_to_left');
-    //         passwordForgetContainer.classList.add('show_forgot_password_container')
-
-
-    //     })
-    // }
-
-
-    // if (confirmContainerBackChevronFour) {
-    //     confirmContainerBackChevronFour.addEventListener('click', () => {
-    //         passwordForgetContainer.classList.remove('show_forgot_password_container')
-    //         passwordForgetContainer.classList.add('hide_forgot_password_container')
-
-    //         emailLoginContainer.classList.remove('hide_email_login_container_to_left');
-    //         emailLoginContainer.classList.add('show_email_login_container');
-
-    //     })
-    // }
-
-
-
-
-    if (resetPasswordBtn) {
-        resetPasswordBtn.addEventListener('click', (e) => {
-
-            e.preventDefault();
-
-            const email = resetPasswordInput.value.trim();
-            const csrfToken = getCookie('csrftoken');
-
-
-            const originalButtonText = resetPasswordBtn.textContent;
-            const resetSpinner = document.getElementById('resetSpinner');
-
-
-
-            // Show spiner
-            resetSpinner.style.display = 'block'
-            // Disable button so user can't click twice
-            resetPasswordBtn.disabled = true
-            resetPasswordBtn.textContent = 'Sending...';
-
-
-            fetch('/pop_accounts/auth/send-reset-link/', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken,
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({ email })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        //alert('Password reset link sent to your email.')
-                        passwordForgetContainer.classList.remove('show_forgot_password_container')
-                        passwordForgetContainer.classList.add('hide_forgot_password_container')
-
-                        forgotPasswordEmailCheckContainer.classList.remove('hide_forgot_password_email_check_container')
-                        forgotPasswordEmailCheckContainer.classList.add('show_forgot_password_email_check_container')
-
-                    } else {
-                        alert(data.error || 'Something went wrong')
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending password reset link:', error);
-                })
-                .finally(() => {
-                    // Hide spiner, reset button text, re-enable button
-                    resetSpinner.style.display = 'none';
-                    resetPasswordBtn.disabled = false;
-                    resetPasswordBtn.textContent = originalButtonText
-                })
-        })
-    }
-
 
     // Invite Friend Modal
     if (inviteFriendModalBtn) {
@@ -221,215 +82,51 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-
-
-})
-
-
-
-
-
-
-
-
-function displayFormErrorsTwo(errors) {
-    console.log('errors', errors);
-
-    const errorContainer = document.querySelector('.registration_form_errors');
-    errorContainer.innerHTML = ''; // Clear previous errors
-    errorContainer.style.display = 'block';
-
-    let parsedErrors = {};
-
-    try {
-        parsedErrors = JSON.parse(errors);  // Try to parse Django-style JSON errors
-    } catch (e) {
-        // If it fails, assume it's a simple string message
-        const p = document.createElement('p');
-        p.classList.add('form-error-message');
-        p.textContent = errors;
-        errorContainer.appendChild(p);
-        return; // Don't continue processing as JSON
+    // Opens Register Modal When Email Invite Clicks on Link
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("show_auth_modal") === "true") {
+        signUpModal.style.display = 'block';
     }
 
-    console.log('parsedErrors', parsedErrors);
 
-    const passwordErrors = parsedErrors.password || [];
-    const password2Errors = parsedErrors.password2 || [];
+    // Shrinks Side Navigation Bar
+    toggle.addEventListener('click', () => {
+        sidebar.classList.toggle('close');
 
-    if (passwordErrors.length > 0) {
-        passwordErrors.forEach(error => {
-            const p = document.createElement('p');
-            p.classList.add('form-error-message');
-            p.textContent = `${error.message}`;
-            errorContainer.appendChild(p);
-        });
-    } else if (password2Errors.length > 0) {
-        password2Errors.forEach(error => {
-            const p = document.createElement('p');
-            p.classList.add('form-error-message');
-            p.textContent = `Confirm Password: ${error.message}`;
-            errorContainer.appendChild(p);
-        });
-    }
+        navLogoText.classList.add('fade-out'); // Start fade-out
 
-    if (errorContainer.children.length > 0) {
-        errorContainer.style.display = 'block';
-    }
-
-}
-
-
-
-const displayFormErrors = (errors) => {
-    // Clear any existing errors
-    document.querySelectorAll('.field-error').forEach(el => el.remove());
-    for (const [fieldName, errorList] of Object.entries(errors)) {
-        const field = document.querySelector(`#id_${fieldName}`);
-        if (field) {
-            const errorDiv = document.createElement('div');
-            errorDiv.classList.add('field-error');
-            errorDiv.style.color = 'red';
-            errorDiv.style.marginTop = '5px';
-            errorDiv.innerText = errorList.join(', ');
-            field.parentNode.appendChild(errorDiv)
-        }
-    }
-}
-
-
-
-
-// const resendLink = document.getElementById('resend_code_link');
-// const statusMessage = document.getElementById('resend_status_message');
-// resendLink.addEventListener('click', (e) => {
-//     e.preventDefault();
-
-//     resendLink.style.pointerEvents = 'none';
-//     resendLink.style.opacity = ' 0.5';
-//     statusMessage.style.display = 'none';
-
-//     fetch('/pop_accounts/resend-code/', {
-//         method: 'POST',
-//         headers: {
-//             'X-CSRFToken': getCSRFToken(),
-//             'X-Requested-With': 'XMLHttpRequest',
-//         },
-//     })
-//         .then(response => response.json())
-//         .then(data => {
-//             if (data.success) {
-//                 statusMessage.textContent = "A new code was sent!"
-//                 statusMessage.style.display = "block";
-//                 confirmSubmitBtn.classList.remove('disabled_button');
-//                 confirmSubmitBtn.disabled = false
-//                 confirmSubmitBtn.innerText = "Submit"
-
-//                 // Resetart the timer
-//                 startCodeTimer(1 * 60, timerDisplay);
-
-//                 setTimeout(() => {
-//                     resendLink.style.pointerEvents = 'auto';
-//                     resendLink.style.opacity = '1';
-//                     statusMessage.style.display = 'none'
-//                 }, 15000);
-//             } else {
-//                 statusMessage.textContent = data.error || "Something went wrong."
-//                 statusMessage.style.color = 'red';
-//                 statusMessage.style.display = 'block';
-//             }
-//         }).catch(err => {
-//             statusMessage.textContent = "Error resending code.";
-//             statusMessage.style.color = "red";
-//             statusMessage.style.display = "block"
-//         })
-// })
-
-
-
-
-toggle.addEventListener('click', () => {
-    sidebar.classList.toggle('close');
-
-    navLogoText.classList.add('fade-out'); // Start fade-out
-
-    setTimeout(() => {
-        if (sidebar.classList.contains('close')) {
-            navLogoText.innerText = 'TPU';
-            navLogoText.style.fontSize = '32px';
-        } else {
-            navLogoText.innerText = 'The Pop Up';
-            navLogoText.style.fontSize = '48px';
-        }
-
-        navLogoText.classList.remove('fade-out');
-        navLogoText.classList.add('fade-in');
-
-        // Remove the fade-in class after animation completes
         setTimeout(() => {
-            navLogoText.classList.remove('fade-in');
-        }, 300); // Match this to your CSS transition time
-    }, 150); // Wait for fade-out before changing text
-});
+            if (sidebar.classList.contains('close')) {
+                navLogoText.innerText = 'TPU';
+                navLogoText.style.fontSize = '32px';
+            } else {
+                navLogoText.innerText = 'The Pop Up';
+                navLogoText.style.fontSize = '48px';
+            }
 
-searchBtn.addEventListener('click', () => {
-    sidebar.classList.remove('close');
-})
+            navLogoText.classList.remove('fade-out');
+            navLogoText.classList.add('fade-in');
 
+            // Remove the fade-in class after animation completes
+            setTimeout(() => {
+                navLogoText.classList.remove('fade-in');
+            }, 300); // Match this to your CSS transition time
+        }, 150); // Wait for fade-out before changing text
+    });
 
-
-mobileSearchIcon.addEventListener('click', () => {
-    mobileSearchBox.classList.toggle('hide-mobile-search-box')
-    navLogoText.classList.toggle('hide-logo-text')
-})
-
-const darkLighModeToggle = () => {
-    modeSwitch.addEventListener('click', () => {
-        body.classList.toggle('dark');
-
-        if (body.classList.contains("dark")) {
-            modeText.innerText = "Light Mode";
-            localStorage.setItem('darkMode', 'enabled');
-        } else {
-            modeText.innerText = "Dark Mode";
-            localStorage.setItem('darkMode', 'disabled'); // Save preference
-        }
+    searchBtn.addEventListener('click', () => {
+        sidebar.classList.remove('close');
     })
-}
 
 
 
-mobileMoon.addEventListener('click', () => {
-    body.classList.toggle('dark');
-})
-
-mobileSun.addEventListener('click', () => {
-    body.classList.toggle('dark');
-
-})
+    mobileSearchIcon.addEventListener('click', () => {
+        mobileSearchBox.classList.toggle('hide-mobile-search-box')
+        navLogoText.classList.toggle('hide-logo-text')
+    })
 
 
-darkLighModeToggle()
-
-// Check localStorage for saved mode preference
-const savedMode = localStorage.getItem('darkMode');
-if (savedMode === 'enabled') {
-    body.classList.add('dark');
-    modeText.innerText = "Light Mode";
-}
-
-
-if (!localStorage.getItem('darkMode')) {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        body.classList.add('dark');
-        modeText.innerText = "Light Mode";
-        localStorage.setItem('darkMode', 'enabled');
-    }
-}
-
-
-// bid modal
-document.addEventListener('DOMContentLoaded', function () {
+    // Bid Modal
     // Get the modal, button, and close span
 
     const bidButton = document.querySelectorAll('.bidButtonClass')
@@ -569,7 +266,293 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-});
+    // Billing Address Update on Checkout Page
+    const tabButtons = document.querySelectorAll('.billing_address_button');
+    const tabContents = document.querySelectorAll('.billing_address_content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = button.getAttribute('data-tab');
+
+            // Remove "active" class from all;
+            tabButtons.forEach(btn => btn.classList.remove('activated'))
+            tabContents.forEach(content => content.classList.remove('activated'));
+
+            // Add active to selected
+            button.classList.add('activated');
+            document.getElementById(target).classList.add('activated')
+        })
+    });
+
+
+
+    // Shipments in Admin Dashboard
+    const shipTabButtons = document.querySelectorAll('.shipment_status_button');
+    const shipTabContents = document.querySelectorAll('.all_shipments_section');
+
+    shipTabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = button.getAttribute('data-tab');
+
+            // Remove "active" class from all;
+            shipTabButtons.forEach(btn => btn.classList.remove('active_shipment'))
+            shipTabContents.forEach(content => content.classList.remove('active_shipment'));
+
+            // Add active to selected
+            button.classList.add('active_shipment');
+            document.getElementById(target).classList.add('active_shipment')
+        })
+    });
+
+
+    // Products in Update Product Info
+    const prodTabButtons = document.querySelectorAll('.product_status_button');
+    const prodTabContents = document.querySelectorAll('.all_products_section');
+
+    prodTabButtons.forEach(prodButton => {
+        prodButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = prodButton.getAttribute('data-tab');
+
+            prodTabButtons.forEach(btn => btn.classList.remove('active_product'));
+            prodTabContents.forEach(content => content.classList.remove('active_product'));
+
+            // Add active to selected
+            prodButton.classList.add('active_product');
+            document.getElementById(target).classList.add('active_product')
+        })
+    });
+
+
+
+    // Grab email for Password Reset
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = newURLSearchParams(window.location.search);
+        const email = urlParams.get('email')
+
+        if (email) {
+            const emailInput = document.querySelector('#id_email_for_password_reset_one');
+            if (emailInput) {
+                emailInput.value = email;
+            }
+        }
+    })
+
+
+    // Password Reset
+    const passwordResetForm = document.getElementById('passwordResetForm');
+
+    if (passwordResetForm) {
+        passwordResetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(passwordResetForm);
+            const csrfToken = getCookie('csrftoken')
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Password reset successully! You can now log in');
+                        window.location.href = '/'; // may want to redirect to 2fa page
+                    } else {
+                        alert(data.error || 'Something went wrong')
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting password', error);
+                    alert('An unexpected error occurred')
+                });
+        });
+    };
+
+
+
+    // Password Reset Confirm
+    const resetPasswordFormBtn = document.querySelector('.resetPasswordFormBtn');
+
+    const resetPasswordForm = document.getElementById('resetPasswordForm');
+
+    if (resetPasswordForm) {
+        resetPasswordForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(resetPasswordForm);
+            console.log('formData', formData)
+
+            const csrfToken = getCookie('csrftoken')
+            console.log('csrfToken', csrfToken)
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Password reset successully! You can now log in');
+                        window.location.href = '/'; // may want to redirect to 2fa page
+                    } else {
+                        alert(data.error || 'Something went wrong')
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting password', error);
+                    alert('An unexpected error occurred')
+                });
+        });
+    };
+
+    // Shipping Address Update in Checkout Page
+    const shippingTabButtons = document.querySelectorAll('.modal_tab');
+    const shippingTabContents = document.querySelectorAll('.modal_tab_content');
+
+    shippingTabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = button.getAttribute('data-tab');
+
+            // Remove "active" class from all;
+            shippingTabButtons.forEach(btn => btn.classList.remove('activated'))
+            shippingTabContents.forEach(content => content.classList.remove('activated'));
+
+            // Add active to selected
+            button.classList.add('activated');
+            document.getElementById(target).classList.add('activated')
+        })
+    });
+
+
+
+
+    darkLighModeToggle()
+})
+
+
+
+
+function displayFormErrorsTwo(errors) {
+    console.log('errors', errors);
+
+    const errorContainer = document.querySelector('.registration_form_errors');
+    errorContainer.innerHTML = ''; // Clear previous errors
+    errorContainer.style.display = 'block';
+
+    let parsedErrors = {};
+
+    try {
+        parsedErrors = JSON.parse(errors);  // Try to parse Django-style JSON errors
+    } catch (e) {
+        // If it fails, assume it's a simple string message
+        const p = document.createElement('p');
+        p.classList.add('form-error-message');
+        p.textContent = errors;
+        errorContainer.appendChild(p);
+        return; // Don't continue processing as JSON
+    }
+
+    console.log('parsedErrors', parsedErrors);
+
+    const passwordErrors = parsedErrors.password || [];
+    const password2Errors = parsedErrors.password2 || [];
+
+    if (passwordErrors.length > 0) {
+        passwordErrors.forEach(error => {
+            const p = document.createElement('p');
+            p.classList.add('form-error-message');
+            p.textContent = `${error.message}`;
+            errorContainer.appendChild(p);
+        });
+    } else if (password2Errors.length > 0) {
+        password2Errors.forEach(error => {
+            const p = document.createElement('p');
+            p.classList.add('form-error-message');
+            p.textContent = `Confirm Password: ${error.message}`;
+            errorContainer.appendChild(p);
+        });
+    }
+
+    if (errorContainer.children.length > 0) {
+        errorContainer.style.display = 'block';
+    }
+
+}
+
+
+
+const displayFormErrors = (errors) => {
+    // Clear any existing errors
+    document.querySelectorAll('.field-error').forEach(el => el.remove());
+    for (const [fieldName, errorList] of Object.entries(errors)) {
+        const field = document.querySelector(`#id_${fieldName}`);
+        if (field) {
+            const errorDiv = document.createElement('div');
+            errorDiv.classList.add('field-error');
+            errorDiv.style.color = 'red';
+            errorDiv.style.marginTop = '5px';
+            errorDiv.innerText = errorList.join(', ');
+            field.parentNode.appendChild(errorDiv)
+        }
+    }
+}
+
+
+
+
+const darkLighModeToggle = () => {
+    modeSwitch.addEventListener('click', () => {
+        body.classList.toggle('dark');
+
+        if (body.classList.contains("dark")) {
+            modeText.innerText = "Light Mode";
+            localStorage.setItem('darkMode', 'enabled');
+        } else {
+            modeText.innerText = "Dark Mode";
+            localStorage.setItem('darkMode', 'disabled'); // Save preference
+        }
+    })
+}
+
+
+
+mobileMoon.addEventListener('click', () => {
+    body.classList.toggle('dark');
+})
+
+mobileSun.addEventListener('click', () => {
+    body.classList.toggle('dark');
+
+})
+
+
+
+
+// Check localStorage for saved mode preference
+const savedMode = localStorage.getItem('darkMode');
+if (savedMode === 'enabled') {
+    body.classList.add('dark');
+    modeText.innerText = "Light Mode";
+}
+
+
+if (!localStorage.getItem('darkMode')) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        body.classList.add('dark');
+        modeText.innerText = "Light Mode";
+        localStorage.setItem('darkMode', 'enabled');
+    }
+}
 
 
 
@@ -645,187 +628,3 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     })
 });
-
-
-
-
-// Billing Address Update in Checkout Page
-document.addEventListener('DOMContentLoaded', () => {
-    const tabButtons = document.querySelectorAll('.billing_address_button');
-    const tabContents = document.querySelectorAll('.billing_address_content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = button.getAttribute('data-tab');
-
-            // Remove "active" class from all;
-            tabButtons.forEach(btn => btn.classList.remove('activated'))
-            tabContents.forEach(content => content.classList.remove('activated'));
-
-            // Add active to selected
-            button.classList.add('activated');
-            document.getElementById(target).classList.add('activated')
-        })
-    });
-
-
-    // Shipments in Admin Dashboard
-    const shipTabButtons = document.querySelectorAll('.shipment_status_button');
-    const shipTabContents = document.querySelectorAll('.all_shipments_section');
-
-    shipTabButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = button.getAttribute('data-tab');
-
-            // Remove "active" class from all;
-            shipTabButtons.forEach(btn => btn.classList.remove('active_shipment'))
-            shipTabContents.forEach(content => content.classList.remove('active_shipment'));
-
-            // Add active to selected
-            button.classList.add('active_shipment');
-            document.getElementById(target).classList.add('active_shipment')
-        })
-    })
-
-
-    // Products in Update Product Info
-    const prodTabButtons = document.querySelectorAll('.product_status_button');
-    const prodTabContents = document.querySelectorAll('.all_products_section');
-
-    prodTabButtons.forEach(prodButton => {
-        prodButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = prodButton.getAttribute('data-tab');
-
-            prodTabButtons.forEach(btn => btn.classList.remove('active_product'));
-            prodTabContents.forEach(content => content.classList.remove('active_product'));
-
-            // Add active to selected
-            prodButton.classList.add('active_product');
-            document.getElementById(target).classList.add('active_product')
-        })
-    })
-
-
-
-
-})
-
-
-
-
-// Shipping Address Update in Checkout Page
-document.addEventListener('DOMContentLoaded', () => {
-    const tabButtons = document.querySelectorAll('.modal_tab');
-    const tabContents = document.querySelectorAll('.modal_tab_content');
-
-    tabButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = button.getAttribute('data-tab');
-
-            // Remove "active" class from all;
-            tabButtons.forEach(btn => btn.classList.remove('activated'))
-            tabContents.forEach(content => content.classList.remove('activated'));
-
-            // Add active to selected
-            button.classList.add('activated');
-            document.getElementById(target).classList.add('activated')
-        })
-    })
-
-})
-
-
-
-
-
-
-// Grab email for Password Reset
-window.addEventListener('DOMContentLoaded', () => {
-    const urlParams = newURLSearchParams(window.location.search);
-    const email = urlParams.get('email')
-
-    if (email) {
-        const emailInput = document.querySelector('#id_email_for_password_reset_one');
-        if (emailInput) {
-            emailInput.value = email;
-        }
-    }
-})
-
-
-// Password Reset
-const passwordResetForm = document.getElementById('passwordResetForm');
-
-if (passwordResetForm) {
-    passwordResetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const formData = new FormData(passwordResetForm);
-        const csrfToken = getCookie('csrftoken')
-
-        fetch(window.location.href, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken
-            },
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Password reset successully! You can now log in');
-                    window.location.href = '/'; // may want to redirect to 2fa page
-                } else {
-                    alert(data.error || 'Something went wrong')
-                }
-            })
-            .catch(error => {
-                console.error('Error resetting password', error);
-                alert('An unexpected error occurred')
-            });
-    });
-}
-
-
-
-// Password Reset Confirm
-const resetPasswordFormBtn = document.querySelector('.resetPasswordFormBtn');
-
-const resetPasswordForm = document.getElementById('resetPasswordForm');
-
-if (resetPasswordForm) {
-    resetPasswordForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        const formData = new FormData(resetPasswordForm);
-        console.log('formData', formData)
-
-        const csrfToken = getCookie('csrftoken')
-        console.log('csrfToken', csrfToken)
-
-        fetch(window.location.href, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken
-            },
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Password reset successully! You can now log in');
-                    window.location.href = '/'; // may want to redirect to 2fa page
-                } else {
-                    alert(data.error || 'Something went wrong')
-                }
-            })
-            .catch(error => {
-                console.error('Error resetting password', error);
-                alert('An unexpected error occurred')
-            });
-    });
-}

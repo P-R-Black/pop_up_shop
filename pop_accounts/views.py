@@ -1552,7 +1552,10 @@ class Verify2FACodeView(View):
 @require_POST
 def resend_2fa_code(request):
     email = request.session.get('auth_email')
-    user_id = request.session.get('2fa_user_id')
+    print(f'email: {email}')
+    
+    user_id = request.session.get('pending_login_user_id') # 2fa_user_id
+    print(f'user_id: {user_id}')
 
     if not email or not user_id:
         return JsonResponse({'success': False, 'error': 'Session expired'}, status = 400)

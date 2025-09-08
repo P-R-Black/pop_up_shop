@@ -437,7 +437,7 @@ class PopUpEmailPasswordResetForm(forms.ModelForm):
         max_length=100, 
         help_text='Required',
         error_messages={'required': 'Sorry, you will need an email'},
-         widget=forms.PasswordInput(attrs={
+         widget=forms.TextInput(attrs={
             'class': 'email_password_reset_form',
             'placeholder': 'Email',
             'id': 'id_email_password_reset_form',

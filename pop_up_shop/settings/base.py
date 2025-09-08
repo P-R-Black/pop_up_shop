@@ -42,13 +42,14 @@ ALLOWED_HOSTS = [
     'mysite.com',
     "localhost:8000", 
     "localhost",
-    "9de9e9cedc9f.ngrok-free.app",
+    "38c0db4405f5.ngrok-free.app",
     "https://*.ngrok.io",
     ]
 
 
+
 CSRF_TRUSTED_ORIGINS = [
-    "https://9de9e9cedc9f.ngrok-free.app",
+    "https://38c0db4405f5.ngrok-free.app",
 ]
 
 # Application definition

@@ -1,6 +1,12 @@
 // Sign-in / Registration modal flow
 // registred user, email sign-in | - sign-in option (google, facebook, email) -> enter email -> enter password -> enter 6-digit code from email
 
+// Sign Up Modal
+const signUpModal = document.getElementById('signUpModal');
+const signUpModalBtn = document.querySelectorAll('.signUpModalBtn');
+const closeSignUpModal = document.querySelector('.closeSignUpModal');
+
+
 // Variables For Signup/Register Modal Home
 const signUpTitleOptionsContainer = document.querySelector('.sign_up_title_options_container');
 const emailSignUpButton = document.querySelector('.emailSignUpButton');
@@ -14,15 +20,9 @@ const emailRegistrationContainer = document.querySelector('.register_by_email_co
 const registrationSubmitButton = document.querySelector('.registrationSubmitButton');
 const emailRegistrationCompleteContainer = document.querySelector('.register_by_email_complete_container')
 
-// Variables for Register/Login by Google
-// const googleSignUpButton = document.querySelector()
-
-
 // Variables for Register/Login by Facebook
 const facebookSignUpButton = document.querySelector('.facebookSignUpButton');
 const socialVerificationContainer = document.querySelector('.social_registration_container')
-
-
 
 
 // Variables for container to enter password and sign-in
@@ -36,11 +36,8 @@ const signUpEmailConfirmContainer = document.querySelector('.sign_up_email_confi
 const confirmSubmitBtn = document.querySelector('.confirm_submit_button');
 const confirmInputs = document.querySelectorAll('.confirmation_input input');
 
-
-// Sign Up Modal
-const signUpModal = document.getElementById('signUpModal');
-const signUpModalBtn = document.querySelectorAll('.signUpModalBtn');
-const closeSignUpModal = document.querySelector('.closeSignUpModal');
+// Variable for password reset
+const emailPasswordResetInput = document.getElementById('email_password_reset_form'); // class inherted from custom form
 
 // Facebook Sign Button and Values
 const fbBtn = document.getElementById("facebookSignUpButton");
@@ -49,6 +46,11 @@ const fbUrl = document.getElementById("facebookLoginUrl").value;
 // Google Sign Button and Values
 const googleBtn = document.getElementById("googleSignUpButton");
 const googleUrl = document.getElementById("googleLoginUrl").value;
+
+
+// Timer Display for 2 factor auth 
+const timerDisplay = document.querySelector('#code_timer');
+
 
 
 
@@ -72,24 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     })
 
-    const sModal = document.getElementById('signUpModal')
+    // const sModal = document.getElementById('signUpModal')
 
-
-    // poll for popup close
-    // const checkPopup = setInterval(() => {
-    //     if (sModal) {
-    //         clearInterval(checkPopup);
-    //         console.log('sModal is', sModal)
-    //         sModal.style.display = "none";
-    //         window.location.reload()
-    //     }
-    // if (popup.closed) {
-    //     clearInterval(checkPopup);
-    //     console.log('Facebook login popup closed');
-    //     // window.location.reload();
-    //     updateNavigationAfterLogin();
-    // }
-    // }, 500);
 
 
     // Opens Register / Login Modal
@@ -142,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
     emailInput.addEventListener('input', () => {
         emailSubmitButton.disabled = !emailInput.value.includes('@');
     });
+
 
     // Email submitted and checked if on file.
     // If not on file, take to register
@@ -223,7 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('data from loginSubmitButton is', data)
                     if (data['authenticated'] === true) {
                         // const moveForwardSignIn( addThisHideClass, removeThisShowClass, removeNextHideClass, addNextShowClass, containerToHide, containerToShow)
                         moveForwardSignIn('hide_email_login_container_to_left', 'show_email_login_container', 'hide_sign_up_email_confirm_container', 'show_sign_up_email_confirm_container', emailLoginContainer, signUpEmailConfirmContainer)
@@ -346,22 +332,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // Submit Registration Form
-
     if (registrationSubmitButton) {
         registrationSubmitButton.addEventListener('click', function (e) {
             e.preventDefault();
-
-            console.log('registrationSubmitButton clicked!')
-
             const form = registrationSubmitButton.closest('form');
-
-            console.log('form.action is:', form.action)
-
             const formData = new FormData(form);
 
             // Inject email from sessionStorage if not in form
             const storedEmail = sessionStorage.getItem('auth_email');
-            console.log('storedEmail', storedEmail)
 
             if (storedEmail) {
                 formData.set('email', storedEmail);  // Ensure it’s part of the POST data
@@ -391,6 +369,149 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         });
     }
+
+
+    // Forgot password
+    const passwordForgetLink = document.querySelector('.passwordForgetLink');
+    const passwordForgetContainer = document.querySelector('.forgot_password_container'); // this is the next container
+
+
+    if (passwordForgetLink) {
+        passwordForgetLink.addEventListener('click', () => {
+            console.log('forgot password has been called!')
+            // const moveForwardSignIn( addThisHideClass, removeThisShowClass,  | removeNextHideClass, addNextShowClass,  | containerToHide, containerToShow)
+            moveForwardSignIn('hide_email_login_container_to_left', 'show_email_login_container',
+                'hide_forgot_password_container', 'show_forgot_password_container',
+                emailLoginContainer, passwordForgetContainer
+            )
+
+
+        })
+    }
+
+    // Enter email for password reset
+    const emailPasswordResetInput = document.querySelector('.email_password_reset_form'); // class inherted from custom form
+    const resetPasswordBtn = document.querySelector('.resetPasswordBtn')
+
+    // Forgot your password container
+    const forgotPasswordEmailCheckContainer = document.querySelector('.forgot_password_email_check_container')
+
+
+    // makes "continue" button in forgot password container pressable
+    emailPasswordResetInput.addEventListener('input', () => {
+        resetPasswordBtn.disabled = !emailPasswordResetInput.value.includes('@');
+    })
+
+    if (resetPasswordBtn) {
+        resetPasswordBtn.addEventListener('click', (e) => {
+
+            e.preventDefault();
+
+            console.log('button clicked!')
+
+            const email = emailPasswordResetInput.value.trim();
+            const csrfToken = getCookie('csrftoken');
+
+
+            const originalButtonText = resetPasswordBtn.textContent;
+            const resetSpinner = document.getElementById('resetSpinner');
+
+
+
+            // Show spiner
+            resetSpinner.style.display = 'block'
+            // Disable button so user can't click twice
+            resetPasswordBtn.disabled = true
+            resetPasswordBtn.textContent = 'Sending...';
+
+
+            fetch('/pop_accounts/auth/send-reset-link/', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ email })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        //alert('Password reset link sent to your email.')
+
+
+                        // const moveForwardSignIn( addThisHideClass, removeThisShowClass,  | removeNextHideClass, addNextShowClass,  | containerToHide, containerToShow)
+                        moveForwardSignIn('forgot_password_container_shift_left', 'show_forgot_password_container',
+                            'hide_forgot_password_email_check_container', 'show_forgot_password_email_check_container',
+                            passwordForgetContainer, forgotPasswordEmailCheckContainer
+                        )
+
+                    } else {
+                        alert(data.error || 'Something went wrong')
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending password reset link:', error);
+                })
+                .finally(() => {
+                    // Hide spiner, reset button text, re-enable button
+                    resetSpinner.style.display = 'none';
+                    resetPasswordBtn.disabled = false;
+                    resetPasswordBtn.textContent = originalButtonText
+                })
+        })
+    }
+
+
+    // Resend 6-digit code for 2 factor auth.
+    const resendLink = document.getElementById('resend_code_link');
+    const statusMessage = document.getElementById('resend_status_message');
+    resendLink.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        resendLink.style.pointerEvents = 'none';
+        resendLink.style.opacity = ' 0.5';
+        statusMessage.style.display = 'none';
+
+        fetch('/pop_accounts/resend-code/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusMessage.textContent = "A new code was sent!"
+                    statusMessage.style.display = "block";
+                    confirmSubmitBtn.classList.remove('disabled_button');
+                    confirmSubmitBtn.disabled = false
+                    confirmSubmitBtn.innerText = "Submit"
+
+                    // Resetart the timer
+                    startCodeTimer(5 * 60, timerDisplay);
+
+                    setTimeout(() => {
+                        resendLink.style.pointerEvents = 'auto';
+                        resendLink.style.opacity = '1';
+                        statusMessage.style.display = 'none'
+                    }, 15000);
+                } else {
+                    statusMessage.textContent = data.error || "Something went wrong."
+                    statusMessage.style.color = 'red';
+                    statusMessage.style.display = 'block';
+                }
+            }).catch(err => {
+                statusMessage.textContent = "Error resending code.";
+                statusMessage.style.color = "red";
+                statusMessage.style.display = "block"
+            })
+    })
+
+
+
 
 
 })
@@ -454,16 +575,25 @@ const moveBackwardSignInButton = (
 
 
 // 2F Auth Timer
+let countdownInterval = null; // global reference to active interval
 const startCodeTimer = (duration, display) => {
     let timer = duration;
-    const countdown = setInterval(() => {
+
+    // clear any existing interval
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+
+    countdownInterval = setInterval(() => {
         const minutes = Math.floor(timer / 60)
         const seconds = timer % 60;
 
         display.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
         if (--timer < 0) {
-            clearInterval(countdown);
+            clearInterval(countdownInterval);
+            countdownInterval = null; // reset global variable
+
             display.textContent = "Time Has Expired, Request Another";
             display.style.textAlign = "center";
 

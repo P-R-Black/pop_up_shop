@@ -29,6 +29,10 @@ def terms_and_conditions(request):
 def privacy_policy(request):
     return render(request, 'pop_up_home/footer_links/privacy.html')
 
+def privacy_choice(request):
+    # Need to add functionality for user to opt out of tracking
+    return render(request, 'pop_up_home/footer_links/privacy_choices.html')
+
 # help_center_pages
 def buying_help(request):
     return render(request, 'pop_up_home/site_info/help_center_pages/buying_page.html')

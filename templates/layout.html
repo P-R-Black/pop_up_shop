@@ -104,6 +104,8 @@
     <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy_choices.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy_choices_mobile.css' %}">
 
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard_mobile.css' %}">
@@ -451,29 +453,6 @@
                             </div>
                         </div>
 
-                        {% comment %}
-                        Register by using socials (Facebook or Google)
-                        {% endcomment %}
-                        {% comment %}
-                        <div class="social_registration_container hide_social_registration">
-                            <div class="sign_up_options_form_container">
-
-                                <form action="{% url 'pop_accounts:complete_profile' %}" method="POST"
-                                    class="registration_options_form">
-                                    {% csrf_token %}
-
-                                    {{ form.as_p }}
-
-                                    <button type="submit"
-                                        class="button_small_white registrationSubmitButton">Submit</button>
-                                </form>
-                            </div>
-                            <div class="sign_up_modal_policy">
-                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.</p>
-                            </div>
-                        </div>
-                        {% endcomment %}
-
                         <div class="email_login_container hide_email_login_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
@@ -510,10 +489,12 @@
                         {% comment %}
                         if "forgotton password" selected show this slide
                         {% endcomment %}
-                        <div class="forgot_password_container">
+                        <div class="forgot_password_container hide_forgot_password_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronFour'></i>
+                                    <i class='bx bx-chevron-left backChevron'
+                                        onclick="moveBackwardSignInButton('show_forgot_password_container', 'hide_forgot_password_container', 'hide_email_login_container_to_left', 'show_email_login_container', '.forgot_password_container', '.email_login_container')"></i>
+
                                     <h3>Forgot your password?</h3>
                                 </div>
 
@@ -530,7 +511,7 @@
 
                                     {{ email_password_reset_form.email }}
 
-                                    <button type="button" class="button_small_white resetPasswordBtn"
+                                    <button type="submit" class="button_small_white resetPasswordBtn"
                                         id="resetPasswordBtn" disabled>Continue</button>
                                 </form>
                                 <div id="resetSpinner" style="display: none; text-align: center; margin-top: 10px;">
@@ -590,12 +571,12 @@
                         <div class="forgot_password_email_check_container hide_forgot_password_email_check_container">
                             <div class="email_sign_up_modal_title">
                                 <div class="email_sign_up_modal_container">
-                                    <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronFive'></i>
                                     <h3>Everything went as planned</h3>
                                 </div>
 
                                 <p>You've been sent an email.</p>
                                 <p>To reset your password, follow the instructions in th email.</p>
+                                <p>You can close this window.</p>
                             </div>
                         </div>
                     </div>
@@ -731,7 +712,7 @@
                 <ul>
                     <li><a href="{% url 'pop_up_home:terms' %}">Terms</a></li>
                     <li><a href="{% url 'pop_up_home:privacy' %}">Privacy</a></li>
-                    <li><a href="">Privacy Choices</a></li>
+                    <li><a href="{% url 'pop_up_home:privacy_choices' %}">Privacy Choices</a></li>
                     <li>©2025 The Pop Up</li>
                     <li>All Rights Reserved</li>
                 </ul>
