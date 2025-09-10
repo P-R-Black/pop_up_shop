@@ -331,12 +331,15 @@ class MarkProductOnNoticeView(LoginRequiredMixin, View):
         except PopUpProduct.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
 
-    
+
+from pop_accounts.utils.utils import get_stripe_payment_reference    
 
 @login_required
 def personal_info(request):
     user = request.user
     addresses = PopUpCustomerAddress.objects.filter(customer=user)
+
+    payment_methods = get_stripe_payment_reference(user)
 
 
     personal_form = PopUpUserEditForm(initial={
@@ -413,10 +416,11 @@ def personal_info(request):
                     return redirect('pop_accounts:personal_info')
             except Exception as e:
                 print('e', e)
-           
+
 
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/personal_info.html', {
-        'form': personal_form, 'address_form': address_form, 'addresses': addresses, 'user': user})
+        'form': personal_form, 'address_form': address_form, 'addresses': addresses, 'user': user,
+        'payment_methods': payment_methods})
 
 
 @login_required
@@ -1554,7 +1558,7 @@ def resend_2fa_code(request):
     email = request.session.get('auth_email')
     print(f'email: {email}')
     
-    user_id = request.session.get('pending_login_user_id') # 2fa_user_id
+    user_id = request.session.get('pending_login_user_id')
     print(f'user_id: {user_id}')
 
     if not email or not user_id:

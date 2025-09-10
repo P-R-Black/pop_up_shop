@@ -93,7 +93,7 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50, blank=True, null=True)
     mobile_phone = models.CharField(max_length=20, blank=True, null=True)
     mobile_notification = models.BooleanField(default=True)
-    stripe_customer_id = models.CharField(max_length=40, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=200, blank=True, null=True)
     shoe_size = models.CharField(max_length=10, null=True)
     size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200, null=True)
     favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default='nike')

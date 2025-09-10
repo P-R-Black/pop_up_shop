@@ -1,7 +1,9 @@
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 import re
-
+from pop_accounts.models import PopUpCustomer
+from django.conf import settings
+import stripe
 
 def validate_email_address(email):
     try:
@@ -67,3 +69,40 @@ def calculate_auction_progress(product, now):
     
     progress = (elapsed_time.total_seconds() / total_duration.total_seconds()) * 100
     return min(max(progress, 0), 100)  # Clamp between 0 and 100
+
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+def get_stripe_payment_reference(user):
+    """
+    Fetch a user's saved payment methods (cards) from Stripe.
+    Returns a list of dicts with brand, last4, and expiry info.
+    """
+    print('user', user)
+    payment_methods = []
+    customer_id = getattr(user, 'stripe_customer_id', None)
+    print('customer_id', customer_id)
+
+    if not customer_id:
+        return payment_methods
+
+    try:
+        methods = stripe.PaymentMethod.list(
+            customer=customer_id,
+            type="card"
+        )
+
+        print('methods', methods)
+
+        for pm in methods['data']:
+            payment_methods.append({
+                'brand': pm.card.brand.title(), # e.g. "Visa"
+                'last4': pm.card.last4,     # e.g. "4321"
+                'exp_month': pm.card.exp_month,
+                'exp_year': pm.card.exp_year,
+                'wallet': pm.wallet_type,   # e.g. 'apple_pay' or None
+            })
+    except stripe.error.StripeError as e:
+        # Optonal: log or handle errors gracefully
+        print('stripe error: {e}')
+        
+    return payment_methods

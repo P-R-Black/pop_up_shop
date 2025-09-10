@@ -488,7 +488,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                     // ✅ Now send order info to your backend to create the order
                     let orderPayLoad = createOrderPayLoad(userId, data.orderID, data.payerID, amount, shippingObject, billingObject, "", 0, 'paypal')
 
-                    fetch('/orders/create-after-payment/', {
+                    fetch('/pop_up_order/create-after-payment/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -499,7 +499,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                         .then(res => res.json())
                         .then(data => {
                             if (data.success) {
-                                window.location.replace('/payment/placed-order/');
+                                window.location.replace('/pop_up_payment/placed-order/');
                             } else {
                                 alert('Order creation failed after PayPal payment.');
                             }
@@ -634,7 +634,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 // First Process the payment
-                const paymentResponse = await fetch('/payment/process-venmo/', {
+                const paymentResponse = await fetch('/pop_up_payment/process-venmo/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -649,7 +649,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 
                 // Send to Django backend
-                const response = await fetch('/orders/create-after-payment/', {
+                const response = await fetch('/pop_up_order/create-after-payment/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -666,7 +666,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 if (result.success) {
                     showMessage(`Payment successful! Transaction ID: ${result.transaction_id || 'N/A'}`, 'success');
                     setTimeout(() => {
-                        window.location.href = '/payment/placed-order/';
+                        window.location.href = '/pop_up_payment/placed-order/';
                     }, 1500);
                 } else {
                     showMessage(`Payment failed: ${result.error || 'Unknown error'}`, 'error');
@@ -756,17 +756,15 @@ window.addEventListener('DOMContentLoaded', async () => {
             paymentButton.addEventListener('click', async (e) => {
 
                 const cleanAmount = purchaseTotal.innerHTML.replace('$', '').replace(',', '')
-                console.log('cleanAmount', cleanAmount)
 
                 let amount = getFinalAmount();
-                console.log('amount stripe credi card', amount)
-
 
                 const { clientSecret } = await fetch('create-payment-intent/', {
                     method: "POST",
                     headers: { "Content-Type": "application/json", 'X-CSRFToken': getCsrfToken() },
                     body: JSON.stringify({ amount: amount }),
                 }).then(res => res.json());
+
 
                 let billingObject = getBillingAddressInfo();
                 let shippingObject = getShippingAddressInfo();
@@ -800,7 +798,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                         console.log('Payment Failed:', result.error.message);
                         alert(result.error.message)
                     } else if (result.paymentIntent && result.paymentIntent.status == 'succeeded') {
-                        fetch('/orders/create-after-payment/', {
+                        fetch('/pop_up_order/create-after-payment/', {
                             method: "POST",
                             headers: { 'Content-Type': 'application/json', },
                             body: JSON.stringify(orderPayLoad)
@@ -808,7 +806,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                             .then(res => res.json())
                             .then(data => {
                                 if (data.success) {
-                                    window.location.replace('/payment/placed-order/');
+                                    window.location.replace('/pop_up_payment/placed-order/');
                                 } else {
                                     alert('Order creation failed.')
                                 }
@@ -969,7 +967,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                 const orderPayLoad = createOrderPayLoad(userId, paymentIntentId, clientSecret, amount, shippingObject, billingObject, "", 0, 'google_pay');
 
-                const response = await fetch('/orders/create-after-payment/', {
+                const response = await fetch('/pop_up_order/create-after-payment/', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -986,7 +984,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 if (data.success) {
                     showMessage('Order created successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.replace('/payment/placed-order/');
+                        window.location.replace('/pop_up_payment/placed-order/');
                     }, 1000);
                 } else {
                     showMessage('Order creation failed after successful payment', 'error');
@@ -1165,7 +1163,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                 const orderPayLoad = createOrderPayLoad(userId, paymentIntentId, clientSecret, amount, shippingObject, billingObject, "", 0, 'apple_pay');
 
-                const response = await fetch('/orders/create-after-payment/', {
+                const response = await fetch('/pop_up_order/create-after-payment/', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -1180,7 +1178,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 if (data.success) {
                     showMessage('Order created successfully! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.replace('/payment/placed-order/');
+                        window.location.replace('/pop_up_payment/placed-order/');
                     }, 1000);
                 } else {
                     showMessage('Order creation failed after successful payment', 'error');
@@ -1228,7 +1226,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             pay_currency: '', // Will be selected by the user (DAI or USDC)
             order_id: generateOrderId(), // Generate unique order ID,
             order_description: `Order for ${userId}`,
-            success_url: window.location.origin + '/payment/success',
+            success_url: window.location.origin + '/pop_up_payment/success',
             cancel_url: window.location.origin + '/checkout/',
             billing_address: billingObject.billingAddressLine,
             shipping_address: shippingObject.shippingAddressLine,
@@ -1492,7 +1490,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         let orderPayLoad = createOrderPayLoad(userId, paymentInfo.payment_id, paymentInfo.payment_id, amount, shippingObject, billingObject, "", 0, 'now_payment');
 
-        fetch('/orders/create-after-payment/', {
+        fetch('/pop_up_order/create-after-payment/', {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -1505,7 +1503,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 if (data.success) {
                     // Clean up and redirect
                     document.querySelector('.payment-details-modal').remove()
-                    window.location.replace('/payment/placed-order/');
+                    window.location.replace('/pop_up_payment/placed-order/');
                 } else {
                     shwoPaymentError('Order creation failed after successful payment')
                 }

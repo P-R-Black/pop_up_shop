@@ -11,35 +11,26 @@ How it Works
 <section class="auction_section container">
     <div class="terms_and_container">
         <div class="footer_links_title">
-            <h2>How it Works</h2>
+            <h2>{{ how_it_works_copy.page_title }}</h2>
         </div>
+
         <div class="the_auction_container">
             <div class="t_and_c_container">
-                <h4 class="bold section_title">Basic</h4>
+                {% for i in how_it_works_copy.instructions %}
+                <h4 class="bold section_title">{{ i.instruction_level }}</h4>
                 <ol>
-                    <li>Find a product you like</li>
-                    <li>Place a bid before auction close or buy now</li>
-                    <li>If winning bid placed or item purchased now, item shipped to you</li>
-                </ol>
-                <h4 class="bold section_title">Advanced</h4>
-                <ol>
-                    <li>We track upcoming releases from different manufacturers <span><a class="how_it_works_links"
-                                href="{% url 'pop_up_auction:future_releases'%}">("Future Releases")</a></span>
-                    </li>
-                    <li>We secure products based on community interest
+                    {% for j in i.instruction %}
+                    <li>{{ j.instruct }}
+                        {% if j.url %}
                         <span>
-                            <a class="how_it_works_links" href="{% url 'pop_up_auction:coming_soon' %}">("Coming
-                                Soon")</a>
+                            <a class="how_it_works_links" href="{% url 'pop_up_auction:'|add:j.url %}">{{ j.label }}
+                            </a>
                         </span>
                     </li>
-                    <li>et notice of product availabilty by pressing "Notify Me" on the <span>
-                            <a class="how_it_works_links" href="{% url 'pop_up_auction:coming_soon' %}">"Coming
-                                Soon"</a>
-                            page</span></li>
-                    <li>Receive email notice when auction opens for product</li>
-                    <li>Place a bid on product before auction close or buy product now</li>
-                    <li>If winning bid placed or item purchased now, item shipped to you</li>
+                    {% endif %}
+                    {% endfor %}
                 </ol>
+                {% endfor %}
             </div>
         </div>
     </div>

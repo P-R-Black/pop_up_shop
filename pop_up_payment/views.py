@@ -518,27 +518,39 @@ def set_billling_address(request):
 class CreatePaymentIntentView(View):
     def post(self, request, *args, **kwargs):
         user = request.user
-        customer_id = request.user.stripe_customer_id
         cart = Cart(request)
 
         try:
             data = json.loads(request.body)
-        
             amount = data.get('amount')
 
             if not amount:
                 return JsonResponse({"error": "Missing amount"}, status=400)
             
-            else:
+            
         
-                stripe.api_key = settings.STRIPE_SECRET_KEY
+            stripe.api_key = settings.STRIPE_SECRET_KEY
 
-                intent = stripe.PaymentIntent.create(
-                    amount=amount,
-                    currency='usd',
-                    automatic_payment_methods={"enabled": True},  # Enable Apple Pay, Google Pay, etc.
+            # Ensure Stripe customer exists
+            if not user.stripe_customer_id:
+                customer = stripe.Customer.create(
+                    email=user.email,
+                    name=f"{user.first_name} {user.last_name}"
                 )
-                return JsonResponse({'clientSecret': intent['client_secret']})
+                user.strip_customer_id = customer.id
+                user.save(update_fields=['stripe_customer_id'])
+            else:
+                customer = stripe.Customer.retrieve(user.stripe_customer_id)
+
+            # Create PaymentIntent for that customer
+            intent = stripe.PaymentIntent.create(
+                amount=amount,
+                currency='usd',
+                customer=user.stripe_customer_id,
+                automatic_payment_methods={"enabled": True},  # Enable Apple Pay, Google Pay, etc.
+                setup_future_usage="off_session"
+            )
+            return JsonResponse({'clientSecret': intent['client_secret']})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
 
@@ -564,6 +576,22 @@ def stripe_webhook_view(request):
     if event['type'] == 'payment_intent.succeeded':
         intent = event['data']['object']
         payment_reference = intent['id']
+
+        # new code
+        customer_id = intent['customer']
+        payment_method_id = intent['payment_method']
+
+        # new code
+        if customer_id and payment_method_id:
+            try:
+                stripe.PaymentMethod.attach(
+                    payment_method_id,
+                    customer=customer_id
+                )
+            except stripe.error.InvalidRequestError as e:
+                # Already attached
+                logger.info(f"PaymentMethod: {payment_method_id}")
+
         # 🛑 Warn if payment_reference not found in DB
         if not PopUpPayment.objects.filter(payment_reference=payment_reference).exists():
             logger.error(f"⚠️ Webhook received unknown payment_reference: {payment_reference}")
@@ -607,13 +635,14 @@ def stripe_webhook_view(request):
         payment_reference = intent['id']
 
         # 🛑 Warn if payment_reference not found in DB
-    if not PopUpPayment.objects.filter(payment_reference=payment_reference).exists():
-        logger.error(f"⚠️ Webhook received unknown payment_reference: {payment_reference}")
-        payment = PopUpPayment.objects.filter(payment_reference=payment_reference).first()
+        if not PopUpPayment.objects.filter(payment_reference=payment_reference).exists():
+            logger.error(f"⚠️ Webhook received unknown payment_reference: {payment_reference}")
+        else:
+            payment = PopUpPayment.objects.filter(payment_reference=payment_reference).first()
 
-        if payment:
-            payment.status = 'failed'
-            payment.save()
+            if payment:
+                payment.status = 'failed'
+                payment.save()
     
     elif event['type'] == 'charge.dispute.created':
         charge = event['data']['object']['charge']

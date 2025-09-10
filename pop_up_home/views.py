@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponse
 import os
 import environ
+from .pop_up_home_copy.site_info_copy.site_info_copy import (ABOUT_US_COPY, HOW_IT_WORKS_COPY, 
+                                                             VERIFICATION_COPY, CONTACT_US_COPY)
 
 # Create your views here.
 def home_page(request):
@@ -9,16 +11,20 @@ def home_page(request):
 
 # site and usage info
 def about_us(request):
-    return render(request, 'pop_up_home/site_info/about_us.html')
+    about_us_copy = ABOUT_US_COPY
+    return render(request, 'pop_up_home/site_info/about_us.html', {'about_us_copy': about_us_copy})
 
 def how_it_works(request):
-    return render(request, 'pop_up_home/site_info/how_it_works.html')
+    how_it_works_copy = HOW_IT_WORKS_COPY
+    return render(request, 'pop_up_home/site_info/how_it_works.html', {"how_it_works_copy": how_it_works_copy })
 
 def verification(request):
-    return render(request, 'pop_up_home/site_info/verification.html')
+    verification_copy = VERIFICATION_COPY
+    return render(request, 'pop_up_home/site_info/verification.html', {"verification_copy": verification_copy})
 
 def contact_us(request):
-    return render(request, 'pop_up_home/site_info/contact_us.html')
+    contact_us_copy = CONTACT_US_COPY
+    return render(request, 'pop_up_home/site_info/contact_us.html', {"contact_us_copy": contact_us_copy})
 
 def help_center(request):
     return render(request, 'pop_up_home/site_info/help_center.html')

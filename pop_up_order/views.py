@@ -23,16 +23,15 @@ from django.conf import settings
 from decimal import Decimal
 import stripe
 import json
-from collections import defaultdict
 import braintree
 import re
 from django.db.models import Q
-from django.http import HttpResponse
 from django.db.models import Prefetch
 import logging
 
 logger = logging.getLogger(__name__)
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 # Create your views here.
@@ -40,6 +39,7 @@ logger = logging.getLogger(__name__)
 class CreateOrderAfterPaymentView(View):
     def post(self, request, *args, **kwargs):
         cart = Cart(request)
+        print('cart', cart)
         ids_in_cart = cart.get_product_ids()
         product_qs = PopUpProduct.objects.filter(Q(id__in=ids_in_cart), Q(is_active=True), Q(inventory_status__in=["reserved", "sold_out"]))
         
@@ -75,6 +75,26 @@ class CreateOrderAfterPaymentView(View):
             customer = PopUpCustomer.objects.get(id=user_id)
             shipping_address = PopUpCustomerAddress.objects.get(id=data.get('shippingAddressId'))
             billing_address = PopUpCustomerAddress.objects.get(id=data.get('billingAddressId'))
+            
+            if not customer.stripe_customer_id:
+                print('not customer.stripe_customer_id')
+                try:
+                    stripe_customer = stripe.Customer.create(
+                        email=data.get('email'),
+                        name=f"{customer.first_name} {customer.last_name}",
+                        address={
+                            "line1": data.get('address1'),
+                            "line2": data.get('address2'),
+                            "postal_code": data.get('postal_code'),
+                            "city": data.get('city'),
+                            "state": data.get('state'),
+                        },
+                    )
+                    print('stripe_customer.id', stripe_customer.id if stripe_customer.id else "No stripe_customer.id")
+                    customer.stripe_customer_id = stripe_customer.id
+                    customer.save(update_fields=["stripe_customer_id"])
+                except stripe.error.StripeError as e:
+                    print(f"Stripe error creating customer: {e}")
 
             
             # Need to work on the get_fees_by_payment function

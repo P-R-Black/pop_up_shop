@@ -239,6 +239,9 @@ Auction
                         <h3>Payment Options</h3>
                     </div>
                     <div class="payment_options_container">
+                        {% comment %}
+                        <!-- since not keeping user payment info on file, no need for add payment feature
+                        will gather user payment details from stripe & paypal -->
                         <form action="" class="personal_card_input_container">
                             <div class="personal_card_number_container">
                                 <label name="card_number" for="">Card number</label>
@@ -256,6 +259,35 @@ Auction
                                 <input class="button_medium" type="submit" value="Add Payment"></input>
                             </div>
                         </form>
+                        {% endcomment %}
+                        <ul>
+                            {% if payment_methods %}
+                            {% for pm in payment_methods %}
+                            <li class="dashboard_databox_large">
+                                <div class="personal_card_data">
+                                    {% if pm.wallet %}
+                                    <h3>{{ pm.brand }}</h3>
+                                    <h3>{ {pm.last4 }}</h3>
+                                    <h3>{{ pm.wallet|title }}</h3>
+                                    {% else %}
+                                    <h3>{{ pm.brand }}</h3>
+                                    <h3>{{ pm.last4 }}</h3>
+                                    <h3>{{ pm.exp_month }}/{{pm.exp_year }}</h3>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            {% endfor %}
+                            {% else %}
+                            <div class="dashboard_databox_large">
+                                <div class="account_card_info_container">
+                                    <div class="personal_card_data">
+                                        <h4>No payment methods on file</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </ul>
+                        {% comment %}
                         <div class="dashboard_databox_large">
                             <div class="account_card_info_container">
                                 <div class="personal_card_data">
@@ -267,7 +299,6 @@ Auction
                                     <h4>Default</h4>
                                 </div>
                             </div>
-
                         </div>
                         <div class="dashboard_databox_large">
                             <div class="account_card_info_container">
@@ -283,6 +314,7 @@ Auction
                                 </div>
                             </div>
                         </div>
+                        {% endcomment %}
                     </div>
                 </div>
                 <div class="account_payment_container">
