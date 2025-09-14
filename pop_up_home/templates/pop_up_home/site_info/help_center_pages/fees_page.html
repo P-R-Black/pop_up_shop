@@ -11,28 +11,31 @@ Fees Help
 <section class="auction_section container">
     <div class="terms_and_container">
         <div class="footer_links_title">
-            <h2>Fees</h2>
+            <h2>{{ help_center_page_fee.page_title }}</h2>
         </div>
         <div class="the_auction_container">
             <div class="help_pages_container">
                 <div class="help_nav_container">
                     <ul class="help_links">
-                        <li><a href="#processingFee">Processing Fee</a></li>
+                        {% for l in help_center_page_fee.side_link_links %}
+                        <li><a href="{{ l.url }}">{{ l.label }}</a></li>
+                        {% endfor %}
                     </ul>
                 </div>
                 <div class="help_content_container">
-                    <div class="help_title_container">
-                        <h3 id="processingFee">Processing Fee</h3>
+                    {% for text in help_center_page_fee.sections %}
+                    <div class="help_title_container" id="{{ text.id }}">
+                        <h3>{{ text.section_title }}</h3>
                     </div>
                     <div class="help_content">
-                        <p>
-                            A processing fee is add to each purchase. Our processing fee is
-                            typically 15% of the shopping cart's subtotal. This processing
-                            fee is used to service and maintain the site as well as cover
-                            other administration expenses. Fees are subject to change
-                            without warning.
-                        </p>
+                        {% for para in text.section_paragraph %}
+                        {% if para.paragraph_title %}
+                        <h4 class="bold section_title">{{ para.paragraph_title }}</h4>
+                        {% endif %}
+                        <p>{{ para.paragraph }}</p>
+                        {% endfor %}
                     </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

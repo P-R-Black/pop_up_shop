@@ -716,16 +716,6 @@ body.dark .sidebar li button:hover .text {
 
 }
 
-/*
-.sidebar li .icon,
-.sidebar li .text {
-    color: var(--text-color);
-    transition: var(--tran-02)
-}
-
-
-*/
-
 
 
 .sidebar .menu-bar {
@@ -822,6 +812,148 @@ body.dark .switch::before {
     opacity: 0;
     visibility: hidden;
 }
+
+
+
+.dashboard_expand {
+    border: none;
+    color: var(--toggle-color);
+    cursor: pointer;
+    outline: none;
+    transition: var(--tran-02);
+
+    font-size: 1.5rem;
+    font-weight: 200;
+    width: 2.25rem;
+
+
+}
+
+.active,
+.dashboard_expand:active {
+    transform: rotate(-90deg);
+    transition: var(--tran-05);
+}
+
+.sidebar.close .dashboard_expand {
+    opacity: 0;
+}
+
+
+.dashboard_nav_container {
+    /* padding: 0 18px; */
+
+    max-height: 0;
+    /* Start collapsed */
+    opacity: 0;
+    /* Invisible by default */
+    overflow: hidden;
+    /* Hide overflowing content */
+    transition: var(--tran-05);
+    /* Smooth transition for height and opacity */
+
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+
+
+}
+
+.dashboard_nav_container.show {
+    align-items: center;
+    /* background: var(--databox-color); */
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+
+    /* Adjust to the maximum height of your container */
+    max-height: 500px;
+
+    opacity: 1;
+    /* Fully visible */
+
+    /* padding: 1rem 0; */
+    transition: var(--tran-05);
+}
+
+
+.dashboard_nav_container ul li a {
+    color: var(--text-color);
+
+    align-items: center;
+    border-radius: 6px;
+    display: flex;
+    height: 100%;
+    text-decoration: none;
+    transition: var(--tran-04);
+    width: 100%;
+}
+
+
+.dashboard_nav_container ul li a:hover {
+    color: var(--sidebar-color);
+    height: 2rem;
+}
+
+.dashboard_nav_container li a i.icon {
+
+    align-items: center;
+    display: flex;
+    font-size: 15px;
+    justify-content: center;
+    min-width: 50px;
+}
+
+.dashboard_nav_container li .icon,
+.dashboard_nav_container li .text {
+    color: var(--text-color);
+    transition: var(--tran-02)
+}
+
+.dashboard_nav_container .text {
+    font-family: var(--text-font);
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-color);
+    transition: var(--tran-03);
+    white-space: nowrap;
+    opacity: 1;
+}
+
+/* 
+.sidebar li .icon {
+    font-size: 20px;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.sidebar li .icon,
+.sidebar li .text {
+    color: var(--text-color);
+    transition: var(--tran-02)
+}
+
+
+.sidebar li a {
+    align-items: center;
+    border-radius: 6px;
+    display: flex;
+    height: 100%;
+    text-decoration: none;
+    transition: var(--tran-04);
+    width: 100%;
+}
+
+.sidebar li a:hover {
+    background: var(--primary-color);
+    height: 2rem;
+} */
+
+/* ========== End of Navbar ========== */
 
 
 /*  ====== Sign Up Modal ===== */
@@ -1639,6 +1771,7 @@ footer span div.logo-text {
 
 .footer_about_title h3 {
     color: var(--primary-color-light);
+    font-family: var(--text-font);
     font-weight: 500;
     margin-bottom: .5rem;
     text-align: left;
@@ -1652,6 +1785,7 @@ footer span div.logo-text {
 .footer_about_options li a {
     color: var(--primary-color-light);
     cursor: pointer;
+    font-family: var(--text-font);
     font-size: .90rem;
     font-weight: 300;
     text-align: left;
@@ -1659,6 +1793,41 @@ footer span div.logo-text {
 }
 
 .footer_about_options li a:hover {
+    color: var(--text-color);
+    transition: var(--tran-03);
+}
+
+
+.footer_about_options li p {
+    color: var(--primary-color-light);
+    cursor: pointer;
+    font-family: var(--text-font);
+    font-size: .90rem;
+    font-weight: 300;
+    text-align: left;
+    transition: var(--tran-03);
+}
+
+.footer_about_options li input {
+    background-color: transparent;
+    color: var(--primary-color-light);
+    cursor: pointer;
+    font-family: var(--text-font);
+    font-size: .90rem;
+    font-weight: 300;
+    text-align: left;
+    transition: var(--tran-03);
+}
+
+
+
+
+.footer_about_options li p:hover {
+    color: var(--text-color);
+    transition: var(--tran-03);
+}
+
+.footer_about_options li input:hover {
     color: var(--text-color);
     transition: var(--tran-03);
 }
@@ -1732,6 +1901,7 @@ footer span div.logo-text {
 
 .footer_terms_container ul li a {
     color: var(--primary-color-light);
+    font-family: var(--text-font);
     font-size: .80rem;
     font-weight: 300;
     transition: var(--tran-03);
@@ -1739,6 +1909,7 @@ footer span div.logo-text {
 
 .footer_terms_container ul li {
     color: var(--primary-color-light);
+    font-family: var(--text-font);
     font-size: .80rem;
     font-weight: 300;
 }

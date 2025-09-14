@@ -537,7 +537,7 @@ class CreatePaymentIntentView(View):
                     email=user.email,
                     name=f"{user.first_name} {user.last_name}"
                 )
-                user.strip_customer_id = customer.id
+                user.stripe_customer_id = customer.id
                 user.save(update_fields=['stripe_customer_id'])
             else:
                 customer = stripe.Customer.retrieve(user.stripe_customer_id)

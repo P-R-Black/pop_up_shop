@@ -11,46 +11,31 @@ Payment Help
 <section class="auction_section container">
     <div class="terms_and_container">
         <div class="footer_links_title">
-            <h2>Payment Options</h2>
+            <h2>{{ help_center_page_payment.page_title }}</h2>
         </div>
         <div class="the_auction_container">
             <div class="help_pages_container">
                 <div class="help_nav_container">
                     <ul class="help_links">
-                        <li><a href="#paymentOptions">What are the Payment Options</a></li>
-                        <li><a href="#cryptoPayment">Does The Pop Up Accept Cryptocurrency as Payment</a></li>
-                        <li><a href="#paymentProcessing">Payment Processing</a></li>
+                        {% for l in help_center_page_payment.side_link_links %}
+                        <li><a href="{{ l.url }}">{{ l.label }}</a></li>
+                        {% endfor %}
                     </ul>
                 </div>
                 <div class="help_content_container">
-                    <div class="help_title_container">
-                        <h3 id="paymentOptions">What are the Payment Options</h3>
+                    {% for text in help_center_page_payment.sections %}
+                    <div class="help_title_container" id="{{ text.id }}">
+                        <h3>{{ text.section_title }}</h3>
                     </div>
                     <div class="help_content">
-                        <p>
-                            We currently accept PayPal, Venmo, Visa, Mastercard, Discover, Apple Pay, Google Pay, DAI
-                            and USDC as forms of payment.
-                        </p>
+                        {% for para in text.section_paragraph %}
+                        {% if para.paragraph_title %}
+                        <h4 class="bold section_title">{{ para.paragraph_title }}</h4>
+                        {% endif %}
+                        <p>{{ para.paragraph }}</p>
+                        {% endfor %}
                     </div>
-                    <div class="help_title_container">
-                        <h3 id="cryptoPayment">Does The Pop Up Accept Cryptocurrency as Payment</h3>
-                    </div>
-                    <div class="help_content">
-                        <p>
-                            "The Pop Up" accepts DAI and USDC stable coins.
-                        </p>
-                    </div>
-                    <div class="help_title_container">
-                        <h3 id="paymentProcessing">Payment Processing</h3>
-                    </div>
-                    <div class="help_content">
-                        <p>
-                            PayPal, Venmo, credit card, debit card, Apple Pay and Google Pay
-                            payments are processed through <a
-                                href="https://stripe.com/?utm_campaign=AMER_US_en_Google_Search_Brand_Stripe_EXA-20839462206&utm_medium=cpc&utm_source=google&ad_content=720048964694&utm_term=stripe&utm_matchtype=e&utm_adposition=&utm_device=c&gad_source=1&gclid=EAIaIQobChMIhZ7XpJrliwMV3nF_AB0euTkoEAAYASAAEgI4BvD_BwE">Stripe.</a>
-                        </p>
-                        <p>DAI and USDC payments are processed through <a href="https://www.bitpay.com/">BitPay.</a></p>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

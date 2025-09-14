@@ -11,38 +11,31 @@ Selling Help
 <section class="auction_section container">
     <div class="terms_and_container">
         <div class="footer_links_title">
-            <h2>Selling</h2>
+            <h2>{{ help_center_page_selling.page_title }}</h2>
         </div>
         <div class="the_auction_container">
             <div class="help_pages_container">
                 <div class="help_nav_container">
                     <ul class="help_links">
-                        <li><a href="#primarySeller">Who is Doing the Selling</a></li>
-                        <li><a href="#canISell">Can I sell on The Pop Up</a></li>
+                        {% for l in help_center_page_selling.side_link_links %}
+                        <li><a href="{{ l.url }}">{{ l.label }}</a></li>
+                        {% endfor %}
                     </ul>
                 </div>
                 <div class="help_content_container">
-                    <div class="help_title_container">
-                        <h3 id="primarySeller">Who is Doing the Selling</h3>
+                    {% for text in help_center_page_selling.sections %}
+                    <div class="help_title_container" id="{{ text.id }}">
+                        <h3 id="primarySeller">{{ text.section_title }}</h3>
                     </div>
                     <div class="help_content">
-                        <p>
-                            All products are being sold by "The Pop Up." We want to ensure that everything sold is
-                            authentic, and the best weay to do that is by controlling what gets bought and sold. We only
-                            secure product from manufacturers and trusted retailers, and we keep the receipts to prove
-                            it. We believe that if you’re going to pay top dollar for your favorite pair kicks or
-                            clothing item, it shoud be the authentic product.
-                        </p>
-
+                        {% for para in text.section_paragraph %}
+                        {% if para.paragraph_title %}
+                        <h4 class="bold section_title">{{ para.paragraph_title }}</h4>
+                        {% endif %}
+                        <p>{{ para.paragraph }}</p>
+                        {% endfor %}
                     </div>
-                    <div class="help_title_container">
-                        <h3 id="canISell">Can I sell on The Pop Up</h3>
-                    </div>
-                    <div class="help_content">
-                        <p>
-                            At this time we're not accepting resellers on the platform.
-                        </p>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

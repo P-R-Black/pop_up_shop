@@ -13,17 +13,6 @@ Dashboard
         <div class="page_title">
             <h2>Dashboard</h2>
         </div>
-        <div class="admin_navigation_section">
-            <div class="admin_navigation_container">
-                <ul>
-                    {% for item in admin_navigation %}
-                    <li class="button_medium">
-                        <a href="{% url 'pop_accounts:'|add:item.url %}">{{ item.label }}</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
         <div class="the_dashboard_container">
             <div class="personal_interest_notice_container">
                 <div class="dashboard_databox_small">

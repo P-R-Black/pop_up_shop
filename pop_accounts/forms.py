@@ -440,7 +440,7 @@ class PopUpEmailPasswordResetForm(forms.ModelForm):
          widget=forms.TextInput(attrs={
             'class': 'email_password_reset_form',
             'placeholder': 'Email',
-            'id': 'id_email_password_reset_form',
+            'id': '',
             'type': 'email',
             'name': 'email_reset'
         }

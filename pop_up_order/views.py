@@ -77,7 +77,6 @@ class CreateOrderAfterPaymentView(View):
             billing_address = PopUpCustomerAddress.objects.get(id=data.get('billingAddressId'))
             
             if not customer.stripe_customer_id:
-                print('not customer.stripe_customer_id')
                 try:
                     stripe_customer = stripe.Customer.create(
                         email=data.get('email'),
@@ -90,9 +89,25 @@ class CreateOrderAfterPaymentView(View):
                             "state": data.get('state'),
                         },
                     )
-                    print('stripe_customer.id', stripe_customer.id if stripe_customer.id else "No stripe_customer.id")
                     customer.stripe_customer_id = stripe_customer.id
                     customer.save(update_fields=["stripe_customer_id"])
+                    # NEW: Attach the PaymentMethod to this customer
+                    try:
+                        # Retrieve the PaymentIntent to get the PaymentMethod
+                        payment_intent = stripe.PaymentIntent.retrieve(payment_data_id)
+                        
+                        if payment_intent.payment_method:
+                            # Attach the PaymentMethod to the newly created customer
+                            stripe.PaymentMethod.attach(
+                                payment_intent.payment_method,
+                                customer=stripe_customer.id,
+                            )
+                            
+                    except stripe.error.StripeError as e:
+                        print(f"Error attaching PaymentMethod to customer: {e}")
+                        
+                except stripe.error.StripeError as e:
+                    print(f"Stripe error creating customer: {e}")
                 except stripe.error.StripeError as e:
                     print(f"Stripe error creating customer: {e}")
 

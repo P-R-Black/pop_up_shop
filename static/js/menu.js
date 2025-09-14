@@ -434,6 +434,24 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 
+    // Nav Dashboard Display and Hide Links
+    // payment options dropdown variables
+    var expandDashLink = document.querySelector(".dashboard_expand");
+    console.log('expandDashLink', expandDashLink)
+
+    var dashboardLinksContainer = document.querySelector('.dashboard_nav_container')
+    console.log('dashboardLinksContainer', dashboardLinksContainer)
+
+    // payment options dropdown
+    expandDashLink.addEventListener("click", function () {
+        console.log('button clicked')
+        this.classList.toggle("active");
+        dashboardLinksContainer.classList.toggle('show')
+
+    });
+
+
+
 
 
     darkLighModeToggle()

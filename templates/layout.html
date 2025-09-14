@@ -217,7 +217,85 @@
                             <i class='bx bxs-user-detail icon'></i>
                             <span class="text nav-text">Dashboard</span>
                         </a>
+                        <i class='bx bxs-chevron-down dashboard_expand' id="dashboard_expand"></i>
                     </li>
+                    <div class="dashboard_nav_container" id="adminDashBoardOptions">
+                        <ul class="menu-links">
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:account_sizes'%}">
+                                    <i class="fa-regular fa-square-poll-vertical icon"></i>
+                                    <span class="text nav-text">Account Sizes</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:add_products'%}">
+                                    <i class='bx  bx-folder-plus icon'></i>
+                                    <span class="text nav-text">Add Products</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:enroute'%}">
+                                    <i class="fa-regular fa-truck icon"></i>
+                                    <span class="text nav-text">En Route</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:inventory_admin'%}">
+                                    <i class="fa-regular fa-warehouse icon"></i>
+                                    <span class="text nav-text">Inventory</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:most_interested'%}">
+                                    <i class="fa-regular fa-check-double icon"></i>
+                                    <span class="text nav-text">Most Interested</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:most_on_notice'%}">
+                                    <i class="fa-regular fa-bell icon"></i>
+                                    <span class="text nav-text">On Notice</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:sales_admin'%}">
+                                    <i class="fa-regular fa-money-check-dollar icon"></i>
+                                    <span class="text nav-text">Sales</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:shipments'%}">
+                                    <i class="fa-regular fa-truck-fast icon"></i>
+                                    <span class="text nav-text">Shipments</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:total_accounts'%}">
+                                    <i class="fa-regular fa-circle-user icon"></i>
+                                    <span class="text nav-text">Total Accounts</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:total_open_bids'%}">
+                                    <i class="fa-regular fa-clock-rotate-left icon"></i>
+                                    <span class="text nav-text">Total Open Bids</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:update_product'%}">
+                                    <i class="fa-regular fa-pen-to-square icon"></i>
+                                    <span class="text nav-text">Update Product</span>
+                                </a>
+                            </li>
+                            <li class="nav-link">
+                                <a href="{% url 'pop_accounts:update_shipping'%}">
+                                    <i class="fa-regular fa-box-open icon"></i>
+                                    <span class="text nav-text">Update Shipping</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                    </div>
                     {% elif request.user.is_authenticated %}
                     <li class="nav-link">
                         <a href="{% url 'pop_accounts:dashboard' %}">
@@ -634,62 +712,54 @@
             <div class="footer_links_container">
                 <div class="footer_about_container">
                     <div class="footer_about_title">
-                        <h3>About</h3>
+                        <h3>{{ footer_column_about.footer_column_title }}</h3>
                     </div>
                     <ul class="footer_about_options">
+                        {% for l in footer_column_about.footer_bottom_links %}
                         <li>
-                            <a href="{% url 'pop_up_home:about' %}">About Us</a>
+                            <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
                         </li>
-                        <li>
-                            <a href="{% url 'pop_up_home:how-it-works' %}">How It Works</a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pop_up_home:verification' %}">Verification</a>
-                        </li>
+                        {% endfor %}
                     </ul>
                 </div>
                 <div class="footer_about_container">
                     <div class="footer_about_title">
-                        <h3>Help</h3>
+                        <h3>{{ footer_column_help.footer_column_title }}</h3>
                     </div>
                     <ul class="footer_about_options">
+                        {% for l in footer_column_help.footer_bottom_links %}
                         <li>
-                            <a href="{% url 'pop_up_home:contact' %}">Contact Us</a>
+                            <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
                         </li>
-
-                        <li>
-                            <a href="{% url 'pop_up_home:help-center' %}">Help Center</a>
-                        </li>
-
-                        <li>
-                            <a href="#">Site Map</a>
-                        </li>
-
+                        {% endfor %}
                     </ul>
                 </div>
                 <div class="footer_about_container">
                     <div class="footer_about_title">
-                        <h3>Regiseter</h3>
+                        <h3>{{ footer_column_register.footer_column_title }}</h3>
                     </div>
                     <ul class="footer_about_options">
                         {% if request.user.is_authenticated %}
                         <form action="{% url 'pop_accounts:logout' %}" method="POST">
+                            {% csrf_token %}
+                            {% for l in footer_column_register.footer_authenicated_link %}
                             <li>
-                                <a>Logout</a>
+                                <input type="submit" class="" value="{{ l.label }}">
                             </li>
+                            {% endfor %}
                         </form>
-
                         {% else %}
-                        <li class="signUpModalBtn">
-                            <a>Login</a>
+                        {% for l in footer_column_register.footer_not_authenicated_link %}
+                        <li class="{{ l.url }}">
+                            <p>{{ l.label }}</p>
                         </li>
+                        {% endfor %}
                         {% endif %}
-                        <li>
-                            <a>Signup</a>
+                        {% for l in footer_column_register.footer_register_link %}
+                        <li class="{{ l.url }}">
+                            <p>{{ l.label }}</p>
                         </li>
-                        <li>
-                            <a>Reset Password</a>
-                        </li>
+                        {% endfor %}
                     </ul>
                 </div>
             </div>
@@ -710,9 +780,9 @@
         <div class="bottom_footer">
             <div class="footer_terms_container">
                 <ul>
-                    <li><a href="{% url 'pop_up_home:terms' %}">Terms</a></li>
-                    <li><a href="{% url 'pop_up_home:privacy' %}">Privacy</a></li>
-                    <li><a href="{% url 'pop_up_home:privacy_choices' %}">Privacy Choices</a></li>
+                    {% for l in bottom_footer_links.footer_bottom_links %}
+                    <li><a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a></li>
+                    {% endfor %}
                     <li>©2025 The Pop Up</li>
                     <li>All Rights Reserved</li>
                 </ul>

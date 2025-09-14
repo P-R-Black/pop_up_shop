@@ -379,6 +379,11 @@
         width: 9rem;
     }
 
+    .footer_about_options li p {
+        text-align: left;
+        width: 9rem;
+    }
+
     /* ========== END OF FOOTER ==========*/
 
 
@@ -668,6 +673,12 @@
     }
 
     .footer_about_options li a {
+        text-align: center;
+        width: 9rem;
+        justify-content: center;
+    }
+
+    .footer_about_options li p {
         text-align: center;
         width: 9rem;
         justify-content: center;

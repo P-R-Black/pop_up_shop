@@ -11,71 +11,100 @@ Help Center
 <section class="auction_section container">
     <div class="terms_and_container">
         <div class="footer_links_title">
-            <h2>Help Center</h2>
+            <h2>{{ help_center_copy.page_title }}</h2>
         </div>
         <div class="the_auction_container">
             <div class="t_and_c_container">
                 <div class="help_center_container">
                     <div class="help_center_buttons_container_top">
-                        <button class="help_center_box" id="help_center_buying">Buying</button>
-                        <button class="help_center_box" id="help_center_selling">Selling</button>
-                        <button class="help_center_box" id="help_center_accounts">My Account</button>
+                        {% for i in help_center_copy.help_center_options_top %}
+                        <button class="help_center_box" id="{{ i.id }}">{{ i.option }}</button>
+                        {% endfor %}
                     </div>
                     <div class="help_center_display_container hide">
                         <div class="help_center_details_container_buy hide" id="buying_display">
-                            <h3>Know More About Buying</h3>
+                            {% for t in help_center_copy.buying_options %}
+                            <h3>{{ t.buying_option_title }}</h3>
+                            {% endfor %}
                             <ul>
-                                <li><a href="{% url 'pop_up_home:buying-help' %}">Auction Bid vs Buy Now</a></li>
-                                <li><a href="{% url 'pop_up_home:buying-help' %}">Retracting a Bid</a></li>
-                                <li><a href="{% url 'pop_up_home:buying-help' %}">Who Am I Buying From</a></li>
+                                {% for opts in help_center_copy.buying_options %}
+                                {% for opt in opts.buying_option %}
+                                <li>
+                                    <a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a>
+                                </li>
+                                {% endfor %}
+                                {% endfor %}
                             </ul>
                         </div>
                         <div class="help_center_details_container_sell hide" id="selling_display">
-                            <h3>Know More About Selling</h3>
+                            {% for t in help_center_copy.selling_options %}
+                            <h3>{{ t.selling_option_title }}</h3>
+                            {% endfor %}
                             <ul>
-                                <li><a href="{% url 'pop_up_home:selling-help' %}">Who is Doing the Selling</a></li>
-                                <li><a href="{% url 'pop_up_home:selling-help' %}">Can I Sell on The Pop Up</a></li>
+                                {% for opts in help_center_copy.selling_options %}
+                                {% for opt in opts.selling_option %}
+                                <li>
+                                    <a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a>
+                                </li>
+                                {% endfor %}
+                                {% endfor %}
                             </ul>
                         </div>
                         <div class="help_center_details_container_account hide" id="my_account_display">
-                            <h3>Understanding My Account</h3>
+                            {% for t in help_center_copy.account_options %}
+                            <h3>{{ t.account_option_title }}</h3>
+                            {% endfor %}
                             <ul>
-                                <li><a href="{% url 'pop_up_home:account-help' %}">Update My Account Information</a>
+                                {% for opts in help_center_copy.account_options %}
+                                {% for opt in opts.account_option %}
+                                <li>
+                                    <a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a>
                                 </li>
-                                <li><a href="{% url 'pop_up_home:account-help' %}">Reset My Password</a></li>
-                                <li><a href="{% url 'pop_up_home:account-help' %}">Delete My Account</a></li>
+                                {% endfor %}
+                                {% endfor %}
                             </ul>
                         </div>
                     </div>
                     <div class="help_center_buttons_container_top">
-                        <button class="help_center_box" id="help_center_shipping">Shipping and Tracking</button>
-                        <button class="help_center_box" id="help_center_payments">Payment Options</button>
-                        <button class="help_center_box" id="help_center_fees">Fees</button>
+                        {% for i in help_center_copy.help_center_options_bottom %}
+                        <button class="help_center_box" id="{{ i.id }}">{{ i.option }}</button>
+                        {% endfor %}
                     </div>
                     <div class="help_center_display_container_bottom hide">
                         <div class="help_center_details_container_shipping hide" id="shipping_display">
-                            <h3>Know More About Shipping and Tracking</h3>
+                            {% for t in help_center_copy.ship_track_options %}
+                            <h3>{{ t.ship_track_option_title }}</h3>
+                            {% endfor %}
                             <ul>
-                                <li><a href="{% url 'pop_up_home:shipping-help' %}">General Shipping</a></li>
-                                <li><a href="{% url 'pop_up_home:shipping-help' %}">Track Shipping</a></li>
-                                <li><a href="{% url 'pop_up_home:shipping-help' %}">International Shipping</a></li>
-                                <li><a href="{% url 'pop_up_home:shipping-help' %}">Update My Shipping Address</a></li>
+                                {% for opts in help_center_copy.ship_track_options %}
+                                {% for opt in opts.ship_track_option %}
+                                <li><a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a></li>
+                                {% endfor %}
+                                {% endfor %}
                             </ul>
                         </div>
                         <div class="help_center_details_container_payment hide" id="payment_opt_display">
-                            <h3>Know More Payment Options</h3>
+                            {% for t in help_center_copy.payment_options %}
+                            <h3>{{ t.payment_option_title }}</h3>
+                            {% endfor %}
                             <ul>
-                                <li><a href="{% url 'pop_up_home:payment-help' %}">What are the Payment Options</a></li>
-                                <li><a href="{% url 'pop_up_home:payment-help' %}">Does The Pop Up Accept Cryptocurrency
-                                        as
-                                        Payment</a></li>
-                                <li><a href="{% url 'home:payment-help' %}">Payment Processing</a></li>
+                                {% for opts in help_center_copy.payment_options %}
+                                {% for opt in opts.payment_option %}
+                                <li><a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a></li>
+                                {% endfor %}
+                                {% endfor %}
                             </ul>
                         </div>
                         <div class="help_center_details_container_fee hide" id="fees_display">
-                            <h3>Understanding Fees</h3>
+                            {% for t in help_center_copy.fee_options %}
+                            <h3>{{ t.fee_option_title }}</h3>
+                            {% endfor %}
                             <ul>
-                                <li><a href="{% url 'pop_up_home:fees-help' %}">Processing Fee</a></li>
+                                {% for opts in help_center_copy.fee_options %}
+                                {% for opt in opts.fee_option %}
+                                <li><a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a></li>
+                                {% endfor %}
+                                {% endfor %}
                             </ul>
                         </div>
                     </div>

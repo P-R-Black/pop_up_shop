@@ -35,7 +35,7 @@ from pop_up_shipping.models import PopUpShipment
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .forms import (PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm, 
-                    ThePopUpUserAddressForm, SocialProfileCompletionForm
+                    ThePopUpUserAddressForm, SocialProfileCompletionForm, PopUpEmailPasswordResetForm
                     )
 from pop_up_shipping.forms import ThePopUpShippingForm
 from django.core.mail import send_mail
@@ -51,7 +51,8 @@ from django.core.cache import cache
 from django.utils.timezone import now
 from django.contrib.auth import logout
 from django.views import View
-from .utils.utils import validate_email_address, get_client_ip, add_specs_to_products, calculate_auction_progress
+from .utils.utils import (validate_email_address, get_client_ip, add_specs_to_products, 
+                          calculate_auction_progress, handle_password_reset_request)
 from django.conf import settings
 import json
 from django.utils.safestring import mark_safe
@@ -105,33 +106,11 @@ class UserLogOutView(LoginRequiredMixin, View):
     
 
 
-def user_password_reset(request):
-    if request.method == "POST":
-        email  = request.POST.get('email')
-        new_password = request.POST.get('new_password')
-        confirm_password = request.POST.get('confirm_password')
-
-        if not email or not new_password or not confirm_password:
-            return JsonResponse({'success': False, 'error': 'All fields are requred'})
-        
-        if new_password != confirm_password:
-            return JsonResponse({'sucess': False, 'error': 'Passwords do not match.'})
-        
-        try:
-            user = PopUpCustomer.objects.get(email=email)
-        except PopUpCustomer.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Invalid email address.'})
-        
-        # Set new password
-        user.set_password(new_password)
-        user.save()
-        return JsonResponse({'success': True, 'message': 'Password has been reset successfully.'})
-    
-    return render(request, 'pop_accounts/login/password_reset.html')
-
-
 
 def user_password_reset_confirm(request, uidb64, token):
+    """
+    Updates user password after password change
+    """
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = PopUpCustomer.objects.get(pk=uid)
@@ -171,9 +150,10 @@ def user_password_reset_confirm(request, uidb64, token):
 
 
 
-
-
 class UserDashboardView(LoginRequiredMixin, View):
+    """
+    User Dashboard View
+    """
     template_name = 'pop_accounts/user_accounts/dashboard_pages/dashboard.html'
     def get(self, request):
         user = request.user
@@ -247,6 +227,10 @@ class UserDashboardView(LoginRequiredMixin, View):
 
 
 class UserInterestedInView(LoginRequiredMixin, View):
+    """
+    List all items user has checked that they are "interested" in
+    "Interested" relates to Future Releases. If enough interest, will attempt to secure for auction
+    """
     template_name = 'pop_accounts/user_accounts/dashboard_pages/interested_in.html'
     product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="anticipated")   
     product_specifications = None
@@ -266,6 +250,9 @@ class UserInterestedInView(LoginRequiredMixin, View):
     
 
 class MarkProductInterestedView(LoginRequiredMixin, View):
+    """
+    Allows users to mark a product as interested in. 
+    """
     def post(self, request, *args, **kwargs):
      
         data = json.loads(request.body)
@@ -290,6 +277,13 @@ class MarkProductInterestedView(LoginRequiredMixin, View):
 
 
 class UserOnNoticeView(LoginRequiredMixin, View):
+    """
+    List all items user has checked that they would like to be notified about
+    "Notify" relates to Coming Soon products. 
+    Coming Soon products, are products that have been ordered, but aren't in inventory.
+    Once product received, user will be sent email notifying them of buy now date and auction date
+    """
+     
     template_name = 'pop_accounts/user_accounts/dashboard_pages/on_notice.html'
     product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="anticipated")   
     product_specifications = None
@@ -310,6 +304,9 @@ class UserOnNoticeView(LoginRequiredMixin, View):
 
 
 class MarkProductOnNoticeView(LoginRequiredMixin, View):
+    """
+    Allows users to request to be notified about a product that is soon to be in inventory. 
+    """
     def post(self, request, *args, **kwargs):
 
         data = json.loads(request.body)
@@ -336,6 +333,9 @@ from pop_accounts.utils.utils import get_stripe_payment_reference
 
 @login_required
 def personal_info(request):
+    """
+    Personal information in user dashboard
+    """
     user = request.user
     addresses = PopUpCustomerAddress.objects.filter(customer=user)
 
@@ -425,6 +425,9 @@ def personal_info(request):
 
 @login_required
 def get_address(request, address_id):
+    """
+    Displays User user address
+    """
     address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
     return JsonResponse({
         'prefix': address.prefix,
@@ -443,6 +446,9 @@ def get_address(request, address_id):
 
 @login_required
 def delete_address(request, address_id):
+    """
+    Allows user to delete an address
+    """
     if request.method == "POST":
         address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
         address.delete()
@@ -452,6 +458,9 @@ def delete_address(request, address_id):
 
 @login_required
 def set_default_address(request, address_id):
+    """
+    Allows user to set a default address
+    """
     user = request.user
     try:
         address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user, deleted_at__isnull=True)
@@ -468,6 +477,9 @@ def set_default_address(request, address_id):
 
 @login_required
 def delete_account(request):
+    """
+    Allows user to delete account
+    """
     if request.method == "POST":
         print('delete_account called on user', request.user)
         user = request.user
@@ -478,11 +490,17 @@ def delete_account(request):
 
 @login_required
 def account_deleted(request):
+    """
+    View to confirm account deletion
+    """
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/account_deleted.html')
 
 
 
 class OpenBidsView(LoginRequiredMixin, View):
+    """
+    View that shows user all items that they have an open bid on.
+    """
     template_name = 'pop_accounts/user_accounts/dashboard_pages/open_bids.html'
     def get(self, request):
         user = request.user
@@ -542,6 +560,9 @@ class OpenBidsView(LoginRequiredMixin, View):
 
 @login_required
 def past_bids(request):
+    """
+    Shows user past bids
+    """
     user = request.user
     user_id = user.id
     bid_data = get_customer_bid_history_context(user_id)
@@ -553,12 +574,18 @@ def past_bids(request):
 
 @login_required
 def past_purchases(request):
+    """
+    Shows Users past purchases
+    """
     orders = user_orders(request)
     context = {'orders': orders}
     return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_purchases.html', context)
 
 @login_required
 def shipping_tracking(request):
+    """
+    View that allows user to track orders
+    """
     user_shipping_copy = USER_SHIPPING_TRACKING
     tracking_categories = TRACKING_CATEGORIES
     shipments = user_shipments(request)
@@ -572,6 +599,9 @@ def shipping_tracking(request):
 
 @login_required
 def user_orders_page(request, order_id):
+    """
+    Displays user orders
+    """
     user_order_details_page = USER_ORDER_DETAILS_PAGE
 
     user = request.user
@@ -630,6 +660,9 @@ def user_orders_page(request, order_id):
 # ADMIN DASHBOARD
 @staff_member_required
 def dashboard_admin(request):
+    """
+    Admin Dashboard View
+    """
     admin_navigation = ADMIN_NAVIGATION_COPY
 
     # Get product inventory
@@ -710,6 +743,9 @@ def dashboard_admin(request):
 
 
 class AdminInventoryView(UserPassesTestMixin, ListView):
+    """
+    Admin Inventory View
+    """
     model = PopUpProduct
     template_name = "pop_accounts/admin_accounts/dashboard_pages/inventory.html"
     context_object_name = 'inventory'
@@ -1578,84 +1614,12 @@ def resend_2fa_code(request):
 
     return JsonResponse({'success': True})
 
-    
-
 
 @require_POST
 def send_password_reset_link(request):
-    RESET_EMAIL_COOLDOWN = timedelta(minutes=5)
-    RATE_LIMIT_SECONDS = 120 # 300 # 5 minutes
-
     email = request.POST.get('email')
-    now_time = now()
-
-    if not email:
-        return JsonResponse({'success': False, 'error': 'An email address is required'}, status=400)
+    return handle_password_reset_request(request, email)
     
-
-    cache_key = f'password_reset_requested:{email}'
-    if cache.get(cache_key):
-        return JsonResponse({'success': False, 'error': 'Please wait before requesting another reset email.'}, status=429)
-
-    try:
-        user = PopUpCustomer.objects.get(email=email)
-    except PopUpCustomer.DoesNotExist:
-        time.sleep(1)  # To prevent user enumeration
-        return JsonResponse({'success': False, 'error': 'Email not found.'}, status=404)
-    
-
-    ip = get_client_ip(request)
-    now_time = now()
-
-    # Rate limiting: IP + User
-    recent_request = PopUpPasswordResetRequestLog.objects.filter(
-        customer=user,
-        ip_address=ip,
-        requested_at__gte=now_time - RESET_EMAIL_COOLDOWN
-    ).exists()
-
-    if recent_request:
-        return JsonResponse({'success': False, 'error': 'Reset already requested recently.'}, status=429)
-   
-    # Session rate limiting
-    rate_limit_key = f'password_reset_cooldown_{ip}'
-    last_request_time = request.session.get(rate_limit_key)
-
-    if last_request_time:
-        try:
-            last_time = timezone.datetime.fromisoformat(last_request_time) 
-            if (now_time - last_time) < RESET_EMAIL_COOLDOWN:
-                return JsonResponse({'success': False, 'error': 'Reset already requested recently.'}, status=429)
-        except ValueError:
-            pass  # Ignore malformed session data
-    
-    # User-based cooldown
-    if user.last_password_reset and now_time - user.last_password_reset < RESET_EMAIL_COOLDOWN:
-        return JsonResponse({'success': False, 'error': 'Reset already requested recently.'}, status=429)
-
-    # Save to session and log
-    request.session[rate_limit_key] = now_time.isoformat()
-    cache.set(cache_key, True, timeout=RATE_LIMIT_SECONDS)
-    PopUpPasswordResetRequestLog.objects.create(customer=user, ip_address=ip)
-
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
-    token = default_token_generator.make_token(user)
-    reset_link = request.build_absolute_uri(reverse('pop_accounts:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}))
-
-    logger.info(f"Password reset requested: user={user.email}, ip={ip}, time={now_time}")
-
-    send_mail(
-        subject="Reset Your Password",
-        message=f"Click the link below to reset your password:\n\n{reset_link}",
-        from_email="no-reply@thepopup.com",
-        recipient_list=[email],
-        fail_silently=False,
-    )
-
-    user.last_password_reset = now_time
-    user.save(update_fields=['last_password_reset'])
-
-    return JsonResponse({'success': True, 'message': 'Password reset link sent.'})
     
 
 class VerifyEmailView(View):

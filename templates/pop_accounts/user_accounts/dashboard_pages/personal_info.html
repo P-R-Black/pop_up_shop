@@ -270,7 +270,17 @@ Auction
                                     <h3>{ {pm.last4 }}</h3>
                                     <h3>{{ pm.wallet|title }}</h3>
                                     {% else %}
+                                    {% if pm.brand == "Mastercard"%}
+                                    <img src="{% static 'img/mastercard_icon.png' %}" class='personal-visa-logo' />
+                                    {% elif pm.brand == "Visa "%}
+                                    <img src="{% static 'img/visa_icon.png' %}" class='personal-visa-logo' />
+                                    {% elif pm.brand == "American Express" %}
+                                    <img src="{% static 'img/amex_logo.png' %}" class='personal-visa-logo' />
+                                    {% elif pm.brand == "Discover" %}
+                                    <img src="{% static 'img/discover_icon.png' %}" class='personal-visa-logo' />
+                                    {% else %}
                                     <h3>{{ pm.brand }}</h3>
+                                    {% endif %}
                                     <h3>{{ pm.last4 }}</h3>
                                     <h3>{{ pm.exp_month }}/{{pm.exp_year }}</h3>
                                     {% endif %}

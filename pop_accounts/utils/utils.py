@@ -4,6 +4,94 @@ import re
 from pop_accounts.models import PopUpCustomer
 from django.conf import settings
 import stripe
+from datetime import timedelta
+import time
+import logging
+from django.utils.timezone import now
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.urls import reverse
+from django.core.mail import send_mail
+from django.core.cache import cache
+from django.http import JsonResponse
+from pop_accounts.models import PopUpCustomer, PopUpPasswordResetRequestLog
+
+logger = logging.getLogger(__name__)
+RESET_EMAIL_COOLDOWN = timedelta(minutes=5)
+RATE_LIMIT_SECONDS = 120 # 2 minutes
+
+
+def handle_password_reset_request(request, email: str):
+    """Utility to handle sending a password reset link with rate limiting"""
+
+    now_time = now()
+    if not email:
+        return JsonResponse({'success': False, 'error': 'An email address is required'}, status=400)
+    
+    cache_key = f"password_reset_requested: {email}"
+    if cache.get(cache_key):
+        return JsonResponse({'success': False, 'error': 'Please waite before requesting another reset email'})
+
+    try:
+        user = PopUpCustomer.objects.get(email=email)
+    except PopUpCustomer.DoesNotExist:
+        time.sleep(1) # prevent timing attack
+        return JsonResponse({'success':False, 'error': 'Email not found.'}, status=404)
+    
+    ip = get_client_ip(request)
+
+    # Rate Limiting: IP + User
+    recent_request = PopUpPasswordResetRequestLog.objects.filter(
+        customer=user,
+        ip_address=ip,
+        requested_at__gte=now_time - RESET_EMAIL_COOLDOWN
+    ).exists()
+
+    if recent_request:
+        return JsonResponse({'success': False, 'error': 'Reset already requested recently'}, status=429)
+    
+    # Session rate limiting
+    rate_limit_key = f"password_reset_cooldown_{ip}"
+    last_request_time = request.session.get(rate_limit_key)
+
+    if last_request_time:
+        try:
+            from django.utils import timezone
+            last_time = timezone.datetime.fromisoformat(last_request_time)
+            if (now_time - last_time) < RESET_EMAIL_COOLDOWN:
+                return JsonResponse({'success': False, 'error': 'Reset already requested recently'}, status=429)
+        except ValueError:
+            pass
+    
+    if user.last_password_reset and now_time - user.last_password_reset < RESET_EMAIL_COOLDOWN:
+        return JsonResponse({'success': False, 'error': 'Reset already request recent'}, status=429)
+    
+    # Save to session and log
+    request.session[rate_limit_key] = now_time.isoformat()
+    cache.set(cache_key, True, timeout=RATE_LIMIT_SECONDS)
+    PopUpPasswordResetRequestLog.objects.create(customer=user, ip_address=ip)
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    reset_link = request.build_absolute_uri(reverse('pop_accounts:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}))
+
+    logger.info(f"Password reset requested: user={user.email}, ip={ip}, time={now_time}")
+
+    send_mail(
+        subject="Reset Your Password",
+        message=f"Click the link below to reset your password:\n\n{reset_link}",
+        from_email="no-reply@thepopup.com",
+        recipient_list=[email],
+        fail_silently=False
+    )
+
+    user.last_password_reset = now_time
+    user.save(update_fields=['last_password_reset'])
+
+    return JsonResponse({'success': True, 'message': 'Password reset link sent'})
+    
+
 
 def validate_email_address(email):
     try:
@@ -77,10 +165,8 @@ def get_stripe_payment_reference(user):
     Fetch a user's saved payment methods (cards) from Stripe.
     Returns a list of dicts with brand, last4, and expiry info.
     """
-    print('user', user)
     payment_methods = []
     customer_id = getattr(user, 'stripe_customer_id', None)
-    print('customer_id', customer_id)
 
     if not customer_id:
         return payment_methods
@@ -91,15 +177,13 @@ def get_stripe_payment_reference(user):
             type="card"
         )
 
-        print('methods', methods)
-
         for pm in methods['data']:
             payment_methods.append({
                 'brand': pm.card.brand.title(), # e.g. "Visa"
                 'last4': pm.card.last4,     # e.g. "4321"
                 'exp_month': pm.card.exp_month,
                 'exp_year': pm.card.exp_year,
-                'wallet': pm.wallet_type,   # e.g. 'apple_pay' or None
+                'wallet': getattr(pm.card, 'wallet', None),   # e.g. 'apple_pay' or None
             })
     except stripe.error.StripeError as e:
         # Optonal: log or handle errors gracefully
