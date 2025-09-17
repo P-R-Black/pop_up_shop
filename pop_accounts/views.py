@@ -802,6 +802,9 @@ class AdminInventoryView(UserPassesTestMixin, ListView):
     
 
 class EnRouteView(UserPassesTestMixin, ListView):
+    """
+    Admin view that shows items that have been ordered, but not yet in inventory
+    """
     model = PopUpProduct
     template_name = "pop_accounts/admin_accounts/dashboard_pages/en_route.html"
     context_object_name = 'en_route'
@@ -866,6 +869,9 @@ class EnRouteView(UserPassesTestMixin, ListView):
 
 @staff_member_required
 def sales(request):
+    """
+    Admin view that shows sales
+    """
     current_date = date.today()
     year = current_date.strftime("%Y")
     month = current_date.strftime("%B")
@@ -892,6 +898,9 @@ def sales(request):
 
 @staff_member_required
 def most_on_notice(request):
+    """
+    Admin view that displays items users have on notice
+    """
     # Get all products with notification counts, ordered by most requested
     most_notified = PopUpProduct.objects.annotate(
         notification_count=Count('notified_users')
@@ -912,6 +921,9 @@ def most_on_notice(request):
 
 @staff_member_required
 def most_interested(request):
+    """
+    Admin view that displays items users are interested in, which tells bots what items to purchase
+    """
     # Get all products with interest counts, ordered by most interested
     most_interested = PopUpProduct.objects.annotate(
         interest_count=Count('interested_users')
@@ -938,7 +950,7 @@ def most_interested(request):
 @staff_member_required
 def total_open_bids(request):
     """
-    Display all products currently in auction with their bid counts and details
+    Admin view that display all products currently in auction with their bid counts and details
     """
     now = timezone.now()
     
@@ -986,6 +998,9 @@ def total_open_bids(request):
 
 @staff_member_required
 def total_accounts(request):
+    """
+    Admin view that shows total number of active accounts
+    """
     # Total active accounts
     total_active_accounts = PopUpCustomer.objects.filter(is_active=True).count()
     context = {
@@ -996,6 +1011,9 @@ def total_accounts(request):
 
 @staff_member_required
 def account_sizes(request):
+    """
+    Admin view that shows user sizes.
+    """
     # Query to get counts grouped by shoe_size and size_gender
     size_counts = PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
         count=Count('id')
@@ -1011,7 +1029,7 @@ def account_sizes(request):
 @staff_member_required
 def pending_okay_to_ship(request):
     """
-    Item paid for, but in waiting period to verify payment clears
+    View that displays ttems that have been purchased, but in waiting period to verify payment clears
     """
     pending_shipping = ADMIN_SHIPING_OKAY_PENDING
 
@@ -1038,7 +1056,7 @@ def get_pending_order_shipping_detail(request, order_no):
 @staff_member_required
 def update_shipping(request):
     """
-    - show orders that have not been shipped : do i need a shipped/fullfilled tag on the orders model or ..
+    - show orders that have not been shipped: do i need a shipped/fullfilled tag on the orders model or ..
         can i get unshipped orders by querying PopUpShipment odrders with status 'pending'. That would require
         creating a shipping instance at every order with just the order_no and pending status. 
         All other fields left blank. Here, can query all pending orders
@@ -1136,8 +1154,8 @@ def update_shipping_post(request, shipment_id):
 @staff_member_required
 def view_shipments(request):
     """
-    - show orders that have been shipped : admin can use this view to view shipped items
-    - shows order that have been shipped : admin can use this view to update delivery status
+    - shows orders that have been shipped : admin can use this view to view shipped items
+    - shows orders that have been shipped : admin can use this view to update delivery status
     """
     admin_shipping = ADMIN_SHIPMENTS
     all_shipments = PopUpShipment.objects.filter(order__popuppayment__notified_ready_to_ship=True).select_related('order')
@@ -1333,6 +1351,9 @@ class UpdateProductPostView(UserPassesTestMixin, View):
 
 
 class AddProductsView(UserPassesTestMixin, View):
+    """
+    Admin view to add products to database
+    """
     template_name = 'pop_accounts/admin_accounts/dashboard_pages/add_product.html'
     product_copy = ADMIN_PRODUCTS_PAGE
 
@@ -1591,6 +1612,9 @@ class Verify2FACodeView(View):
 
 @require_POST
 def resend_2fa_code(request):
+    """
+    Resends 6-digit code at users request
+    """
     email = request.session.get('auth_email')
     print(f'email: {email}')
     
@@ -1617,12 +1641,18 @@ def resend_2fa_code(request):
 
 @require_POST
 def send_password_reset_link(request):
+    """
+    Emails link to user's email address to reset password
+    """
     email = request.POST.get('email')
     return handle_password_reset_request(request, email)
     
     
 
 class VerifyEmailView(View):
+    """
+    Verifiies Email for user's who are requesting a password reeset.
+    """
     template_name = 'pop_accounts/registration/verify_email.html'
 
     def get(self, request, uidb64, token):
@@ -1667,6 +1697,9 @@ class VerifyEmailView(View):
 
 
 class CompleteProfileView(UpdateView):
+    """
+    View for user to complete profile if they login using Facebook or Google.
+    """
     model = PopUpCustomer
     form_class = SocialProfileCompletionForm
     template_name = 'pop_accounts/registration/complete_profile.html'

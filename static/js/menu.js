@@ -435,19 +435,72 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Nav Dashboard Display and Hide Links
-    // payment options dropdown variables
-    var expandDashLink = document.querySelector(".dashboard_expand");
-    console.log('expandDashLink', expandDashLink)
-
-    var dashboardLinksContainer = document.querySelector('.dashboard_nav_container')
-    console.log('dashboardLinksContainer', dashboardLinksContainer)
+    // var expandDashLink = document.querySelector(".dashboard_expand");
+    // var dashboardLinksContainer = document.querySelector('.dashboard_nav_container')
 
     // payment options dropdown
-    expandDashLink.addEventListener("click", function () {
-        console.log('button clicked')
-        this.classList.toggle("active");
-        dashboardLinksContainer.classList.toggle('show')
+    // expandDashLink.addEventListener("click", function () {
+    // this.classList.toggle("active");
+    // dashboardLinksContainer.classList.toggle('show')
 
+    // });
+
+
+    // expandInnerButton = document.querySelectorAll('.inner_dashboard_expand');
+
+    // // Nav Dashboard Inner Links Show and Hide
+    // expandInnerButton.forEach(btn => {
+    //     btn.addEventListener('click', function () {
+    //         console.log('inner clicked!')
+    //         console.log('expandInnerButton', expandInnerButton)
+
+    //         const group = this.closest('.dashboard-group');    // safe container
+    //         console.log('group', group)
+
+    //         const container = group?.querySelector('.inner_dashboard_container');
+    //         console.log('container', container)
+
+    //         if (!container) return;
+    //         this.classList.toggle('active');
+    //         container.classList.toggle('show');
+
+    //         // accessibility nicety
+    //         const expanded = this.classList.contains('active');
+    //         this.setAttribute('aria-expanded', expanded);
+    //         container.setAttribute('aria-hidden', !expanded);
+    //     });
+    // });
+
+
+    // Main dashboard toggle
+    const dashboardExpand = document.querySelector('.dashboard_expand');
+    const dashboardSubmenu = document.getElementById('dashboard-submenu');
+
+
+    // Also add specific click event to the expand icon
+    dashboardExpand.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('clicked!')
+        dashboardSubmenu.classList.toggle('show');
+        dashboardExpand.classList.toggle('expanded');
+    });
+
+    // Category toggles
+    const categoryHeaders = document.querySelectorAll('.category-header');
+
+    categoryHeaders.forEach(header => {
+        header.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const category = this.dataset.category;
+            const submenu = document.getElementById(category + '-submenu');
+            const expandIcon = this.querySelector('.category-expand');
+
+            // Toggle current submenu
+            submenu.classList.toggle('show');
+            expandIcon.classList.toggle('expanded');
+        });
     });
 
 

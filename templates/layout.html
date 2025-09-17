@@ -210,93 +210,115 @@
                             <span class="text nav-text">Home</span>
                         </a>
                     </li>
+                    {% comment %}
                     {% if request.user.is_authenticated and request.user.is_staff %}
-                    <li class="nav-link">
-                        <a href="{% url 'pop_accounts:dashboard_admin' %}">
+                    {% endcomment %}
+                    <li class="dash-nav-link" id="dashboard-nav">
+                        <a href="{% url 'pop_accounts:dashboard_admin' %}" class="dashboard_link">
                             <!-- <i class='bx bxs-dashboard icon'></i> -->
                             <i class='bx bxs-user-detail icon'></i>
                             <span class="text nav-text">Dashboard</span>
+                            <i class='bx bxs-chevron-down dashboard_expand' id="dashboard_expand"></i>
                         </a>
-                        <i class='bx bxs-chevron-down dashboard_expand' id="dashboard_expand"></i>
-                    </li>
-                    <div class="dashboard_nav_container" id="adminDashBoardOptions">
-                        <ul class="menu-links">
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:account_sizes'%}">
-                                    <i class="fa-regular fa-square-poll-vertical icon"></i>
-                                    <span class="text nav-text">Account Sizes</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:add_products'%}">
-                                    <i class='bx  bx-folder-plus icon'></i>
-                                    <span class="text nav-text">Add Products</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:enroute'%}">
-                                    <i class="fa-regular fa-truck icon"></i>
-                                    <span class="text nav-text">En Route</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:inventory_admin'%}">
-                                    <i class="fa-regular fa-warehouse icon"></i>
-                                    <span class="text nav-text">Inventory</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:most_interested'%}">
-                                    <i class="fa-regular fa-check-double icon"></i>
-                                    <span class="text nav-text">Most Interested</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:most_on_notice'%}">
-                                    <i class="fa-regular fa-bell icon"></i>
-                                    <span class="text nav-text">On Notice</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:sales_admin'%}">
-                                    <i class="fa-regular fa-money-check-dollar icon"></i>
-                                    <span class="text nav-text">Sales</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:shipments'%}">
-                                    <i class="fa-regular fa-truck-fast icon"></i>
-                                    <span class="text nav-text">Shipments</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:total_accounts'%}">
-                                    <i class="fa-regular fa-circle-user icon"></i>
-                                    <span class="text nav-text">Total Accounts</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:total_open_bids'%}">
-                                    <i class="fa-regular fa-clock-rotate-left icon"></i>
-                                    <span class="text nav-text">Total Open Bids</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:update_product'%}">
-                                    <i class="fa-regular fa-pen-to-square icon"></i>
-                                    <span class="text nav-text">Update Product</span>
-                                </a>
-                            </li>
-                            <li class="nav-link">
-                                <a href="{% url 'pop_accounts:update_shipping'%}">
-                                    <i class="fa-regular fa-box-open icon"></i>
-                                    <span class="text nav-text">Update Shipping</span>
-                                </a>
-                            </li>
-                        </ul>
 
-                    </div>
+
+                        <!-- Nested Menu -->
+                        <div class="nested-menu" id="dashboard-submenu">
+                            <!-- Accounts Category -->
+                            <div class="nested-category">
+                                <div class="category-header" data-category="accounts">
+                                    <i class='bx bx-user icon'></i>
+                                    <span>Accounts</span>
+                                    <i class='bx bxs-chevron-down category-expand'></i>
+                                </div>
+                                <div class="sub-menu" id="accounts-submenu">
+                                    <a href="{% url 'pop_accounts:account_sizes' %}">
+                                        <i class='bx  bx-sneaker icon'></i>
+                                        <span>Account Sizes</span>
+                                    </a>
+                                    <a href="{% url 'pop_accounts:most_interested'%}">
+                                        <i class="fa-regular fa-check-double icon"></i>
+                                        <span>Most Interested</span>
+                                    </a>
+                                    <a href="{% url 'pop_accounts:most_on_notice'%}">
+                                        <i class="fa-regular fa-bell icon"></i>
+                                        <span>On Notice</span>
+                                    </a>
+                                    <a href="{% url 'pop_accounts:total_accounts' %}">
+                                        <i class='bx bx-group icon'></i>
+                                        <span>Total Accounts</span>
+                                    </a>
+                                    <a href="{% url 'pop_accounts:total_open_bids'%}">
+                                        <i class="fa-regular fa-clock-rotate-left icon"></i>
+                                        <span>Total Open Bids</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Products Category -->
+                            <div class="nested-category">
+                                <div class="category-header" data-category="products">
+                                    <i class='bx bx-package icon'></i>
+                                    <span>Products</span>
+                                    <i class='bx bxs-chevron-down category-expand'></i>
+                                </div>
+                                <div class="sub-menu" id="products-submenu">
+                                    <a href="{% url 'pop_accounts:add_products' %}">
+                                        <i class='bx bx-plus-circle icon'></i>
+                                        <span>Add Products</span>
+                                    </a>
+                                    <a href="{% url 'pop_accounts:enroute' %}">
+                                        <i class='bx bx-trip icon'></i>
+                                        <span>En Route</span>
+                                    </a>
+                                    <a href="{% url 'pop_accounts:inventory_admin' %}">
+                                        <i class='bx bx-cabinet icon'></i>
+                                        <span>Inventory</span>
+                                    </a>
+                                    <a href="{% url 'pop_accounts:update_product' %}">
+                                        <i class='bx bx-edit icon'></i>
+                                        <span>Update Product</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <!-- Sales Category -->
+                            <div class="nested-category">
+                                <div class="category-header" data-category="sales">
+                                    <i class="fa-regular fa-money-check-dollar icon"></i>
+                                    <span>Sales</span>
+                                    <i class='bx bxs-chevron-down category-expand'></i>
+                                </div>
+                                <div class="sub-menu" id="sales-submenu">
+                                    <a href="{% url 'pop_accounts:sales_admin'%}">
+                                        <i class="fa-light fa-money-bill icon"></i>
+                                        <span>Sales</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <!-- Shipping Category -->
+                            <div class="nested-category">
+                                <div class="category-header" data-category="shipping">
+                                    <i class='bx bx-send icon'></i>
+                                    <span>Shipping</span>
+                                    <i class='bx bxs-chevron-down category-expand'></i>
+                                </div>
+                                <div class="sub-menu" id="shipping-submenu">
+                                    <a href="{% url 'pop_accounts:shipments' %}">
+                                        <i class='bx  bx-truck icon'></i>
+                                        <span>Shipments</span>
+                                    </a>
+                                    <a href="{% url 'pop_accounts:update_shipping' %}">
+                                        <i class='bx bx-edit-alt icon'></i>
+                                        <span>Update Shipping</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    {% comment %}
                     {% elif request.user.is_authenticated %}
+                    {% endcomment %}
                     <li class="nav-link">
                         <a href="{% url 'pop_accounts:dashboard' %}">
                             <!-- <i class='bx bxs-dashboard icon'></i> -->
@@ -304,8 +326,9 @@
                             <span class="text nav-text">Dashboard</span>
                         </a>
                     </li>
+                    {% comment %}
                     {% endif %}
-
+                    {% endcomment %}
                     <li class="nav-link">
                         <a href="{% url 'pop_up_auction:products' %}">
                             <i class='bx bx-package icon'></i>
