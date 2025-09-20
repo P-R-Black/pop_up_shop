@@ -1,6 +1,6 @@
 from pop_up_auction.models import PopUpProduct
 from pop_up_cart.models import PopUpCartItem
-
+from django.contrib.auth.models import AnonymousUser
 from decimal import Decimal
 from django.conf import settings
 from django.utils.timezone import now
@@ -16,7 +16,7 @@ class Cart:
     def __init__(self, request):
 
         self.request = request
-        self._user = getattr(request, 'user', None)
+        self._user = getattr(request, 'user', None) or AnonymousUser()
         self.session = request.session
         self.session_cart = self.session.get('cart', {})
        

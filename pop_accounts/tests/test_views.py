@@ -1086,4 +1086,6 @@ class ProductBuyAuthTest(TestCase):
     # """
     # Run Test
     # python3 manage.py test pop_accounts/tests
+    # Run Test with Coverage
+    # coverage run --omit='*/venv/*' manage.py test pop_accounts/tests
     # """

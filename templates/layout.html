@@ -194,10 +194,10 @@
                 <ul>
                     <li class="search-box">
                         <i class='bx bx-search icon'></i>
-                        <input type="text" placeholder="Search...">
+                        <input type="text" placeholder="Search..." aria-label="search-box" autofocus>
                     </li>
                     <li class="mobile-search-box hide-mobile-search-box">
-                        <input type="text" placeholder="Search...">
+                        <input type="text" placeholder="Search..." aria-label="search-box" autofocus>
                     </li>
                 </ul>
                 <ul class="menu-links" id="menu-links">
@@ -205,14 +205,12 @@
                         <i class='bx bx-search icon' id="mobile-search-icon"></i>
                     </li>
                     <li class="nav-link">
-                        <a href="/">
+                        <a href="/" aria-current="page">
                             <i class='bx bx-home-alt icon'></i>
                             <span class="text nav-text">Home</span>
                         </a>
                     </li>
-                    {% comment %}
                     {% if request.user.is_authenticated and request.user.is_staff %}
-                    {% endcomment %}
                     <li class="dash-nav-link" id="dashboard-nav">
                         <a href="{% url 'pop_accounts:dashboard_admin' %}" class="dashboard_link">
                             <!-- <i class='bx bxs-dashboard icon'></i> -->
@@ -316,9 +314,7 @@
                         </div>
                     </li>
 
-                    {% comment %}
                     {% elif request.user.is_authenticated %}
-                    {% endcomment %}
                     <li class="nav-link">
                         <a href="{% url 'pop_accounts:dashboard' %}">
                             <!-- <i class='bx bxs-dashboard icon'></i> -->
@@ -326,9 +322,7 @@
                             <span class="text nav-text">Dashboard</span>
                         </a>
                     </li>
-                    {% comment %}
                     {% endif %}
-                    {% endcomment %}
                     <li class="nav-link">
                         <a href="{% url 'pop_up_auction:products' %}">
                             <i class='bx bx-package icon'></i>

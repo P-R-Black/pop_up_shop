@@ -214,7 +214,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     ))
 
     delivery_instructions = forms.CharField(
-        label='Delivery Instructions', max_length=200, required=False,
+        label='Delivery Instructions', max_length=500, required=False,
         widget=forms.Textarea(attrs={
             'class': 'delivery_instruct_text',
             'id': '',
@@ -742,7 +742,7 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
     ))
 
     delivery_instructions = forms.CharField(
-        label='Delivery Instructions', max_length=200, required=False,
+        label='Delivery Instructions', max_length=500, required=False,
         widget=forms.Textarea(attrs={
             'class': 'modal_address_delivery_instructions',
             'id': '',

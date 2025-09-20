@@ -299,7 +299,16 @@ CELERY_TIMEZONE = 'America/New_York'  # Set to your project's timezone
 PASSWORD_RESET_TIMEOUT = 7200 # 2-hour timeout (in seconds)
 
 # Email Setting
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# SMTP Configuratoin
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+
+EMAIL_HOST_USER=os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD=os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_PORT=os.environ.get("EMAIL_PORT")
+EMAIL_USE_TLS = True
 
 
 # Cart Session Id
@@ -323,3 +332,5 @@ BRAINTREE_PRIVATE_KEY=os.environ.get('BRAINTREE_PRIVATE_KEY')
 NOWPAYMENTS_API_KEY = os.environ.get('NOWPAYMENTS_API_KEY', '')
 NOWPAYMENTS_IPN_SECRET = os.environ.get('NOWPAYMENTS_IPN_SECRET', '')
 NOWPAYMENTS_SANDBOX = os.environ.get('NOWPAYMENTS_SANDBOX', 'True').lower() == 'true'
+
+

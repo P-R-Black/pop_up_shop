@@ -1,5 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django.core.mail import send_mail, BadHeaderError
 import os
 import environ
 from .pop_up_home_copy.site_info_copy.site_info_copy import (
@@ -7,6 +8,10 @@ from .pop_up_home_copy.site_info_copy.site_info_copy import (
     HELP_CENTER_PAGE_BUYING, HELP_CENTER_PAGE_SELLING, HELP_CENTER_PAGE_ACCOUNT, HELP_CENTER_PAGE_SHIPPING,
     HELP_CENTER_PAGE_PAYMENT, HELP_CENTER_PAGE_FEE, TERMS_AND_CONDITIONS_COPY, PRIVACY_POLICY_COPY,
     PRIVACY_CHOICES_COPY)
+
+from .forms import ContactForm
+
+
 
 # Create your views here.
 def home_page(request):
@@ -27,7 +32,36 @@ def verification(request):
 
 def contact_us(request):
     contact_us_copy = CONTACT_US_COPY
-    return render(request, 'pop_up_home/site_info/contact_us.html', {"contact_us_copy": contact_us_copy})
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            body = {
+                'email_address': form.cleaned_data['email_address'],
+                'subject': form.cleaned_data['subject'],
+                'message': form.cleaned_data['message'],
+                
+            }
+            message = '\n'.join(body.values())
+            from_email_address=os.environ.get('EMAIL_HOST_USER')
+        
+            try:
+                # send_mail(subject, message, from_email_address, [from_email_address])
+                send_mail(
+                    subject=body['subject'], 
+                    message=message,
+                    from_email=from_email_address, 
+                    recipient_list =[from_email_address],
+                    fail_silently = False)
+                print('from_email_address 2:', from_email_address)
+            except (BadHeaderError, Exception) as e:
+                print('e', e)
+                return HttpResponse('Invalid header found.')
+            return redirect('pop_up_home:home')
+    else:
+        form = ContactForm()
+    return render(request, 'pop_up_home/site_info/contact_us.html', {
+        "contact_us_copy": contact_us_copy, 'form': form}
+        )
 
 def help_center(request):
     help_center_copy = HELP_CENTER_COPY
