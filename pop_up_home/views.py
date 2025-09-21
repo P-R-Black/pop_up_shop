@@ -30,8 +30,11 @@ def verification(request):
     verification_copy = VERIFICATION_COPY
     return render(request, 'pop_up_home/site_info/verification.html', {"verification_copy": verification_copy})
 
+import requests
 def contact_us(request):
     contact_us_copy = CONTACT_US_COPY
+    recaptcha_public_key=os.environ.get('RECAPTCHA_PUBLIC_KEY')
+
     if request.method == "POST":
         form = ContactForm(request.POST)
         if form.is_valid():
@@ -45,14 +48,12 @@ def contact_us(request):
             from_email_address=os.environ.get('EMAIL_HOST_USER')
         
             try:
-                # send_mail(subject, message, from_email_address, [from_email_address])
                 send_mail(
                     subject=body['subject'], 
                     message=message,
                     from_email=from_email_address, 
                     recipient_list =[from_email_address],
                     fail_silently = False)
-                print('from_email_address 2:', from_email_address)
             except (BadHeaderError, Exception) as e:
                 print('e', e)
                 return HttpResponse('Invalid header found.')
@@ -60,7 +61,7 @@ def contact_us(request):
     else:
         form = ContactForm()
     return render(request, 'pop_up_home/site_info/contact_us.html', {
-        "contact_us_copy": contact_us_copy, 'form': form}
+        "contact_us_copy": contact_us_copy, 'form': form, 'recaptcha_public_key': recaptcha_public_key}
         )
 
 def help_center(request):

@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'pop_up_reward.apps.PopUpRewardConfig',
     'social_django',
     'django_extensions',
+    'django_recaptcha'
 ]
 
 MIDDLEWARE = [
@@ -307,7 +308,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 
 EMAIL_HOST_USER=os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD=os.environ.get('EMAIL_HOST_PASSWORD')
-EMAIL_PORT=os.environ.get("EMAIL_PORT")
+EMAIL_PORT=int(os.environ.get("EMAIL_PORT", 587))
 EMAIL_USE_TLS = True
 
 
@@ -334,3 +335,6 @@ NOWPAYMENTS_IPN_SECRET = os.environ.get('NOWPAYMENTS_IPN_SECRET', '')
 NOWPAYMENTS_SANDBOX = os.environ.get('NOWPAYMENTS_SANDBOX', 'True').lower() == 'true'
 
 
+# RECAPTCHA Key
+RECAPTCHA_PUBLIC_KEY=os.environ.get('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY=os.environ.get('RECAPTCHA_PRIVATE_KEY')

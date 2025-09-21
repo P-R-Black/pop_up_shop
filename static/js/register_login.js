@@ -396,7 +396,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const emailPasswordResetInput = document.querySelector('.email_password_reset_form'); // class inherted from custom form
     const resetPasswordBtn = document.querySelector('.resetPasswordBtn')
 
-    console.log('emailPasswordResetInput', emailPasswordResetInput)
     // Forgot your password container
     const forgotPasswordEmailCheckContainer = document.querySelector('.forgot_password_email_check_container')
 

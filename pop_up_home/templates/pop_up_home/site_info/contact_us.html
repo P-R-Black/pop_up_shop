@@ -16,17 +16,8 @@
                 <h4 class="bold section_title">
                     {{ contact_us_copy.section_paragraph }}
                 </h4>
-                <form action="{% url 'pop_up_home:contact' %}" method="post" class="contact_us_form">
+                <form id="contact-form" action="{% url 'pop_up_home:contact' %}" method="post" class="contact_us_form">
                     {% csrf_token %}
-                    <!-- Non-field errors -->
-                    {% if form.non_field_errors %}
-                    <div class="form-errors" role="alert" aria-live="assertive">
-                        {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
                     <div class="form-group">
                         {{ form.email_address }}
                         {% if form.email_address.errors %}
@@ -59,11 +50,20 @@
                         </div>
                         {% endif %}
                     </div>
+                    <div class="form-group">
+                        {{ form.captcha }}
+                        {% if form.captcha.errors %}
+                        <div class="error-message" role="alert" aria-live="assertive">
+                            {% for error in form.captcha.errors %}
+                            <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
                     <button type="submit" class="button_long">Send</button>
                 </form>
             </div>
         </div>
     </div>
 </section>
-
 {% endblock %}
