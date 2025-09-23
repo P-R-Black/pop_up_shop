@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'django.contrib.sites',
+    'django.contrib.sitemaps',
     'django_celery_beat',
     'mptt',
     'pop_up_home.apps.PopUpHomeConfig',
@@ -77,7 +79,8 @@ INSTALLED_APPS = [
     'pop_up_reward.apps.PopUpRewardConfig',
     'social_django',
     'django_extensions',
-    'django_recaptcha'
+    'django_recaptcha',
+   
 ]
 
 MIDDLEWARE = [
@@ -338,3 +341,6 @@ NOWPAYMENTS_SANDBOX = os.environ.get('NOWPAYMENTS_SANDBOX', 'True').lower() == '
 # RECAPTCHA Key
 RECAPTCHA_PUBLIC_KEY=os.environ.get('RECAPTCHA_PUBLIC_KEY')
 RECAPTCHA_PRIVATE_KEY=os.environ.get('RECAPTCHA_PRIVATE_KEY')
+
+# Site Map Data
+SITE_ID = 1

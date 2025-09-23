@@ -61,6 +61,7 @@ class TestPopUpHomeViewResponses(TestCase):
         # quick test of the copy
         self.assertIn('<h2>About The Pop Up</h2>', html)
 
+
     def test_how_it_works_html(self):
         response = self.c.get('/how-it-works/')
         self.assertEqual(response.status_code, 200)
@@ -70,6 +71,7 @@ class TestPopUpHomeViewResponses(TestCase):
 
         # quick test of the copy
         self.assertIn('<h2>How it Works</h2>', html)
+
 
     def test_verification_html(self):
         response = self.c.get('/verification/')
@@ -81,6 +83,7 @@ class TestPopUpHomeViewResponses(TestCase):
         # quick test of the copy
         self.assertIn('<h2>Verification</h2>', html)
     
+
     def test_contact_us_html(self):
         response = self.c.get('/contact/')
         self.assertEqual(response.status_code, 200)
@@ -91,6 +94,7 @@ class TestPopUpHomeViewResponses(TestCase):
         # quick test of the copy
         self.assertIn('<h2>Contact Us</h2>', html)
     
+
     def test_help_center_html(self):
         response = self.c.get('/help-center/')
         self.assertEqual(response.status_code, 200)
@@ -135,16 +139,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<h2>Your Privacy Choices</h2>', html)
     
 
-    def test_site_map_html(self):
-        response = self.c.get('/site-map/')
-        self.assertEqual(response.status_code, 200)
 
-        html = response.content.decode('utf-8')
-        self.assertIn('<title>Site Map</title>', html)
-
-        # quick test of the copy
-        self.assertIn('<h2>Site Map</h2>', html)
-    
 
 
 

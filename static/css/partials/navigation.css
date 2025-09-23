@@ -1,0 +1,610 @@
+/* ========= Navbar ========= */
+.sidebar {
+    background: var(--sidebar-color);
+    border-right: 1px solid var(--text-color);
+    left: 0;
+    height: 100vh;
+    padding: 10px 14px;
+    position: fixed;
+    top: 0;
+    transition: var(--tran-05);
+    width: 16rem;
+    z-index: 100;
+}
+
+.sidebar.close {
+    width: 5.5rem;
+}
+
+/* ====== Resuable CSS ====== */
+.sidebar .text {
+    font-family: var(--text-font);
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--text-color);
+    transition: var(--tran-03);
+    white-space: nowrap;
+    opacity: 1;
+}
+
+
+.sidebar.close .text {
+    opacity: 0;
+}
+
+.sidebar .image {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-width: 4rem;
+}
+
+.sidebar li {
+    height: 1.5rem;
+    margin-top: 10px;
+    list-style: none;
+    display: flex;
+    align-items: center;
+
+}
+
+.sidebar li .icon {
+    align-items: center;
+    display: flex;
+    font-size: 20px;
+    justify-content: center;
+    min-width: 60px;
+}
+
+
+.sidebar li .icon,
+.sidebar li .text {
+    color: var(--text-color);
+    transition: var(--tran-02)
+}
+
+.sidebar header {
+    position: relative;
+}
+
+
+
+.sidebar .logo-text {
+    color: var(--text-color);
+    font-family: var(--logo-font);
+    font-size: 3rem;
+    font-weight: 600;
+    text-align: left;
+    width: 16rem;
+
+    opacity: 1;
+    transition: opacity 0.3s ease, font-size 0.3s ease;
+}
+
+.sidebar .logo-text.fade-out {
+    opacity: 0;
+}
+
+.sidebar .logo-text.fade-in {
+    opacity: 1;
+}
+
+
+
+.sidebar .logo-text .sidebar header .logo-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+header .logo-text .header-text {
+    display: flex;
+    flex-direction: column;
+
+}
+
+
+.sidebar header .toggle {
+    align-items: center;
+    background: var(--text-color);
+    border-radius: 50%;
+    color: var(--sidebar-color);
+    cursor: pointer;
+    display: flex;
+    font-size: 1.25rem;
+    height: 25px;
+    justify-content: center;
+    position: absolute;
+    right: -25px;
+    top: 50%;
+    transform: translateY(-50%) rotate(180deg);
+    transition: var(--tran-03);
+    width: 25px;
+
+}
+
+.sidebar.close header .toggle {
+    transform: translateY(-50%);
+}
+
+.body.dark .sidebar header .toggle {
+    color: var(--text-color);
+}
+
+.sidebar .menu {
+    margin-top: 1.5rem;
+}
+
+.sidebar .search-box {
+    background: var(--primary-color-light);
+    border-radius: 6px;
+    transition: var(--tran-05);
+}
+
+.search-box input {
+    background: var(--primary-color-light);
+    border: none;
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 500;
+    height: 100%;
+    outline: none;
+    transition: var(--tran-05);
+    width: 100%;
+}
+
+.menu-links .nav-link-mobile {
+    display: none;
+}
+
+.sidebar .mobile-search-box {
+    display: none;
+}
+
+
+
+.sidebar li a {
+    align-items: center;
+    border-radius: 6px;
+    display: flex;
+    height: 100%;
+    text-decoration: none;
+    transition: var(--tran-04);
+    width: 100%;
+}
+
+.sidebar li a:hover {
+    background: var(--primary-color);
+    height: 2rem;
+}
+
+.sidebar li a:hover .icon,
+.sidebar li a:hover .text {
+    color: var(--sidebar-color);
+}
+
+
+
+body.dark .sidebar li a:hover .icon,
+body.dark .sidebar li a:hover .text {
+    color: var(--sidebar-color);
+
+}
+
+
+.sidebar li button {
+    align-items: center;
+    background: var(--sidebar-color);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    height: 100%;
+    text-decoration: none;
+    transition: var(--tran-04);
+    width: 100%;
+}
+
+
+
+.sidebar li button:hover {
+    background: var(--primary-color);
+    height: 2rem;
+}
+
+
+.sidebar li button:hover .icon,
+.sidebar li button:hover .text {
+    color: var(--sidebar-color);
+}
+
+
+body.dark .sidebar li button:hover .icon,
+body.dark .sidebar li button:hover .text {
+    color: var(--sidebar-color);
+
+}
+
+
+
+.sidebar .menu-bar {
+    height: cacl(100% - 50px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+
+.menu-bar .menu .greetings_box h4 {
+    color: var(--text-color);
+    font-family: var(--text-font);
+    font-size: 1rem;
+    font-weight: 400;
+    margin-left: 1.25rem;
+    text-align: left;
+}
+
+
+
+.menu-bar .mode {
+    background: var(--primary-color-light);
+    border-radius: 6px;
+    position: relative;
+
+}
+
+.menu-bar .mode .moon-sun {
+    align-items: center;
+    display: flex;
+    height: 50px;
+    width: 60px;
+}
+
+.menu-bar .mode i {
+    position: absolute;
+    transition: var(--tran-03);
+}
+
+.menu-bar .mode i.sun {
+    opacity: 0;
+}
+
+body.dark .menu-bar .mode i.sun {
+    opacity: 1
+}
+
+body.dark .menu-bar .mode i.moon {
+    opacity: 0
+}
+
+.menu-bar .mode .toggle-switch {
+    align-items: center;
+    background: var(--primary-color-light);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    min-width: 60px;
+    position: absolute;
+    right: 0;
+    transition: var(--tran-05);
+}
+
+.toggle-switch .switch {
+    background: var(--toggle-color);
+    border-radius: 25px;
+    height: 22px;
+    position: relative;
+    width: 44px;
+}
+
+.switch::before {
+    background: var(--sidebar-color);
+    border-radius: 50%;
+    content: "";
+    height: 15px;
+    left: 5px;
+    position: absolute;
+    transform: translateY(-50%);
+    top: 50%;
+    width: 15px;
+    transition: var(--tran-03)
+}
+
+
+body.dark .switch::before {
+    left: 24px;
+}
+
+.mobile-mode {
+    opacity: 0;
+    visibility: hidden;
+}
+
+
+
+/* ========= Nested Dashboard Navigation ========= */
+/* Force the dashboard nav li to behave as an expandable container */
+.sidebar .menu-links li.dash-nav-link {
+    align-items: stretch !important;
+    display: block !important;
+    /* display: flex; */
+
+    flex-direction: column !important;
+    list-style: none;
+
+    /* Override any fixed height from .sidebar li ; */
+    height: auto !important;
+
+    margin-top: 10px;
+    min-height: 1.5rem;
+
+    position: static !important;
+
+    position: relative;
+    width: 100%
+        /* height: auto !important; Override any fixed height from .sidebar li 
+    min-height: 1.5rem;
+    margin-top: 10px;
+    list-style: none;
+    display: block !important; /* Force block display 
+    position: static !important; /* Ensure it's in normal flow
+    width: 100%;
+    flex-direction: column !important; /* Override any flex-row from parent
+    align-items: stretch !important; /* Allow children to expand
+    */
+}
+
+/* Dashboard link container - child of the li */
+.sidebar .menu-links li.dash-nav-link .dashboard_link {
+    align-items: center;
+    border-radius: 6px;
+    display: flex !important;
+    height: 1.5rem;
+    text-decoration: none;
+    transition: var(--tran-04);
+    width: 100%;
+    position: relative;
+}
+
+.dash-nav-link .dashboard_link:hover {
+    background: var(--primary-color);
+    height: 2rem;
+}
+
+.dash-nav-link .dashboard_link:hover .icon,
+.dash-nav-link .dashboard_link:hover .text {
+    color: var(--sidebar-color);
+}
+
+body.dark .dash-nav-link .dashboard_link:hover .icon,
+body.dark .dash-nav-link .dashboard_link:hover .text {
+    color: var(--sidebar-color);
+}
+
+/* Dashboard expand chevron icon */
+.dashboard_expand {
+    position: absolute !important;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: var(--text-color);
+    transition: transform var(--tran-03);
+    cursor: pointer;
+    z-index: 10;
+}
+
+.dashboard_expand.expanded {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.dashboard_expand:hover {
+    color: var(--sidebar-color);
+}
+
+/* Nested menu container - child of the li.dash-nav-link */
+.sidebar .menu-links li.dash-nav-link .nested-menu {
+    background: var(--primary-color-light);
+    border-left: 1px solid var(--primary-color);
+    border-radius: 5px;
+    box-sizing: border-box;
+    clear: both;
+    display: none !important;
+    margin: 8px 0 8px 20px !important;
+
+    overflow: hidden;
+    width: calc(100% - 25px);
+
+    /* Force static positioning */
+    position: static !important;
+
+
+}
+
+/* Show state with explicit display block and animation */
+.sidebar .menu-links li.dash-nav-link .nested-menu.show {
+    display: block !important;
+    animation: expandVertical 0.4s ease-out forwards;
+}
+
+@keyframes expandVertical {
+    0% {
+        max-height: 0;
+        opacity: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    100% {
+        max-height: 400px;
+        opacity: 1;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        margin-top: 8px;
+        margin-bottom: 8px;
+    }
+}
+
+/* Category sections within nested menu */
+.nested-category {
+    border-bottom: 1px solid var(--toggle-color);
+    margin-bottom: 2px;
+}
+
+.nested-category:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* Category headers (Accounts, Products, Shipping) */
+.category-header {
+    display: flex !important;
+    align-items: center;
+    padding: 8px 15px;
+    background: var(--sidebar-color);
+    cursor: pointer;
+    transition: background var(--tran-03);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+    border-radius: 4px;
+    margin: 2px;
+    width: calc(100% - 4px);
+    box-sizing: border-box;
+}
+
+.category-header:hover {
+    background: var(--primary-color-light);
+}
+
+.category-header .icon {
+    font-size: 16px;
+    margin-right: 8px;
+    min-width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+}
+
+/* Category expand chevron */
+.category-expand {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-color);
+    transition: transform var(--tran-03);
+}
+
+.category-expand.expanded {
+    transform: rotate(180deg);
+}
+
+/* Sub-menu container for individual links */
+.sub-menu {
+    display: none !important;
+    background: var(--sidebar-color);
+    border-radius: 4px;
+    margin: 2px;
+    overflow: hidden;
+    width: calc(100% - 4px);
+    box-sizing: border-box;
+}
+
+.sub-menu.show {
+    display: block !important;
+    animation: expandSubVertical 0.3s ease-out forwards;
+}
+
+@keyframes expandSubVertical {
+    0% {
+        max-height: 0;
+        opacity: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    100% {
+        max-height: 200px;
+        opacity: 1;
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+}
+
+/* Individual sub-menu links */
+.sub-menu a {
+    display: flex !important;
+    align-items: center;
+    padding: 6px 15px 6px 25px !important;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all var(--tran-03);
+    border-left: 3px solid transparent;
+    font-family: var(--text-font);
+    font-weight: 300;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 1px 0;
+}
+
+.sub-menu a:hover {
+    color: var(--sidebar-color) !important;
+    background: var(--primary-color) !important;
+    border-left-color: var(--primary-color);
+    padding-left: 28px !important;
+}
+
+body.dark .sub-menu a:hover {
+    color: var(--sidebar-color) !important;
+}
+
+.sub-menu a .icon {
+    font-size: 14px;
+    margin-right: 8px;
+    min-width: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--tran-03);
+}
+
+/* Ensure proper spacing after nested menu */
+.dash-nav-link+.nav-link {
+    margin-top: 15px !important;
+}
+
+/* Responsive adjustments for closed sidebar */
+.sidebar.close .nested-menu {
+    display: none !important;
+}
+
+.sidebar.close .dashboard_expand {
+    opacity: 0;
+}
+
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .nested-menu {
+        margin-left: 10px !important;
+        width: calc(100% - 15px) !important;
+    }
+
+    .category-header {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .sub-menu a {
+        padding: 5px 10px 5px 20px !important;
+        font-size: 12px;
+    }
+}
+
+/* ========== End of Navbar ========== */

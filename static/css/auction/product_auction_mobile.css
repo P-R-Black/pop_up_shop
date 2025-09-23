@@ -57,6 +57,10 @@
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
 @media screen and (max-width: 800px) {
+    .auction_container {
+
+        background-color: green;
+    }
 
     .details_size_container,
     .details_condition_container,
@@ -101,6 +105,7 @@
 
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
 @media screen and (max-width: 640px) {
+
     .section_container {
         margin-bottom: 12rem;
     }

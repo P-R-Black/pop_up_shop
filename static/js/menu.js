@@ -51,6 +51,8 @@ function getCSRFToken() {
 
 document.addEventListener('DOMContentLoaded', function () {
 
+    darkLighModeToggle()
+
     // Invite Friend Modal
     if (inviteFriendModalBtn) {
         inviteFriendModalBtn.forEach((inv) => {
@@ -507,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-    darkLighModeToggle()
+
 })
 
 

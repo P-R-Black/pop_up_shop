@@ -6,7 +6,12 @@
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
-@media screen and (max-width: 1000px) {}
+@media screen and (max-width: 1000px) {
+    .help_center_box {
+        border: 3px solid var(--text-color);
+
+    }
+}
 
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
@@ -14,7 +19,13 @@
 
 
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
-@media screen and (max-width: 640px) {}
+@media screen and (max-width: 640px) {
+
+    .help_center_box {
+        border: 2px solid var(--text-color);
+
+    }
+}
 
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */

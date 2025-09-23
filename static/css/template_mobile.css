@@ -2,7 +2,7 @@
 @media screen and (max-width: 1350px) {
     .container {
         border: 2px solid yellow;
-        height: auto;
+        min-height: auto;
     }
 
 }
@@ -12,57 +12,25 @@
     .container {
         border: 2px solid red;
         width: calc(100% - 16rem);
-        height: auto;
-    }
-
-    .footer_payment_options {
-        width: 80%;
+        min-height: auto;
     }
 
 }
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (min-height: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
 @media screen and (max-width: 1000px) {
+
     .container {
         border: 2px solid green;
-        height: auto;
-    }
-
-
-    /* =============== FOOTER =============== */
-
-    .top_footer {
-        align-items: center;
-        flex-direction: column;
-        justify-content: space-around;
-        height: auto;
-        gap: 2rem;
+        min-height: auto;
 
     }
 
-    .footer_links_container {
-        width: 90%;
-    }
-
-    .footer_invite_payment_container {
-        align-items: center;
-        flex-direction: row;
-        justify-content: space-between;
-        width: 90%;
-    }
-
-    .footer_payment_options {
-        width: 35%;
-    }
-
-    .footer_terms_container ul {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-    }
-
-    /* =============== END OF FOOTER =============== */
 
 
     /* =============== SIGN UP MODAL =============== */
@@ -134,12 +102,11 @@
 @media screen and (max-width: 800px) {
     .container {
         border: 2px solid blue;
+        /* min-height: auto; */
 
     }
 
-    .footer_payment_options {
-        width: 45%;
-    }
+
 
     /* =============== SIGN UP MODAL =============== */
     .sign_up_image_container {
@@ -171,220 +138,7 @@
         text-align: center;
     }
 
-    /* ============== NAVIGATION ==============*/
 
-    .bx-chevron-right {
-        opacity: 0;
-    }
-
-    .sidebar.close,
-    .sidebar {
-        border-top: 1px solid var(--text-color);
-
-        bottom: 0;
-        top: unset;
-        position: fixed;
-        height: 10.5rem;
-        width: 100%;
-        border-right: none;
-        display: flex;
-        flex-direction: column;
-    }
-
-
-    .sidebar ul {
-        display: flex;
-        align-items: center;
-        overflow-x: scroll;
-        padding-bottom: 1rem;
-        margin-top: 0;
-    }
-
-    .sidebar ul li {
-        height: 100%;
-
-    }
-
-
-    ul li span {
-        display: none;
-    }
-
-    section {
-        overflow-x: auto;
-    }
-
-    li {
-        display: inline-flex;
-
-    }
-
-    .menu {
-        display: flex;
-        flex-direction: column;
-        gap: .5rem;
-        height: auto;
-
-    }
-
-    header {
-        order: 2;
-
-    }
-
-
-    .sidebar .logo-text {
-        font-size: 2rem;
-        text-align: center;
-
-    }
-
-    .sidebar .logo-text {
-        display: block;
-        font-size: 2rem;
-        text-align: center;
-
-    }
-
-    .sidebar .logo-text.hide-logo-text {
-        display: none
-    }
-
-
-    .menu-bar .mode {
-        display: none;
-
-    }
-
-    .mobile-mode {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .menu-bar .mobile-mode {
-        position: relative;
-
-    }
-
-
-    .mobile-moon,
-    .mobile-sun {
-        cursor: pointer;
-        position: absolute;
-    }
-
-    .menu-bar .mobile-mode i.mobile-sun {
-        opacity: 0;
-    }
-
-    body.dark .menu-bar .mobile-mode i.mobile-sun {
-        opacity: 1
-    }
-
-    body.dark .menu-bar .mobile-mode i.mobile-moon {
-        opacity: 0
-    }
-
-    .menu-links .nav-link-mobile {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-
-    .sidebar .search-box {
-        display: none;
-    }
-
-
-    .sidebar .mobile-search-box.hide-mobile-search-box {
-        display: none;
-        transition: var(--tran-05);
-    }
-
-    .sidebar .mobile-search-box {
-        display: block;
-        background: var(--primary-color-light);
-        border-radius: 6px;
-        transition: var(--tran-05);
-        webkit-animation: fadeIn 0.5s;
-        animation: fadeIn 0.5s;
-    }
-
-    .mobile-search-box input {
-        background: var(--primary-color-light);
-        border: none;
-        border-radius: 6px;
-        color: var(--text-color);
-        font-size: 1rem;
-        font-weight: 500;
-        height: 100%;
-        outline: none;
-        transition: var(--tran-05);
-        width: 80%;
-        margin-left: .5rem;
-    }
-
-
-
-    @-webkit-keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    /* ========== END OF NAVIGATION ==========*/
-
-
-
-    /* ========== FOOTER ==========*/
-
-    .footer_container {
-        height: 45rem;
-    }
-
-
-    .top_footer {
-        height: 30rem;
-        justify-content: space-around;
-    }
-
-    .footer_links_container {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 27% 27% 27%;
-    }
-
-    .footer_about_title h3 {
-        text-align: left;
-
-    }
-
-    .footer_about_options li a {
-        text-align: left;
-        width: 9rem;
-    }
-
-    .footer_about_options li p {
-        text-align: left;
-        width: 9rem;
-    }
-
-    /* ========== END OF FOOTER ==========*/
 
 
     /* ========== SIGN UP MODAL ========== */
@@ -441,259 +195,6 @@
         /* width: 100%; */
     }
 
-
-    /* ============== NAVIGATION ==============*/
-
-    .bx-chevron-right {
-        opacity: 0;
-    }
-
-    .sidebar.close,
-    .sidebar {
-        border-top: 1px solid var(--text-color);
-
-        bottom: 0;
-        top: unset;
-        position: fixed;
-        height: 10.5rem;
-        width: 100%;
-        border-right: none;
-        display: flex;
-        flex-direction: column;
-    }
-
-
-    .sidebar ul {
-        align-items: center;
-        display: flex;
-        height: auto;
-        margin-top: 0;
-        overflow-x: scroll;
-        overflow-y: hidden;
-    }
-
-    .sidebar ul li {
-        height: 100%;
-
-
-    }
-
-
-    ul li span {
-        display: none;
-    }
-
-    section {
-        overflow-x: auto;
-
-    }
-
-    li {
-        display: inline-flex;
-
-
-    }
-
-    .menu {
-        display: flex;
-        flex-direction: column;
-        gap: .5rem;
-        height: auto;
-    }
-
-    header {
-        order: 2;
-
-
-    }
-
-
-    .sidebar .logo-text {
-        font-size: 2rem;
-        text-align: center;
-
-
-    }
-
-    .sidebar .logo-text {
-        display: block;
-        font-size: 2rem;
-        text-align: center;
-
-    }
-
-    .sidebar .logo-text.hide-logo-text {
-        display: none
-    }
-
-
-    .menu-bar .mode {
-        display: none;
-
-    }
-
-    .mobile-mode {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .menu-bar .mobile-mode {
-        position: relative;
-
-    }
-
-
-    .mobile-moon,
-    .mobile-sun {
-        cursor: pointer;
-        position: absolute;
-    }
-
-    .menu-bar .mobile-mode i.mobile-sun {
-        opacity: 0;
-    }
-
-    body.dark .menu-bar .mobile-mode i.mobile-sun {
-        opacity: 1
-    }
-
-    body.dark .menu-bar .mobile-mode i.mobile-moon {
-        opacity: 0
-    }
-
-    .menu-links .nav-link-mobile {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-
-    .sidebar .search-box {
-        display: none;
-    }
-
-
-    .sidebar .mobile-search-box.hide-mobile-search-box {
-        display: none;
-        transition: var(--tran-05);
-    }
-
-    .sidebar .mobile-search-box {
-        display: block;
-        background: var(--primary-color-light);
-        border-radius: 6px;
-        transition: var(--tran-05);
-        webkit-animation: fadeIn 0.5s;
-        animation: fadeIn 0.5s;
-    }
-
-    .mobile-search-box input {
-        background: var(--primary-color-light);
-        border: none;
-        border-radius: 6px;
-        color: var(--text-color);
-        font-size: 1rem;
-        font-weight: 500;
-        height: 100%;
-        outline: none;
-        transition: var(--tran-05);
-        width: 80%;
-        margin-left: .5rem;
-    }
-
-
-
-    @-webkit-keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    /* ========== END OF NAVIGATION ==========*/
-
-    /* =============== FOOTER =============== */
-
-    .footer_container {
-        height: 63rem;
-    }
-
-    .top_footer {
-        height: 46rem;
-    }
-
-    .footer_logo_social_container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-
-    }
-
-    footer span div.logo-text {
-        text-align: center;
-    }
-
-
-    .footer_links_container {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .footer_about_title h3 {
-        text-align: center;
-    }
-
-
-    .footer_about_container {
-        flex-wrap: wrap;
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 1rem;
-    }
-
-    .footer_about_options {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .footer_about_options li a {
-        text-align: center;
-        width: 9rem;
-        justify-content: center;
-    }
-
-    .footer_about_options li p {
-        text-align: center;
-        width: 9rem;
-        justify-content: center;
-    }
-
-    .bottom_footer {
-        height: 10rem;
-    }
-
-    .footer_terms_container ul {
-        display: grid;
-        grid-template-columns: repeat(2, 50%);
-        gap: .75rem;
-        width: 100%;
-    }
 
 
     /* ========== SIGN UP MODAL ========== */

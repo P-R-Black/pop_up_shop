@@ -1,7 +1,15 @@
 from django.urls import path
 from . import views
+from django.contrib import sitemaps
+from django.contrib.sitemaps.views import sitemap
+from .sitemaps import StaticViewSitemap, ProductSitemap
 
 app_name = 'pop_up_home'
+
+sitemaps_dict = {
+    "static": StaticViewSitemap,
+    "products": ProductSitemap
+}
 urlpatterns = [
     path('', views.home_page, name='home'),
      # footer_links
@@ -13,7 +21,7 @@ urlpatterns = [
     path('terms/', views.terms_and_conditions, name='terms'),
     path('privacy/', views.privacy_policy, name='privacy'),
     path('privacy-choices/', views.privacy_choice, name='privacy_choices'),
-    path('site-map/', views.site_map, name='site-map'),
+    path('sitemap.xml/', sitemap, {'sitemaps': sitemaps_dict}, name="django.contrib.site"),
     # help center pages
     path('buying-help/', views.buying_help, name='buying-help'),
     path('selling-help/', views.selling_help, name='selling-help'),

@@ -6,64 +6,62 @@
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="terms_and_container">
-        <div class="footer_links_title">
-            <h2>{{ contact_us_copy.page_title }}</h2>
-        </div>
-        <div class="the_auction_container">
-            <div class="site_contact_container">
-                <h4 class="bold section_title">
-                    {{ contact_us_copy.section_paragraph }}
-                </h4>
-                <form id="contact-form" action="{% url 'pop_up_home:contact' %}" method="post" class="contact_us_form">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        {{ form.email_address }}
-                        {% if form.email_address.errors %}
-                        <div class="error-message" role="'alert" aria-live="assertive">
-                            {% for error in form.email_address.errors %}
-                            <p class="error-message-p">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+<div class="terms_and_container">
+    <div class="footer_links_title">
+        <h2>{{ contact_us_copy.page_title }}</h2>
+    </div>
+    <div class="the_auction_container">
+        <div class="site_contact_container">
+            <h4 class="bold section_title">
+                {{ contact_us_copy.section_paragraph }}
+            </h4>
+            <form id="contact-form" action="{% url 'pop_up_home:contact' %}" method="post" class="contact_us_form">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.email_address }}
+                    {% if form.email_address.errors %}
+                    <div class="error-message" role="'alert" aria-live="assertive">
+                        {% for error in form.email_address.errors %}
+                        <p class="error-message-p">{{ error }}</p>
+                        {% endfor %}
                     </div>
+                    {% endif %}
+                </div>
 
-                    <div class="form-group">
-                        {{ form.subject }}
-                        {% if form.subject.errors %}
-                        <div class="error-message" role="'alert" aria-live="assertive">
-                            {% for error in form.subject.errors %}
-                            <p class="error-message-p">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+                <div class="form-group">
+                    {{ form.subject }}
+                    {% if form.subject.errors %}
+                    <div class="error-message" role="'alert" aria-live="assertive">
+                        {% for error in form.subject.errors %}
+                        <p class="error-message-p">{{ error }}</p>
+                        {% endfor %}
                     </div>
+                    {% endif %}
+                </div>
 
-                    <div class="form-group">
-                        {{ form.message }}
-                        {% if form.message.errors %}
-                        <div class="error-message" role="'alert" aria-live="assertive">
-                            {% for error in form.message.errors %}
-                            <p class="error-message-p">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+                <div class="form-group">
+                    {{ form.message }}
+                    {% if form.message.errors %}
+                    <div class="error-message" role="'alert" aria-live="assertive">
+                        {% for error in form.message.errors %}
+                        <p class="error-message-p">{{ error }}</p>
+                        {% endfor %}
                     </div>
-                    <div class="form-group">
-                        {{ form.captcha }}
-                        {% if form.captcha.errors %}
-                        <div class="error-message" role="alert" aria-live="assertive">
-                            {% for error in form.captcha.errors %}
-                            <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.captcha }}
+                    {% if form.captcha.errors %}
+                    <div class="error-message" role="alert" aria-live="assertive">
+                        {% for error in form.captcha.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
                     </div>
-                    <button type="submit" class="button_long">Send</button>
-                </form>
-            </div>
+                    {% endif %}
+                </div>
+                <button type="submit" class="button_long">Send</button>
+            </form>
         </div>
     </div>
-</section>
+</div>
 {% endblock %}

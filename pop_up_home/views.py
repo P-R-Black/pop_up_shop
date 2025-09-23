@@ -10,7 +10,7 @@ from .pop_up_home_copy.site_info_copy.site_info_copy import (
     PRIVACY_CHOICES_COPY)
 
 from .forms import ContactForm
-
+import requests
 
 
 # Create your views here.
@@ -19,19 +19,24 @@ def home_page(request):
 
 # site and usage info
 def about_us(request):
+    # ✅ mobile / tablet done
+    
     about_us_copy = ABOUT_US_COPY
     return render(request, 'pop_up_home/site_info/about_us.html', {'about_us_copy': about_us_copy})
 
 def how_it_works(request):
+    # ✅ mobile / tablet done
     how_it_works_copy = HOW_IT_WORKS_COPY
     return render(request, 'pop_up_home/site_info/how_it_works.html', {"how_it_works_copy": how_it_works_copy })
 
 def verification(request):
+    # ✅ mobile / tablet done
     verification_copy = VERIFICATION_COPY
     return render(request, 'pop_up_home/site_info/verification.html', {"verification_copy": verification_copy})
 
-import requests
+
 def contact_us(request):
+    # ✅ mobile / tablet done
     contact_us_copy = CONTACT_US_COPY
     recaptcha_public_key=os.environ.get('RECAPTCHA_PUBLIC_KEY')
 
@@ -65,6 +70,7 @@ def contact_us(request):
         )
 
 def help_center(request):
+    # ✅ mobile / tablet done
     help_center_copy = HELP_CENTER_COPY
     return render(request, 'pop_up_home/site_info/help_center.html', {'help_center_copy': help_center_copy})
 
@@ -84,9 +90,6 @@ def privacy_choice(request):
     # Need to add functionality for user to opt out of tracking
     return render(request, 'pop_up_home/footer_links/privacy_choices.html', {
         "privacy_choices": privacy_choices})
-
-def site_map(request):
-    return render(request, 'pop_up_home/site_info/site_map.html')
 
 # help_center_pages
 def buying_help(request):

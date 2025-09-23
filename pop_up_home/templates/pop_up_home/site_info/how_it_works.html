@@ -5,33 +5,30 @@
 {% block title %}How it Works{% endblock %}
 
 {% block main %}
-
-<section class="auction_section container">
-    <div class="terms_and_container">
-        <div class="footer_links_title">
-            <h2>{{ how_it_works_copy.page_title }}</h2>
-        </div>
-
-        <div class="the_auction_container">
-            <div class="t_and_c_container">
-                {% for i in how_it_works_copy.instructions %}
-                <h4 class="bold section_title">{{ i.instruction_level }}</h4>
-                <ol>
-                    {% for j in i.instruction %}
-                    <li>{{ j.instruct }}
-                        {% if j.url %}
-                        <span>
-                            <a class="how_it_works_links" href="{% url 'pop_up_auction:'|add:j.url %}">{{ j.label }}
-                            </a>
-                        </span>
-                    </li>
-                    {% endif %}
-                    {% endfor %}
-                </ol>
+<div class="terms_and_container">
+    <div class="footer_links_title">
+        <h2>{{ how_it_works_copy.page_title }}</h2>
+    </div>
+    <div class="the_auction_container">
+        <div class="t_and_c_container">
+            {% for i in how_it_works_copy.instructions %}
+            <h4 class="bold section_title">{{ i.instruction_level }}</h4>
+            <ol>
+                {% for j in i.instruction %}
+                <li>{{ j.instruct }}
+                    {% if j.url %}
+                    <span>
+                        <a class="how_it_works_links" href="{% url 'pop_up_auction:'|add:j.url %}">{{ j.label }}
+                        </a>
+                    </span>
+                </li>
+                {% endif %}
                 {% endfor %}
-            </div>
+            </ol>
+            {% endfor %}
         </div>
     </div>
-</section>
+</div>
+
 
 {% endblock %}
