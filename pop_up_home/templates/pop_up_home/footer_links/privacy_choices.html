@@ -6,31 +6,29 @@
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="terms_and_container">
-        <div class="footer_links_title">
-            <h2>{{ privacy_choices.page_title }}</h2>
-        </div>
-        <div class="the_auction_container">
-            <div class="t_and_c_container">
-                {% for text in privacy_choices.sections %}
-                {% for para in text.section_paragraph %}
-                <p class="{{para.class }}">{{ para.paragraph }}</p>
+<div class="terms_and_container">
+    <div class="footer_links_title">
+        <h2>{{ privacy_choices.page_title }}</h2>
+    </div>
+    <div class="the_auction_container">
+        <div class="t_and_c_container">
+            {% for text in privacy_choices.sections %}
+            {% for para in text.section_paragraph %}
+            <p class="{{para.class }}">{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
+
+            <div class="user_opt_out_container">
+                <h4 class="bold section_title">{{ privacy_choices.section_title}}</h4>
+                {% for text in privacy_choices.buttons %}
+                {% for btn in text.section_button %}
+                <buttton class="{{ btn.class }}">{{ btn.button }}</buttton>
                 {% endfor %}
                 {% endfor %}
-
-                <div class="user_opt_out_container">
-                    <h4 class="bold section_title">{{ privacy_choices.section_title}}</h4>
-                    {% for text in privacy_choices.buttons %}
-                    {% for btn in text.section_button %}
-                    <buttton class="{{ btn.class }}">{{ btn.button }}</buttton>
-                    {% endfor %}
-                    {% endfor %}
-                </div>
-
             </div>
+
         </div>
     </div>
-</section>
+</div>
 
 {% endblock %}

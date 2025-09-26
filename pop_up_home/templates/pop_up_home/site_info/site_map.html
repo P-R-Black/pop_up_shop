@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% load static %}
+
+
+{% block title %}Site Map{% endblock %}
+
+{% block main %}
+
+<div class="terms_and_container">
+    <div class="footer_links_title">
+        <h2>{{ site_map_copy.page_title }}</h2>
+    </div>
+    <div class="the_auction_container">
+        <div class="site_map_container">
+            <p>{{ site_map_copy.page_update_title}}: {{ site_map_copy.page_update_date }}</p>
+            {% for text in site_map_copy.pages %}
+            {% for para in text.page_section %}
+            <ul>
+                <li>
+                    <a class="how_it_works_links" href="{% url para.full_url %}">{{ para.title }}</a>
+                </li>
+                {% if para.sub_page %}
+                <ol class="indented">
+                    {% for sub in para.sub_page %}
+                    <li>
+                        <a class="how_it_works_links" href="{% url sub.full_url %}">{{ sub.sub_page_title }}</a>
+                    </li>
+                    {% if sub.sub_categories %}
+                    <ol class="indented">
+                        {% for sub_cat in sub.sub_categories %}
+                        <li>
+                            <a class="how_it_works_links" href="{% url sub_cat.sub_category_url %}">
+                                {{ sub_cat.sub_page_title }}</a>
+                        </li>
+                        {% endfor %}
+                    </ol>
+                    {% endif %}
+                    {% endfor %}
+                </ol>
+                {% endif %}
+            </ul>
+
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    </section>
+
+    {% endblock %}

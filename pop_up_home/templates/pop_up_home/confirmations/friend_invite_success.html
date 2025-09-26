@@ -4,17 +4,13 @@
 {% load email_filters %}
 {% load humanize %}
 
-{% block title %}
-Friend Invite Confirmation
-{% endblock %}
+{% block title %}Friend Invite Confirmation{% endblock %}
 
 {% block main %}
 
-<section class="friend_invite_section container">
 
+<div class="the_auction_container">
     <div class="success_friend_invite">
-
-
         {% if messages %}
         {% for message in messages %}
 
@@ -24,10 +20,9 @@ Friend Invite Confirmation
 
         {% endfor %}
         {% endif %}
-
     </div>
+</div>
 
-</section>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const duration = 3 * 1000; // 3 seconds

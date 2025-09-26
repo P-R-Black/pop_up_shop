@@ -6,200 +6,198 @@
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="terms_and_container">
-        <div class="footer_links_title">
-            <h2>{{ privacy_policy_copy.page_title }}</h2>
-        </div>
-        <div class="the_auction_container">
-            <div class="t_and_c_container">
-                <p>{{ privacy_policy_copy.page_update_title}}: {{ privacy_policy_copy.page_update_date }}</p>
-                {% for text in privacy_policy_copy.sections %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
+<div class="terms_and_container">
+    <div class="footer_links_title">
+        <h2>{{ privacy_policy_copy.page_title }}</h2>
+    </div>
+    <div class="the_auction_container">
+        <div class="t_and_c_container">
+            <p>{{ privacy_policy_copy.page_update_title}}: {{ privacy_policy_copy.page_update_date }}</p>
+            {% for text in privacy_policy_copy.sections %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.ordered_list_sections_one %}
-                <p>{{ text.section_paragraph }}</p>
+            {% for text in privacy_policy_copy.ordered_list_sections_one %}
+            <p>{{ text.section_paragraph }}</p>
+            {% endfor %}
+            <ol>
+                {% for links in privacy_policy_copy.ordered_list_sections_one %}
+                {% for link in links.ordered_list_one %}
+                <li>{{ link.list_item }}</li>
                 {% endfor %}
-                <ol>
-                    {% for links in privacy_policy_copy.ordered_list_sections_one %}
-                    {% for link in links.ordered_list_one %}
-                    <li>{{ link.list_item }}</li>
-                    {% endfor %}
-                    {% endfor %}
-                </ol>
-                {% for text in privacy_policy_copy.information_collect_sections %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
                 {% endfor %}
+            </ol>
+            {% for text in privacy_policy_copy.information_collect_sections %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.information_collect_sections %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
+            {% for text in privacy_policy_copy.information_collect_sections %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
 
-                <ol class="indented">
-                    {% for links in privacy_policy_copy.information_collect_sections %}
-                    {% for link in links.section_list %}
-                    <li>{{ link.label }}</li>
-                    {% endfor %}
-                    {% endfor %}
-                </ol>
+            <ol class="indented">
+                {% for links in privacy_policy_copy.information_collect_sections %}
+                {% for link in links.section_list %}
+                <li>{{ link.label }}</li>
+                {% endfor %}
+                {% endfor %}
+            </ol>
 
-                {% for text in privacy_policy_copy.information_collect_sections %}
-                {% for para in text.section_paragraph_two %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
+            {% for text in privacy_policy_copy.information_collect_sections %}
+            {% for para in text.section_paragraph_two %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.why_we_collect %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
+            {% for text in privacy_policy_copy.why_we_collect %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.why_we_collect %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
+            {% for text in privacy_policy_copy.why_we_collect %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
 
-                <ul>
-                    {% for links in privacy_policy_copy.why_we_collect %}
-                    {% for link in links.section_list %}
-                    <li>{{ link.label }}</li>
-                    {% endfor %}
-                    {% endfor %}
-                </ul>
-                {% for text in privacy_policy_copy.why_we_collect %}
-                {% for para in text.section_paragraph_two %}
-                <p>{{ para.paragraph }}</p>
+            <ul>
+                {% for links in privacy_policy_copy.why_we_collect %}
+                {% for link in links.section_list %}
+                <li>{{ link.label }}</li>
                 {% endfor %}
                 {% endfor %}
+            </ul>
+            {% for text in privacy_policy_copy.why_we_collect %}
+            {% for para in text.section_paragraph_two %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.use_of_information %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
+            {% for text in privacy_policy_copy.use_of_information %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.use_of_information %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
-
-
-                {% for text in privacy_policy_copy.disclosure_of_info %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.disclosure_of_info %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
-
-                <ul>
-                    {% for links in privacy_policy_copy.disclosure_of_info %}
-                    {% for link in links.section_list %}
-                    <li>{{ link.label }}</li>
-                    {% endfor %}
-                    {% endfor %}
-                </ul>
-
-                {% for text in privacy_policy_copy.non_marketing %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.non_marketing %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.under_13 %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.under_13 %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.unsubscribe_opt_out %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.unsubscribe_opt_out %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.links_to_other_sites %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.links_to_other_sites %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.european_users %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
-
-                {% for text in privacy_policy_copy.european_users %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
+            {% for text in privacy_policy_copy.use_of_information %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
 
 
-                {% for text in privacy_policy_copy.security %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
+            {% for text in privacy_policy_copy.disclosure_of_info %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.security %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
+            {% for text in privacy_policy_copy.disclosure_of_info %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
+
+            <ul>
+                {% for links in privacy_policy_copy.disclosure_of_info %}
+                {% for link in links.section_list %}
+                <li>{{ link.label }}</li>
                 {% endfor %}
                 {% endfor %}
+            </ul>
+
+            {% for text in privacy_policy_copy.non_marketing %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.non_marketing %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.under_13 %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.under_13 %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.unsubscribe_opt_out %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.unsubscribe_opt_out %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.links_to_other_sites %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.links_to_other_sites %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.european_users %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.european_users %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
 
 
-                {% for text in privacy_policy_copy.acceptnace_of_terms %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
+            {% for text in privacy_policy_copy.security %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.acceptnace_of_terms %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
+            {% for text in privacy_policy_copy.security %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
 
-                {% for text in privacy_policy_copy.how_to_contact %}
-                <h4 class="bold section_title">{{ text.section_title }}</h4>
-                {% endfor %}
 
-                {% for text in privacy_policy_copy.how_to_contact %}
-                {% for para in text.section_paragraph %}
-                <p>{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
+            {% for text in privacy_policy_copy.acceptnace_of_terms %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
 
-                <p class="bold">{{ privacy_policy_copy.telephone_label }}:
-                    <span>{{ privacy_policy_copy.phone }}</span>
-                </p>
-                <p class="bold">{{ privacy_policy_copy.email_label }}:
-                    <span>{{ privacy_policy_copy.email }}</span>
-                </p>
-                <p class="bold">{{ privacy_policy_copy.mailing_label }}:
-                    <span>{{ privacy_policy_copy.address }}</span>
-                </p>
-            </div>
+            {% for text in privacy_policy_copy.acceptnace_of_terms %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.how_to_contact %}
+            <h4 class="bold section_title">{{ text.section_title }}</h4>
+            {% endfor %}
+
+            {% for text in privacy_policy_copy.how_to_contact %}
+            {% for para in text.section_paragraph %}
+            <p>{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
+
+            <p class="bold">{{ privacy_policy_copy.telephone_label }}:
+                <span>{{ privacy_policy_copy.phone }}</span>
+            </p>
+            <p class="bold">{{ privacy_policy_copy.email_label }}:
+                <span>{{ privacy_policy_copy.email }}</span>
+            </p>
+            <p class="bold">{{ privacy_policy_copy.mailing_label }}:
+                <span>{{ privacy_policy_copy.address }}</span>
+            </p>
         </div>
     </div>
-</section>
+</div>
 
 {% endblock %}

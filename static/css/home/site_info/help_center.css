@@ -25,14 +25,15 @@
 
     font-family: "Inter", sans-serif;
     font-weight: 300;
-    font-size: clamp(.80rem, 1.25rem, 3vw);
-    transition: var(--tran-04);
+    font-size: clamp(.80rem, 1.20rem, 3vw);
+    transition: var(--tran-02);
 }
 
 .help_center_box:hover {
     background: var(--text-color);
     border: 4px solid var(--chevron-color);
     color: var(--primary-color-light);
+    transition: var(--tran-02);
 
 }
 

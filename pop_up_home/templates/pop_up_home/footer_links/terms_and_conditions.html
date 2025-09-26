@@ -6,22 +6,20 @@
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="terms_and_container">
-        <div class="footer_links_title">
-            <h2>{{ terms_and_condition_copy.page_title }}</h2>
-        </div>
-        <div class="the_auction_container">
-            <div class="t_and_c_container">
-                <p>{{ terms_and_condition_copy.page_update_title}}: {{ terms_and_condition_copy.page_update_date }}</p>
-                {% for text in terms_and_condition_copy.sections %}
-                {% for para in text.section_paragraph %}
-                <p class="{{para.class }}">{{ para.paragraph }}</p>
-                {% endfor %}
-                {% endfor %}
-            </div>
+<div class="terms_and_container">
+    <div class="footer_links_title">
+        <h2>{{ terms_and_condition_copy.page_title }}</h2>
+    </div>
+    <div class="the_auction_container">
+        <div class="t_and_c_container">
+            <p>{{ terms_and_condition_copy.page_update_title}}: {{ terms_and_condition_copy.page_update_date }}</p>
+            {% for text in terms_and_condition_copy.sections %}
+            {% for para in text.section_paragraph %}
+            <p class="{{para.class }}">{{ para.paragraph }}</p>
+            {% endfor %}
+            {% endfor %}
         </div>
     </div>
-</section>
+    </section>
 
-{% endblock %}
+    {% endblock %}

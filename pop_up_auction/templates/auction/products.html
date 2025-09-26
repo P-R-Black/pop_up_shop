@@ -8,70 +8,68 @@ Products
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>Products</h2>
-        </div>
-        <div class="product_type_container">
-            <div class="product_type_item_select">
-                <ul>
-                    <li {% if not product_type %} class="selected" {% endif %}>
-                        <a href="{% url 'pop_up_auction:products' %}">All</a>
-                    </li>
+<div class="section_container">
+    <div class="page_title">
+        <h2>Products</h2>
+    </div>
+    <div class="product_type_container">
+        <div class="product_type_item_select">
+            <ul>
+                <li {% if not product_type %} class="selected" {% endif %}>
+                    <a href="{% url 'pop_up_auction:products' %}">All</a>
+                </li>
 
-                    {% for c in product_types %}
-                    {% if product_type and product_type.slug == c.slug %}
-                    <li class="selected">
-                        {% else %}
-                    <li>
-                        {% endif %}
-                        <a href="{% url 'pop_up_auction:products' c.slug %}">{{ c.name|capfirst }}</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        <div class="products_container">
-            {% if product %}
-            {% for p in product %}
-            <div class="product_display_container">
-
-                <a href="{{ p.get_absolute_url }}">
-                    <div class="circle_image_container">
-                        <div class="background_circle"></div>
-                        {% for image in p.product_image.all %}
-                        {% if image.is_feature %}
-                        {% if p.product_type.slug == "shoe" %}
-                        <img class="img_fluid_product" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}" />
-                        {% else %}
-                        <img class="img_fluid_product_non_shoe" alt="{{ image.alt_text }}"
-                            src="{{ image.get_image_url }}" />
-                        {% endif %}
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                </a>
-
-
-                <div class="products_desc_container">
-                    {% if p.specs.model_year %}
-                    <h3>{{ p.specs.model_year }}</h3>
+                {% for c in product_types %}
+                {% if product_type and product_type.slug == c.slug %}
+                <li class="selected">
+                    {% else %}
+                <li>
                     {% endif %}
-                    <h3>{{ p.product_title }}</h3>
-                    <h3>{{ p.secondary_product_title }}</h3>
-                </div>
-                <div class="products_button_container">
-                    <a class="button_medium" href="{% url 'pop_up_payment:buy_now' p.slug %}">Buy Now</a>
-                </div>
-            </div>
-            {% endfor %}
-            {% else %}
-            <h4 style="color: #CB3A60">Nothing to display</h4>
-            {% endif %}
+                    <a href="{% url 'pop_up_auction:products' c.slug %}">{{ c.name|capfirst }}</a>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
-</section>
+    <div class="products_container">
+        {% if product %}
+        {% for p in product %}
+        <div class="product_display_container">
+
+            <a href="{{ p.get_absolute_url }}">
+                <div class="circle_image_container">
+                    <div class="background_circle"></div>
+                    {% for image in p.product_image.all %}
+                    {% if image.is_feature %}
+                    {% if p.product_type.slug == "shoe" %}
+                    <img class="img_fluid_product" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}" />
+                    {% else %}
+                    <img class="img_fluid_product_non_shoe" alt="{{ image.alt_text }}"
+                        src="{{ image.get_image_url }}" />
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </a>
+
+
+            <div class="products_desc_container">
+                {% if p.specs.model_year %}
+                <h3>{{ p.specs.model_year }}</h3>
+                {% endif %}
+                <h3>{{ p.product_title }}</h3>
+                <h3>{{ p.secondary_product_title }}</h3>
+            </div>
+            <div class="products_button_container">
+                <a class="button_medium" href="{% url 'pop_up_payment:buy_now' p.slug %}">Buy Now</a>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <h4 style="color: #CB3A60">Nothing to display</h4>
+        {% endif %}
+    </div>
+</div>
 <script>
     $(document).ready(function () {
 

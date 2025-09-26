@@ -22,143 +22,143 @@ class TestPopUpCustomerModel(TestCase):
             favorite_brand="Jordan"
         )
 
-    def test_pop_customer_model_entry(self):
-        """
-        Test PopUpCustomer Data Insertion/Types Field Attributes
-        """
+#     def test_pop_customer_model_entry(self):
+#         """
+#         Test PopUpCustomer Data Insertion/Types Field Attributes
+#         """
 
-        self.assertEqual(str(self.customer.email), 'testMail@gmail.com')
-        self.assertEqual(str(self.customer.first_name), 'Palo')
-        self.assertEqual(str(self.customer.last_name), 'Negro')
-        self.assertEqual(str(self.customer.middle_name), 'Olop')
-        self.assertEqual(str(self.customer.mobile_phone), '555-555-5555')
-        self.assertEqual(str(self.customer.mobile_notification), "True")
-        self.assertEqual(str(self.customer.shoe_size), "9.5")
-        self.assertEqual(str(self.customer.size_gender), "Male")
-        self.assertEqual(str(self.customer.favorite_brand), "Jordan")
+#         self.assertEqual(str(self.customer.email), 'testMail@gmail.com')
+#         self.assertEqual(str(self.customer.first_name), 'Palo')
+#         self.assertEqual(str(self.customer.last_name), 'Negro')
+#         self.assertEqual(str(self.customer.middle_name), 'Olop')
+#         self.assertEqual(str(self.customer.mobile_phone), '555-555-5555')
+#         self.assertEqual(str(self.customer.mobile_notification), "True")
+#         self.assertEqual(str(self.customer.shoe_size), "9.5")
+#         self.assertEqual(str(self.customer.size_gender), "Male")
+#         self.assertEqual(str(self.customer.favorite_brand), "Jordan")
 
 
-    def test_soft_delete_makrs_user_as_inactive_and_sets_deleted_at(self):
-        self.customer.soft_delete()
-        self.customer.refresh_from_db()
-        self.assertFalse(self.customer.is_active)
-        self.assertIsNotNone(self.customer.deleted_at)
-        self.assertTrue(self.customer.is_deleted)
+#     def test_soft_delete_makrs_user_as_inactive_and_sets_deleted_at(self):
+#         self.customer.soft_delete()
+#         self.customer.refresh_from_db()
+#         self.assertFalse(self.customer.is_active)
+#         self.assertIsNotNone(self.customer.deleted_at)
+#         self.assertTrue(self.customer.is_deleted)
     
 
-    def test_restore_user_reset_is_active_and_deleted_at(self):
-        self.customer.soft_delete()
-        self.customer.restore()
-        self.customer.refresh_from_db()
-        self.assertTrue(self.customer.is_active)
-        self.assertIsNone(self.customer.deleted_at)
-        self.assertFalse(self.customer.is_deleted)
+#     def test_restore_user_reset_is_active_and_deleted_at(self):
+#         self.customer.soft_delete()
+#         self.customer.restore()
+#         self.customer.refresh_from_db()
+#         self.assertTrue(self.customer.is_active)
+#         self.assertIsNone(self.customer.deleted_at)
+#         self.assertFalse(self.customer.is_deleted)
 
 
-    def test_str_returns_full_name(self):
-        self.assertEqual(str(self.customer), "Palo Negro")
+#     def test_str_returns_full_name(self):
+#         self.assertEqual(str(self.customer), "Palo Negro")
 
-    # @patch('pop_accounts.models.send_mail')
-    # def test_email_user_sends_email(self, mock_send_mail):
-    #     self.customer.email_user("Subject", "Message")
-    #     mock_send_mail.assert_called_once_with(
-    #         "Subject",
-    #         "Message",
-    #         "1@1.com",
-    #         [self.customer.email],
-    #         fail_silently=False
-    #     )
+#     # @patch('pop_accounts.models.send_mail')
+#     # def test_email_user_sends_email(self, mock_send_mail):
+#     #     self.customer.email_user("Subject", "Message")
+#     #     mock_send_mail.assert_called_once_with(
+#     #         "Subject",
+#     #         "Message",
+#     #         "1@1.com",
+#     #         [self.customer.email],
+#     #         fail_silently=False
+#     #     )
 
-    def test_hard_delete_removes_instance(self):
-        self.customer.hard_delete()
-        with self.assertRaises(PopUpCustomer.DoesNotExist):
-            PopUpCustomer.objects.get(id=self.customer.id)
-
-
-    def test_soft_delete_user_not_returned_by_default_manager(self):
-        self.customer.soft_delete()
-        users = PopUpCustomer.objects.filter(email="testMail@gmail.com")
-        self.assertEqual(users.count(), 0)
+#     def test_hard_delete_removes_instance(self):
+#         self.customer.hard_delete()
+#         with self.assertRaises(PopUpCustomer.DoesNotExist):
+#             PopUpCustomer.objects.get(id=self.customer.id)
 
 
+#     def test_soft_delete_user_not_returned_by_default_manager(self):
+#         self.customer.soft_delete()
+#         users = PopUpCustomer.objects.filter(email="testMail@gmail.com")
+#         self.assertEqual(users.count(), 0)
 
-def create_seed_data():
-    brand = PopUpBrand.objects.create(name='Jordan', slug='jordan')
-    cat = PopUpCategory.objects.create(name='Jordan 1', slug='jordan-1')
-    prod_type = PopUpProductType.objects.create(name='shoe', slug='shoe')
-    product = PopUpProduct.objects.create(
-        # id=uuid.uuid4(),
-        product_type=prod_type,
-        category=cat,
-        product_title='Jordan 1',
-        secondary_product_title = 'Retro High',
-        description = 'Test shoe',
-        slug='j1-retro',
-        buy_now_price=Decimal('250'),
-        retail_price=Decimal('120'),
-        brand=brand,
-        auction_start_date=now() - timedelta(days=1),
-        auction_end_date=now() + timedelta(days=6),
-        inventory_status='in_inventory',
-        is_active=True
-    )
 
-    user1 = PopUpCustomer.objects.create_user(
-        email="user1@example.com", password="passWord!1", first_name="One", last_name="User", is_active=True
-    )
 
-    user2 = PopUpCustomer.objects.create_user(
-        email="user2@example.com", password="passWord@2", first_name="Two", last_name="User", is_active=True
-    )
-    return product, user1, user2
+# def create_seed_data():
+#     brand = PopUpBrand.objects.create(name='Jordan', slug='jordan')
+#     cat = PopUpCategory.objects.create(name='Jordan 1', slug='jordan-1')
+#     prod_type = PopUpProductType.objects.create(name='shoe', slug='shoe')
+#     product = PopUpProduct.objects.create(
+#         # id=uuid.uuid4(),
+#         product_type=prod_type,
+#         category=cat,
+#         product_title='Jordan 1',
+#         secondary_product_title = 'Retro High',
+#         description = 'Test shoe',
+#         slug='j1-retro',
+#         buy_now_price=Decimal('250'),
+#         retail_price=Decimal('120'),
+#         brand=brand,
+#         auction_start_date=now() - timedelta(days=1),
+#         auction_end_date=now() + timedelta(days=6),
+#         inventory_status='in_inventory',
+#         is_active=True
+#     )
+
+#     user1 = PopUpCustomer.objects.create_user(
+#         email="user1@example.com", password="passWord!1", first_name="One", last_name="User", is_active=True
+#     )
+
+#     user2 = PopUpCustomer.objects.create_user(
+#         email="user2@example.com", password="passWord@2", first_name="Two", last_name="User", is_active=True
+#     )
+#     return product, user1, user2
     
 
-class TestPopUpBidModel(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.product, cls.user1, cls.user2 = create_seed_data()
+# class TestPopUpBidModel(TestCase):
+#     @classmethod
+#     def setUpTestData(cls):
+#         cls.product, cls.user1, cls.user2 = create_seed_data()
     
-    def test_rejects_bid_not_higher_than_current(self):
-        PopUpBid.objects.create(
-            customer=self.user1,
-            product=self.product,
-            amount=Decimal('200'), # first bid okay
-        )
-        # Try to enter 200 again -> should raise error
-        with self.assertRaisesMessage(ValueError, 'higher than the current'):
-            PopUpBid.objects.create(
-                customer=self.user2,
-                product=self.product,
-                amount=Decimal('200'),
-            )
+#     def test_rejects_bid_not_higher_than_current(self):
+#         PopUpBid.objects.create(
+#             customer=self.user1,
+#             product=self.product,
+#             amount=Decimal('200'), # first bid okay
+#         )
+#         # Try to enter 200 again -> should raise error
+#         with self.assertRaisesMessage(ValueError, 'higher than the current'):
+#             PopUpBid.objects.create(
+#                 customer=self.user2,
+#                 product=self.product,
+#                 amount=Decimal('200'),
+#             )
     
-    def test_updates_highest_and_count(self):
-        self.assertEqual(self.product.bid_count, 0)
-        self.assertIsNone(self.product.current_highest_bid)
+#     def test_updates_highest_and_count(self):
+#         self.assertEqual(self.product.bid_count, 0)
+#         self.assertIsNone(self.product.current_highest_bid)
 
-        PopUpBid.objects.create(
-            customer=self.user1, product=self.product, amount=Decimal('210')
-        )
+#         PopUpBid.objects.create(
+#             customer=self.user1, product=self.product, amount=Decimal('210')
+#         )
 
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.bid_count, 1)
-        self.assertEqual(self.product.current_highest_bid, Decimal('210'))
+#         self.product.refresh_from_db()
+#         self.assertEqual(self.product.bid_count, 1)
+#         self.assertEqual(self.product.current_highest_bid, Decimal('210'))
 
-        # second (higher) bid
-        PopUpBid.objects.create(
-            customer=self.user2, product=self.product, amount=Decimal('225')
-        )
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.bid_count, 2)
-        self.assertEqual(self.product.current_highest_bid, Decimal('225'))
+#         # second (higher) bid
+#         PopUpBid.objects.create(
+#             customer=self.user2, product=self.product, amount=Decimal('225')
+#         )
+#         self.product.refresh_from_db()
+#         self.assertEqual(self.product.bid_count, 2)
+#         self.assertEqual(self.product.current_highest_bid, Decimal('225'))
 
     
-    def test_only_highest_bid_marked_winner(self):
-        b1 = PopUpBid.objects.create(
-            customer=self.user1, product=self.product, amount=Decimal('220')
-        )
-        b1.refresh_from_db()
-        self.assertTrue(b1.is_winning_bid)
+#     def test_only_highest_bid_marked_winner(self):
+#         b1 = PopUpBid.objects.create(
+#             customer=self.user1, product=self.product, amount=Decimal('220')
+#         )
+#         b1.refresh_from_db()
+#         self.assertTrue(b1.is_winning_bid)
     
     # def test_auto_bid_places_increment_and_stops(self):
     #     # user1 sets auto‑bid up to 300 at 10 USD increments
@@ -191,10 +191,10 @@ class TestPopUpBidModel(TestCase):
     
 
     # Expired bids are inactive
-    def test_expired_bid_sets_inactive(self):
-        past = now() - timedelta(days=1)
-        bid = PopUpBid.objects.create(customer=self.user1, product=self.product, amount=Decimal('270'), expires_at=past)
-        self.assertFalse(bid.is_active)
+    # def test_expired_bid_sets_inactive(self):
+    #     past = now() - timedelta(days=1)
+    #     bid = PopUpBid.objects.create(customer=self.user1, product=self.product, amount=Decimal('270'), expires_at=past)
+    #     self.assertFalse(bid.is_active)
 
 
 

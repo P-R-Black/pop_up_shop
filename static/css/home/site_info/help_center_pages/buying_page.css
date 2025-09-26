@@ -1,6 +1,6 @@
 .help_pages_container {
     display: grid;
-    grid-template-columns: 25% 75%;
+    grid-template-columns: 30% 70%;
 }
 
 .help_links {
@@ -16,7 +16,8 @@
 .help_links li a {
     color: var(--light-blue-links);
     font-family: "Inter", sans-serif;
-    font-size: clamp(.80rem, 1.15rem, 4.5vw);
+    font-size: clamp(.75rem, 1.10rem, 4.25vw);
+
     text-decoration: underline;
 }
 

@@ -2,44 +2,40 @@
 {% load static %}
 
 
-{% block title %}
-Payment Help
-{% endblock %}
+{% block title %}Payment Help{% endblock %}
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="terms_and_container">
-        <div class="footer_links_title">
-            <h2>{{ help_center_page_payment.page_title }}</h2>
-        </div>
-        <div class="the_auction_container">
-            <div class="help_pages_container">
-                <div class="help_nav_container">
-                    <ul class="help_links">
-                        {% for l in help_center_page_payment.side_link_links %}
-                        <li><a href="{{ l.url }}">{{ l.label }}</a></li>
-                        {% endfor %}
-                    </ul>
+<div class="terms_and_container">
+    <div class="footer_links_title">
+        <h2>{{ help_center_page_payment.page_title }}</h2>
+    </div>
+    <div class="the_auction_container">
+        <div class="help_pages_container">
+            <div class="help_nav_container">
+                <ul class="help_links">
+                    {% for l in help_center_page_payment.side_link_links %}
+                    <li><a href="{{ l.url }}">{{ l.label }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="help_content_container">
+                {% for text in help_center_page_payment.sections %}
+                <div class="help_title_container" id="{{ text.id }}">
+                    <h3>{{ text.section_title }}</h3>
                 </div>
-                <div class="help_content_container">
-                    {% for text in help_center_page_payment.sections %}
-                    <div class="help_title_container" id="{{ text.id }}">
-                        <h3>{{ text.section_title }}</h3>
-                    </div>
-                    <div class="help_content">
-                        {% for para in text.section_paragraph %}
-                        {% if para.paragraph_title %}
-                        <h4 class="bold section_title">{{ para.paragraph_title }}</h4>
-                        {% endif %}
-                        <p>{{ para.paragraph }}</p>
-                        {% endfor %}
-                    </div>
+                <div class="help_content">
+                    {% for para in text.section_paragraph %}
+                    {% if para.paragraph_title %}
+                    <h4 class="bold section_title">{{ para.paragraph_title }}</h4>
+                    {% endif %}
+                    <p>{{ para.paragraph }}</p>
                     {% endfor %}
                 </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-</section>
+</div>
 
 {% endblock %}

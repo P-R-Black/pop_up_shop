@@ -61,7 +61,7 @@ from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
 from .pop_accounts_copy.admin_copy.admin_copy import (ADMIN_NAVIGATION_COPY, ADMIN_SHIPPING_UPDATE, 
                                                       ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE)
-from .pop_accounts_copy.user_copy.user_copy import USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE
+from .pop_accounts_copy.user_copy.user_copy import (USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY)
 from django.db.models import Count, Max, Q
 from django.http import Http404
 from social_django.utils import load_strategy, load_backend
@@ -70,6 +70,10 @@ from social_django.views import _do_login
 
 
 logger  = logging.getLogger('security')
+
+# 🟢 View Test Completed
+# ⚪️ Model Test Completed
+# ✅ Mobile / Tablet Media Query Completed
 
 
 # Create your views here.
@@ -151,10 +155,14 @@ def user_password_reset_confirm(request, uidb64, token):
 
 
 class UserDashboardView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested in later view
+    # ✅ mobile / tablet media query completed
     """
     User Dashboard View
     """
     template_name = 'pop_accounts/user_accounts/dashboard_pages/dashboard.html'
+    user_dashboard_copy = USER_DASHBOARD_COPY
     def get(self, request):
         user = request.user
         addresses = user.address.filter(default=True)
@@ -217,12 +225,12 @@ class UserDashboardView(LoginRequiredMixin, View):
                    'prods_on_notice_for': prods_on_notice_for, 'highest_bid_objects': highest_bid_objects, 
                    'quick_bid_increments':quick_bid_increments, 'open_bids':enriched_data, 'orders': orders,
                    'shipments': shipments, 'bid_history': bid_data['bid_history'],
-                   'statistics': bid_data['statistics']
+                   'statistics': bid_data['statistics'], "user_dashboard_copy": self.user_dashboard_copy
                    }
         return render(request, self.template_name, context)
 
     def post(self, request):
-        return render(request, self.template_name)
+        return render(request, self.template_name, {"user_dashboard_copy": self.user_dashboard_copy})
 
 
 

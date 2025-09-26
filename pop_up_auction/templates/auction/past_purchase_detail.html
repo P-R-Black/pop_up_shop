@@ -9,85 +9,83 @@ Auction
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>{{ item.product_title }}</h2>
-            <h3>{{ item.secondary_product_title }}</h3>
-            <h4>{{ product.specs.model_year }}</h4>
-        </div>
-        <div class="product_details_container">
-            <div class="product_details_container_left">
-                <div class="pd_circle_image_container">
-                    <div class="pd_background_circle"></div>
+<div class="section_container">
+    <div class="page_title">
+        <h2>{{ item.product_title }}</h2>
+        <h3>{{ item.secondary_product_title }}</h3>
+        <h4>{{ product.specs.model_year }}</h4>
+    </div>
+    <div class="product_details_container">
+        <div class="product_details_container_left">
+            <div class="pd_circle_image_container">
+                <div class="pd_background_circle"></div>
 
 
-                    {% for image in product.product_image.all %}
-                    {% if image.is_feature %}
-                    <img class="img_fluid_product_details" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}"
-                        alt="{{ image.image.alt_text}}" />
-                    {% endif %}
-                    {% endfor %}
+                {% for image in product.product_image.all %}
+                {% if image.is_feature %}
+                <img class="img_fluid_product_details" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}"
+                    alt="{{ image.image.alt_text}}" />
+                {% endif %}
+                {% endfor %}
 
-                </div>
-            </div>
-        </div>
-        <div class="lower_auction_container">
-            <div class="prod_auct_desc_container">
-                <h3>Product Description</h3>
-                <p>
-                    {{ product.description }}
-                </p>
-            </div>
-
-            <div class="prod_auct_details_container">
-
-                <div class="auct_details_style_container">
-
-                    <h4 class="prod_auct_details_title">Style</h4>
-                    <p>{{ product.specs.style_number }}</p>
-                </div>
-                <div class="auct_details_colorway_container">
-                    <h4 class="prod_auct_details_title">Colorway</h4>
-                    <p>{{ product.specs.colorway }}</p>
-                </div>
-                <div class="auct_details_release_container">
-
-                    <h4 class="prod_auct_details_title">Release Date</h4>
-                    <p>{{ product.specs.release_date }}</p>
-                </div>
-                <div class="auct_details_retail_container">
-                    <h4 class="prod_auct_details_title">Retail</h4>
-                    <p>${{ product.retail_price }}</p>
-                </div>
-
-            </div>
-
-            <div class="verified_return_container">
-                <div class="databox_medium_dark">
-                    <div class="databox_medium_dark_title_box">
-                        <i class='bx bx-award'></i>
-                        <h3>100% Guaranteed Authentic</h3>
-                    </div>
-                    <p>
-                        Always real. Really really real! If we don't use resellers. We buy it from the manufacturer and
-                        resell.
-                    </p>
-                    <a href="/">Learn More</a>
-                </div>
-                <div class="databox_medium_dark">
-                    <div class="databox_medium_dark_title_box">
-                        <i class="fa-solid fa-arrow-rotate-left"></i>
-                        <h3>Return Policy</h3>
-                    </div>
-                    <p>
-                        Learn more about our return policy by clicking on the link below.
-                    </p>
-                    <a href="/">Learn More</a>
-                </div>
             </div>
         </div>
     </div>
-</section>
+    <div class="lower_auction_container">
+        <div class="prod_auct_desc_container">
+            <h3>Product Description</h3>
+            <p>
+                {{ product.description }}
+            </p>
+        </div>
+
+        <div class="prod_auct_details_container">
+
+            <div class="auct_details_style_container">
+
+                <h4 class="prod_auct_details_title">Style</h4>
+                <p>{{ product.specs.style_number }}</p>
+            </div>
+            <div class="auct_details_colorway_container">
+                <h4 class="prod_auct_details_title">Colorway</h4>
+                <p>{{ product.specs.colorway }}</p>
+            </div>
+            <div class="auct_details_release_container">
+
+                <h4 class="prod_auct_details_title">Release Date</h4>
+                <p>{{ product.specs.release_date }}</p>
+            </div>
+            <div class="auct_details_retail_container">
+                <h4 class="prod_auct_details_title">Retail</h4>
+                <p>${{ product.retail_price }}</p>
+            </div>
+
+        </div>
+
+        <div class="verified_return_container">
+            <div class="databox_medium_dark">
+                <div class="databox_medium_dark_title_box">
+                    <i class='bx bx-award'></i>
+                    <h3>100% Guaranteed Authentic</h3>
+                </div>
+                <p>
+                    Always real. Really really real! If we don't use resellers. We buy it from the manufacturer and
+                    resell.
+                </p>
+                <a href="/">Learn More</a>
+            </div>
+            <div class="databox_medium_dark">
+                <div class="databox_medium_dark_title_box">
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                    <h3>Return Policy</h3>
+                </div>
+                <p>
+                    Learn more about our return policy by clicking on the link below.
+                </p>
+                <a href="/">Learn More</a>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

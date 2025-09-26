@@ -21,7 +21,8 @@ urlpatterns = [
     path('terms/', views.terms_and_conditions, name='terms'),
     path('privacy/', views.privacy_policy, name='privacy'),
     path('privacy-choices/', views.privacy_choice, name='privacy_choices'),
-    path('sitemap.xml/', sitemap, {'sitemaps': sitemaps_dict}, name="django.contrib.site"),
+    path('site-map/', views.site_map, name='site-map'),
+    path('sitemap.xml/', sitemap, {'sitemaps': sitemaps_dict}, name="django.contrib.site.views.sitemap"),
     # help center pages
     path('buying-help/', views.buying_help, name='buying-help'),
     path('selling-help/', views.selling_help, name='selling-help'),

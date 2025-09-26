@@ -6,28 +6,7 @@
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
-@media screen and (min-height: 1000px) {
-    /* .auction_section {
-        border: 5px solid rgb(213, 105, 200);
-    }
-
-    body {
-        height: 100vh;
-
-        background-color: purple;
-    } */
-
-    /* .container {
-        height: auto;
-        border: 2px solid red;
-    } */
-
-
-    /* .auction_section {
-        min-height: auto;
-        background-color: white;
-    } */
-}
+@media screen and (min-height: 1000px) {}
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */

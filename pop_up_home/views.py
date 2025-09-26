@@ -7,10 +7,14 @@ from .pop_up_home_copy.site_info_copy.site_info_copy import (
     ABOUT_US_COPY, HOW_IT_WORKS_COPY, VERIFICATION_COPY, CONTACT_US_COPY, HELP_CENTER_COPY, 
     HELP_CENTER_PAGE_BUYING, HELP_CENTER_PAGE_SELLING, HELP_CENTER_PAGE_ACCOUNT, HELP_CENTER_PAGE_SHIPPING,
     HELP_CENTER_PAGE_PAYMENT, HELP_CENTER_PAGE_FEE, TERMS_AND_CONDITIONS_COPY, PRIVACY_POLICY_COPY,
-    PRIVACY_CHOICES_COPY)
+    PRIVACY_CHOICES_COPY, SITE_MAP_COPY)
 
 from .forms import ContactForm
 import requests
+
+
+# 🟢 View Test Completed
+# ✅ mobile / tablet media query done
 
 
 # Create your views here.
@@ -19,24 +23,28 @@ def home_page(request):
 
 # site and usage info
 def about_us(request):
-    # ✅ mobile / tablet done
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     
     about_us_copy = ABOUT_US_COPY
     return render(request, 'pop_up_home/site_info/about_us.html', {'about_us_copy': about_us_copy})
 
 def how_it_works(request):
-    # ✅ mobile / tablet done
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     how_it_works_copy = HOW_IT_WORKS_COPY
     return render(request, 'pop_up_home/site_info/how_it_works.html', {"how_it_works_copy": how_it_works_copy })
 
 def verification(request):
-    # ✅ mobile / tablet done
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     verification_copy = VERIFICATION_COPY
     return render(request, 'pop_up_home/site_info/verification.html', {"verification_copy": verification_copy})
 
 
 def contact_us(request):
-    # ✅ mobile / tablet done
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     contact_us_copy = CONTACT_US_COPY
     recaptcha_public_key=os.environ.get('RECAPTCHA_PUBLIC_KEY')
 
@@ -70,63 +78,94 @@ def contact_us(request):
         )
 
 def help_center(request):
-    # ✅ mobile / tablet done
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     help_center_copy = HELP_CENTER_COPY
     return render(request, 'pop_up_home/site_info/help_center.html', {'help_center_copy': help_center_copy})
 
+
+def site_map(request):
+    site_map_copy = SITE_MAP_COPY
+    return render(request, 'pop_up_home/site_info/site_map.html', {'site_map_copy': site_map_copy})
+
+
 def terms_and_conditions(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     terms_and_condition_copy = TERMS_AND_CONDITIONS_COPY
     return render(request, 'pop_up_home/footer_links/terms_and_conditions.html', 
                             { "terms_and_condition_copy": terms_and_condition_copy}
                             )
 
 def privacy_policy(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     privacy_policy_copy = PRIVACY_POLICY_COPY
     return render(request, 'pop_up_home/footer_links/privacy.html', {
         "privacy_policy_copy": privacy_policy_copy})
 
+
 def privacy_choice(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     privacy_choices = PRIVACY_CHOICES_COPY
     # Need to add functionality for user to opt out of tracking
     return render(request, 'pop_up_home/footer_links/privacy_choices.html', {
         "privacy_choices": privacy_choices})
 
+
+
 # help_center_pages
 def buying_help(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     help_center_page_buying = HELP_CENTER_PAGE_BUYING
     return render(request, 'pop_up_home/site_info/help_center_pages/buying_page.html', 
                   {"help_center_page_buying": help_center_page_buying})
 
 def selling_help(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     help_center_page_selling = HELP_CENTER_PAGE_SELLING
     return render(request, 'pop_up_home/site_info/help_center_pages/selling_page.html',
                   {"help_center_page_selling": help_center_page_selling})
 
 def account_help(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     help_center_page_account = HELP_CENTER_PAGE_ACCOUNT
     return render(request, 'pop_up_home/site_info/help_center_pages/my_account_page.html', {
         "help_center_page_account":help_center_page_account
     })
 
 def shipping_help(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     help_center_page_shipping = HELP_CENTER_PAGE_SHIPPING
     return render(request, 'pop_up_home/site_info/help_center_pages/shipping_page.html', {
         "help_center_page_shipping":help_center_page_shipping
     })
 
 def payment_help(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     help_center_page_payment = HELP_CENTER_PAGE_PAYMENT
     return render(request, 'pop_up_home/site_info/help_center_pages/payment_options_page.html',
                   {"help_center_page_payment": help_center_page_payment})
 
 def fees_help(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     help_center_page_fee = HELP_CENTER_PAGE_FEE
     return render(request, 'pop_up_home/site_info/help_center_pages/fees_page.html', {
         "help_center_page_fee": help_center_page_fee
     })
 
 def friend_invite_success(request):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Done
     return render(request, 'pop_up_home/confirmations/friend_invite_success.html')
+
 
 def friend_invite_failure(request):
     return render(request, 'pop_up_home/error/friend_invite_fail.html')

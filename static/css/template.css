@@ -42,7 +42,8 @@
 
 
 body {
-    min-height: auto;
+    /* min-height: auto; */
+    height: 100%;
     background: var(--body-color);
     transition: var(--tran-02);
 }
@@ -72,33 +73,30 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-
-
-    border: 2px solid yellowgreen;
 }
 
-.auction_section {
+
+/* .auction_section {
     background: var(--body-color);
     flex: 1;
     min-height: auto;
 
-    border: 5px solid purple;
-}
-
-
-/* .main-content {
-    flex: 1;
 } */
 
+
+
 .container {
-    left: 16rem;
+    background: var(--body-color);
+    flex: 1;
+    left: 15rem;
     min-height: auto;
-    overflow-y: scroll;
-    padding: 0 .5rem;
+    /* overflow-y: scroll; */
+    padding: 0 2rem;
     position: relative;
     transition: var(--tran-05);
-    width: var(--container-width-lg);
+    width: calc(100% - 15rem);
 }
+
 
 .sidebar.close~.container,
 .sidebar.close~.footer_container {
@@ -348,13 +346,13 @@ body {
     color: var(--primary-color-light);
     cursor: pointer;
     display: flex;
-    font-size: clamp(.70rem, .95rem, 2vw);
+    font-size: clamp(.95rem, .1.1rem, 2vw);
     height: 2.25rem;
     justify-content: center;
-    padding: 0 .5rem 0 .5rem;
+    padding: 1.5rem .5rem;
     text-align: center;
     transition: var(--tran-03);
-    width: clamp(9rem, 14rem, 17vw)
+    width: clamp(11rem, 16rem, 19vw)
 }
 
 .button_extra_long:hover {
@@ -1168,83 +1166,4 @@ p.email_provided_signin_popup {
 /* ===== end forgot_password_email_check_container | displayed after user enters email address for forgotten password ===== */
 
 
-
-
 /* ====== End of Sign Up ====== */
-
-
-/*  ====== Invite Friend Modal ===== */
-
-/* Modal background */
-.inviteFriendModal {
-    /* Hidden by default */
-    display: none;
-
-    /* Enable scroll if needed */
-    position: fixed;
-    z-index: 1000;
-    left: 20%;
-    top: 0;
-
-    width: 75%;
-    height: 90%;
-    overflow: auto;
-
-    /* Black background with opacity */
-    background-color: rgba(0, 0, 0, 0.4);
-
-}
-
-/* Modal content */
-.invite_friend_modal_content {
-    background-color: #fff;
-    /* margin: 15% auto; */
-    /* Center it */
-    padding: 1rem 1rem;
-    border: 1px solid #888;
-    width: 65%;
-    /* Adjust width */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-
-    border: 2px solid var(--text-color);
-
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    height: 90%;
-    margin: 2.5% auto;
-}
-
-
-.invite_friend_form_container {
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-    margin-top: 4rem;
-    overflow: hidden;
-    width: 100%;
-    position: relative;
-}
-
-.invite_friend_form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: .5rem;
-    width: 100%;
-}
-
-
-.friendInviteInput {
-    background-color: transparent;
-    border: 2px solid var(--text-color);
-    border-radius: 5px;
-    color: var(--text-color);
-    font-size: 1rem;
-    height: 2rem;
-    padding-left: .5rem;
-    width: 60%
-}
-
-/* ==================================== End of Invite Friend Modal =================================== */

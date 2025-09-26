@@ -2,16 +2,17 @@
 @media screen and (max-width: 1350px) {}
 
 /* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+
+
 @media screen and (max-width: 1245px) {}
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
-@media screen and (max-width: 1000px) {
-    .personal_interest_notice_container {
-        grid-template-columns: repeat(1, 100%);
-    }
+/* @media screen and (min-height: 1000px) {} */
 
-}
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {}
 
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
@@ -21,21 +22,22 @@
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
 
 
-@media screen and (max-width: 640px) {}
+@media screen and (max-width: 640px) {
+
+
+    .site_map_container ol li {
+        display: list-item;
+
+    }
+
+
+    .site_map_container ul li {
+        display: list-item;
+    }
+
+
+}
 
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
-@media screen and (max-width: 450px) {
-
-    .the_dashboard_container {
-        margin-bottom: -8rem;
-    }
-
-    .size_options_container {
-        grid-template-columns: repeat(3, 40%);
-    }
-
-    #dashboardPaymentEdit {
-        width: 45%;
-    }
-}
+@media screen and (max-width: 450px) {}

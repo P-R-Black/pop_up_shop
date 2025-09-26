@@ -23,19 +23,15 @@
 }
 
 .login_input_container {
-    /* border: 2px solid yellow; */
     width: 35%;
 }
 
 .login_input_container form {
     align-items: center;
-    /* border: 2px solid pink; */
     display: flex;
     flex-direction: column;
     gap: 1rem;
     justify-content: center;
-
-
 }
 
 .login_input {

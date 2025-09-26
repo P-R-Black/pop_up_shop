@@ -6,12 +6,11 @@
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
-@media screen and (max-width: 1000px) {
-    .personal_interest_notice_container {
-        grid-template-columns: repeat(1, 100%);
-    }
+@media screen and (min-height: 1000px) {}
 
-}
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {}
 
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
@@ -21,21 +20,26 @@
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
 
 
-@media screen and (max-width: 640px) {}
+@media screen and (max-width: 640px) {
+
+
+    /* 
+    .page_title h2 {
+        text-align: center;
+    } */
+
+}
 
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
 @media screen and (max-width: 450px) {
 
-    .the_dashboard_container {
-        margin-bottom: -8rem;
+    .t_and_c_container ol li {
+        color: var(--chevron-color);
+        display: list-item;
+        list-style-type: decimal;
+
     }
 
-    .size_options_container {
-        grid-template-columns: repeat(3, 40%);
-    }
 
-    #dashboardPaymentEdit {
-        width: 45%;
-    }
 }

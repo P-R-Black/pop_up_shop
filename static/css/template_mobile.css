@@ -11,15 +11,29 @@
 @media screen and (max-width: 1245px) {
     .container {
         border: 2px solid red;
-        width: calc(100% - 16rem);
+        /* min-width: var(--container-width-lg); */
         min-height: auto;
     }
+
+    /* =============== SIGN UP MODAL =============== */
+    .img_sign_up {
+        transform: rotate(-50deg);
+        height: 50%;
+    }
+
+    /* =============== END OF SIGN UP MODAL =============== */
 
 }
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
-@media screen and (min-height: 1000px) {}
+/* @media screen and (min-height: 1000px) {
+    .container {
+        border: 2px solid gold;
+        min-height: auto;
+
+    }
+} */
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
@@ -28,8 +42,14 @@
     .container {
         border: 2px solid green;
         min-height: auto;
+        /* left: 15rem;
+        width: calc(100% - 15rem); */
+
 
     }
+
+
+
 
 
 
@@ -86,11 +106,14 @@
 
     .sign_up_image_container {
         width: 40%;
+
+        display: flex;
+        align-items: center;
     }
 
     .img_sign_up {
         transform: rotate(-90deg);
-        height: 45%;
+        height: 43%;
         margin-left: -5rem;
     }
 
@@ -100,11 +123,12 @@
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
 @media screen and (max-width: 800px) {
+
     .container {
         border: 2px solid blue;
-        /* min-height: auto; */
 
     }
+
 
 
 
@@ -128,8 +152,8 @@
 @media screen and (max-width: 640px) {
     .container {
         border: 2px solid pink;
-        width: 100%;
-        margin-left: -16rem;
+        min-width: 100vw;
+        margin-left: -15rem;
     }
 
 
@@ -137,6 +161,8 @@
     .page_title h2 {
         text-align: center;
     }
+
+
 
 
 
@@ -193,6 +219,19 @@
     .container {
         border: 2px solid #28f1c9;
         /* width: 100%; */
+    }
+
+
+    .recaptcha-wrapper {
+        transform: scale(0.85);
+        /* shrink */
+        transform-origin: 0 0;
+    }
+
+    .g-recaptcha {
+        transform: scale(0.85);
+        /* shrink */
+        transform-origin: 0 0;
     }
 
 

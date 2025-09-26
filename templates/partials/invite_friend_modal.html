@@ -1,0 +1,26 @@
+{% load static %}
+<!-- Invite Friend Modal -->
+<div class="inviteFriendModal fade" id="inviteFriendModal" tabindex="-22" aria-labelledby="bidModalLabel"
+    aria-hidden="true">
+    <div class="invite_friend_modal_content">
+        <div class="modal_header">
+            <div class="empty_div"></div>
+            <button type="button" class="btn-close closeInviteModal" aria-label="Close">X</button>
+        </div>
+        <div class="invite_friend_form_container">
+            <div class="sign_up_modal_title">
+                <h3>Invite a Friend</h3>
+                <p>Provide your friend's name and email, and we'll do the rest.</p>
+            </div>
+            <form method="POST" action="{% url 'pop_up_emails:invite' %}" class="invite_friend_form">
+                {% csrf_token %}
+                <input type="text" class="friendInviteInput" name="friend_name" placeholder="Friend's Name">
+                <input type="email" class="friendInviteInput" name="friend_email" placeholder="Friend's Email">
+
+                <input type="submit" class="button_small" value="Submit">
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End of Invite Friend Modal -->
+</nav>

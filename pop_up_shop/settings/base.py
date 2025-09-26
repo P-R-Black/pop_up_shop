@@ -303,10 +303,10 @@ CELERY_TIMEZONE = 'America/New_York'  # Set to your project's timezone
 PASSWORD_RESET_TIMEOUT = 7200 # 2-hour timeout (in seconds)
 
 # Email Setting
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # SMTP Configuratoin
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 
 EMAIL_HOST_USER=os.environ.get('EMAIL_HOST_USER')

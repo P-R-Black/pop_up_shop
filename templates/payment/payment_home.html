@@ -7,650 +7,641 @@ Payment
 {% endblock %}
 
 {% block main %}
-<section class="product_buy_section container">
-    {% if user.is_authenticated %}
-    <div class="section_container">
-        <div class="page_title">
-            <h2><span>The Pop Up</span> Checkout</h2>
-        </div>
-        <div class="buy_product_container">
-            <div class="checkout_container_left">
-                <div class="checkbout_container">
-                    <div class="checkbout_container_title">
-                        <h3>Checkout</h3>
-                    </div>
+{% if user.is_authenticated %}
+<div class="section_container">
+    <div class="page_title">
+        <h2><span>The Pop Up</span> Checkout</h2>
+    </div>
+    <div class="buy_product_container">
+        <div class="checkout_container_left">
+            <div class="checkbout_container">
+                <div class="checkbout_container_title">
+                    <h3>Checkout</h3>
+                </div>
 
-                    <div class="checkout_billing_container">
-                        <h3>Billing Address</h3>
-                        {% if not billing %}
-                        <div class="shipping_name_container">
-                            <input type="hidden" name="billing_address" id="billingAddressData"
-                                value="{{ address.id}}" />
-                            {% if address.first_name == None or not address.first_name %}
-                            <h4 class="billing_to_name">{{ user }}</h4>
-                            {% else %}
-                            {% if address.prefix %}
-                            <h4 class="billing_name_prefix">{{ address.prefix }}&nbsp</h4>
-                            {% endif %}
-                            <h4 class="billing_to_first_name">{{ address.first_name }}&nbsp</h4>
-                            {% if address.middle_name %}
-                            <h4 class="billing_to_middle_name">{{ address.middle_name }}&nbsp</h4>
-                            {% endif %}
-                            <h4 class="billing_to_last_name">{{ address.last_name }}&nbsp</h4>
-                            {% if address.suffix %}
-                            <h4 class="billing_to_suffix">{{address.suffix }}</h4>
-                            {% endif %}
-                            {% endif %}
-                        </div>
-                        <h4 class="billing_street_address" id="billingAddressLine">{{ address.address_line }}</h4>
-                        {% if address.address_line2 %}
-                        <h4 class="billing_street_address" id="billingAddressLine2">{{ address.address_line2 }}</h4>
-                        {% endif %}
-                        {% if address.apartment_suite_number and address.apartment_suite_number != "N/A"%}
-                        <h4>Apt/Ste: <span class="billing_street_address" id="billingAptSuite">
-                                {{ address.apartment_suite_number }}
-                            </span>
-                        </h4>
-                        {% endif %}
-                        <div class="shipping_city_state_zip_container" id="shipping_city_state_zip">
-                            <h4 id="billing_town_city">{{ address.town_city }},&nbsp</h4>
-                            <h4 id="billing_state">{{ address.state }}&nbsp</h4>
-                            <h4 id="billing_postcode">{{ address.postcode}}</h4>
-                        </div>
-                        <h4 class="billing_country">United States</h4>
-                        {% if user.mobile_phone %}
-                        <h4 class="billing_phone_number" value="{{ user.mobile_phone }}">{{ user.mobile_phone }}</h4>
-                        {% elif address.phone_number %}
-                        <h4 class="billing_phone_number" value="{{  address.phone_number }}">{{ address.phone_number }}
-                        </h4>
-                        {% endif %}
-
+                <div class="checkout_billing_container">
+                    <h3>Billing Address</h3>
+                    {% if not billing %}
+                    <div class="shipping_name_container">
+                        <input type="hidden" name="billing_address" id="billingAddressData" value="{{ address.id}}" />
+                        {% if address.first_name == None or not address.first_name %}
+                        <h4 class="billing_to_name">{{ user }}</h4>
                         {% else %}
-                        <div class="shipping_name_container">
-                            <input type="hidden" name="billing_address" id="billingAddressData"
-                                value="{{ billing.id}}" />
-                            {% if billing.first_name == None or not billing.first_name %}
-                            <h4 class="billing_to_name">{{ user }}</h4>
-                            {% else %}
-                            {% if billing.prefix %}
-                            <h4 class="billing_name_prefix">{{ billing.prefix }}&nbsp</h4>
-                            {% endif %}
-                            <h4 class="billing_to_first_name">{{ billing.first_name }}&nbsp</h4>
-                            {% if billing.middle_name %}
-                            <h4 class="billing_to_middle_name">{{ billing.middle_name }}&nbsp</h4>
-                            {% endif %}
-                            <h4 class="billing_to_last_name">{{ billing.last_name }}&nbsp</h4>
-                            {% if billing.suffix %}
-                            <h4 class="billing_to_suffix">{{billing.suffix }}</h4>
-                            {% endif %}
-                            {% endif %}
-                        </div>
-                        <h4 class="billing_street_address" id="billingAddressLine">{{ billing.address_line }}</h4>
-                        {% if address.address_line2 %}
-                        <h4 class="billing_street_address" id="billingAddressLine2">{{ billing.address_line2 }}</h4>
+                        {% if address.prefix %}
+                        <h4 class="billing_name_prefix">{{ address.prefix }}&nbsp</h4>
                         {% endif %}
-                        {% if billing.apartment_suite_number and billing.apartment_suite_number != "N/A"%}
-                        <h4>Apt/Ste: <span class="billing_street_address" id="billingAptSuite">
-                                {{ address.apartment_suite_number }}
-                            </span>
-                        </h4>
+                        <h4 class="billing_to_first_name">{{ address.first_name }}&nbsp</h4>
+                        {% if address.middle_name %}
+                        <h4 class="billing_to_middle_name">{{ address.middle_name }}&nbsp</h4>
                         {% endif %}
-                        <div class="shipping_city_state_zip_container" id="shipping_city_state_zip">
-                            <h4 id="billing_town_city">{{ billing.town_city }},&nbsp</h4>
-                            <h4 id="billing_state">{{ billing.state }}&nbsp</h4>
-                            <h4 id="billing_postcode">{{ billing.postcode}}</h4>
-                        </div>
-                        <h4 class="billing_country">United States</h4>
-                        {% if user.phone_number %}
-                        <h4 class="billing_phone_number" value="{{ user.mobile_phone }}">{{ user.mobile_phone }}</h4>
-                        {% elif billing.phone_number %}
-                        <h4 class="billing_phone_number" value="{{  address.phone_number }}">{{ billing.phone_number }}
-                        </h4>
+                        <h4 class="billing_to_last_name">{{ address.last_name }}&nbsp</h4>
+                        {% if address.suffix %}
+                        <h4 class="billing_to_suffix">{{address.suffix }}</h4>
                         {% endif %}
                         {% endif %}
-
-                        <div class="billing_choices_container">
-                            <form action="{% url 'pop_up_payment:payment_home' %}" class="select_billing_address_form"
-                                method="POST">
-                                {% csrf_token %}
-                                <input type="checkbox" name="use_billing_as_shipping" value="true"
-                                    id="same_as_shipping_check">
-
-
-                                <label for="same_as_shipping_check" class="confirm_billing">Same as Shipping Address
-                                </label>
-                            </form>
-                            <a href="{% url 'pop_up_payment:billing_address' %}" class="address_change_button_long">
-                                Change Billing Address
-                            </a>
-                            {% comment %}
-                            <button class="address_change_button_long" id="billingAddressChangeButton">Change Billing
-                                Address</button>
-                            {% endcomment %}
-                        </div>
                     </div>
-
-                    {% if messages %}
-                    <div class="alert">{{ message }}</div>
+                    <h4 class="billing_street_address" id="billingAddressLine">{{ address.address_line }}</h4>
+                    {% if address.address_line2 %}
+                    <h4 class="billing_street_address" id="billingAddressLine2">{{ address.address_line2 }}</h4>
+                    {% endif %}
+                    {% if address.apartment_suite_number and address.apartment_suite_number != "N/A"%}
+                    <h4>Apt/Ste: <span class="billing_street_address" id="billingAptSuite">
+                            {{ address.apartment_suite_number }}
+                        </span>
+                    </h4>
+                    {% endif %}
+                    <div class="shipping_city_state_zip_container" id="shipping_city_state_zip">
+                        <h4 id="billing_town_city">{{ address.town_city }},&nbsp</h4>
+                        <h4 id="billing_state">{{ address.state }}&nbsp</h4>
+                        <h4 id="billing_postcode">{{ address.postcode}}</h4>
+                    </div>
+                    <h4 class="billing_country">United States</h4>
+                    {% if user.mobile_phone %}
+                    <h4 class="billing_phone_number" value="{{ user.mobile_phone }}">{{ user.mobile_phone }}</h4>
+                    {% elif address.phone_number %}
+                    <h4 class="billing_phone_number" value="{{  address.phone_number }}">{{ address.phone_number }}
+                    </h4>
                     {% endif %}
 
-                    <div class="checkout_shipping_container">
-                        <h3>Shipping to</h3>
-                        {% if selected_address %}
-                        {% with selected_address as address %}
-                        <div class="shipping_name_container">
-                            <input type="hidden" name="shipping_address" id="shippingAddressData"
-                                value="{{ address.id}}" />
-
-                            {% if address.first_name == None or not address.first_name %}
-                            <h4 class="shipping_to_name">{{ user }}</h4>
-                            {% else %}
-                            {% if address.prefix %}
-                            <h4 class="shipping_name_prefix">{{ address.prefix }}&nbsp</h4>
-                            {% endif %}
-                            <h4 class="shipping_to_first_name">{{ address.first_name }}&nbsp</h4>
-                            {% if address.middle_name %}
-                            <h4 class="shipping_to_middle_name">{{ address.middle_name }}&nbsp</h4>
-                            {% endif %}
-                            <h4 class="shipping_to_last_name">{{ address.last_name }}&nbsp</h4>
-                            {% if address.suffix %}
-                            <h4 class="shipping_to_suffix">{{address.suffix }}</h4>
-                            {% endif %}
-                            {% endif %}
-                        </div>
-
-                        <h4 class="shipping_street_address" id="addressLine">{{ address.address_line }}</h4>
-                        {% if address.address_line2 %}
-                        <h4 class="shipping_street_address" id="shippingAddressLine2">{{ address.address_line2 }}</h4>
-                        {% endif %}
-                        {% if address.apartment_suite_number and address.apartment_suite_number != "N/A"%}
-                        <h4>Apt/Ste: <span class="shipping_street_address" id="aptSuite">
-                                {{ address.apartment_suite_number }}
-                            </span>
-                        </h4>
-                        {% endif %}
-                        <div class="shipping_city_state_zip_container" id="shipping_city_state_zip">
-                            <h4 id="shipping_town_city">{{ address.town_city }},&nbsp</h4>
-                            <h4 id="shipping_state">{{ address.state }}&nbsp</h4>
-                            <h4 id="shipping_postcode">{{ address.postcode}}</h4>
-                        </div>
-                        <h4 class="shipping_country">United States</h4>
-                        {% if address.phone_number %}
-                        <h4 class="shipping_phone_number">{{ address.phone_number }}</h4>
+                    {% else %}
+                    <div class="shipping_name_container">
+                        <input type="hidden" name="billing_address" id="billingAddressData" value="{{ billing.id}}" />
+                        {% if billing.first_name == None or not billing.first_name %}
+                        <h4 class="billing_to_name">{{ user }}</h4>
                         {% else %}
-                        <h4 class="shipping_phone_number">{{ user.mobile_phone }}</h4>
+                        {% if billing.prefix %}
+                        <h4 class="billing_name_prefix">{{ billing.prefix }}&nbsp</h4>
                         {% endif %}
-                        {% endwith %}
-
-                        {% else %}
-                        {% with saved_addresses.0 as address %}
-                        <div class="shipping_name_container">
-                            <input type="hidden" name="shipping_address" id="shippingAddressData"
-                                value="{{ address.id}}" />
-                            {% if address.first_name == None or not address.first_name %}
-                            <h4 class="shipping_to_name">{{ user }}</h4>
-                            {% else %}
-                            {% if address.prefix %}
-                            <h4 class="shipping_name_prefix">{{ address.prefix }}&nbsp</h4>
-                            {% endif %}
-                            <h4 class="shipping_to_first_name">{{ address.first_name }}&nbsp</h4>
-                            {% if address.middle_name %}
-                            <h4 class="shipping_to_middle_name">{{ address.middle_name }}&nbsp</h4>
-                            {% endif %}
-                            <h4 class="shipping_to_last_name">{{ address.last_name }}&nbsp</h4>
-                            {% if address.suffix %}
-                            <h4 class="shipping_to_suffix">{{address.suffix }}</h4>
-                            {% endif %}
-                            {% endif %}
-                        </div>
-
-                        <h4 class="shipping_street_address" id="addressLine">{{ address.address_line }}</h4>
-                        {% if address.address_line2 %}
-                        <h4 class="shipping_street_address" id="shippingAddressLine2">{{ address.address_line2 }}</h4>
+                        <h4 class="billing_to_first_name">{{ billing.first_name }}&nbsp</h4>
+                        {% if billing.middle_name %}
+                        <h4 class="billing_to_middle_name">{{ billing.middle_name }}&nbsp</h4>
                         {% endif %}
-                        {% if address.apartment_suite_number and address.apartment_suite_number != "N/A"%}
-                        <h4>Apt/Ste: <span class="shipping_street_address" id="aptSuite">
-                                {{ address.apartment_suite_number }}
-                            </span>
-                        </h4>
+                        <h4 class="billing_to_last_name">{{ billing.last_name }}&nbsp</h4>
+                        {% if billing.suffix %}
+                        <h4 class="billing_to_suffix">{{billing.suffix }}</h4>
                         {% endif %}
-                        <div class="shipping_city_state_zip_container" id="shipping_city_state_zip">
-                            <h4 id="shipping_town_city">{{ address.town_city }},&nbsp</h4>
-                            <h4 id="shipping_state">{{ address.state }}&nbsp</h4>
-                            <h4 id="shipping_postcode">{{ address.postcode}}</h4>
-                        </div>
-
-                        <h4 class="shipping_country">United States</h4>
-                        {% if address.phone_number %}
-                        <h4 class="shipping_phone_number">{{ address.phone_number }}</h4>
-                        {% else %}
-                        <h4 class="shipping_phone_number">{{ user.mobile_phone }}</h4>
                         {% endif %}
-                        {% endwith %}
-                        {% endif %}
-
-                        <a href="{% url 'pop_up_payment:shipping_address' %}" class="address_change_button_long">
-                            Change Shipping Address
-                        </a>
                     </div>
-
-                    {% if messages %}
-                    <div class="alert">{{ message }}</div>
+                    <h4 class="billing_street_address" id="billingAddressLine">{{ billing.address_line }}</h4>
+                    {% if address.address_line2 %}
+                    <h4 class="billing_street_address" id="billingAddressLine2">{{ billing.address_line2 }}</h4>
+                    {% endif %}
+                    {% if billing.apartment_suite_number and billing.apartment_suite_number != "N/A"%}
+                    <h4>Apt/Ste: <span class="billing_street_address" id="billingAptSuite">
+                            {{ address.apartment_suite_number }}
+                        </span>
+                    </h4>
+                    {% endif %}
+                    <div class="shipping_city_state_zip_container" id="shipping_city_state_zip">
+                        <h4 id="billing_town_city">{{ billing.town_city }},&nbsp</h4>
+                        <h4 id="billing_state">{{ billing.state }}&nbsp</h4>
+                        <h4 id="billing_postcode">{{ billing.postcode}}</h4>
+                    </div>
+                    <h4 class="billing_country">United States</h4>
+                    {% if user.phone_number %}
+                    <h4 class="billing_phone_number" value="{{ user.mobile_phone }}">{{ user.mobile_phone }}</h4>
+                    {% elif billing.phone_number %}
+                    <h4 class="billing_phone_number" value="{{  address.phone_number }}">{{ billing.phone_number }}
+                    </h4>
+                    {% endif %}
                     {% endif %}
 
-                    <div class="checkout_shipping_options_container">
-                        <h3>Shipping Choice</h3>
-                        <form action="{% url 'pop_up_payment:payment_home' %}" method="GET"
-                            class="checkout_shipping_options_button_container">
+                    <div class="billing_choices_container">
+                        <form action="{% url 'pop_up_payment:payment_home' %}" class="select_billing_address_form"
+                            method="POST">
                             {% csrf_token %}
-                            <input type="hidden" name="shipping_method" id="shippingMethodInput" value="1499" />
-                            <button id="shippingButton1" name="standard" type="submit" value="1499" shipping-data="1499"
-                                class="button_long_option  shippingButtons chosen">Standard
-                                Shipping
-                            </button>
-                            <button id="shippingButtons" name="express" type="submit" value="2499"
-                                class="button_long_option shippingButtons" shipping-data="2499">Express
-                                Shipping</button>
-                        </form>
-                    </div>
-                    <div class="primary_payment_container">
-                        <h3>Payment Options</h3>
-                        <div class="button_expand_container">
-                            <button class="payment_option_buttons_small" id="selectedPaymentButton">
-                                Select
-                            </button>
-                            <i class='bx bxs-chevron-down expandButton' id="expandButton"></i>
-                        </div>
+                            <input type="checkbox" name="use_billing_as_shipping" value="true"
+                                id="same_as_shipping_check">
 
-                        <input type="hidden" name="selected_payment_method" id="selectedPaymentMethod">
-                        <div class="checkout_options_container" id="checkoutOptions">
-                            <button type="button" class="payment_option_buttons" data-method="apple_pay">
+
+                            <label for="same_as_shipping_check" class="confirm_billing">Same as Shipping Address
+                            </label>
+                        </form>
+                        <a href="{% url 'pop_up_payment:billing_address' %}" class="address_change_button_long">
+                            Change Billing Address
+                        </a>
+                        {% comment %}
+                        <button class="address_change_button_long" id="billingAddressChangeButton">Change Billing
+                            Address</button>
+                        {% endcomment %}
+                    </div>
+                </div>
+
+                {% if messages %}
+                <div class="alert">{{ message }}</div>
+                {% endif %}
+
+                <div class="checkout_shipping_container">
+                    <h3>Shipping to</h3>
+                    {% if selected_address %}
+                    {% with selected_address as address %}
+                    <div class="shipping_name_container">
+                        <input type="hidden" name="shipping_address" id="shippingAddressData" value="{{ address.id}}" />
+
+                        {% if address.first_name == None or not address.first_name %}
+                        <h4 class="shipping_to_name">{{ user }}</h4>
+                        {% else %}
+                        {% if address.prefix %}
+                        <h4 class="shipping_name_prefix">{{ address.prefix }}&nbsp</h4>
+                        {% endif %}
+                        <h4 class="shipping_to_first_name">{{ address.first_name }}&nbsp</h4>
+                        {% if address.middle_name %}
+                        <h4 class="shipping_to_middle_name">{{ address.middle_name }}&nbsp</h4>
+                        {% endif %}
+                        <h4 class="shipping_to_last_name">{{ address.last_name }}&nbsp</h4>
+                        {% if address.suffix %}
+                        <h4 class="shipping_to_suffix">{{address.suffix }}</h4>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <h4 class="shipping_street_address" id="addressLine">{{ address.address_line }}</h4>
+                    {% if address.address_line2 %}
+                    <h4 class="shipping_street_address" id="shippingAddressLine2">{{ address.address_line2 }}</h4>
+                    {% endif %}
+                    {% if address.apartment_suite_number and address.apartment_suite_number != "N/A"%}
+                    <h4>Apt/Ste: <span class="shipping_street_address" id="aptSuite">
+                            {{ address.apartment_suite_number }}
+                        </span>
+                    </h4>
+                    {% endif %}
+                    <div class="shipping_city_state_zip_container" id="shipping_city_state_zip">
+                        <h4 id="shipping_town_city">{{ address.town_city }},&nbsp</h4>
+                        <h4 id="shipping_state">{{ address.state }}&nbsp</h4>
+                        <h4 id="shipping_postcode">{{ address.postcode}}</h4>
+                    </div>
+                    <h4 class="shipping_country">United States</h4>
+                    {% if address.phone_number %}
+                    <h4 class="shipping_phone_number">{{ address.phone_number }}</h4>
+                    {% else %}
+                    <h4 class="shipping_phone_number">{{ user.mobile_phone }}</h4>
+                    {% endif %}
+                    {% endwith %}
+
+                    {% else %}
+                    {% with saved_addresses.0 as address %}
+                    <div class="shipping_name_container">
+                        <input type="hidden" name="shipping_address" id="shippingAddressData" value="{{ address.id}}" />
+                        {% if address.first_name == None or not address.first_name %}
+                        <h4 class="shipping_to_name">{{ user }}</h4>
+                        {% else %}
+                        {% if address.prefix %}
+                        <h4 class="shipping_name_prefix">{{ address.prefix }}&nbsp</h4>
+                        {% endif %}
+                        <h4 class="shipping_to_first_name">{{ address.first_name }}&nbsp</h4>
+                        {% if address.middle_name %}
+                        <h4 class="shipping_to_middle_name">{{ address.middle_name }}&nbsp</h4>
+                        {% endif %}
+                        <h4 class="shipping_to_last_name">{{ address.last_name }}&nbsp</h4>
+                        {% if address.suffix %}
+                        <h4 class="shipping_to_suffix">{{address.suffix }}</h4>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <h4 class="shipping_street_address" id="addressLine">{{ address.address_line }}</h4>
+                    {% if address.address_line2 %}
+                    <h4 class="shipping_street_address" id="shippingAddressLine2">{{ address.address_line2 }}</h4>
+                    {% endif %}
+                    {% if address.apartment_suite_number and address.apartment_suite_number != "N/A"%}
+                    <h4>Apt/Ste: <span class="shipping_street_address" id="aptSuite">
+                            {{ address.apartment_suite_number }}
+                        </span>
+                    </h4>
+                    {% endif %}
+                    <div class="shipping_city_state_zip_container" id="shipping_city_state_zip">
+                        <h4 id="shipping_town_city">{{ address.town_city }},&nbsp</h4>
+                        <h4 id="shipping_state">{{ address.state }}&nbsp</h4>
+                        <h4 id="shipping_postcode">{{ address.postcode}}</h4>
+                    </div>
+
+                    <h4 class="shipping_country">United States</h4>
+                    {% if address.phone_number %}
+                    <h4 class="shipping_phone_number">{{ address.phone_number }}</h4>
+                    {% else %}
+                    <h4 class="shipping_phone_number">{{ user.mobile_phone }}</h4>
+                    {% endif %}
+                    {% endwith %}
+                    {% endif %}
+
+                    <a href="{% url 'pop_up_payment:shipping_address' %}" class="address_change_button_long">
+                        Change Shipping Address
+                    </a>
+                </div>
+
+                {% if messages %}
+                <div class="alert">{{ message }}</div>
+                {% endif %}
+
+                <div class="checkout_shipping_options_container">
+                    <h3>Shipping Choice</h3>
+                    <form action="{% url 'pop_up_payment:payment_home' %}" method="GET"
+                        class="checkout_shipping_options_button_container">
+                        {% csrf_token %}
+                        <input type="hidden" name="shipping_method" id="shippingMethodInput" value="1499" />
+                        <button id="shippingButton1" name="standard" type="submit" value="1499" shipping-data="1499"
+                            class="button_long_option  shippingButtons chosen">Standard
+                            Shipping
+                        </button>
+                        <button id="shippingButtons" name="express" type="submit" value="2499"
+                            class="button_long_option shippingButtons" shipping-data="2499">Express
+                            Shipping</button>
+                    </form>
+                </div>
+                <div class="primary_payment_container">
+                    <h3>Payment Options</h3>
+                    <div class="button_expand_container">
+                        <button class="payment_option_buttons_small" id="selectedPaymentButton">
+                            Select
+                        </button>
+                        <i class='bx bxs-chevron-down expandButton' id="expandButton"></i>
+                    </div>
+
+                    <input type="hidden" name="selected_payment_method" id="selectedPaymentMethod">
+                    <div class="checkout_options_container" id="checkoutOptions">
+                        <button type="button" class="payment_option_buttons" data-method="apple_pay">
+                            <span class="payBtnIcon"><i class='bx bxl-apple'></i></span>
+                            <span class="payBtnText">Pay</span>
+                        </button>
+
+                        <button class="payment_option_buttons" data-method="google_pay">
+                            <span class="payBtnIcon"><img src="{% static 'img/g_icon.svg' %}" class='g-logo' /></span>
+                            <span class="payBtnText">Pay</span>
+                        </button>
+
+                        <button class="payment_option_buttons" data-method="paypal">
+                            <span class="payBtnIcon"><img src="{% static 'img/paypal_icon.svg' %}" alt="PayPal Logo"
+                                    class='paypal-logo' /></span>
+                        </button>
+
+
+                        <button class="payment_option_buttons" data-method="venmo">
+                            <span class="payBtnIcon">
+                                <img src="{% static 'img/venmo.svg' %}" class='venmo-logo' alt="Venmo Logo" />
+                            </span>
+                            <span class="payBtnText"></span>
+                        </button>
+
+                        <button class="payment_option_buttons" data-method="credit_card">
+                            <span class="payBtnIcon">
+                                <img src="{% static 'img/cards.png' %}" class='cards-logo' alt="Credit Card Logos">
+                            </span>
+                        </button>
+
+                        <button class="payment_option_buttons" data-method="stable_coin">
+                            <span class="payBtnIcon">
+                                <img src="{% static 'img/stableCoins.png' %}" class='stable-coin-logo'
+                                    alt="DAI & USDC Logo" />
+                            </span>
+                            <span class="payBtnText"></span>
+                        </button>
+                    </div>
+                </div>
+                {% comment %}
+                <!-- Checkout Details -->
+                <!-- Checkout Details -->
+                <!-- Checkout Details -->
+                <!-- Checkout Details -->
+                {% endcomment %}
+                <div class="checkout_details_container">
+                    <div class="checkout_subtotal_container">
+                        <p>Subtotal <span id="purchaseSubtotal">${{ cart_subtotal|intcomma }}</span></p>
+                        <i class='bx bxs-chevron-down subtotalExpand' id="subtotalExpand"></i>
+                    </div>
+                    <div class="purchase_details_container">
+                        {% comment %}{% for ci in cart_items %}{% endcomment %}
+
+                        {% for c in cart %}
+                        {% with product=c.product %}
+                        <div class="purchase_details_item_price_container" data-index="{{ product.id }}">
+
+                            <p>{{ c.product.product_title }} {{ c.product.secondary_product_title }}</p>
+                            <p id="purchasePrice">${{ c.total_price|intcomma }}</p>
+
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+
+                        <div class="purchase_details_item_price_container">
+                            <p>Quantity</p>
+                            <p id="purchaseQuantity">{{ cart_length }}</p>
+
+                        </div>
+                        <div class="purchase_details_item_price_container">
+                            <p>Processing Fee</p>
+                            <p id="processingFee">${{ processing_fee }}</p>
+                        </div>
+                        <div class="purchase_details_item_price_container">
+                            <p>Shipping Cost</p>
+                            <p id="shippingCost"></p>
+                        </div>
+                        <div class="purchase_details_item_price_container">
+                            <p>Tax</p>
+                            <p id="purchaseTax">${{ sales_tax|intcomma }}</p>
+                            <p id="taxRate" style="display: none">{{ tax_rate }}</p>
+
+                        </div>
+                        <div class="purchase_details_item_price_container">
+                            <p class="purchaseTotal">Total</p>
+                            <p id="purchaseTotal">${{ grand_total|intcomma }}</p>
+                        </div>
+                        <div class="purchase_details_confirm_pay">
+                            {% if user.is_authenticated %}
+                            <input type="hidden" name="user_data" id="userData" value="{{ user.id}}" />
+
+                            {% comment %}
+                            <button class="payment_option_buttons_two" id="selectedPaymentButtonTwo"
+                                data-secret="{{ client_secret }}" value="">
                                 <span class="payBtnIcon"><i class='bx bxl-apple'></i></span>
                                 <span class="payBtnText">Pay</span>
                             </button>
 
-                            <button class="payment_option_buttons" data-method="google_pay">
-                                <span class="payBtnIcon"><img src="{% static 'img/g_icon.svg' %}"
-                                        class='g-logo' /></span>
-                                <span class="payBtnText">Pay</span>
-                            </button>
-
-                            <button class="payment_option_buttons" data-method="paypal">
-                                <span class="payBtnIcon"><img src="{% static 'img/paypal_icon.svg' %}" alt="PayPal Logo"
-                                        class='paypal-logo' /></span>
-                            </button>
-
-
-                            <button class="payment_option_buttons" data-method="venmo">
-                                <span class="payBtnIcon">
-                                    <img src="{% static 'img/venmo.svg' %}" class='venmo-logo' alt="Venmo Logo" />
-                                </span>
+                            <button class="payment_option_buttons_two" id="confirm-card-payment">
+                                <span class="payBtnIcon"></span>
                                 <span class="payBtnText"></span>
                             </button>
+                            <div id="payment-request-button"></div>
 
-                            <button class="payment_option_buttons" data-method="credit_card">
-                                <span class="payBtnIcon">
-                                    <img src="{% static 'img/cards.png' %}" class='cards-logo' alt="Credit Card Logos">
-                                </span>
+                            <div id="stable-coin-payment" style="display: none"></div>
+                            {% endcomment %}
+                            <!-- Payment Module Buttons -->
+                            <div id="card-payment-form" style="display:none;">
+                                <div id="card-element"></div>
+                                <div id="card-errors" role="alert"></div>
+                            </div>
+
+                            <div id="apple-pay-button" style="display: none"></div>
+                            <div id="google-pay-button" style="display: none"></div>
+                            <div id="paypal-button-container" style="display: none"></div>
+                            <div id="venmo-button-container" style="display: none"></div>
+
+                            <div id="payment-messages"></div>
+                            <!-- End of Payment Module Buttons -->
+
+                            {% else %}
+                            <button class="payment_option_buttons_two signUpModalBtn">
+                                Sign in or create account to complete order.
                             </button>
-
-                            <button class="payment_option_buttons" data-method="stable_coin">
-                                <span class="payBtnIcon">
-                                    <img src="{% static 'img/stableCoins.png' %}" class='stable-coin-logo'
-                                        alt="DAI & USDC Logo" />
-                                </span>
-                                <span class="payBtnText"></span>
-                            </button>
-                        </div>
-                    </div>
-                    {% comment %}
-                    <!-- Checkout Details -->
-                    <!-- Checkout Details -->
-                    <!-- Checkout Details -->
-                    <!-- Checkout Details -->
-                    {% endcomment %}
-                    <div class="checkout_details_container">
-                        <div class="checkout_subtotal_container">
-                            <p>Subtotal <span id="purchaseSubtotal">${{ cart_subtotal|intcomma }}</span></p>
-                            <i class='bx bxs-chevron-down subtotalExpand' id="subtotalExpand"></i>
-                        </div>
-                        <div class="purchase_details_container">
-                            {% comment %}{% for ci in cart_items %}{% endcomment %}
-
-                            {% for c in cart %}
-                            {% with product=c.product %}
-                            <div class="purchase_details_item_price_container" data-index="{{ product.id }}">
-
-                                <p>{{ c.product.product_title }} {{ c.product.secondary_product_title }}</p>
-                                <p id="purchasePrice">${{ c.total_price|intcomma }}</p>
-
-                            </div>
-                            {% endwith %}
-                            {% endfor %}
-
-                            <div class="purchase_details_item_price_container">
-                                <p>Quantity</p>
-                                <p id="purchaseQuantity">{{ cart_length }}</p>
-
-                            </div>
-                            <div class="purchase_details_item_price_container">
-                                <p>Processing Fee</p>
-                                <p id="processingFee">${{ processing_fee }}</p>
-                            </div>
-                            <div class="purchase_details_item_price_container">
-                                <p>Shipping Cost</p>
-                                <p id="shippingCost"></p>
-                            </div>
-                            <div class="purchase_details_item_price_container">
-                                <p>Tax</p>
-                                <p id="purchaseTax">${{ sales_tax|intcomma }}</p>
-                                <p id="taxRate" style="display: none">{{ tax_rate }}</p>
-
-                            </div>
-                            <div class="purchase_details_item_price_container">
-                                <p class="purchaseTotal">Total</p>
-                                <p id="purchaseTotal">${{ grand_total|intcomma }}</p>
-                            </div>
-                            <div class="purchase_details_confirm_pay">
-                                {% if user.is_authenticated %}
-                                <input type="hidden" name="user_data" id="userData" value="{{ user.id}}" />
-
-                                {% comment %}
-                                <button class="payment_option_buttons_two" id="selectedPaymentButtonTwo"
-                                    data-secret="{{ client_secret }}" value="">
-                                    <span class="payBtnIcon"><i class='bx bxl-apple'></i></span>
-                                    <span class="payBtnText">Pay</span>
-                                </button>
-
-                                <button class="payment_option_buttons_two" id="confirm-card-payment">
-                                    <span class="payBtnIcon"></span>
-                                    <span class="payBtnText"></span>
-                                </button>
-                                <div id="payment-request-button"></div>
-
-                                <div id="stable-coin-payment" style="display: none"></div>
-                                {% endcomment %}
-                                <!-- Payment Module Buttons -->
-                                <div id="card-payment-form" style="display:none;">
-                                    <div id="card-element"></div>
-                                    <div id="card-errors" role="alert"></div>
-                                </div>
-
-                                <div id="apple-pay-button" style="display: none"></div>
-                                <div id="google-pay-button" style="display: none"></div>
-                                <div id="paypal-button-container" style="display: none"></div>
-                                <div id="venmo-button-container" style="display: none"></div>
-
-                                <div id="payment-messages"></div>
-                                <!-- End of Payment Module Buttons -->
-
-                                {% else %}
-                                <button class="payment_option_buttons_two signUpModalBtn">
-                                    Sign in or create account to complete order.
-                                </button>
-                                {% endif %}
-                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="checkout_container_right">
-                <div class="checkbout_container_title">
-                    <h3>Cart</h3>
+        <div class="checkout_container_right">
+            <div class="checkbout_container_title">
+                <h3>Cart</h3>
+            </div>
+
+            {% for c in cart %}
+            {% with product=c.product %}
+
+            <div class="checkout_product_container product_item" data-index="{{ product.id }}">
+                <div class="checkout_img_title_container">
+                    {% for image in c.product.product_image.all %}
+                    {% if image.is_feature %}
+                    <img class="checkout_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}" />
+                    {% endif %}
+                    {% endfor %}
+                    <div class="checkout_product_desc_container">
+                        {% for spec in c.product.popupproductspecificationvalue_set.all|slice:"2:3" %}
+                        <h3>{{ spec }}</h3>
+                        {% endfor %}
+                        <h3>{{ c.product }}</h3>
+                        <h3>{{ c.product.secondary_product_title }}</h3>
+                    </div>
                 </div>
 
-                {% for c in cart %}
-                {% with product=c.product %}
-
-                <div class="checkout_product_container product_item" data-index="{{ product.id }}">
-                    <div class="checkout_img_title_container">
-                        {% for image in c.product.product_image.all %}
-                        {% if image.is_feature %}
-                        <img class="checkout_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}" />
+                <div class="checkout_product_details_container">
+                    <div class="checkout_details_size_container">
+                        <p>Size</p>
+                        {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"5:6" %}
+                        {% if gen.value == "Male" %}
+                        <p>U.S. {{"Men's"}}
+                            <span>
+                                {% for h in c.product.popupproductspecificationvalue_set.all|slice:"4:5" %}
+                                {{ h }}
+                                {% endfor %}
+                            </span>
+                        </p>
                         {% endif %}
                         {% endfor %}
-                        <div class="checkout_product_desc_container">
-                            {% for spec in c.product.popupproductspecificationvalue_set.all|slice:"2:3" %}
-                            <h3>{{ spec }}</h3>
-                            {% endfor %}
-                            <h3>{{ c.product }}</h3>
-                            <h3>{{ c.product.secondary_product_title }}</h3>
-                        </div>
                     </div>
-
-                    <div class="checkout_product_details_container">
-                        <div class="checkout_details_size_container">
-                            <p>Size</p>
-                            {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"5:6" %}
-                            {% if gen.value == "Male" %}
-                            <p>U.S. {{"Men's"}}
-                                <span>
-                                    {% for h in c.product.popupproductspecificationvalue_set.all|slice:"4:5" %}
-                                    {{ h }}
-                                    {% endfor %}
-                                </span>
-                            </p>
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                        <div class="checkout_details_condition_container">
-                            <p>Condition</p>
-                            {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"6:7" %}
-                            <p class="checkout_databox_assign_left">{{ gen }}</p>
-                            {% endfor %}
-                        </div>
-                        <div class="checkout_details_condition_container">
-                            <p>Quantity</p>
-                            <p class="checkout_databox_assign_left">1</p>
-                        </div>
-                        <div class="checkout_details_condition_button_container">
-                            <button class="button_small" id="remove_button" data-index="{{ product.id }}">Remove
-                                <span class="spinner" style="display:none; margin-left: 5px">
-                                    <i class="fa-thin fa-spinner"></i>
-                                </span>
-
-                            </button>
-                            <p>${{ c.price|intcomma }}</p>
-                        </div>
+                    <div class="checkout_details_condition_container">
+                        <p>Condition</p>
+                        {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"6:7" %}
+                        <p class="checkout_databox_assign_left">{{ gen }}</p>
+                        {% endfor %}
                     </div>
-                </div>
-                {% endwith %}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    </div>
-    {% comment %}
-    <!-- View For User Who Is Not Authenticated -->
-    <!-- View For User Who Is Not Authenticated -->
-    <!-- View For User Who Is Not Authenticated -->
-    {% endcomment %}
-    {% else %}
-    <div class="section_container">
-        <div class="page_title">
-            <h2><span>The Pop Up</span> Checkout</h2>
-        </div>
-        <div class="buy_product_container">
-            <div class="checkout_container_left">
-                <div class="checkbout_container">
-                    <div class="checkbout_container_title">
-                        <h3>Checkout</h3>
+                    <div class="checkout_details_condition_container">
+                        <p>Quantity</p>
+                        <p class="checkout_databox_assign_left">1</p>
                     </div>
-                    <div class="primary_payment_container">
-                        <h3>Payment Options</h3>
-                        <div class="button_expand_container">
-                            <button class="payment_option_buttons_small" id="selectedPaymentButton">
-                                <i class='bx bxl-apple'></i>Pay
-                            </button>
-                            <i class='bx bxs-chevron-down expandButton' id="expandButton"></i>
-                        </div>
-                        <div class="checkout_options_container" id="checkoutOptions">
-                            <button class="payment_option_buttons">
-                                <i class='bx bxl-apple'></i>Pay
-                            </button>
-                            <button class="payment_option_buttons">
-                                <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
-                                Pay
-                            </button>
-                            <button class="payment_option_buttons">
-                                <img src="{% static 'img/paypal_icon.svg' %}" class='paypal-logo' />
-                            </button>
-                            <button class="payment_option_buttons">
-                                <img src="{% static 'img/venmo.svg' %}" class='venmo-logo' />
-                            </button>
-                            <button class="payment_option_buttons">
-                                <div class="visa_mc_disc_card_logo_container">
-                                    <img src="{% static 'img/visa_icon.png' %}" class='visa-logo' />
-                                    <img src="{% static 'img/mastercard_icon.png' %}" class='mc-logo' />
-                                    <img src="{% static 'img/discover_icon.png' %}" class='disc-logo' />
-                                </div>
-                            </button>
-                            <button class="payment_option_buttons">
-                                <div class="dai_usdc_logo_container">
-                                    <img src="{% static 'img/dia-logo.png' %}" class='dai-logo' />
-                                    <img src="{% static 'img/usdc-logo.png' %}" class='usdc-logo' />
-                                </div>
-                            </button>
-                        </div>
-                    </div>
+                    <div class="checkout_details_condition_button_container">
+                        <button class="button_small" id="remove_button" data-index="{{ product.id }}">Remove
+                            <span class="spinner" style="display:none; margin-left: 5px">
+                                <i class="fa-thin fa-spinner"></i>
+                            </span>
 
-                    <div class="checkout_shipping_options_container">
-                        <h3>Shipping Choice</h3>
-                        <form action="{% url 'pop_up_payment:payment_home' %}" method="GET"
-                            class="checkout_shipping_options_button_container">
-                            {% csrf_token %}
-
-                            <button disabled id="shippingButton1" name="standard" type="submit" value="1499"
-                                shipping-data="1499" class="button_long_option  shippingButtons chosen">Standard
-                                Shipping
-                            </button>
-
-                            <button disabled id="shippingButtons" name="express" type="submit" value="2499"
-                                class="button_long_option shippingButtons" shipping-data="2499">Express
-                                Shipping</button>
-                        </form>
-                    </div>
-                    <!-- Checkout Details -->
-                    <div class="checkout_details_container">
-                        <div class="checkout_subtotal_container">
-
-                            <p>Subtotal <span id="purchaseSubtotal">${{ cart_subtotal|intcomma }}</span></p>
-                            <i class='bx bxs-chevron-down subtotalExpand' id="subtotalExpand"></i>
-                        </div>
-                        <div class="purchase_details_container">
-                            {% comment %}{% for ci in cart_items %}{% endcomment %}
-
-                            {% for c in cart %}
-                            {% with product=c.product %}
-                            <div class="purchase_details_item_price_container" data-index="{{ product.id }}">
-
-                                <p>{{ c.product.product_title }} {{ c.product.secondary_product_title }}</p>
-                                <p id="purchasePrice">${{ c.total_price|intcomma }}</p>
-
-                            </div>
-                            {% endwith %}
-                            {% endfor %}
-
-                            <div class="purchase_details_item_price_container">
-                                <p>Quantity</p>
-                                <p id="purchaseQuantity">{{ cart_length }}</p>
-
-                            </div>
-                            <div class="purchase_details_item_price_container">
-                                <p>Processing Fee</p>
-                                <p id="processingFee">${{ processing_fee }}</p>
-                            </div>
-                            <div class="purchase_details_item_price_container">
-                                <p>Shipping Cost</p>
-                                <p id="shippingCost"></p>
-                            </div>
-                            <div class="purchase_details_item_price_container">
-                                <p>Tax</p>
-                                <p id="purchaseTax">${{ sales_tax|intcomma }}</p>
-                                <p id="taxRate" style="display: none">{{ tax_rate }}</p>
-
-                            </div>
-                            <div class="purchase_details_item_price_container">
-                                <p class="purchaseTotal">Total</p>
-                                <p id="purchaseTotal">${{ grand_total|intcomma }}</p>
-                            </div>
-                            <div class="purchase_details_confirm_pay">
-                                <button class="payment_option_buttons_two signUpModalBtn">
-                                    Sign in or create account to complete order.
-                                </button>
-                            </div>
-
-                        </div>
+                        </button>
+                        <p>${{ c.price|intcomma }}</p>
                     </div>
                 </div>
             </div>
-
-            <div class="checkout_container_right">
+            {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</div>
+{% comment %}
+<!-- View For User Who Is Not Authenticated -->
+<!-- View For User Who Is Not Authenticated -->
+<!-- View For User Who Is Not Authenticated -->
+{% endcomment %}
+{% else %}
+<div class="section_container">
+    <div class="page_title">
+        <h2><span>The Pop Up</span> Checkout</h2>
+    </div>
+    <div class="buy_product_container">
+        <div class="checkout_container_left">
+            <div class="checkbout_container">
                 <div class="checkbout_container_title">
-                    <h3>Cart</h3>
+                    <h3>Checkout</h3>
+                </div>
+                <div class="primary_payment_container">
+                    <h3>Payment Options</h3>
+                    <div class="button_expand_container">
+                        <button class="payment_option_buttons_small" id="selectedPaymentButton">
+                            <i class='bx bxl-apple'></i>Pay
+                        </button>
+                        <i class='bx bxs-chevron-down expandButton' id="expandButton"></i>
+                    </div>
+                    <div class="checkout_options_container" id="checkoutOptions">
+                        <button class="payment_option_buttons">
+                            <i class='bx bxl-apple'></i>Pay
+                        </button>
+                        <button class="payment_option_buttons">
+                            <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
+                            Pay
+                        </button>
+                        <button class="payment_option_buttons">
+                            <img src="{% static 'img/paypal_icon.svg' %}" class='paypal-logo' />
+                        </button>
+                        <button class="payment_option_buttons">
+                            <img src="{% static 'img/venmo.svg' %}" class='venmo-logo' />
+                        </button>
+                        <button class="payment_option_buttons">
+                            <div class="visa_mc_disc_card_logo_container">
+                                <img src="{% static 'img/visa_icon.png' %}" class='visa-logo' />
+                                <img src="{% static 'img/mastercard_icon.png' %}" class='mc-logo' />
+                                <img src="{% static 'img/discover_icon.png' %}" class='disc-logo' />
+                            </div>
+                        </button>
+                        <button class="payment_option_buttons">
+                            <div class="dai_usdc_logo_container">
+                                <img src="{% static 'img/dia-logo.png' %}" class='dai-logo' />
+                                <img src="{% static 'img/usdc-logo.png' %}" class='usdc-logo' />
+                            </div>
+                        </button>
+                    </div>
                 </div>
 
-                {% for c in cart %}
-                {% with product=c.product %}
+                <div class="checkout_shipping_options_container">
+                    <h3>Shipping Choice</h3>
+                    <form action="{% url 'pop_up_payment:payment_home' %}" method="GET"
+                        class="checkout_shipping_options_button_container">
+                        {% csrf_token %}
 
-                <div class="checkout_product_container product_item" data-index="{{ product.id }}">
-                    <div class="checkout_img_title_container">
-                        {% for image in c.product.product_image.all %}
-                        {% if image.is_feature %}
-                        <img class="checkout_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}" />
+                        <button disabled id="shippingButton1" name="standard" type="submit" value="1499"
+                            shipping-data="1499" class="button_long_option  shippingButtons chosen">Standard
+                            Shipping
+                        </button>
+
+                        <button disabled id="shippingButtons" name="express" type="submit" value="2499"
+                            class="button_long_option shippingButtons" shipping-data="2499">Express
+                            Shipping</button>
+                    </form>
+                </div>
+                <!-- Checkout Details -->
+                <div class="checkout_details_container">
+                    <div class="checkout_subtotal_container">
+
+                        <p>Subtotal <span id="purchaseSubtotal">${{ cart_subtotal|intcomma }}</span></p>
+                        <i class='bx bxs-chevron-down subtotalExpand' id="subtotalExpand"></i>
+                    </div>
+                    <div class="purchase_details_container">
+                        {% comment %}{% for ci in cart_items %}{% endcomment %}
+
+                        {% for c in cart %}
+                        {% with product=c.product %}
+                        <div class="purchase_details_item_price_container" data-index="{{ product.id }}">
+
+                            <p>{{ c.product.product_title }} {{ c.product.secondary_product_title }}</p>
+                            <p id="purchasePrice">${{ c.total_price|intcomma }}</p>
+
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+
+                        <div class="purchase_details_item_price_container">
+                            <p>Quantity</p>
+                            <p id="purchaseQuantity">{{ cart_length }}</p>
+
+                        </div>
+                        <div class="purchase_details_item_price_container">
+                            <p>Processing Fee</p>
+                            <p id="processingFee">${{ processing_fee }}</p>
+                        </div>
+                        <div class="purchase_details_item_price_container">
+                            <p>Shipping Cost</p>
+                            <p id="shippingCost"></p>
+                        </div>
+                        <div class="purchase_details_item_price_container">
+                            <p>Tax</p>
+                            <p id="purchaseTax">${{ sales_tax|intcomma }}</p>
+                            <p id="taxRate" style="display: none">{{ tax_rate }}</p>
+
+                        </div>
+                        <div class="purchase_details_item_price_container">
+                            <p class="purchaseTotal">Total</p>
+                            <p id="purchaseTotal">${{ grand_total|intcomma }}</p>
+                        </div>
+                        <div class="purchase_details_confirm_pay">
+                            <button class="payment_option_buttons_two signUpModalBtn">
+                                Sign in or create account to complete order.
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout_container_right">
+            <div class="checkbout_container_title">
+                <h3>Cart</h3>
+            </div>
+
+            {% for c in cart %}
+            {% with product=c.product %}
+
+            <div class="checkout_product_container product_item" data-index="{{ product.id }}">
+                <div class="checkout_img_title_container">
+                    {% for image in c.product.product_image.all %}
+                    {% if image.is_feature %}
+                    <img class="checkout_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}" />
+                    {% endif %}
+                    {% endfor %}
+                    <div class="checkout_product_desc_container">
+                        {% for spec in c.product.popupproductspecificationvalue_set.all|slice:"2:3" %}
+                        <h3>{{ spec }}</h3>
+                        {% endfor %}
+                        <h3>{{ c.product }}</h3>
+                        <h3>{{ c.product.secondary_product_title }}</h3>
+                    </div>
+                </div>
+
+                <div class="checkout_product_details_container">
+                    <div class="checkout_details_size_container">
+                        <p>Size</p>
+                        {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"5:6" %}
+                        {% if gen.value == "Male" %}
+                        <p>U.S. {{"Men's"}}
+                            <span>
+                                {% for h in c.product.popupproductspecificationvalue_set.all|slice:"4:5" %}
+                                {{ h }}
+                                {% endfor %}
+                            </span>
+                        </p>
                         {% endif %}
                         {% endfor %}
-                        <div class="checkout_product_desc_container">
-                            {% for spec in c.product.popupproductspecificationvalue_set.all|slice:"2:3" %}
-                            <h3>{{ spec }}</h3>
-                            {% endfor %}
-                            <h3>{{ c.product }}</h3>
-                            <h3>{{ c.product.secondary_product_title }}</h3>
-                        </div>
                     </div>
-
-                    <div class="checkout_product_details_container">
-                        <div class="checkout_details_size_container">
-                            <p>Size</p>
-                            {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"5:6" %}
-                            {% if gen.value == "Male" %}
-                            <p>U.S. {{"Men's"}}
-                                <span>
-                                    {% for h in c.product.popupproductspecificationvalue_set.all|slice:"4:5" %}
-                                    {{ h }}
-                                    {% endfor %}
-                                </span>
-                            </p>
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                        <div class="checkout_details_condition_container">
-                            <p>Condition</p>
-                            {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"6:7" %}
-                            <p class="checkout_databox_assign_left">{{ gen }}</p>
-                            {% endfor %}
-                        </div>
-                        <div class="checkout_details_condition_container">
-                            <p>Quantity</p>
-                            <p class="checkout_databox_assign_left">1</p>
-                        </div>
-                        <div class="checkout_details_condition_button_container">
-                            <button class="button_small" id="remove_button"
-                                data-index="{{ product.id }}">Remove</button>
-                            <p>${{ c.price|intcomma }}</p>
-                        </div>
+                    <div class="checkout_details_condition_container">
+                        <p>Condition</p>
+                        {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"6:7" %}
+                        <p class="checkout_databox_assign_left">{{ gen }}</p>
+                        {% endfor %}
+                    </div>
+                    <div class="checkout_details_condition_container">
+                        <p>Quantity</p>
+                        <p class="checkout_databox_assign_left">1</p>
+                    </div>
+                    <div class="checkout_details_condition_button_container">
+                        <button class="button_small" id="remove_button" data-index="{{ product.id }}">Remove</button>
+                        <p>${{ c.price|intcomma }}</p>
                     </div>
                 </div>
-                {% endwith %}
-                {% endfor %}
             </div>
+            {% endwith %}
+            {% endfor %}
         </div>
     </div>
-    </div>
-    {% endif %}
-
-</section>
+</div>
+</div>
+{% endif %}
 <script>
     // Remove Item From Cart
     $(document).on('click', " #remove_button", function () {

@@ -1,99 +1,101 @@
 {% load static %}
-<footer class="footer_container container">
-    <div class="top_footer">
-        <div class="footer_logo_social_container">
-            <div class="image-text">
-                <span class="image">
-                    <div class="logo-text" alt="logo">The Pop Up</div>
-                </span>
+<footer>
+    <div class="footer_container container">
+        <div class="top_footer">
+            <div class="footer_logo_social_container">
+                <div class="image-text">
+                    <span class="image">
+                        <div class="logo-text" alt="logo">The Pop Up</div>
+                    </span>
+                </div>
+                <div class="footer_social_container">
+                    <ul>
+                        <li><a href=""><i class="fa-brands fa-x-twitter"></i></a></li>
+                        <li><a href=""><i class="fa-brands fa-facebook-f"></i></a></li>
+                        <li><a href=""><i class="fa-brands fa-square-instagram"></i></a></li>
+                        <li><a href=""><i class="fa-brands fa-tiktok"></i></a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer_social_container">
-                <ul>
-                    <li><a href=""><i class="fa-brands fa-x-twitter"></i></a></li>
-                    <li><a href=""><i class="fa-brands fa-facebook-f"></i></a></li>
-                    <li><a href=""><i class="fa-brands fa-square-instagram"></i></a></li>
-                    <li><a href=""><i class="fa-brands fa-tiktok"></i></a></li>
-                </ul>
-            </div>
-        </div>
 
-        <div class="footer_links_container">
-            <div class="footer_about_container">
-                <div class="footer_about_title">
-                    <h3>{{ footer_column_about.footer_column_title }}</h3>
-                </div>
-                <ul class="footer_about_options">
-                    {% for l in footer_column_about.footer_bottom_links %}
-                    <li>
-                        <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="footer_about_container">
-                <div class="footer_about_title">
-                    <h3>{{ footer_column_help.footer_column_title }}</h3>
-                </div>
-                <ul class="footer_about_options">
-                    {% for l in footer_column_help.footer_bottom_links %}
-                    <li>
-                        <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="footer_about_container">
-                <div class="footer_about_title">
-                    <h3>{{ footer_column_register.footer_column_title }}</h3>
-                </div>
-                <ul class="footer_about_options">
-                    {% if request.user.is_authenticated %}
-                    <form action="{% url 'pop_accounts:logout' %}" method="POST">
-                        {% csrf_token %}
-                        {% for l in footer_column_register.footer_authenicated_link %}
+            <div class="footer_links_container">
+                <div class="footer_about_container">
+                    <div class="footer_about_title">
+                        <h3>{{ footer_column_about.footer_column_title }}</h3>
+                    </div>
+                    <ul class="footer_about_options">
+                        {% for l in footer_column_about.footer_bottom_links %}
                         <li>
-                            <input type="submit" class="" value="{{ l.label }}">
+                            <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
                         </li>
                         {% endfor %}
-                    </form>
-                    {% else %}
-                    {% for l in footer_column_register.footer_not_authenicated_link %}
-                    <li class="{{ l.url }}">
-                        <p>{{ l.label }}</p>
-                    </li>
+                    </ul>
+                </div>
+                <div class="footer_about_container">
+                    <div class="footer_about_title">
+                        <h3>{{ footer_column_help.footer_column_title }}</h3>
+                    </div>
+                    <ul class="footer_about_options">
+                        {% for l in footer_column_help.footer_bottom_links %}
+                        <li>
+                            <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="footer_about_container">
+                    <div class="footer_about_title">
+                        <h3>{{ footer_column_register.footer_column_title }}</h3>
+                    </div>
+                    <ul class="footer_about_options">
+                        {% if request.user.is_authenticated %}
+                        <form action="{% url 'pop_accounts:logout' %}" method="POST">
+                            {% csrf_token %}
+                            {% for l in footer_column_register.footer_authenicated_link %}
+                            <li>
+                                <input type="submit" class="" value="{{ l.label }}">
+                            </li>
+                            {% endfor %}
+                        </form>
+                        {% else %}
+                        {% for l in footer_column_register.footer_not_authenicated_link %}
+                        <li class="{{ l.url }}">
+                            <p>{{ l.label }}</p>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                        {% for l in footer_column_register.footer_register_link %}
+                        <li class="{{ l.url }}">
+                            <p>{{ l.label }}</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div class="footer_invite_payment_container">
+                <button class="button_long inviteFriendBtn">Invite Friend</button>
+                <div class="footer_payment_options">
+                    <img src="{% static 'img/paypal_card_icon.png' %}" class='footer_paypal-logo' />
+                    <img src="{% static 'img/visa_icon.png' %}" class='footer_visa-logo' />
+                    <img src="{% static 'img/mastercard_icon.png' %}" class='footer_mc-logo' />
+                    <img src="{% static 'img/discover_icon.png' %}" class='footer_disc-logo' />
+                    <img src="{% static 'img/dia-logo.png' %}" class='footer_dai-logo' />
+                    <img src="{% static 'img/usdc-logo.png' %}" class='footer_usdc-logo' />
+                    <img src="{% static 'img/apple-pay.png' %}" class="footer_apple_logo">
+                    <img src="{% static 'img/google-pay-svgrepo-com.svg' %}" class='footer_g-logo' />
+                </div>
+            </div>
+        </div>
+        <div class="bottom_footer">
+            <div class="footer_terms_container">
+                <ul>
+                    {% for l in bottom_footer_links.footer_bottom_links %}
+                    <li><a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a></li>
                     {% endfor %}
-                    {% endif %}
-                    {% for l in footer_column_register.footer_register_link %}
-                    <li class="{{ l.url }}">
-                        <p>{{ l.label }}</p>
-                    </li>
-                    {% endfor %}
+                    <li>©2025 The Pop Up</li>
+                    <li>All Rights Reserved</li>
                 </ul>
             </div>
-        </div>
-        <div class="footer_invite_payment_container">
-            <button class="button_long inviteFriendBtn">Invite Friend</button>
-            <div class="footer_payment_options">
-                <img src="{% static 'img/paypal_card_icon.png' %}" class='footer_paypal-logo' />
-                <img src="{% static 'img/visa_icon.png' %}" class='footer_visa-logo' />
-                <img src="{% static 'img/mastercard_icon.png' %}" class='footer_mc-logo' />
-                <img src="{% static 'img/discover_icon.png' %}" class='footer_disc-logo' />
-                <img src="{% static 'img/dia-logo.png' %}" class='footer_dai-logo' />
-                <img src="{% static 'img/usdc-logo.png' %}" class='footer_usdc-logo' />
-                <img src="{% static 'img/apple-pay.png' %}" class="footer_apple_logo">
-                <img src="{% static 'img/google-pay-svgrepo-com.svg' %}" class='footer_g-logo' />
-            </div>
-        </div>
-    </div>
-    <div class="bottom_footer">
-        <div class="footer_terms_container">
-            <ul>
-                {% for l in bottom_footer_links.footer_bottom_links %}
-                <li><a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a></li>
-                {% endfor %}
-                <li>©2025 The Pop Up</li>
-                <li>All Rights Reserved</li>
-            </ul>
         </div>
     </div>
 </footer>

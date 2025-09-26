@@ -79,11 +79,34 @@
     <link rel="stylesheet" href="{% static 'css/partials/navigation.css' %}">
     <link rel="stylesheet" href="{% static 'css/partials/navigation_mobile.css' %}">
 
+
     <link rel="stylesheet" href="{% static 'css/partials/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/partials/footer_mobile.css' %}">
 
+    <link rel="stylesheet" href="{% static 'css/partials/invite_friend_modal.css' %}">
+    <link rel="stylesheet" href="{% static 'css/partials/invite_friend_modal_mobile.css' %}">
+
     <link rel="stylesheet" href="{% static 'css/home/home.css' %}">
     <link rel="stylesheet" href="{% static 'css/home/confirmations/friend_invite_success.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/about_us.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/about_us_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/how_it_works.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/how_it_works_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/contact_us.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/contact_us_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/help_center.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/help_center_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/site_map.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/site_map_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/help_center_pages/buying_page.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/site_info/help_center_pages/buying_page_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/footer_links/terms_and_conditions.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/footer_links/terms_and_conditions_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/footer_links/privacy.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/footer_links/privacy_mobile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/footer_links/privacy_choices.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home/footer_links/privacy_choices_mobile.css' %}">
+
     <link rel="stylesheet" href="{% static 'css/auction/auction.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/auction_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_auction.css' %}">
@@ -96,26 +119,6 @@
     <link rel="stylesheet" href="{% static 'css/auction/future_releases_mobile.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_details.css' %}">
     <link rel="stylesheet" href="{% static 'css/auction/product_details_mobile.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/about_us.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/about_us_mobile.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/how_it_works.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/how_it_works_mobile.css' %}">
-
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/contact_us.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/contact_us_mobile.css' %}">
-
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/help_center.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/help_center_mobile.css' %}">
-
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/help_center_pages/buying_page.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/site_info/help_center_pages/buying_page_mobile.css' %}">
-
-    <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/footer_links/terms_and_conditions_mobile.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy_mobile.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy_choices.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auction/footer_links/privacy_choices_mobile.css' %}">
 
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard.css' %}">
     <link rel="stylesheet" href="{% static 'css/pop_accounts/user_accounts/dashboard_mobile.css' %}">
@@ -180,7 +183,7 @@
 <body>
     <div class="page-wrapper">
         {% include "partials/navigation.html" %}
-        <section class="auction_section container">
+        <section class="container"> {% comment %}auction_section{% endcomment %}
             {% block main %}{% endblock %}
         </section>
         {% include "partials/footer.html" %}

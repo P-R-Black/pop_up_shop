@@ -139,6 +139,78 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<h2>Your Privacy Choices</h2>', html)
     
 
+    def test_buying_help_html(self):
+        response = self.c.get('/buying-help/')
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>Buying Help</title>', html)
+
+        # small test of the copy
+        self.assertIn('<h2>Buying</h2>', html)
+
+
+
+    def test_selling_help_html(self):
+        response = self.c.get('/selling-help/')
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>Selling Help</title>', html)
+
+        # small test of the copy
+        self.assertIn('<h2>Selling</h2>', html)
+
+
+
+    def test_account_help_html(self):
+        response = self.c.get('/account-help/')
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>Account Help</title>', html)
+
+        # small test of the copy
+        self.assertIn('<h2>My Account</h2>', html)
+    
+
+    def test_shipping_help_html(self):
+        response = self.c.get('/shipping-help/')
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>Shipping and Tracking Help</title>', html)
+
+        # small test of the copy
+        self.assertIn('<h2>Shipping and Tracking</h2>', html)
+
+
+    def test_payment_help_html(self):
+        response = self.c.get('/payment-help/')
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>Payment Help</title>', html)
+
+        # small test of the copy
+        self.assertIn('<h2>Payment Options</h2>', html)
+
+
+    def test_fees_help_html(self):
+        response = self.c.get('/fees-help/')
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>Fees Help</title>', html)
+
+        # small test of the copy
+        self.assertIn('<h2>Fees</h2>', html)
+
+
+
+
+    
+
 
 
 

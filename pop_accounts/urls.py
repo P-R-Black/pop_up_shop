@@ -31,10 +31,11 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='login'),
     path('logout/',UserLogOutView.as_view(), name='logout'),
        
-    path('dashboard/', UserDashboardView.as_view(), name='dashboard'),
+    
     # path('place-bid/', DashboardPlaceBidView.as_view(), name='place_bid'),
 
     # User Info
+    path('dashboard/', UserDashboardView.as_view(), name='dashboard'),
     path('personal-information/', views.personal_info, name='personal_info'),
     path('delete-account/', views.delete_account, name='delete_account'),
     path('account-deleted/', views.account_deleted, name="account_deleted"),

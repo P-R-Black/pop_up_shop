@@ -1,3 +1,5 @@
+from django.urls import reverse
+
 ABOUT_US_COPY = {"page_title": "About The Pop Up", "paragraph_title": "Connecting buyers with authentic products", 
             "paragraph": "The Pop Up’s focus is authenticity and we exist to bring authentic products to buyers."}
 
@@ -268,6 +270,46 @@ HELP_CENTER_PAGE_FEE = {
         },
         
     ]
+}
+
+
+SITE_MAP_COPY = {
+    "page_title": "Site Map",
+    "page_update_title": "Last Updated",
+    "page_update_date": "January 1, 2025",
+    "pages": [
+        {
+            "page_section" : [
+                {"title": "Home", "full_url":"pop_up_home:home", 
+                    "sub_page": [
+                        {"sub_page_title": "About Us", "full_url":"pop_up_home:about"},
+                        {"sub_page_title": "How It Works", "full_url":"pop_up_home:how-it-works"},
+                        {"sub_page_title": "Verification", "full_url":"pop_up_home:verification"},
+                        {"sub_page_title": "Contact Us", "full_url":"pop_up_home:contact"},
+                        {"sub_page_title": "Help Center", "full_url":"pop_up_home:help-center",
+                        "sub_categories": [
+                            {"sub_page_title": "Buying", "sub_category_url": "pop_up_home:buying-help"},
+                            {"sub_page_title": "Selling", "sub_category_url": "pop_up_home:selling-help"},
+                            {"sub_page_title": "My Account", "sub_category_url": "pop_up_home:account-help"},
+                            {"sub_page_title": "Shipping and Tracking", "sub_category_url": "pop_up_home:shipping-help"},
+                            {"sub_page_title": "Payment Options", "sub_category_url": "pop_up_home:payment-help"},
+                            {"sub_page_title": "Fees", "sub_category_url": "pop_up_home:fees-help"},
+                         ]},
+                        {"sub_page_title": "Site Map", "full_url":"pop_up_home:site-map"},
+                        {"sub_page_title": "Terms and Conditions", "full_url":"pop_up_home:terms"},
+                        {"sub_page_title": "Privacy Policy", "full_url":"pop_up_home:privacy"},
+                        {"sub_page_title": "Privacy Choices", "full_url":"pop_up_home:privacy_choices"},
+                    ]
+                 },
+                {"title": "Products", "full_url":"pop_up_auction:products"},
+                {"title": "Auction", "full_url":"pop_up_home:home"},
+                {"title": "Coming Soon", "full_url":"pop_up_home:home"},
+                {"title": "Future Releases", "full_url":"pop_up_home:home"},
+                {"title": "Cart", "full_url":"pop_up_home:home"}
+            ]
+        }
+    ]
+
 }
 
 TERMS_AND_CONDITIONS_COPY = {
