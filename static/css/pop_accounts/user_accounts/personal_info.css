@@ -26,7 +26,7 @@
     background-color: transparent;
     height: 2rem;
     padding-left: .5rem;
-    width: 10%;
+    width: auto;
 }
 
 
@@ -81,6 +81,7 @@
 }
 
 .personal_info_first_name_input,
+.personal_info_middle_name_input,
 .personal_info_last_name_input {
     border: 2px solid var(--text-color);
     border-radius: 5px;
@@ -185,7 +186,7 @@ select#gen_option {
     font-size: 1rem;
     height: 2rem;
     padding-left: .5rem;
-    width: 15%;
+    width: auto;
 }
 
 
@@ -520,6 +521,19 @@ select#gen_option {
 
 
 /* ============  Update Address Modal  ============ */
+
+
+.update_address_modal_container {
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    padding: .5rem .5rem;
+}
+
+.update_address_modal_container form .modal_name_inputs {
+    color: var(--text-color);
+    margin-bottom: .5rem;
+}
+
 .personal_info_modal_choice_input {
     width: 100%;
 }

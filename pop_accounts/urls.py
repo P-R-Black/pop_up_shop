@@ -4,7 +4,7 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView,
                     UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
                     UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
-                    UpdateProductView, CompleteProfileView)
+                    UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, DeleteAddressView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -31,18 +31,16 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='login'),
     path('logout/',UserLogOutView.as_view(), name='logout'),
        
-    
     # path('place-bid/', DashboardPlaceBidView.as_view(), name='place_bid'),
 
     # User Info
     path('dashboard/', UserDashboardView.as_view(), name='dashboard'),
-    path('personal-information/', views.personal_info, name='personal_info'),
+    path('personal-information/', views.PersonalInfoView.as_view(), name='personal_info'),
     path('delete-account/', views.delete_account, name='delete_account'),
     path('account-deleted/', views.account_deleted, name="account_deleted"),
-    path('get-address/<uuid:address_id>/', views.get_address, name='get_address'),
-    path('delete-address/<uuid:address_id>/', views.delete_address, name='delete_address'),
+    path('get-address/<uuid:address_id>/', GetAddressView.as_view(), name='get_address'),
+    path('delete-address/<uuid:address_id>/', DeleteAddressView.as_view(), name='delete_address'),
     path('set-default-address/<uuid:address_id>/', views.set_default_address, name='set_default_address'),
-
     path('interested-in/', UserInterestedInView.as_view(), name='interested_in'),
     path('mark-interested/', MarkProductInterestedView.as_view(), name='mark_interested'),
     path('on-notice/', UserOnNoticeView.as_view(), name='on_notice'),

@@ -8,129 +8,122 @@ On Notice
 
 {% block main %}
 
-<section class="auction_section container">
+<div class="section_container">
+    <div class="page_title">
+        {% for t in user_order_details_page %}
+        <h2>{{ t.page_title }}</h2>
+        {% endfor %}
+    </div>
+    <div class="the_dashboard_container">
+        <div class="bids_purchases_container">
 
-    <div class="section_container">
-        <div class="page_title">
-            {% for t in user_order_details_page %}
-            <h2>{{ t.page_title }}</h2>
-            {% endfor %}
-        </div>
-        <div class="the_dashboard_container">
-            <div class="bids_purchases_container">
+            <div class="dashboard_databox_large">
 
-                <div class="dashboard_databox_large">
-
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        {% for t in user_order_details_page %}
-                        <h2>{{ t.box_title }} {{ order.id }}</h2>
-                        {% endfor %}
-                        <div class="blank_div"></div>
-                    </div>
-                    {% for item in items %}
-                    <div class="order_details_inner_container">
-                        <div class="order_dets_image_container">
-                            {% for image in item.product.product_image.all %}
-                            {% if image.is_feature %}
-                            <img class="order_dets_min_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}">
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                        <div class="order_dets_product_desc_container">
-                            <h4 class="order_dets_product_title">
-                                {{ item.model_year|default:"Not Specified" }}
-                                {{ item.order_item.product_title }} <br>
-                                {% if item.order_item.secondary_product_title %}
-                                {{ item.order_item.secondary_product_title }}
-                                {% endif %}
-                            </h4>
-                            <div class="order_dets_sizing_data">
-                                <div class="order_dets_sizing">
-                                    {% if item.product_sex == "Male" %}
-                                    <h4>{{ item.order_item.size|default:"N/A" }} U.S. Mens</h4>
-                                    {% elif item.product_sex == "Female" %}
-                                    <h4>{{ item.order_item.size|default:"N/A" }} U.S. Womens</h4>
-                                    {% else %}
-                                    <h4>N/A</h4>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="order_dets_color_data">
-                                <div class="order_dets_colorway">
-                                    <h4> {{ item.order_item.color|default:"N/A" }}</h4>
-                                </div>
-                            </div>
-
-                        </div>
-                        <div class="order_dets_shipping_dets_container">
-                            <div class="shipping_dets">
-                                {% if shipment %}
-                                {% if shipment.delivered_at %}
-                                <h4>Delivered: {{ shipment.delivered_at|date:"F d, Y" }}</h4>
-
-                                {% elif shipment.shipped_at %}
-                                <h4>Shipped: {{ shipment.shipped_at|date:"F d, Y"}}</h4>
-
-                                {% else %}
-                                <h3 style="text-align: center;">Shipping Information<br>Not Available Yet</h3>
-                                {% endif %}
-                                {% endif %}
-                            </div>
-                            <div class="order_dets_shipped_to_container">
-                                {% if shipment.shipped_at %}
-                                {% if order.shipping_address.first_name %}
-                                <h4>
-                                    {{order.shipping_address.first_name }}
-                                    {{order.shipping_address.middle_name }}
-                                    {{order.shipping_address.last_name }}
-                                </h4>
-                                {% else %}
-                                <h4>{{ order.full_name }}</h4>
-                                {% endif %}
-                                <h4>{{ order.shipping_address.address_line }}</h4>
-                                {% if order.shipping_address.address_line2 %}
-                                <h4>{{ order.shipping_address.address_line2 }}</h4>
-                                {% endif %}
-                                {% if order.shipping_address.apartment_suite_number %}
-                                <h4>{{ order.shipping_address.apartment_suite_number }}</h4>
-                                {% endif %}
-                                <h4>
-                                    {{ order.shipping_address.town_city }},
-                                    {{ order.shipping_address.state }}
-                                    {{ order.shipping_address.postcode }}
-                                </h4>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="order_dets_cust_dets_container">
-                            <h4>{{ order.full_name }}</h4>
-                            <h4>{{ order.address1 }}</h4>
-                            {% if order.address2 %}
-                            <h4>{{ order.address2 }}</h4>
-                            {% endif %}
-                            <h4>{{ order.city }} {{ order.state }} {{ order.postal_code }}</h4>
-                            {% if order.aparment_suite_number %}
-                            <h4>{{ order.aparment_suite_number }}</h4>
-                            {% endif %}
-                            {% if order.phone %}
-                            <h4>{{ order.phone }}</h4>
-                            {% endif %}
-
-                        </div>
-                    </div>
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    {% for t in user_order_details_page %}
+                    <h2>{{ t.box_title }} {{ order.id }}</h2>
                     {% endfor %}
-                    <div class="order_dets_date_create_container">
-                        <h3>Ordered: {{ order.created_at|date:"F d Y "}}</h3>
+                    <div class="blank_div"></div>
+                </div>
+                {% for item in items %}
+                <div class="order_details_inner_container">
+                    <div class="order_dets_image_container">
+                        {% for image in item.product.product_image.all %}
+                        {% if image.is_feature %}
+                        <img class="order_dets_min_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}">
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="order_dets_product_desc_container">
+                        <h4 class="order_dets_product_title">
+                            {{ item.model_year|default:"Not Specified" }}
+                            {{ item.order_item.product_title }} <br>
+                            {% if item.order_item.secondary_product_title %}
+                            {{ item.order_item.secondary_product_title }}
+                            {% endif %}
+                        </h4>
+                        <div class="order_dets_sizing_data">
+                            <div class="order_dets_sizing">
+                                {% if item.product_sex == "Male" %}
+                                <h4>{{ item.order_item.size|default:"N/A" }} U.S. Mens</h4>
+                                {% elif item.product_sex == "Female" %}
+                                <h4>{{ item.order_item.size|default:"N/A" }} U.S. Womens</h4>
+                                {% else %}
+                                <h4>N/A</h4>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="order_dets_color_data">
+                            <div class="order_dets_colorway">
+                                <h4> {{ item.order_item.color|default:"N/A" }}</h4>
+                            </div>
+                        </div>
 
                     </div>
+                    <div class="order_dets_shipping_dets_container">
+                        <div class="shipping_dets">
+                            {% if shipment %}
+                            {% if shipment.delivered_at %}
+                            <h4>Delivered: {{ shipment.delivered_at|date:"F d, Y" }}</h4>
+
+                            {% elif shipment.shipped_at %}
+                            <h4>Shipped: {{ shipment.shipped_at|date:"F d, Y"}}</h4>
+
+                            {% else %}
+                            <h3 style="text-align: center;">Shipping Information<br>Not Available Yet</h3>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="order_dets_shipped_to_container">
+                            {% if shipment.shipped_at %}
+                            {% if order.shipping_address.first_name %}
+                            <h4>
+                                {{order.shipping_address.first_name }}
+                                {{order.shipping_address.middle_name }}
+                                {{order.shipping_address.last_name }}
+                            </h4>
+                            {% else %}
+                            <h4>{{ order.full_name }}</h4>
+                            {% endif %}
+                            <h4>{{ order.shipping_address.address_line }}</h4>
+                            {% if order.shipping_address.address_line2 %}
+                            <h4>{{ order.shipping_address.address_line2 }}</h4>
+                            {% endif %}
+                            {% if order.shipping_address.apartment_suite_number %}
+                            <h4>{{ order.shipping_address.apartment_suite_number }}</h4>
+                            {% endif %}
+                            <h4>
+                                {{ order.shipping_address.town_city }},
+                                {{ order.shipping_address.state }}
+                                {{ order.shipping_address.postcode }}
+                            </h4>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="order_dets_cust_dets_container">
+                        <h4>{{ order.full_name }}</h4>
+                        <h4>{{ order.address1 }}</h4>
+                        {% if order.address2 %}
+                        <h4>{{ order.address2 }}</h4>
+                        {% endif %}
+                        <h4>{{ order.city }} {{ order.state }} {{ order.postal_code }}</h4>
+                        {% if order.aparment_suite_number %}
+                        <h4>{{ order.aparment_suite_number }}</h4>
+                        {% endif %}
+                        {% if order.phone %}
+                        <h4>{{ order.phone }}</h4>
+                        {% endif %}
+
+                    </div>
+                </div>
+                {% endfor %}
+                <div class="order_dets_date_create_container">
+                    <h3>Ordered: {{ order.created_at|date:"F d Y "}}</h3>
+
                 </div>
             </div>
         </div>
     </div>
-
-
-
-</section>
-
+</div>
 {% endblock %}

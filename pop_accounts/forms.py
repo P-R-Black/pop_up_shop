@@ -7,10 +7,7 @@ from .utils.utils import validate_password_strength
 
 # from django_countries.data import COUNTRIES
 
-
-
-
-"""" The Pop Up"""
+"""The Pop Up"""
 SHOE_SIZE_CHOICES = [
     ('', 'Select size'),
     ('5', '5 US'),
@@ -107,7 +104,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     )
 
     first_name = forms.CharField(
-        label='First Name', min_length=2, max_length=50, required=False,
+        label='First Name', min_length=2, max_length=50, required=True,
         widget=forms.TextInput(attrs={
             'class': 'personal_info_input_first_name', # personal_info_first_name_input
             'placeholder': 'First Name',
@@ -117,7 +114,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     )
 
     middle_name = forms.CharField(
-        label='Middle Name', min_length=2, max_length=50, required=False,
+        label='Middle Name', min_length=1, max_length=50, required=False,
         widget=forms.TextInput(attrs={
             'class': 'personal_info_input_middle_name', # personal_info_first_name_input
             'id': '',
@@ -127,7 +124,7 @@ class ThePopUpUserAddressForm(forms.ModelForm):
     )
 
     last_name = forms.CharField(
-        label='Last Name', min_length=2, max_length=50, required=False,
+        label='Last Name', min_length=2, max_length=50, required=True,
         widget=forms.TextInput(attrs={
             'class': 'personal_info_input_last_name', # personal_info_last_name_input
             'placeholder': 'Last Name',
@@ -523,7 +520,7 @@ class PopUpPasswordResetForm(forms.ModelForm):
 
 class PopUpUserEditForm(forms.Form):
     first_name = forms.CharField(
-        label='First Name', min_length=2, max_length=50, required=False,
+        label='First Name', min_length=2, max_length=50, required=True,
         widget=forms.TextInput(attrs={
             'class': 'personal_info_first_name_input',
             'placeholder': 'First Name',
@@ -532,7 +529,7 @@ class PopUpUserEditForm(forms.Form):
     )
 
     middle_name = forms.CharField(
-        label='Middle Name', min_length=2, max_length=50, required=False,
+        label='Middle Name', min_length=1, max_length=50, required=False,
         widget=forms.TextInput(attrs={
             'class': 'personal_info_first_name_input',
             'placeholder': 'Middle Name',
@@ -541,7 +538,7 @@ class PopUpUserEditForm(forms.Form):
     )
 
     last_name = forms.CharField(
-        label='Last Name', min_length=2, max_length=50, required=False,
+        label='Last Name', min_length=2, max_length=50, required=True,
         widget=forms.TextInput(attrs={
             'class': 'personal_info_last_name_input',
             'placeholder': 'Last Name',
@@ -634,7 +631,7 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
     )
 
     first_name = forms.CharField(
-        label='First Name', min_length=2, max_length=50, required=False,
+        label='First Name', min_length=2, max_length=50, required=True,
         widget=forms.TextInput(attrs={
             'class': 'modal_first_name_input',
             'placeholder': 'First Name',
@@ -644,7 +641,7 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
     )
 
     middle_name = forms.CharField(
-        label='Middle Name', min_length=2, max_length=50, required=False,
+        label='Middle Name', min_length=1, max_length=50, required=False,
         widget=forms.TextInput(attrs={
             'class': 'modal_first_name_input',
             'placeholder': 'Middle Name',
@@ -654,7 +651,7 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
     )
 
     last_name = forms.CharField(
-        label='Last Name', min_length=2, max_length=50, required=False,
+        label='Last Name', min_length=2, max_length=50, required=True,
         widget=forms.TextInput(attrs={
             'class': 'modal_first_name_input',
             'placeholder': 'Last Name',

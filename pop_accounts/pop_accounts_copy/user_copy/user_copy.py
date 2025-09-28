@@ -42,6 +42,40 @@ USER_DASHBOARD_COPY = {
     "box_more_title": "More",
 }
 
+PERSONAL_INFO_COPY = {
+    "page_title": "Account Data",
+    "personal_info_update_section_title": "Update Account Data",
+    "address_update_section_title": "Add Address and/or Recipient",
+    "delete_account_section_title": "Delete Account", "delete_account_warning_text": [
+        {"delete_warning": "To delete your account, click below. This action is irreversible."}
+    ],
+    "address_modal_title": "Edit Address"
+
+}
+
+USER_INTERESTED_IN_COPY = {
+    "page_title": "Interested In",
+    "interested_in_headers": [
+        {"headers": "Year"},
+        {"headers": "Item"},
+        {"headers": "Size"},
+        {"headers": "Condition"},
+        {"headers": "Interested"},
+    ],
+}
+
+USER_ON_NOTICE_COPY = {
+    "page_title": "On Notice",
+    "on_notice_headers": [
+        {"headers": "Year"},
+        {"headers": "Item"},
+        {"headers": "Size"},
+        {"headers": "Condition"},
+        {"headers": "On Notice"},
+    ],
+}
+
+
 USER_SHIPPING_TRACKING = {"page_title": "Shipping and Tracking"}
 TRACKING_CATEGORIES =[
     {"header": "Tracking No."},

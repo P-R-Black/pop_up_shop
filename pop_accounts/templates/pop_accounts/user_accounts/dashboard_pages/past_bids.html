@@ -8,58 +8,56 @@ Past Bids
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>Past Bids</h2>
-        </div>
-        <div class="interested_in_container">
-            <div class="interested_in_open_bids_container">
-                <div class="interested_in_databox_headers">
-                    <h3>Date</h3>
-                    <h3>Item</h3>
-                    <h3>Size</h3>
-                    <h3>Last Bid</h3>
-                    <h3>Bid Status</h3>
-                </div>
-                <div class="interested_in_open_bids">
-                    {% for bid in bid_history %}
-                    <div class="interested_in_items_container">
-                        <div class="interested_in_year">
-                            <p>{{ bid.bid_time|date:"F d, Y"}}</p>
-                        </div>
-                        <div class="interested_in_item">
-                            <a href="{% url 'pop_up_auction:past_bids_product_detail' bid.product.id%}">
-                                <p>{{ bid.mptt_specs.model_year }} {{ bid.product.product_title }} <br>
-                                    {{ bid.product.secondary_product_title }}
-                                </p>
-                            </a>
-                        </div>
-                        <div class="interested_in_size">
-                            {% if bid.mptt_specs.product_sex == "Male" %}
-                            <p>{{ bid.mptt_specs.size }} US Mens</p>
-                            {% elif bid.mptt_specs.product_sex == "Female" %}
-                            <p>{{ bid.mptt_specs.size }} US Womens</p>
-                            {% else %}
-                            <p>N/A</p>
-                            {% endif %}
-                        </div>
-                        <div class="interested_in_condition">
-                            <p>${{bid.bid_amount}}</p>
-                        </div>
-                        <div class="interested_in_condition">
-                            {% if bid.is_winning == True %}
-                            <p>Winning Bid</p>
-                            {% else %}
-                            <p>Losing Bid</p>
-                            {% endif %}
-                        </div>
+<div class="section_container">
+    <div class="page_title">
+        <h2>Past Bids</h2>
+    </div>
+    <div class="interested_in_container">
+        <div class="interested_in_open_bids_container">
+            <div class="interested_in_databox_headers">
+                <h3>Date</h3>
+                <h3>Item</h3>
+                <h3>Size</h3>
+                <h3>Last Bid</h3>
+                <h3>Bid Status</h3>
+            </div>
+            <div class="interested_in_open_bids">
+                {% for bid in bid_history %}
+                <div class="interested_in_items_container">
+                    <div class="interested_in_year">
+                        <p>{{ bid.bid_time|date:"F d, Y"}}</p>
                     </div>
-                    {% endfor %}
+                    <div class="interested_in_item">
+                        <a href="{% url 'pop_up_auction:past_bids_product_detail' bid.product.id%}">
+                            <p>{{ bid.mptt_specs.model_year }} {{ bid.product.product_title }} <br>
+                                {{ bid.product.secondary_product_title }}
+                            </p>
+                        </a>
+                    </div>
+                    <div class="interested_in_size">
+                        {% if bid.mptt_specs.product_sex == "Male" %}
+                        <p>{{ bid.mptt_specs.size }} US Mens</p>
+                        {% elif bid.mptt_specs.product_sex == "Female" %}
+                        <p>{{ bid.mptt_specs.size }} US Womens</p>
+                        {% else %}
+                        <p>N/A</p>
+                        {% endif %}
+                    </div>
+                    <div class="interested_in_condition">
+                        <p>${{bid.bid_amount}}</p>
+                    </div>
+                    <div class="interested_in_condition">
+                        {% if bid.is_winning == True %}
+                        <p>Winning Bid</p>
+                        {% else %}
+                        <p>Losing Bid</p>
+                        {% endif %}
+                    </div>
                 </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-</section>
+</div>
 
 {% endblock %}

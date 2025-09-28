@@ -21,9 +21,16 @@
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
 @media screen and (max-width: 450px) {
 
-    .interested_in_databox_headers h3:nth-child(even) {
-        margin-top: 2rem;
+    .interested_in_open_bids_container {
+        width: 130%;
+    }
 
+    .interested_in_databox_headers {
+        width: 130%;
+    }
+
+    .interested_in_items_container {
+        width: 130%;
     }
 
 }

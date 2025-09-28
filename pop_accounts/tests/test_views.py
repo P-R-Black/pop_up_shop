@@ -3,6 +3,7 @@ from django.urls import reverse
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
 from pop_up_auction.models import PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType
+from pop_accounts.views import PersonalInfoView
 from unittest.mock import patch
 from django.utils import timezone
 from django.utils.timezone import now, make_aware
@@ -13,6 +14,7 @@ from django.http import HttpRequest
 from django.views.decorators.csrf import csrf_protect
 from django.test import RequestFactory
 from django.http import JsonResponse
+import json
 from django.core import mail
 from pop_accounts.utils.utils import validate_password_strength
 from django.core.exceptions import ValidationError
@@ -21,8 +23,12 @@ from pop_up_cart.cart import Cart
 from decimal import Decimal, ROUND_HALF_UP
 from django.http import HttpRequest
 from django.utils.text import slugify
+from .conftest import create_seed_data
+from django.contrib.messages import get_messages
+from unittest.mock import patch, MagicMock
 
-def create_test_user(email, password, first_name, last_name, shoe_size, size_gender):
+
+def create_test_user(email, password, first_name, last_name, shoe_size, size_gender,**kwargs):
     return PopUpCustomer.objects.create_user(
             email=email,
             password=password,
@@ -42,8 +48,20 @@ def create_test_user_two():
             size_gender="male"
         )
 
-
-
+def create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
+                        town_city, state, postcode, delivery_instructions):
+    return PopUpCustomerAddress.objects.create(
+            customer=customer,
+            first_name=first_name,
+            last_name=last_name,
+            address_line=address_line,
+            address_line2=address_line2,
+            apartment_suite_number=apartment_suite_number,
+            town_city=town_city,
+            state=state,
+            postcode=postcode,
+            delivery_instructions=delivery_instructions
+        )
 
 def create_brand(name):
     return PopUpBrand.objects.create(
@@ -103,9 +121,6 @@ class TestPopUpUserDashboardView(TestCase):
 
         self.url = reverse('pop_accounts:dashboard')
 
-        # create an existing user
-        # email, password, first_name, last_name, shoe_size, size_gender
-        # self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
 
     def test_dashboard_view_authenicated_user(self):
         # Log the user in
@@ -127,7 +142,663 @@ class TestPopUpUserDashboardView(TestCase):
         self.assertEqual(response.status_code, 302)
 
 
+
+class TestUserInterestedInView(TestCase):
+    def setUp(self):
+        # create an existing user
+        self.existing_email = 'existing@example.com'
+
+        # create an existing user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+
+        self.url = reverse('pop_accounts:interested_in')
+    
+    def test_interested_in_view_authenicated_user(self):
+        # Log the user in
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        html = response.content.decode('utf-8')
         
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "pop_accounts/user_accounts/dashboard_pages/interested_in.html")
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>Interested In</title>', html)
+
+        self.assertIn('<h2>Interested In</h2>', html)
+
+
+    def test_interested_in_redirects_if_not_logged_in(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+
+class TestMarkProductInterestedView(TestCase):
+    def setUp(self):
+        
+        # create an existing user
+        self.existing_email = 'existing@example.com'
+
+        # create an existing user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+
+        self.url = reverse('pop_accounts:mark_interested')
+
+        self.product, _, _, self.user1, _ = create_seed_data()
+
+    def test_add_product_to_interested(self):
+       
+        self.client.force_login(self.user1)
+
+        response = self.client.post(
+            reverse('pop_accounts:mark_interested'),
+            data=json.dumps({'product_id': str(self.product.id), 'action': 'add'}),
+            content_type = 'application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status':'added', 'message': 'Product added to interested list.'})
+
+
+    def test_remove_product_from_interested(self):
+        self.client.force_login(self.user1)
+
+        # First add product manually
+        self.user1.prods_interested_in.add(self.product)
+
+        response = self.client.post(
+            reverse('pop_accounts:mark_interested'),
+            data=json.dumps({'product_id': str(self.product.id), 'action': 'remove'}),
+            content_type='application/json'
+        )
+      
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': 'removed', 'message': 'Product removed from interested list.'})
+        self.assertNotIn(self.product, self.user.prods_interested_in.all())
+
+
+    def test_missing_product_id(self):
+        self.client.force_login(self.user1)
+        response = self.client.post(
+            reverse('pop_accounts:mark_interested'),
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': 'error', 'message': 'Product ID missing'})
+
+
+    def test_product_does_not_exist(self):
+        self.client.force_login(self.user1)
+        response = self.client.post(
+            reverse('pop_accounts:mark_interested'),
+            data=json.dumps({'product_id': 99999999}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertJSONEqual(response.content, {'status': 'error', 'message': 'Product not found'})
+
+
+class TestUserOnNoticeView(TestCase):
+    def setUp(self):
+        # create an existing user
+        self.existing_email = 'existing@example.com'
+
+        # create an existing user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+
+        self.url = reverse('pop_accounts:on_notice')
+    
+    def test_on_notice_view_authenicated_user(self):
+        # Log the user in
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        html = response.content.decode('utf-8')
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "pop_accounts/user_accounts/dashboard_pages/on_notice.html")
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>On Notice</title>', html)
+
+        self.assertIn('<h2>On Notice</h2>', html)
+
+
+    def test_on_notice_redirects_if_not_logged_in(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+
+class TestMarkProductOnNoticeView(TestCase):
+    def setUp(self):
+        
+        # create an existing user
+        self.existing_email = 'existing@example.com'
+
+        # create an existing user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+
+        self.url = reverse('pop_accounts:mark_on_notice')
+
+        self.product, _, _, self.user1, _ = create_seed_data()
+
+
+    def test_add_product_to_interested(self):
+       
+        self.client.force_login(self.user1)
+
+        response = self.client.post(
+            reverse('pop_accounts:mark_on_notice'),
+            data=json.dumps({'product_id': str(self.product.id), 'action': 'add'}),
+            content_type = 'application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': 'added', 'message': 'Product added to notify me list.'})
+    
+
+    def test_remove_product_from_interested(self):
+        self.client.force_login(self.user1)
+
+        # First add product manually
+        self.user1.prods_on_notice_for.add(self.product)
+
+        response = self.client.post(
+            reverse('pop_accounts:mark_on_notice'),
+            data=json.dumps({'product_id': str(self.product.id), 'action': 'remove'}),
+            content_type='application/json'
+        )
+      
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': 'removed', 'message': 'Product removed from notify me list.'})
+        self.assertNotIn(self.product, self.user.prods_on_notice_for.all())
+
+
+    def test_missing_product_id(self):
+        self.client.force_login(self.user1)
+        response = self.client.post(
+            reverse('pop_accounts:mark_on_notice'),
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': 'error', 'message': 'Product ID missing'})
+
+
+    def test_product_does_not_exist(self):
+        self.client.force_login(self.user1)
+        response = self.client.post(
+            reverse('pop_accounts:mark_on_notice'),
+            data=json.dumps({'product_id': 99999999}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertJSONEqual(response.content, {'status': 'error', 'message': 'Product not found'})
+
+
+
+class TestPersonalInfoView(TestCase):
+    def setUp(self):
+        # create an existing user
+        self.existing_email = 'existing@example.com'
+
+        # create an existing user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', mobile_phone="1234567890")
+        # create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
+        #                 town_city, state, postcode, delivery_instructions)
+        self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
+                                           address_line="123 Test St", address_line2="", apartment_suite_number="", town_city="Test City", state="TS", 
+                                           postcode="12345",delivery_instructions="")
+
+        self.url = reverse('pop_accounts:personal_info')
+    
+    
+    def test_personal_info_view_authenicated_user(self):
+        # Log the user in
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        html = response.content.decode('utf-8')
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "pop_accounts/user_accounts/dashboard_pages/personal_info.html")
+
+        html = response.content.decode('utf-8')
+        self.assertIn('<title>Personal Info</title>', html)
+
+        self.assertIn('<h2>Account Data</h2>', html)
+
+
+    def test_personal_info_view_redirects_if_not_logged_in(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+    
+
+    def test_get_request_authenticated(self):
+        """Test GET request for authenticated user"""
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, 'Test')  # User's first name
+        self.assertIn('form', response.context)
+        self.assertIn('address_form', response.context)
+        self.assertIn('addresses', response.context)
+        
+        # Check forms are properly initialized
+        form = response.context['form']
+        self.assertEqual(form.initial['first_name'], 'Test')
+        self.assertEqual(form.initial['last_name'], 'User')
+    
+
+    def test_get_context_data(self):
+        """Test the get_context_data method"""
+        self.client.force_login(self.user)
+        view = PersonalInfoView()
+        view.request = self.client.request()
+        view.request.user = self.user
+        
+        
+        context = view.get_context_data()
+        
+        self.assertIn('form', context)
+        self.assertIn('address_form', context)
+        self.assertIn('addresses', context)
+        self.assertIn('user', context)
+        self.assertEqual(context['user'], self.user)
+    
+    
+    def test_personal_form_submission_valid(self):
+        """Test valid personal information form submission"""
+        self.client.force_login(self.user)
+        
+        form_data = {
+            'first_name': 'Test',
+            'middle_name': 'M',
+            'last_name': 'User',
+            'shoe_size': '11',
+            'size_gender': 'male',
+            'favorite_brand': 'nike',
+            'mobile_phone': '9876543210',
+            'mobile_notification': True
+        }
+        
+       
+        response = self.client.post(self.url, form_data)
+        
+        self.assertRedirects(response, self.url)
+        
+        # Check user was updated
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Test')
+        self.assertEqual(self.user.middle_name, 'M')
+        self.assertEqual(self.user.last_name, 'User')
+        self.assertEqual(self.user.shoe_size, '11')
+        
+        # Check success message
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), "Your profile has been updated.")
+    
+
+    def test_personal_form_submission_invalid(self):
+        """Test invalid personal information form submission"""
+        self.client.force_login(self.user)
+        
+        form_data = {
+            'first_name': '',  # Required field empty
+            'last_name': 'Smith'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        self.assertFalse(response.context['form'].is_valid())    
+
+
+    def test_address_form_submission_new_address(self):
+        """Test adding a new address"""
+        self.client.force_login(self.user)
+        
+        form_data = {
+            'prefix': 'Mr.',
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'street_address_1': '456 New St',
+            'city_town': 'New City',
+            'state': 'North Carolina',
+            'postcode': '54321',
+            'delivery_instructions': 'Ring doorbell'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.assertRedirects(response, self.url)
+        
+        # Check new address was created
+        new_address = PopUpCustomerAddress.objects.filter(
+            customer=self.user,
+            address_line='456 New St'
+        ).first()
+        self.assertIsNotNone(new_address)
+        self.assertEqual(new_address.town_city, 'New City')
+        
+        # Check success message
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), "Address has been added.")
+
+
+    def test_address_form_submission_update_existing(self):
+        """Test updating an existing address"""
+        self.client.force_login(self.user)
+        
+        form_data = {
+            'address_id': str(self.address.id),
+            'prefix': 'Mr.',
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'street_address_1': '789 Updated St',
+            'city_town': 'Updated City',
+            'state': 'South Carolina',
+            'postcode': '98765'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.assertRedirects(response, self.url)
+        
+        # Check address was updated
+        self.address.refresh_from_db()
+        self.assertEqual(self.address.address_line, '789 Updated St')
+        self.assertEqual(self.address.town_city, 'Updated City')
+        
+        # Check success message
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), "Address has been updated.")
+
+
+    def test_address_form_submission_invalid(self):
+        """Test invalid address form submission"""
+        self.client.force_login(self.user)
+        
+        form_data = {
+            'street_address_1': '456 New St',
+            'city_town': '' # Missing required fields like city, state, postcode
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('address_form', response.context)
+       
+       # Add these missing assertions:
+        address_form = response.context['address_form']
+        self.assertFalse(address_form.is_valid())
+        
+        # Check that specific fields have validation errors
+        form_errors = address_form.errors
+        self.assertIn('city_town', form_errors)
+        
+        # You might also want to test other required fields
+        # Check your ThePopUpUserAddressForm to see what's required
+        if 'state' in address_form.fields and address_form.fields['state'].required:
+            self.assertIn('state', form_errors)
+        if 'postcode' in address_form.fields and address_form.fields['postcode'].required:
+            self.assertIn('postcode', form_errors)
+        
+        # Verify no address was created
+        new_address = PopUpCustomerAddress.objects.filter(
+            customer=self.user,
+            address_line='456 New St'
+        ).first()
+        self.assertIsNone(new_address)
+
+
+    def test_address_form_submission_nonexistent_address_id(self):
+        """Test updating non-existent address returns 404"""
+        self.client.force_login(self.user)
+        
+        form_data = {
+            'address_id': '00000000-0000-0000-0000-000000000000',  # Non-existent ID
+            'street_address_1': '789 Updated St',
+            'city_town': 'Updated City',
+            'state': 'UC',
+            'postcode': '98765'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.assertEqual(response.status_code, 404)
+    
+    def test_address_form_submission_other_users_address(self):
+        """Test updating another user's address returns 404"""
+
+        other_user = create_test_user_two()
+        print('other_user', other_user)
+
+        other_address = PopUpCustomerAddress.objects.create(
+            customer=other_user,
+            first_name='Other',
+            last_name='User',
+            address_line='999 Other St',
+            town_city='Other City',
+            state='Oklahoma',
+            postcode='99999'
+        )
+        
+        self.client.force_login(self.user)
+        
+        form_data = {
+            'address_id': str(other_address.id),
+            'street_address_1': '789 Hacked St',
+            'city_town': 'Hacked City',
+            'state': 'North Carolina',
+            'postcode': '12345'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.assertEqual(response.status_code, 404)
+    
+
+    def test_form_detection_methods(self):
+        """Test the helper methods for form detection"""
+        view = PersonalInfoView()
+        
+        # Test personal form detection
+        view.request = MagicMock()
+        view.request.POST = {'first_name': 'John', 'last_name': 'Doe'}
+        self.assertTrue(view._is_personal_form_submission())
+        self.assertFalse(view._is_address_form_submission())
+        
+        # Test address form detection
+        view.request.POST = {'street_address_1': '123 Main St', 'first_name': 'John'}
+        self.assertFalse(view._is_personal_form_submission())
+        self.assertTrue(view._is_address_form_submission())
+    
+
+    def test_address_form_exception_handling(self):
+        """Test exception handling in address form submission"""
+        self.client.force_login(self.user)
+        
+        form_data = {
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'street_address_1': '456 New St',
+            'city_town': 'New City',
+            'state': 'North Carolina',
+            'postcode': '54321'
+        }
+        
+        with patch('pop_accounts.forms.ThePopUpUserAddressForm.save', side_effect=Exception("Database error")):
+            
+            response = self.client.post(self.url, form_data)
+
+            self.assertEqual(response.status_code, 200)
+            # Should render the form again with error message
+            messages = list(get_messages(response.wsgi_request))
+            self.assertTrue(any("error occurred" in str(m) for m in messages))
+    
+
+
+
+class PersonalInfoViewIntegrationTests(TestCase):
+    """Integration tests for PersonalInfoView"""
+    
+    def setUp(self):
+        """Set up integration test data"""
+        self.client = Client()
+        self.user = create_test_user('integration@example.com', 'integrationpass!123', 'Integration', 'User', '10', 'male', mobile_phone="1234567890")
+
+        # self.user = User.objects.create_user(
+        #     email='integration@example.com',
+        #     password='integrationpass!123'
+        # )
+        self.url = reverse('pop_accounts:personal_info')
+    
+    def test_full_workflow_personal_and_address_forms(self):
+        """Test complete workflow of updating both personal info and address"""
+        self.client.force_login(self.user)
+        
+        # First, update personal information
+        personal_data = {
+            'first_name': 'Integration',
+            'last_name': 'Test',
+            'shoe_size': '9',
+            'mobile_phone': '5555555555'
+        }
+        
+        response = self.client.post(self.url, personal_data)
+        
+        self.assertRedirects(response, self.url)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Integration')
+        
+        # Then, add an address
+        address_data = {
+            'first_name': 'Integration',
+            'last_name': 'Test',
+            'street_address_1': '123 Integration St',
+            'city_town': 'Test City',
+            'state': 'Tennessee',
+            'postcode': '12345'
+        }
+        
+        response = self.client.post(self.url, address_data)
+        
+        self.assertRedirects(response, self.url)
+        
+        # Verify address was created
+        address = PopUpCustomerAddress.objects.filter(customer=self.user).first()
+        self.assertIsNotNone(address)
+        self.assertEqual(address.address_line, '123 Integration St')
+
+
+class TestGetAddressView(TestCase):
+    def setUp(self):
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+        self.client.force_login(self.user)
+        self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
+                                           address_line="123 Test St", address_line2="Unit 4", 
+                                           apartment_suite_number="128", town_city="Test City", 
+                                           state="TS", postcode="12345", delivery_instructions="Leave at the door")
+        
+
+    def test_get_address_requires_login(self):
+        self.client.logout()
+        url = reverse("pop_accounts:get_address", args=[self.address.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)  # redirect to login
+    
+    def test_get_address_returns_json(self):
+        url = reverse("pop_accounts:get_address", args=[self.address.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+
+        # Verify key fields
+        self.assertEqual(data["first_name"], "Test")
+        self.assertEqual(data["last_name"], "User")
+        self.assertEqual(data["address_line"], "123 Test St")
+        self.assertEqual(data["postcode"], "12345")
+    
+
+    def test_get_address_404_for_other_users_address(self):
+        # Create another user and an address for them
+        other_user = PopUpCustomer.objects.create_user(
+            email="user2@example.com",
+            password="testPass!45",
+            first_name="Jane",
+            last_name="Smith",
+        )
+        other_address = PopUpCustomerAddress.objects.create(
+            customer=other_user,
+            first_name="Jane",
+            last_name="Smith",
+            address_line="999 Hidden St",
+            town_city="SecretTown",
+            state="CA",
+            postcode="54321",
+        )
+
+        url = reverse("pop_accounts:get_address", args=[other_address.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)  # cannot access another user’s address
+    
+
+    def test_get_address_404_if_does_not_exist(self):
+        url = reverse("pop_accounts:get_address", args=['00000000-0000-0000-0000-000000000000'])  # non-existent ID
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+
+class TestDeleteAddressView(TestCase):
+    def setUp(self):
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+        self.other_user = create_test_user_two()
+
+        self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
+                                           address_line="123 Test St", address_line2="Unit 4", 
+                                           apartment_suite_number="128", town_city="Test City", 
+                                           state="North Carolina", postcode="12345", 
+                                           delivery_instructions="Leave at the door")
+        
+        self.url = reverse("pop_accounts:delete_address", args=[self.address.id])
+    
+
+    def test_redirect_if_not_logged_in(self):
+        """Should redirect unauthenticated users to login page"""
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 302)  # redirect
+        self.assertIn("/", response.url)
+    
+
+    def test_successful_delete_by_owner(self):
+        """User should be able to delete their own address"""
+        self.client.force_login(self.user)
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {"status": "success"})
+        self.assertFalse(PopUpCustomerAddress.objects.filter(id=self.address.id).exists())
+
+    def test_cannot_delete_other_users_address(self):
+        """User cannot delete an address they don't own"""
+        self.client.force_login(self.other_user)
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 404)  # get_object_or_404 should trigger
+
+    def test_get_request_not_allowed(self):
+        """GET request should return error JSON"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {"error": "Invalid Request"})
+
+
 # class EmailCheckViewTests(TestCase):
 #     def setUp(self):
 #         self.client = Client()
@@ -1123,7 +1794,38 @@ class TestPopUpUserDashboardView(TestCase):
     # """
     # Run Test
     # python3 manage.py test pop_accounts/tests
+    # python3 manage.py test pop_accounts.tests.test_views.PersonalInfoViewIntegrationTests
     # Run Test with Coverage
-    # coverage run --omit='*/venv/*' manage.py test pop_accounts/tests
-    # 
+    # coverage run --omit='*/venv/*' manage.py test pop_accounts/tests 
     # """
+
+
+    """
+    # Debug output
+    # print(f"Response status: {response.status_code}")
+    # print(f"Form data sent: {form_data}")
+
+    # # Check if it's being detected as address form
+    # view = PersonalInfoView()
+    # view.request = response.wsgi_request
+    # print(f"Detected as address form: {view._is_address_form_submission()}")
+
+    # if response.status_code == 200:
+    #     print("Form didn't redirect - checking for validation errors")
+    #     if hasattr(response, 'context') and 'address_form' in response.context:
+    #         address_form = response.context['address_form']
+    #         if hasattr(address_form, 'errors'):
+    #             print(f"Address form errors: {address_form.errors}")
+    
+    # print(f"Response content preview: {response.content.decode()[:500]}")
+
+    # Debug output
+    # print(f"Response status: {response.status_code}")
+    # print(f"Is personal form: {response.wsgi_request.POST}")
+    # print(f"response.content: {response.content.decode()[:500]}")
+
+    # if hasattr(response, 'context') and response.context:
+    #     form = response.context.get('form')
+    #     if form and hasattr(form, 'errors'):
+    #         print(f"Form errors: {form.errors}")
+    """

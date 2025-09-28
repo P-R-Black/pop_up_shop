@@ -8,42 +8,40 @@ Past Purchases
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>Past Purchases</h2>
-        </div>
-        <div class="interested_in_container">
-            <div class="interested_in_open_bids_container">
-                <div class="past_purchases_databox_headers">
-                    <h3>Item</h3>
-                    <h3>Date Purchased</h3>
-                    <h3>Order No.</h3>
-                </div>
-                <div class="past_purchases_inner_container">
-                    {% for order in orders %}
-                    <div class="past_purchases_items_container">
-                        <div class="interested_in_item">
-                            {% for item in order.items.all %}
-                            <a href="{% url 'pop_up_auction:past_product_details' item.id %}">
-                                <p>{{ item.product_title }} <br> {{ item.secondary_product_title}}</p>
-                            </a>
-                            {% endfor %}
-                        </div>
-                        <div class="interested_in_size">
-                            <p>{{ order.created_at|date:"F d, Y"}}</p>
-                        </div>
-                        <div class="interested_in_item">
-                            <a href="{% url 'pop_accounts:customer_order' order.id%}">
-                                <p>{{ order.id}}</p>
-                            </a>
-
-                        </div>
+<div class="section_container">
+    <div class="page_title">
+        <h2>Past Purchases</h2>
+    </div>
+    <div class="interested_in_container">
+        <div class="interested_in_open_bids_container">
+            <div class="past_purchases_databox_headers">
+                <h3>Item</h3>
+                <h3>Date Purchased</h3>
+                <h3>Order No.</h3>
+            </div>
+            <div class="past_purchases_inner_container">
+                {% for order in orders %}
+                <div class="past_purchases_items_container">
+                    <div class="interested_in_item">
+                        {% for item in order.items.all %}
+                        <a href="{% url 'pop_up_auction:past_product_details' item.id %}">
+                            <p>{{ item.product_title }} <br> {{ item.secondary_product_title}}</p>
+                        </a>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                    <div class="interested_in_size">
+                        <p>{{ order.created_at|date:"F d, Y"}}</p>
+                    </div>
+                    <div class="interested_in_item">
+                        <a href="{% url 'pop_accounts:customer_order' order.id%}">
+                            <p>{{ order.id}}</p>
+                        </a>
+
+                    </div>
                 </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-</section>
+</div>
 {% endblock %}

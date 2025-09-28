@@ -2,389 +2,359 @@
 {% load static %}
 
 
-{% block title %}
-Auction
-{% endblock %}
+{% block title %}Personal Info{% endblock %}
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>Account Data</h2>
+<div class="section_container">
+    <div class="page_title">
+        <h2>{{ personal_info_copy.page_title }}</h2>
+    </div>
+    <div class="the_dashboard_container">
+        <div class="personal_info_title_container">
+            <h3>{{ personal_info_copy.personal_info_update_section_title }}</h3>
         </div>
-        <div class="the_dashboard_container">
-            <div class="personal_info_title_container">
-                <h3>Update Account Data</h3>
+        <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
+            {% csrf_token %}
+            <div class="personal_info_name_container">
+                <div class="personal_info_name_inputs">
+                    <div class="personal_info_first_name_container">
+                        {{ form.first_name }}
+                    </div>
+                    <div class="personal_info_first_name_container">
+                        {{ form.middle_name }}
+                    </div>
+                    <div class="personal_info_last_name_container">
+                        {{ form.last_name}}
+                    </div>
+                </div>
+
+                <div class="personal_info_shoe_size_container">
+                    <div class="shoe_brand_options_container">
+                        {{ form.favorite_brand }}
+                    </div>
+                    <div class="shoe_sizes_container">
+                        {{ form.shoe_size }}
+                    </div>
+                    <div class="shoe_gen_options_container">
+                        {{ form.size_gender }}
+                    </div>
+                </div>
+
+                <div class="personal_info_phone_container">
+                    {{ form.mobile_phone }}
+                    <div class="personal_info_text_permission_container">
+                        {{ form.mobile_notification.label }}
+                        {{ form.mobile_notification }}
+                    </div>
+                </div>
+                <button class="button_medium" type="submit">Update</button>
             </div>
+        </form>
+
+        <div class="ship_to_address_update_personal_info_container">
+            <div class="personal_info_title_container">
+                <h3>{{ personal_info_copy.address_update_section_title }}</h3>
+            </div>
+
             <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
                 {% csrf_token %}
-                <div class="personal_info_name_container">
-                    <div class="personal_info_name_inputs">
-                        <div class="persional_info_first_name_container">
-                            {{ form.first_name }}
-                        </div>
-                        <div class="personal_info_middle_name_container">
-                            {{ form.middle_name }}
-                        </div>
-                        <div class="personal_info_last_name_container">
-                            {{ form.last_name}}
-                        </div>
-                    </div>
-
-                    <div class="personal_info_shoe_size_container">
-                        <div class="shoe_brand_options_container">
-                            {{ form.favorite_brand }}
-                        </div>
-                        <div class="shoe_sizes_container">
-                            {{ form.shoe_size }}
-                        </div>
-                        <div class="shoe_gen_options_container">
-                            {{ form.size_gender }}
-                        </div>
-                    </div>
-
-                    <div class="personal_info_phone_container">
-                        {{ form.mobile_phone }}
-                        <div class="personal_info_text_permission_container">
-                            {{ form.mobile_notification.label }}
-                            {{ form.mobile_notification }}
-                        </div>
-                    </div>
-                    <button class="button_medium" type="submit">Update</button>
+                <div class="personal_info_choice_inputs">
+                    {{ address_form.prefix }}
                 </div>
-            </form>
-
-            <div class="ship_to_address_update_personal_info_container">
-                <div class="personal_info_title_container">
-                    <h3>Add Address and/or Recipient</h3>
+                <div class="personal_info_names_container">
+                    <div class="personal_info_add_medium">
+                        {{ address_form.first_name }}
+                    </div>
+                    <div class="personal_info_add_medium">
+                        {{ address_form.middle_name }}
+                    </div>
+                    <div class="personal_info_add_medium">
+                        {{ address_form.last_name}}
+                    </div>
+                </div>
+                <div class="personal_info_choice_inputs">
+                    {{ address_form.suffix }}
+                </div>
+                <div class="personal_info_add_long">
+                    {{ address_form.street_address_1 }}
+                </div>
+                <div class="personal_info_add_long">
+                    {{ address_form.street_address_2 }}
+                </div>
+                <div class="personal_info_add_small">
+                    {{ address_form.apt_ste_no }}
                 </div>
 
-                <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
-                    {% csrf_token %}
-                    <div class="personal_info_choice_inputs">
-                        {{ address_form.prefix }}
-                    </div>
-                    <div class="personal_info_names_container">
-                        <div class="personal_info_add_medium">
-                            {{ address_form.first_name }}
-                        </div>
-                        <div class="personal_info_add_medium">
-                            {{ address_form.middle_name }}
-                        </div>
-                        <div class="personal_info_add_medium">
-                            {{ address_form.last_name}}
-                        </div>
+                <div class="personal_info_city_state_zip_container">
+                    <div class="personal_info_add_medium">
+                        {{ address_form.city_town }}
                     </div>
                     <div class="personal_info_choice_inputs">
-                        {{ address_form.suffix }}
-                    </div>
-                    <div class="personal_info_add_long">
-                        {{ address_form.street_address_1 }}
-                    </div>
-                    <div class="personal_info_add_long">
-                        {{ address_form.street_address_2 }}
+                        {{ address_form.state}}
                     </div>
                     <div class="personal_info_add_small">
-                        {{ address_form.apt_ste_no }}
+                        {{ address_form.postcode }}
                     </div>
-
-                    <div class="personal_info_city_state_zip_container">
-                        <div class="personal_info_add_medium">
-                            {{ address_form.city_town }}
-                        </div>
-                        <div class="personal_info_choice_inputs">
-                            {{ address_form.state}}
-                        </div>
-                        <div class="personal_info_add_small">
-                            {{ address_form.postcode }}
-                        </div>
-                    </div>
-                    <div class="personal_info_delivery_instructions">
-                        {{ address_form.delivery_instructions }}
-                    </div>
-                    <div class="personal_info_default_addy_options">
-                        {{ address_form.address_default.label }}
-                        {{ address_form.address_default }}
-                    </div>
-                    <input class="button_medium" type="submit" value="Add Address"></input>
-                </form>
-                <!-- Address List -->
-                <div class="account_addresses_container">
-                    {% for addy in addresses %}
-                    <div class="dashboard_addressbox_small">
-                        <div class="account_addresses_default_notice">
-                            {% if addy.default %}
-                            <p>Default</p>
-                            {% endif %}
-                        </div>
-                        <div class="account_addresses_data">
-                            {% if addy.first_name == None or not addy.first_name %}
-                            <div class="account_addresses_data_street">
-                                <p>{{ user }}</p>
-                            </div>
-                            {% else %}
-                            <p>
-                                {% if addy.prefix %} <span>{{ addy.prefix }}</span> {% endif %}
-                                {{ addy.first_name }} {{ addy.last_name }}
-                                {% if addy.suffix %} <span>{{ addy.suffix }}</span> {% endif %}
-                            </p>
-
-                            {% endif %}
-
-
-                            <div class="account_addresses_data_street">
-                                <p>{{ addy.address_line }}</p>
-                            </div>
-                            <div class="account_addresses_data_street">
-                                <p>{{ addy.address_line_2 }}</p>
-                            </div>
-                            {% if addy.apartment_suite_number %}
-                            <div class="account_addresses_data_apt">
-                                <p>Apt/Ste: <span>{{ addy.apartment_suite_number }}</span></p>
-                            </div>
-                            {% endif %}
-                            <div class="account_addresses_data_city_state_zip">
-                                <p>{{ addy.town_city }},</p>
-                                <p>{{ addy.state }}</p>
-                                <p>{{ addy.postcode }}</p>
-                            </div>
-                            <div class="account_addresses_data_country">
-                                <p>United States</p>
-                            </div>
-                        </div>
-                        <div class="account_addresses_data_delivery_info">
-                            {% if addy.delivery_instructions %}
-                            <p>{{ addy.delivery_instructions|capfirst }}</p>
-                            {% else %}
-                            <a type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressEditBtn"
-                                value="Add Delivery Info">Add Delivery Info</a>
-                            {% endif %}
-                        </div>
-                        <div class="account_addresses_data_update_option">
-                            <input type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressEditBtn"
-                                value="Edit">
-                            <input type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressRemoveBtn"
-                                value="Remove">
-                            {% if not addy.default %}
-                            <input type="submit" data-address-id="{{ addy.id }}" value="Set as default"
-                                class="setDefaultAddressBtn">
-                            {% endif %}
-
-                        </div>
-                    </div>
-                    <!-- Address Modal -->
-                    <div class="modal fade" id="accountAddressEditModal" tabindex="-1" aria-labelledby="bidModalLabel"
-                        aria-hidden="true">
-                        <div class="modal_content">
-                            <div class="modal_header">
-                                <h3 class="modal-title" id="bidModalLabel">Edit Address</h3>
-                                <button type="button" class="btn-close closeAccountAddressEditModal"
-                                    aria-label="Close">X</button>
-                            </div>
-                            <div class="dashbaord_location_update_container">
-                                <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
-                                    {% csrf_token %}
-                                    <div class="personal_info_modal_choice_input">
-                                        {{ address_form.prefix }}
-                                    </div>
-                                    <div class="personal_info_modal_name_input">
-                                        {{ address_form.first_name }}
-                                    </div>
-                                    <div class="personal_info_modal_name_input">
-                                        {{ address_form.middle_name }}
-                                    </div>
-                                    <div class="personal_info_modal_name_input">
-                                        {{ address_form.last_name }}
-                                    </div>
-                                    <div class="personal_info_modal_choice_input">
-                                        {{ address_form.suffix }}
-                                    </div>
-                                    <div class="personal_info_modal_street_input">
-                                        {{ address_form.street_address_1 }}
-                                    </div>
-                                    <div class="personal_info_modal_street_input">
-                                        {{ address_form.street_address_2 }}
-                                    </div>
-                                    <div class="personal_info_modal_choice_input">
-                                        {{ address_form.apt_ste_no }}
-                                    </div>
-
-                                    <div class="personal_info_modal_street_input">
-                                        {{ address_form.city_town }}
-                                    </div>
-                                    <div class="personal_info_modal_city_state_zip_container">
-                                        {{ address_form.state}}
-                                        {{ address_form.postcode }}
-                                    </div>
-                                    <div class="personal_info_modal_delivery_instructions">
-                                        {{ address_form.delivery_instructions }}
-                                    </div>
-                                    <div class="personal_info_modal_name_radio">
-                                        {{ address_form.address_default.label }}
-                                        {{ address_form.address_default }}
-                                    </div>
-
-                                    <input class="button_medium" type="submit" value="Save">
-                                    <input type="hidden" name="address_id" id="address-id" />
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- End of Address Modal -->
-                    {% endfor %}
                 </div>
-                <div class="account_payment_container">
-                    <div class="personal_info_title_container">
-                        <h3>Payment Options</h3>
+                <div class="personal_info_delivery_instructions">
+                    {{ address_form.delivery_instructions }}
+                </div>
+                <div class="personal_info_default_addy_options">
+                    {{ address_form.address_default.label }}
+                    {{ address_form.address_default }}
+                </div>
+                <input class="button_medium" type="submit" value="Add Address"></input>
+            </form>
+            <!-- Address List -->
+            <div class="account_addresses_container">
+                {% for addy in addresses %}
+                <div class="dashboard_addressbox_small">
+                    <div class="account_addresses_default_notice">
+                        {% if addy.default %}
+                        <p>Default</p>
+                        {% endif %}
                     </div>
-                    <div class="payment_options_container">
-                        {% comment %}
-                        <!-- since not keeping user payment info on file, no need for add payment feature
+                    <div class="account_addresses_data">
+                        {% if addy.first_name == None or not addy.first_name %}
+                        <div class="account_addresses_data_street">
+                            <p>{{ user }}</p>
+                        </div>
+                        {% else %}
+                        <p>
+                            {% if addy.prefix %} <span>{{ addy.prefix }}</span> {% endif %}
+                            {{ addy.first_name }} {{ addy.last_name }}
+                            {% if addy.suffix %} <span>{{ addy.suffix }}</span> {% endif %}
+                        </p>
+                        {% endif %}
+
+                        <div class="account_addresses_data_street">
+                            <p>{{ addy.address_line }}</p>
+                        </div>
+                        <div class="account_addresses_data_street">
+                            <p>{{ addy.address_line_2 }}</p>
+                        </div>
+                        {% if addy.apartment_suite_number %}
+                        <div class="account_addresses_data_apt">
+                            <p>Apt/Ste: <span>{{ addy.apartment_suite_number }}</span></p>
+                        </div>
+                        {% endif %}
+                        <div class="account_addresses_data_city_state_zip">
+                            <p>{{ addy.town_city }},</p>
+                            <p>{{ addy.state }}</p>
+                            <p>{{ addy.postcode }}</p>
+                        </div>
+                        <div class="account_addresses_data_country">
+                            <p>United States</p>
+                        </div>
+                    </div>
+                    <div class="account_addresses_data_delivery_info">
+                        {% if addy.delivery_instructions %}
+                        <p>{{ addy.delivery_instructions|capfirst }}</p>
+                        {% else %}
+                        <a type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressEditBtn"
+                            value="Add Delivery Info">Add Delivery Info</a>
+                        {% endif %}
+                    </div>
+                    <div class="account_addresses_data_update_option">
+                        <input type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressEditBtn"
+                            value="Edit">
+                        <input type="submit" data-address-id="{{ addy.id }}" class="accountDataAddressRemoveBtn"
+                            value="Remove">
+                        {% if not addy.default %}
+                        <input type="submit" data-address-id="{{ addy.id }}" value="Set as default"
+                            class="setDefaultAddressBtn">
+                        {% endif %}
+
+                    </div>
+                </div>
+                <!-- Address Modal -->
+                <div class="modal fade" id="accountAddressEditModal" tabindex="-1" aria-labelledby="bidModalLabel"
+                    aria-hidden="true">
+                    <div class="modal_content">
+                        <div class="modal_header">
+                            <h3 class="modal-title" id="bidModalLabel">{{ personal_info_copy.address_modal_title }}</h3>
+                            <button type="button" class="btn-close closeAccountAddressEditModal"
+                                aria-label="Close">X</button>
+                        </div>
+                        <div class="update_address_modal_container">
+                            <form action="{% url 'pop_accounts:personal_info' %}" method="POST">
+                                {% csrf_token %}
+                                <div class="personal_info_modal_choice_input">
+                                    {{ address_form.prefix }}
+                                </div>
+                                <div class="personal_info_modal_name_input">
+                                    {{ address_form.first_name }}
+                                </div>
+                                <div class="personal_info_modal_name_input">
+                                    {{ address_form.middle_name }}
+                                </div>
+                                <div class="personal_info_modal_name_input">
+                                    {{ address_form.last_name }}
+                                </div>
+                                <div class="personal_info_modal_choice_input">
+                                    {{ address_form.suffix }}
+                                </div>
+                                <div class="personal_info_modal_street_input">
+                                    {{ address_form.street_address_1 }}
+                                </div>
+                                <div class="personal_info_modal_street_input">
+                                    {{ address_form.street_address_2 }}
+                                </div>
+                                <div class="personal_info_modal_choice_input">
+                                    {{ address_form.apt_ste_no }}
+                                </div>
+
+                                <div class="personal_info_modal_street_input">
+                                    {{ address_form.city_town }}
+                                </div>
+                                <div class="personal_info_modal_city_state_zip_container">
+                                    {{ address_form.state}}
+                                    {{ address_form.postcode }}
+                                </div>
+                                <div class="personal_info_modal_delivery_instructions">
+                                    {{ address_form.delivery_instructions }}
+                                </div>
+                                <div class="personal_info_modal_name_radio">
+                                    {{ address_form.address_default.label }}
+                                    {{ address_form.address_default }}
+                                </div>
+
+                                <input class="button_medium" type="submit" value="Save">
+                                <input type="hidden" name="address_id" id="address-id" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- End of Address Modal -->
+                {% endfor %}
+            </div>
+            {% comment %}
+            <!-- since not keeping user payment info on file, no need for add payment feature
                         will gather user payment details from stripe & paypal -->
-                        <form action="" class="personal_card_input_container">
-                            <div class="personal_card_number_container">
-                                <label name="card_number" for="">Card number</label>
-                                <input type="text" class="personal_card_nums_input" />
-                            </div>
-                            <div class="personal_card_number_container">
-                                <label name="card_expiration" for="">Expiration date</label>
-                                <input type="text" class="card_exp_input" placeholder="MM/YY" />
-                            </div>
-                            <div class="personal_card_number_container">
-                                <label name="card_holder" for="">Name on Card</label>
-                                <input type="text" class="card_name_input" />
-                            </div>
-                            <div class="account_add_payment_container">
-                                <input class="button_medium" type="submit" value="Add Payment"></input>
-                            </div>
-                        </form>
-                        {% endcomment %}
-                        <ul>
-                            {% if payment_methods %}
-                            {% for pm in payment_methods %}
-                            <li class="dashboard_databox_large">
-                                <div class="personal_card_data">
-                                    {% if pm.wallet %}
-                                    <h3>{{ pm.brand }}</h3>
-                                    <h3>{ {pm.last4 }}</h3>
-                                    <h3>{{ pm.wallet|title }}</h3>
-                                    {% else %}
-                                    {% if pm.brand == "Mastercard"%}
-                                    <img src="{% static 'img/mastercard_icon.png' %}" class='personal-visa-logo' />
-                                    {% elif pm.brand == "Visa "%}
-                                    <img src="{% static 'img/visa_icon.png' %}" class='personal-visa-logo' />
-                                    {% elif pm.brand == "American Express" %}
-                                    <img src="{% static 'img/amex_logo.png' %}" class='personal-visa-logo' />
-                                    {% elif pm.brand == "Discover" %}
-                                    <img src="{% static 'img/discover_icon.png' %}" class='personal-visa-logo' />
-                                    {% else %}
-                                    <h3>{{ pm.brand }}</h3>
-                                    {% endif %}
-                                    <h3>{{ pm.last4 }}</h3>
-                                    <h3>{{ pm.exp_month }}/{{pm.exp_year }}</h3>
-                                    {% endif %}
-                                </div>
-                            </li>
-                            {% endfor %}
-                            {% else %}
-                            <div class="dashboard_databox_large">
-                                <div class="account_card_info_container">
-                                    <div class="personal_card_data">
-                                        <h4>No payment methods on file</h4>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </ul>
-                        {% comment %}
-                        <div class="dashboard_databox_large">
-                            <div class="account_card_info_container">
-                                <div class="personal_card_data">
-                                    <img src="{% static 'img/visa_icon.png' %}" class='personal-visa-logo' />
-                                    <h3>0541</h3>
-                                    <h3>12/28</h3>
-                                </div>
-                                <div class="account_payment_data_update_option">
-                                    <h4>Default</h4>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="dashboard_databox_large">
-                            <div class="account_card_info_container">
-                                <div class="personal_card_data">
-                                    <img src="{% static 'img/mastercard_icon.png' %}" class='personal-mc-logo' />
-                                    <h3>0541</h3>
-                                    <h3>12/28</h3>
-                                </div>
-                                <div class="account_payment_data_update_option">
-                                    <a href="#" class="accountDataPaymentEditBtn">Edit</a>
-                                    <a href="#">Remove</a>
-                                    <a href="#">Set as default</a>
-                                </div>
-                            </div>
-                        </div>
-                        {% endcomment %}
-                    </div>
+            <div class="account_payment_container">
+                <div class="personal_info_title_container">
+                    <h3>Payment Options</h3>
                 </div>
-                <div class="account_payment_container">
-                    <div class="personal_info_title_container">
-                        <h3>Delete Account</h3>
-                    </div>
-                    <div class="delete_account_container">
-                        <p>To delete your account, click below. This action is irreversible.</p>
-                        <form method="POST" action="{% url 'pop_accounts:delete_account' %}"
-                            onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
-                            {% csrf_token %}
-                            <button type="submit" class="button_long_red">Delete Account</button>
-                        </form>
+                <div class="payment_options_container">
 
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-
-        <!-- Payment Modal -->
-        <div class="modal fade" id="accountPaymentEditModal" tabindex="-1" aria-labelledby="bidModalLabel"
-            aria-hidden="true">
-            <div class="modal_content">
-                <div class="modal_header">
-                    <h3 class="modal-title" id="bidModalLabel">Payment</h3>
-                    <button type="button" class="btn-close closeAccountPaymentEditModal" aria-label="Close">X</button>
-                </div>
-                <div class="dashbaord_location_update_container">
-                    <form action="" method="post">
-                        <div class="modal_name_inputs">
-                            <label>Card No.</label>
-                            <input type="number" class="modal_street_address_two_input" />
+                    <form action="" class="personal_card_input_container">
+                        <div class="personal_card_number_container">
+                            <label name="card_number" for="">Card number</label>
+                            <input type="text" class="personal_card_nums_input" />
                         </div>
-
-                        <div class="modal_name_inputs">
-                            <label>Expiration Date</label>
-                            <input type="text" class="modal_address_zip_input" />
+                        <div class="personal_card_number_container">
+                            <label name="card_expiration" for="">Expiration date</label>
+                            <input type="text" class="card_exp_input" placeholder="MM/YY" />
                         </div>
-
-                        <div class="modal_name_inputs">
-                            <label>CVV</label>
-                            <input type="number" class="modal_address_zip_input" />
+                        <div class="personal_card_number_container">
+                            <label name="card_holder" for="">Name on Card</label>
+                            <input type="text" class="card_name_input" />
                         </div>
-                        <div class="modal_name_inputs">
-                            <label>Name on card.</label>
-                            <input type="text" class="modal_street_address_two_input" />
+                        <div class="account_add_payment_container">
+                            <input class="button_medium" type="submit" value="Add Payment"></input>
                         </div>
-
-                        <div class="payment_edit_button_container">
-                            <button class="button_medium">Cancel</button>
-                            <button class="button_medium">Submit</button>
-                        </div>
-
                     </form>
+
+                    <ul>
+                        {% if payment_methods %}
+                        {% for pm in payment_methods %}
+                        <li class="dashboard_databox_large">
+                            <div class="personal_card_data">
+                                {% if pm.wallet %}
+                                <h3>{{ pm.brand }}</h3>
+                                <h3>{ {pm.last4 }}</h3>
+                                <h3>{{ pm.wallet|title }}</h3>
+                                {% else %}
+                                {% if pm.brand == "Mastercard"%}
+                                <img src="{% static 'img/mastercard_icon.png' %}" class='personal-visa-logo' />
+                                {% elif pm.brand == "Visa "%}
+                                <img src="{% static 'img/visa_icon.png' %}" class='personal-visa-logo' />
+                                {% elif pm.brand == "American Express" %}
+                                <img src="{% static 'img/amex_logo.png' %}" class='personal-visa-logo' />
+                                {% elif pm.brand == "Discover" %}
+                                <img src="{% static 'img/discover_icon.png' %}" class='personal-visa-logo' />
+                                {% else %}
+                                <h3>{{ pm.brand }}</h3>
+                                {% endif %}
+                                <h3>{{ pm.last4 }}</h3>
+                                <h3>{{ pm.exp_month }}/{{pm.exp_year }}</h3>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                        {% else %}
+                        <div class="dashboard_databox_large">
+                            <div class="account_card_info_container">
+                                <div class="personal_card_data">
+                                    <h4>No payment methods on file</h4>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </ul>
                 </div>
             </div>
-        </div>
-        <!-- End of Payment Modal -->
-</section>
+            {% endcomment %}
+            <div class="account_payment_container">
+                <div class="personal_info_title_container">
+                    <h3>{{ personal_info_copy.delete_account_section_title }}</h3>
+                </div>
+                <div class="delete_account_container">
+                    {% for p in personal_info_copy.delete_account_warning_text %}
+                    <p>{{ p.delete_warning }}</p>
+                    {% endfor %}
+                    <form method="POST" action="{% url 'pop_accounts:delete_account' %}"
+                        onsubmit="return confirm('Are you sure you want to delete your account? This cannot be undone.');">
+                        {% csrf_token %}
+                        <button type="submit" class="button_long_red">Delete Account</button>
+                    </form>
 
-{% endblock %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Payment Modal -->
+    <div class="modal fade" id="accountPaymentEditModal" tabindex="-1" aria-labelledby="bidModalLabel"
+        aria-hidden="true">
+        <div class="modal_content">
+            <div class="modal_header">
+                <h3 class="modal-title" id="bidModalLabel">Payment</h3>
+                <button type="button" class="btn-close closeAccountPaymentEditModal" aria-label="Close">X</button>
+            </div>
+            <div class="dashbaord_location_update_container">
+                <form action="" method="post">
+                    <div class="modal_name_inputs">
+                        <label>Card No.</label>
+                        <input type="number" class="modal_street_address_two_input" />
+                    </div>
+
+                    <div class="modal_name_inputs">
+                        <label>Expiration Date</label>
+                        <input type="text" class="modal_address_zip_input" />
+                    </div>
+
+                    <div class="modal_name_inputs">
+                        <label>CVV</label>
+                        <input type="number" class="modal_address_zip_input" />
+                    </div>
+                    <div class="modal_name_inputs">
+                        <label>Name on card.</label>
+                        <input type="text" class="modal_street_address_two_input" />
+                    </div>
+
+                    <div class="payment_edit_button_container">
+                        <button class="button_medium">Cancel</button>
+                        <button class="button_medium">Submit</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- End of Payment Modal -->
+
+    {% endblock %}

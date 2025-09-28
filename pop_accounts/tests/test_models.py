@@ -1,4 +1,6 @@
+import pytest
 from django.test import TestCase
+from pop_up_auction.models import PopUpProductSpecificationValue, PopUpProductSpecification
 from pop_accounts.models import (PopUpCustomer,PopUpBid, CustomPopUpAccountManager, SoftDeleteManager, PopUpCustomerAddress)
 from pop_up_auction.models import (PopUpProduct, PopUpCategory, PopUpBrand, PopUpProductType)
 from django.utils.timezone import now
@@ -7,6 +9,8 @@ from django.utils.timezone import make_aware
 from unittest.mock import patch
 from django.core.mail import send_mail
 from decimal import Decimal
+from .conftest import create_seed_data
+
 
 class TestPopUpCustomerModel(TestCase):
     def setUp(self):
@@ -22,96 +26,147 @@ class TestPopUpCustomerModel(TestCase):
             favorite_brand="Jordan"
         )
 
-#     def test_pop_customer_model_entry(self):
-#         """
-#         Test PopUpCustomer Data Insertion/Types Field Attributes
-#         """
+    def test_pop_customer_model_entry(self):
+        """
+        Test PopUpCustomer Data Insertion/Types Field Attributes
+        """
 
-#         self.assertEqual(str(self.customer.email), 'testMail@gmail.com')
-#         self.assertEqual(str(self.customer.first_name), 'Palo')
-#         self.assertEqual(str(self.customer.last_name), 'Negro')
-#         self.assertEqual(str(self.customer.middle_name), 'Olop')
-#         self.assertEqual(str(self.customer.mobile_phone), '555-555-5555')
-#         self.assertEqual(str(self.customer.mobile_notification), "True")
-#         self.assertEqual(str(self.customer.shoe_size), "9.5")
-#         self.assertEqual(str(self.customer.size_gender), "Male")
-#         self.assertEqual(str(self.customer.favorite_brand), "Jordan")
+        self.assertEqual(str(self.customer.email), 'testMail@gmail.com')
+        self.assertEqual(str(self.customer.first_name), 'Palo')
+        self.assertEqual(str(self.customer.last_name), 'Negro')
+        self.assertEqual(str(self.customer.middle_name), 'Olop')
+        self.assertEqual(str(self.customer.mobile_phone), '555-555-5555')
+        self.assertEqual(str(self.customer.mobile_notification), "True")
+        self.assertEqual(str(self.customer.shoe_size), "9.5")
+        self.assertEqual(str(self.customer.size_gender), "Male")
+        self.assertEqual(str(self.customer.favorite_brand), "Jordan")
 
 
-#     def test_soft_delete_makrs_user_as_inactive_and_sets_deleted_at(self):
-#         self.customer.soft_delete()
-#         self.customer.refresh_from_db()
-#         self.assertFalse(self.customer.is_active)
-#         self.assertIsNotNone(self.customer.deleted_at)
-#         self.assertTrue(self.customer.is_deleted)
+    def test_soft_delete_makrs_user_as_inactive_and_sets_deleted_at(self):
+        self.customer.soft_delete()
+        self.customer.refresh_from_db()
+        self.assertFalse(self.customer.is_active)
+        self.assertIsNotNone(self.customer.deleted_at)
+        self.assertTrue(self.customer.is_deleted)
     
 
-#     def test_restore_user_reset_is_active_and_deleted_at(self):
-#         self.customer.soft_delete()
-#         self.customer.restore()
-#         self.customer.refresh_from_db()
-#         self.assertTrue(self.customer.is_active)
-#         self.assertIsNone(self.customer.deleted_at)
-#         self.assertFalse(self.customer.is_deleted)
+    def test_restore_user_reset_is_active_and_deleted_at(self):
+        self.customer.soft_delete()
+        self.customer.restore()
+        self.customer.refresh_from_db()
+        self.assertTrue(self.customer.is_active)
+        self.assertIsNone(self.customer.deleted_at)
+        self.assertFalse(self.customer.is_deleted)
 
 
-#     def test_str_returns_full_name(self):
-#         self.assertEqual(str(self.customer), "Palo Negro")
+    def test_str_returns_full_name(self):
+        self.assertEqual(str(self.customer), "Palo Negro")
 
-#     # @patch('pop_accounts.models.send_mail')
-#     # def test_email_user_sends_email(self, mock_send_mail):
-#     #     self.customer.email_user("Subject", "Message")
-#     #     mock_send_mail.assert_called_once_with(
-#     #         "Subject",
-#     #         "Message",
-#     #         "1@1.com",
-#     #         [self.customer.email],
-#     #         fail_silently=False
-#     #     )
+    @patch('pop_accounts.models.send_mail')
+    def test_email_user_sends_email(self, mock_send_mail):
+        self.customer.email_user("Subject", "Message")
+        mock_send_mail.assert_called_once_with(
+            "Subject",
+            "Message",
+            "l@1.com",
+            [self.customer.email],
+            fail_silently=False
+        )
 
-#     def test_hard_delete_removes_instance(self):
-#         self.customer.hard_delete()
-#         with self.assertRaises(PopUpCustomer.DoesNotExist):
-#             PopUpCustomer.objects.get(id=self.customer.id)
-
-
-#     def test_soft_delete_user_not_returned_by_default_manager(self):
-#         self.customer.soft_delete()
-#         users = PopUpCustomer.objects.filter(email="testMail@gmail.com")
-#         self.assertEqual(users.count(), 0)
+    def test_hard_delete_removes_instance(self):
+        self.customer.hard_delete()
+        with self.assertRaises(PopUpCustomer.DoesNotExist):
+            PopUpCustomer.objects.get(id=self.customer.id)
 
 
+    def test_soft_delete_user_not_returned_by_default_manager(self):
+        self.customer.soft_delete()
+        users = PopUpCustomer.objects.filter(email="testMail@gmail.com")
+        self.assertEqual(users.count(), 0)
 
-# def create_seed_data():
-#     brand = PopUpBrand.objects.create(name='Jordan', slug='jordan')
-#     cat = PopUpCategory.objects.create(name='Jordan 1', slug='jordan-1')
-#     prod_type = PopUpProductType.objects.create(name='shoe', slug='shoe')
-#     product = PopUpProduct.objects.create(
-#         # id=uuid.uuid4(),
-#         product_type=prod_type,
-#         category=cat,
-#         product_title='Jordan 1',
-#         secondary_product_title = 'Retro High',
-#         description = 'Test shoe',
-#         slug='j1-retro',
-#         buy_now_price=Decimal('250'),
-#         retail_price=Decimal('120'),
-#         brand=brand,
-#         auction_start_date=now() - timedelta(days=1),
-#         auction_end_date=now() + timedelta(days=6),
-#         inventory_status='in_inventory',
-#         is_active=True
-#     )
 
-#     user1 = PopUpCustomer.objects.create_user(
-#         email="user1@example.com", password="passWord!1", first_name="One", last_name="User", is_active=True
-#     )
+class TestUserInterestedInViewModels(TestCase):
 
-#     user2 = PopUpCustomer.objects.create_user(
-#         email="user2@example.com", password="passWord@2", first_name="Two", last_name="User", is_active=True
-#     )
-#     return product, user1, user2
+    def test_user_can_mark_product_as_interested(self):
+        product, _, _, user1, _ = create_seed_data()
+        product.is_active = False
+        product.inventory_status = "in_transit"
+        product.save()
+
+        user1.prods_interested_in.add(product)
+
+        assert product in user1.prods_interested_in.all()
+        assert user1.prods_interested_in.count() == 1
     
+    def test_product_can_have_specifications(self):
+        product, _, _, _, _ = create_seed_data()
+        product.is_active = False
+        product.inventory_status = "in_transit"
+        product.save()
+
+        specs = product.popupproductspecificationvalue_set.all()
+        
+        # assert specs.count() == 2
+        # assert specs.first().value == "Black/Red"
+        # assert specs.first().specification.name == "colorway"
+
+        color_spec_value = product.popupproductspecificationvalue_set.get(specification__name="colorway")
+        assert color_spec_value.value == "Black/Red"
+
+        size_spec_value = product.popupproductspecificationvalue_set.get(specification__name="size")
+        assert size_spec_value.value == "10"
+
+
+
+class TestUserOnNoticeViewModels(TestCase):
+
+    def test_user_can_mark_product_as_on_notice(self):
+        product, _, _, user1, _ = create_seed_data()
+        product.is_active = False
+        product.inventory_status = "anticipated"
+        product.save()
+
+        user1.prods_on_notice_for.add(product)
+
+        assert product in user1.prods_on_notice_for.all()
+        assert user1.prods_on_notice_for.count() == 1
+
+
+class TestPersonalInfoViewModels(TestCase):
+    def setUp(self):
+        # Create a user
+        self.user = PopUpCustomer.objects.create_user(
+            email="user1@example.com",
+            password="Password123",
+            first_name="John",
+            last_name="Doe",
+            is_active=True
+        )
+
+    def test_user_can_update_personal_info(self):
+        """User model should allow updating personal profile info"""
+        self.user.first_name = "Jane"
+        self.user.middle_name = "M"
+        self.user.last_name = "Smith"
+        self.user.shoe_size = "10"
+        self.user.size_gender = "M"
+        self.user.favorite_brand = "Jordan"
+        self.user.mobile_phone = "+1234567890"
+        self.user.mobile_notification = True
+        self.user.save()
+    
+        # Refresh from the database to confirm persistence
+        updated_user = PopUpCustomer.objects.get(id=self.user.id)
+
+        assert updated_user.first_name == "Jane"
+        assert updated_user.middle_name == "M"
+        assert updated_user.last_name == "Smith"
+        assert updated_user.shoe_size == "10"
+        assert updated_user.size_gender == "M"
+        assert updated_user.favorite_brand == "Jordan"
+        assert updated_user.mobile_phone == "+1234567890"
+        assert updated_user.mobile_notification is True
+
 
 # class TestPopUpBidModel(TestCase):
 #     @classmethod

@@ -61,12 +61,14 @@ from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
 from .pop_accounts_copy.admin_copy.admin_copy import (ADMIN_NAVIGATION_COPY, ADMIN_SHIPPING_UPDATE, 
                                                       ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE)
-from .pop_accounts_copy.user_copy.user_copy import (USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY)
+from .pop_accounts_copy.user_copy.user_copy import (
+    USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
+    USER_ON_NOTICE_COPY, PERSONAL_INFO_COPY)
 from django.db.models import Count, Max, Q
 from django.http import Http404
 from social_django.utils import load_strategy, load_backend
 from social_django.views import _do_login
-
+from pop_accounts.utils.utils import get_stripe_payment_reference 
 
 
 logger  = logging.getLogger('security')
@@ -159,11 +161,50 @@ class UserDashboardView(LoginRequiredMixin, View):
     # 🔴 No Model Test Needed, Since Models will be tested in later view
     # ✅ mobile / tablet media query completed
     """
-    User Dashboard View
+    Class-based view for User Dashboard 
+
+    Provides a snapshot of the user's account, including:
+    - Default shipping addresses
+    - Products the user is interested in (future releases)
+    - Products the user has on notice
+    - Highest bids for active auctions
+    - Recent orders
+    - Recent shipments
+    - Bid history and related statistics
+
+    Attributes:
+        template_name (str): Template used to render the dashboard page.
+        user_dashboard_copy (dict): Static copy/content used in dashboard display (from USER_DASHBOARD_COPY).
+
+    Methods:
+        get(request):
+            Retrieves and prepares all context data for rendering the dashboard, including:
+                - Addresses (default only)
+                - Top 3 interested products
+                - Top 3 products on notice
+                - Highest active bids and enriched product info
+                - Recent orders and shipments
+                - Bid history and statistics
+            Renders the template with the prepared context.
+
+        post(request):
+            Currently returns the template with static dashboard copy only.
+            Can be extended to handle POST requests from dashboard actions in the future.
     """
+
     template_name = 'pop_accounts/user_accounts/dashboard_pages/dashboard.html'
     user_dashboard_copy = USER_DASHBOARD_COPY
+
     def get(self, request):
+        """
+        Build context for the user dashboard page.
+
+        Args:
+            request (HttpRequest): The current request object.
+
+        Returns:
+            HttpResponse: Rendered HTML response with user interest data and product specs.
+        """
         user = request.user
         addresses = user.address.filter(default=True)
         prod_interested_in = user.prods_interested_in.all()[:3]
@@ -230,37 +271,128 @@ class UserDashboardView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
 
     def post(self, request):
+        """
+        Handle POST requests by re-rendering the page.
+
+        Args:
+            request (HttpRequest): The current request object.
+
+        Returns:
+            HttpResponse: Rendered template with static copy context.
+        """
         return render(request, self.template_name, {"user_dashboard_copy": self.user_dashboard_copy})
 
 
 
 class UserInterestedInView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # ⚪️ Model Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
     """
-    List all items user has checked that they are "interested" in
-    "Interested" relates to Future Releases. If enough interest, will attempt to secure for auction
+    Display all products that the authenticated user has marked as "interested in."
+
+    This view represents potential future releases. If enough users mark interest, 
+    the product may be secured for auction.
+
+    Attributes:
+        template_name (str): Path to the template used for rendering the view.
+        product (QuerySet): Prefetched queryset of anticipated (inactive) products.
+        product_specifications (dict): Cached mapping of specification names to values 
+            for products (built in `get`).
+        user_intested_in_copy (str): Static copy text for the "Interested In" page.
+
+    Methods:
+        get(request):
+            Renders the list of products the user is interested in and their specifications.
+        post(request):
+            Handles post requests (currently just re-renders the template).
     """
+   
     template_name = 'pop_accounts/user_accounts/dashboard_pages/interested_in.html'
     product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="anticipated")   
     product_specifications = None
-    
+    user_intested_in_copy = USER_INTERESTED_IN_COPY
+
     def get(self, request):
+        """
+        Build context for the "interested in" page.
+
+        Args:
+            request (HttpRequest): The current request object.
+
+        Returns:
+            HttpResponse: Rendered HTML response with user interest data and product specs.
+        """
         user = request.user
         prod_interested_in = user.prods_interested_in.all()
 
         for p in self.product:
-            self.product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
+            self.product_specifications = { 
+                spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
         
-        context = {'user': user, 'prod_interested_in': prod_interested_in, 'product_specifications': self.product_specifications}
+        context = {
+            'user': user, 'prod_interested_in': prod_interested_in, 
+            'product_specifications': self.product_specifications, 
+            'user_intested_in_copy': self.user_intested_in_copy}
         return render(request, self.template_name, context)
 
+
     def post(self, request):
-        return render(request, self.template_name)
+        """
+        Handle POST requests by re-rendering the page.
+
+        Args:
+            request (HttpRequest): The current request object.
+
+        Returns:
+            HttpResponse: Rendered template with static copy context.
+        """
+        return render(request, self.template_name, {'user_intested_in_copy': self.user_intested_in_copy})
     
 
+
 class MarkProductInterestedView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
     """
-    Allows users to mark a product as interested in. 
+    Handles adding or removing products from a user's "interested in" list.
+
+    This view is triggered via an AJAX/JSON POST request. The request body must 
+    include a `product_id` and optionally an `action`. If the product exists:
+    
+    - If the product is already in the user's interested list, it is removed.
+    - If the product is not in the user's interested list, it is added.
+
+    If `product_id` is missing, an error response is returned.
+    If the given product does not exist, a 404 response is returned.
+
+    Requires:
+        - User must be authenticated (LoginRequiredMixin).
+
+    Request body (JSON):
+        {
+            "product_id": "id number",
+            "action": "add" | "remove"  # optional, defaults to "add"
+        }
+
+    Responses:
+        200 OK:
+            {"status": "added", "message": "Product added to interested list."}
+            {"status": "removed", "message": "Product removed from interested list."}
+            {"status": "error", "message": "Product ID missing"}
+        
+        404 Not Found:
+            {"status": "error", "message": "Product not found"}
+
+    Models involved:
+        - PopUpProduct: The product being marked as interested or not interested.
+        - PopUpCustomer (request.user): The authenticated user whose list is updated.
+        - M2M relationship: user.prods_interested_in
+
+    Example usage:
+        POST /mark-interested/
+        Body: {"product_id": "123e4567-e89b-12d3-a456-426614174000", "action": "add"}
     """
+
     def post(self, request, *args, **kwargs):
      
         data = json.loads(request.body)
@@ -285,16 +417,34 @@ class MarkProductInterestedView(LoginRequiredMixin, View):
 
 
 class UserOnNoticeView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # ⚪️ Model Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
     """
-    List all items user has checked that they would like to be notified about
-    "Notify" relates to Coming Soon products. 
-    Coming Soon products, are products that have been ordered, but aren't in inventory.
-    Once product received, user will be sent email notifying them of buy now date and auction date
+    Display all products that the authenticated user has marked as "nofity me."
+
+    This view represents products that will be in inventory soon. 
+    If enough users mark notify me, the user will be notified when 
+    the product is available for purchases or auction.
+
+    Attributes:
+        template_name (str): Path to the template used for rendering the view.
+        product (QuerySet): Prefetched queryset of anticipated (inactive) products.
+        product_specifications (dict): Cached mapping of specification names to values 
+            for products (built in `get`).
+        user_intested_in_copy (str): Static copy text for the "On Notice" page.
+
+    Methods:
+        get(request):
+            Renders the list of products the user is interested in and their specifications.
+        post(request):
+            Handles post requests (currently just re-renders the template).
     """
      
     template_name = 'pop_accounts/user_accounts/dashboard_pages/on_notice.html'
-    product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="anticipated")   
+    product = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")   
     product_specifications = None
+    user_on_notice_copy = USER_ON_NOTICE_COPY
 
     def get(self, request):
         user = request.user
@@ -303,18 +453,59 @@ class UserOnNoticeView(LoginRequiredMixin, View):
         for p in self.product:
             self.product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
         
-        context = {'user': user, 'prods_on_notice_for': prods_on_notice_for, 'product_specifications': self.product_specifications}
+        context = {'user': user, 'prods_on_notice_for': prods_on_notice_for, 
+                   'product_specifications': self.product_specifications, 
+                   "user_on_notice_copy": self.user_on_notice_copy}
 
         return render(request, self.template_name, context)
     
     def post(self, request):
-        return render(request, self.template_name)
+        return render(request, self.template_name, {"user_on_notice_copy": self.user_on_notice_copy})
 
 
 class MarkProductOnNoticeView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+   
     """
-    Allows users to request to be notified about a product that is soon to be in inventory. 
+    Handles adding or removing products from a user's "notify me list" list.
+
+    This view is triggered via an AJAX/JSON POST request. The request body must 
+    include a `product_id` and optionally an `action`. If the product exists:
+    
+    - If the product is already in the user's notify-me list, it is removed.
+    - If the product is not in the user's notify-me list, it is added.
+
+    If `product_id` is missing, an error response is returned.
+    If the given product does not exist, a 404 response is returned.
+
+    Requires:
+        - User must be authenticated (LoginRequiredMixin).
+
+    Request body (JSON):
+        {
+            "product_id": "id number",
+            "action": "add" | "remove"  # optional, defaults to "add"
+        }
+
+    Responses:
+        200 OK:
+            {"status": "added", "message": "Product added to notify-me list."}
+            {"status": "removed", "message": "Product removed from notify-me list."}
+            {"status": "error", "message": "Product ID missing"}
+        
+        404 Not Found:
+            {"status": "error", "message": "Product not found"}
+
+    Models involved:
+        - PopUpProduct: The product being marked as notify-me or not notify-me.
+        - PopUpCustomer (request.user): The authenticated user whose list is updated.
+        - M2M relationship: user.prods_interested_in
+
+    Example usage:
+        POST /mark-on-notice//
+        Body: {"product_id": "123e4567-e89b-12d3-a456-426614174000", "action": "add"}
     """
+
     def post(self, request, *args, **kwargs):
 
         data = json.loads(request.body)
@@ -337,20 +528,59 @@ class MarkProductOnNoticeView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
 
 
-from pop_accounts.utils.utils import get_stripe_payment_reference    
 
-@login_required
-def personal_info(request):
+class PersonalInfoView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # ⚪️ Model Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
     """
-    Personal information in user dashboard
+    Handles display and updates of a user's personal information and addresses
+    within their dashboard.
+
+    This view provides two forms:
+      1. Personal Info Form – allows users to update their profile details
+         such as name, shoe size, favorite brand, and mobile preferences.
+      2. Address Form – allows users to add or update delivery addresses.
+
+    Features:
+        - GET request:
+            Renders the personal info page with the user's current details,
+            available addresses, and blank address form.
+        - POST request:
+            Determines whether the submission is for personal info or
+            address updates, validates the data, and either saves changes
+            (with a success message and redirect) or re-renders the page
+            with validation errors.
+
+    Submethods:
+        - get_context_data():
+            Collects common context data including forms and user info.
+        - _is_personal_form_submission():
+            Identifies if the POST data belongs to the personal info form.
+        - _is_address_form_submission():
+            Identifies if the POST data belongs to the address form.
+        - _handle_personal_form(user):
+            Validates and updates user profile data, or returns form errors.
+        - _handle_address_form(user):
+            Validates and saves a new or existing address, or returns errors.
+
+    Template:
+        pop_accounts/user_accounts/dashboard_pages/personal_info.html
+
+    Access:
+        Requires the user to be logged in.
     """
-    user = request.user
-    addresses = PopUpCustomerAddress.objects.filter(customer=user)
 
-    payment_methods = get_stripe_payment_reference(user)
+    template_name = "pop_accounts/user_accounts/dashboard_pages/personal_info.html"
+    personal_info_copy = PERSONAL_INFO_COPY
 
+    def get_context_data(self):
+        """Get common context data for both GET and POST"""
+        user = self.request.user
+        addressess = PopUpCustomerAddress.objects.filter(customer=user)
+        # payment_methods = get_stripe_payment_reference(user)
 
-    personal_form = PopUpUserEditForm(initial={
+        personal_form = PopUpUserEditForm(initial={
             'first_name': user.first_name,
             'middle_name': user.middle_name,
             'last_name': user.last_name,
@@ -361,18 +591,42 @@ def personal_info(request):
             'mobile_notification': user.mobile_notification
         })
     
-    address_form = ThePopUpUserAddressForm()
+        address_form = ThePopUpUserAddressForm()
 
-
-    if request.method == "POST":
+        return {'form': personal_form, 'address_form': address_form, 'addresses': addressess, 'user': user, 
+                'personal_info_copy': self.personal_info_copy}
     
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests"""
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
 
-        # Determine which form as been submitted
-        if not 'street_address_1' in request.POST and 'first_name' in request.POST:
+    def post(self, request, *args, **kwargs):
+        """Handle POST requests"""
+        user = request.user
 
-            # It's the personal info form
-            personal_form = PopUpUserEditForm(request.POST)
-            if personal_form.is_valid():
+        # Determine which form was submitted
+        if self._is_personal_form_submission():
+            return self._handle_personal_form(user)
+        elif self._is_address_form_submission():
+            return self._handle_address_form(user)
+        
+        # If neighter form matches, render with errors
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
+    
+    def _is_personal_form_submission(self):
+        """Check if personal form was submitted"""
+        return 'street_address_1' not in self.request.POST and 'first_name' in self.request.POST
+
+    def _is_address_form_submission(self):
+        """Check if address form was submitted"""
+        return 'street_address_1' in self.request.POST
+    
+    def _handle_personal_form(self, user):
+        """Handle personal information form submission"""
+        personal_form = PopUpUserEditForm(self.request.POST)
+        if personal_form.is_valid():
                 # Manually update user fields
                 data = personal_form.cleaned_data
                 user.first_name = data.get('first_name', '')
@@ -385,72 +639,109 @@ def personal_info(request):
                 user.mobile_notification = data.get('mobile_notification', '')
                 user.save()
 
-                messages.success(request, "Your profile has been updated.")
+                messages.success(self.request, "Your profile has been updated.")
                 return redirect('pop_accounts:personal_info')
-            
-        elif 'street_address_1' in request.POST:
 
-            address_id = request.POST.get('address_id')
-            
-            if address_id:
-                # Edit existing address
-                address= get_object_or_404(PopUpCustomerAddress, id=address_id, customer=user)
-                address_form = ThePopUpUserAddressForm(request.POST, instance=address)
-            else:
-                address_form = ThePopUpUserAddressForm(request.POST)
-            
-            # It's the address form 
-            try:         
-                if address_form.is_valid():
-                    address = address_form.save(commit=False)
-                    address.customer = user
-                    address.prefix = address_form.cleaned_data['prefix']
-                    address.first_name = address_form.cleaned_data['first_name']
-                    address.middle_name = address_form.cleaned_data['middle_name']
-                    address.last_name = address_form.cleaned_data['last_name']
-                    address.suffix = address_form.cleaned_data['suffix']
-                    address.address_line = address_form.cleaned_data['street_address_1']
-                    address.address_line2 = address_form.cleaned_data['street_address_2']
-                    address.apartment_suite_number = address_form.cleaned_data['apt_ste_no']
-                    address.town_city = address_form.cleaned_data['city_town']
-                    address.state = address_form.cleaned_data['state']
-                    address.postcode = address_form.cleaned_data['postcode']
-                    address.delivery_instructions = address_form.cleaned_data['delivery_instructions']
-                    address.default = address_form.cleaned_data.get('address_default', False)
-                    address.save()
-                    msg = "Address has been updated." if address_id else "Address has been added."
-                    messages.success(request,msg)
-                    # messages.success(request, "Address has been added.")
-                    return redirect('pop_accounts:personal_info')
-            except Exception as e:
-                print('e', e)
+        # If form is invalid, render with errors
+        context = self.get_context_data()
+        context['form'] = personal_form
+        return render(self.request, self.template_name, context)
+    
+    def _handle_address_form(self, user):
+        """Handle address form submission"""
+        address_id = self.request.POST.get('address_id')
+
+        if address_id:
+            # Edit existing address
+            address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=user)
+            address_form = ThePopUpUserAddressForm(self.request.POST, instance=address)
+        else:
+            address_form = ThePopUpUserAddressForm(self.request.POST)
+        
+        try:         
+            if address_form.is_valid():
+                address = address_form.save(commit=False)
+                address.customer = user
+                address.prefix = address_form.cleaned_data['prefix']
+                address.first_name = address_form.cleaned_data['first_name']
+                address.middle_name = address_form.cleaned_data['middle_name']
+                address.last_name = address_form.cleaned_data['last_name']
+                address.suffix = address_form.cleaned_data['suffix']
+                address.address_line = address_form.cleaned_data['street_address_1']
+                address.address_line2 = address_form.cleaned_data['street_address_2']
+                address.apartment_suite_number = address_form.cleaned_data['apt_ste_no']
+                address.town_city = address_form.cleaned_data['city_town']
+                address.state = address_form.cleaned_data['state']
+                address.postcode = address_form.cleaned_data['postcode']
+                address.delivery_instructions = address_form.cleaned_data['delivery_instructions']
+                address.default = address_form.cleaned_data.get('address_default', False)
+                address.save()
+                msg = "Address has been updated." if address_id else "Address has been added."
+                messages.success(self.request, msg)
+                return redirect('pop_accounts:personal_info')
+        except Exception as e:
+            print('e', e)
+            messages.error(self.request, 'An error occurred while saving the address')
+
+        # If form is invalid or exception occured, render with errors
+        context = self.get_context_data()
+        context['address_form'] = address_form
+        return render(self.request, self.template_name, context)
 
 
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/personal_info.html', {
-        'form': personal_form, 'address_form': address_form, 'addresses': addresses, 'user': user,
-        'payment_methods': payment_methods})
 
-
-@login_required
-def get_address(request, address_id):
+class GetAddressView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
     """
-    Displays User user address
+    Handles retrieval of a user's saved address.
+
+    This view ensures that the requested address belongs to the currently
+    authenticated user. If the address exists, it returns the address fields
+    in JSON format, which can be consumed by frontend code (e.g., for
+    pre-filling an address edit form in a modal).
+
+    Methods:
+        get(request, address_id):
+            Returns a JSON response with the address details for the given ID.
+            Raises 404 if the address does not exist or does not belong to the user.
     """
-    address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
-    return JsonResponse({
-        'prefix': address.prefix,
-        'first_name': address.first_name,
-        'middle_name': address.middle_name,
-        'last_name': address.last_name,
-        'suffix': address.suffix,
-        'address_line': address.address_line,
-        'address_line2': address.address_line2,
-        'apartment_suite_number': address.apartment_suite_number,
-        'town_city': address.town_city,
-        'state': address.state,
-        'postcode': address.postcode,
-        'delivery_instructions': address.delivery_instructions,
-    })
+
+    def get(self, request, address_id, *args, **kwargs):
+        address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
+        return JsonResponse({
+            'prefix': address.prefix,
+            'first_name': address.first_name,
+            'middle_name': address.middle_name,
+            'last_name': address.last_name,
+            'suffix': address.suffix,
+            'address_line': address.address_line,
+            'address_line2': address.address_line2,
+            'apartment_suite_number': address.apartment_suite_number,
+            'town_city': address.town_city,
+            'state': address.state,
+            'postcode': address.postcode,
+            'delivery_instructions': address.delivery_instructions,
+        })
+
+
+
+class DeleteAddressView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    """
+    Allows a logged-in user to delete one of their addresses.
+    Accepts only POST requests. 
+    Returns JSON response indicating success or failure.
+    """
+    def post(self, request, address_id, *args, **kwargs):
+        address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
+        address.delete()
+        return JsonResponse({'status': 'success'})
+    
+    def get(self, request, *args, **kwargs):
+        """Reject GET requests explicitly"""
+        return JsonResponse({'error': 'Invalid Request'}, status=400)
+
+
 
 @login_required
 def delete_address(request, address_id):
