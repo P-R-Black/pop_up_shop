@@ -724,7 +724,6 @@ class GetAddressView(LoginRequiredMixin, View):
         })
 
 
-
 class DeleteAddressView(LoginRequiredMixin, View):
     # 🟢 View Test Completed
     """
@@ -742,37 +741,55 @@ class DeleteAddressView(LoginRequiredMixin, View):
         return JsonResponse({'error': 'Invalid Request'}, status=400)
 
 
-
-@login_required
-def delete_address(request, address_id):
+class SetDefaultAddressView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
     """
-    Allows user to delete an address
+    Allows user to make address a default address.
+    Accepts only POST requests.
+    Returns JSON response indicating success or failure
     """
-    if request.method == "POST":
-        address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user)
-        address.delete()
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'error': 'Invalid Request'}, status=400)
+
+    def post(self, request, address_id, *args, **kwargs):
+        user = request.user
+        try:
+            address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user, 
+                                        deleted_at__isnull=True)
+            # Unset all other address
+            PopUpCustomerAddress.objects.filter(customer=user, default=True).update(default=False)
+
+            # Set selected address as default
+            address.default = True
+            address.save()
+            return JsonResponse({'success': True})
+        except PopUpCustomerAddress.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Address not found'}, status=400)
+    
+    def get(self, request, *args, **kwargs):
+        """Reject GET requests explicitly"""
+        return JsonResponse({'success': False, 'error': 'Invalid Request'}, status=400)
 
 
-@login_required
-def set_default_address(request, address_id):
-    """
-    Allows user to set a default address
-    """
-    user = request.user
-    try:
-        address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user, deleted_at__isnull=True)
-        # Unset all other address
-        PopUpCustomerAddress.objects.filter(customer=user, default=True).update(default=False)
+# @login_required
+# def set_default_address(request, address_id):
+#     """
+#     Allows user to set a default address
+#     """
+#     user = request.user
+#     try:
+#         address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user, deleted_at__isnull=True)
+#         # Unset all other address
+#         PopUpCustomerAddress.objects.filter(customer=user, default=True).update(default=False)
 
-        # Set selected address as default
-        address.default = True
-        address.save()
+#         # Set selected address as default
+#         address.default = True
+#         address.save()
 
-        return JsonResponse({'success': True})
-    except PopUpCustomerAddress.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Address not found'}, status=404)
+#         return JsonResponse({'success': True})
+#     except PopUpCustomerAddress.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Address not found'}, status=404)
+
+
+
 
 @login_required
 def delete_account(request):

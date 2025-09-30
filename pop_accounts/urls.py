@@ -4,7 +4,8 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView,
                     UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
                     UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
-                    UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, DeleteAddressView)
+                    UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, 
+                    DeleteAddressView, SetDefaultAddressView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -40,7 +41,8 @@ urlpatterns = [
     path('account-deleted/', views.account_deleted, name="account_deleted"),
     path('get-address/<uuid:address_id>/', GetAddressView.as_view(), name='get_address'),
     path('delete-address/<uuid:address_id>/', DeleteAddressView.as_view(), name='delete_address'),
-    path('set-default-address/<uuid:address_id>/', views.set_default_address, name='set_default_address'),
+    path('set-default-address/<uuid:address_id>/', SetDefaultAddressView.as_view(), name='set_default_address'),
+    # path('set-default-address/<uuid:address_id>/', views.set_default_address, name='set_default_address'),
     path('interested-in/', UserInterestedInView.as_view(), name='interested_in'),
     path('mark-interested/', MarkProductInterestedView.as_view(), name='mark_interested'),
     path('on-notice/', UserOnNoticeView.as_view(), name='on_notice'),

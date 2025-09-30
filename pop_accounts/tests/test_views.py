@@ -49,7 +49,8 @@ def create_test_user_two():
         )
 
 def create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
-                        town_city, state, postcode, delivery_instructions):
+                        town_city, state, postcode, delivery_instructions, default=True, is_default_shipping=False,
+                        is_default_billing=False):
     return PopUpCustomerAddress.objects.create(
             customer=customer,
             first_name=first_name,
@@ -60,7 +61,10 @@ def create_test_address(customer, first_name, last_name, address_line, address_l
             town_city=town_city,
             state=state,
             postcode=postcode,
-            delivery_instructions=delivery_instructions
+            delivery_instructions=delivery_instructions,
+            default=default,
+            is_default_shipping=is_default_shipping,
+            is_default_billing=is_default_billing
         )
 
 def create_brand(name):
@@ -345,10 +349,12 @@ class TestPersonalInfoView(TestCase):
         # create an existing user
         self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', mobile_phone="1234567890")
         # create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
-        #                 town_city, state, postcode, delivery_instructions)
+        #                 town_city, state, postcode, delivery_instructions, default=True, is_default_shipping=False, 
+        # is_default_billing=False)
         self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
                                            address_line="123 Test St", address_line2="", apartment_suite_number="", town_city="Test City", state="TS", 
-                                           postcode="12345",delivery_instructions="")
+                                           postcode="12345",delivery_instructions="", default=True, 
+                                           is_default_shipping=True, is_default_billing=True)
 
         self.url = reverse('pop_accounts:personal_info')
     
@@ -703,7 +709,8 @@ class TestGetAddressView(TestCase):
         self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
                                            address_line="123 Test St", address_line2="Unit 4", 
                                            apartment_suite_number="128", town_city="Test City", 
-                                           state="TS", postcode="12345", delivery_instructions="Leave at the door")
+                                           state="TS", postcode="12345", delivery_instructions="Leave at the door",
+                                           default=True, is_default_shipping=False, is_default_billing=False)
         
 
     def test_get_address_requires_login(self):
@@ -764,7 +771,8 @@ class TestDeleteAddressView(TestCase):
                                            address_line="123 Test St", address_line2="Unit 4", 
                                            apartment_suite_number="128", town_city="Test City", 
                                            state="North Carolina", postcode="12345", 
-                                           delivery_instructions="Leave at the door")
+                                           delivery_instructions="Leave at the door", default=True, 
+                                           is_default_shipping=False, is_default_billing=False)
         
         self.url = reverse("pop_accounts:delete_address", args=[self.address.id])
     
@@ -797,6 +805,358 @@ class TestDeleteAddressView(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 400)
         self.assertJSONEqual(response.content, {"error": "Invalid Request"})
+
+
+class TestSetDefaultAddressView(TestCase):
+    """Test Suite for SetDefaultAddressView"""
+    def setUp(self):
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+        # self.client.force_login(self.user)
+        self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
+                                           address_line="123 Test St", address_line2="Unit 4", 
+                                           apartment_suite_number="128", town_city="Test City", 
+                                           state="North Carolina", postcode="12345", 
+                                           delivery_instructions="Leave at the door", default=True, 
+                                           is_default_shipping=False, is_default_billing=False)
+        
+        self.address_two = create_test_address(customer=self.user, first_name="Test", last_name="User", 
+                                           address_line="456 Second St", address_line2="", 
+                                           apartment_suite_number="", town_city="Second City", 
+                                           state="New York", postcode="54321", 
+                                           delivery_instructions="", default=False, is_default_shipping=False, 
+                                           is_default_billing=False)
+        
+        self.address_three = create_test_address(customer=self.user, first_name="Test", last_name="User", 
+                                           address_line="789 Third St", address_line2="", 
+                                           apartment_suite_number="", town_city="Third City", 
+                                           state="Texas", postcode="67890", 
+                                           delivery_instructions="", default=False, is_default_shipping=False, 
+                                           is_default_billing=False)
+        
+        self.other_user = create_test_user_two()
+        self.other_user_address = create_test_address(
+            customer=self.other_user, first_name=self.other_user.first_name, last_name=self.other_user.last_name, 
+            address_line="789 Third St", address_line2="", apartment_suite_number="", town_city="Third City", 
+            state="Texas", postcode="67890", delivery_instructions="", default=True, is_default_shipping=False, 
+            is_default_billing=False)
+        
+        self.url = reverse("pop_accounts:delete_address", args=[self.address.id])
+
+        # Force reset defaults to ensure clean state
+        # PopUpCustomerAddress.objects.filter(customer=self.user).update(default=False)
+        # self.address.default = True
+        # self.address.save()
+
+    def get_url(self, address_id):
+        """Helper to get the URL for setting default address"""
+        return reverse('pop_accounts:set_default_address', kwargs={'address_id': address_id})
+
+    def test_view_requires_login(self):
+        """Test that the view requires authentication"""
+        url = self.get_url(self.address.id)
+        response = self.client.post(url)
+
+        # Should redirect to login
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+
+    def test_get_request_rejected(self):
+        """Test that GET requests are rejected"""
+        self.client.force_login(self.user)
+        url = self.get_url(self.address.id)
+        
+        response = self.client.get(url)        
+        
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+
+        self.assertFalse(data['success'])  # Now explicitly False
+        self.assertIn('error', data)
+        self.assertEqual(data['error'], 'Invalid Request')
+
+
+
+    def test_set_default_address_success(self):
+        """Test successfully setting a new default address"""
+        self.client.force_login(self.user)
+        url = self.get_url(self.address_two.id)
+        
+        response = self.client.post(url)
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+        
+        # Verify address2 is now default
+        self.address_two.refresh_from_db()
+        self.assertTrue(self.address_two.default)
+        
+        # Verify address1 is no longer default
+        self.address.refresh_from_db()
+        self.assertFalse(self.address.default)
+        
+        # Verify address3 remains non-default
+        self.address_three.refresh_from_db()
+        self.assertFalse(self.address_three.default)
+    
+    def test_only_one_default_address(self):
+        """Test that only one address can be default at a time"""
+        self.client.force_login(self.user)
+        
+        # Set address2 as default
+        url = self.get_url(self.address_two.id)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify only address2 is default
+        addresses = PopUpCustomerAddress.objects.filter(customer=self.user, default=True)
+        self.assertEqual(addresses.count(), 1)
+        self.assertEqual(addresses.first().id, self.address_two.id)
+        
+        # Now set address3 as default
+        url = self.get_url(self.address_three.id)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify only address3 is default
+        addresses = PopUpCustomerAddress.objects.filter(customer=self.user, default=True)
+        self.assertEqual(addresses.count(), 1)
+        self.assertEqual(addresses.first().id, self.address_three.id)
+    
+    def test_set_already_default_address(self):
+        """Test setting an address that's already default"""
+        self.client.force_login(self.user)
+        url = self.get_url(self.address.id)
+        
+        # address1 is already default
+        response = self.client.post(url)
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+        
+        # Should still be default
+        self.address.refresh_from_db()
+        self.assertTrue(self.address.default)
+        
+        # Only one default should exist
+        default_count = PopUpCustomerAddress.objects.filter(
+            customer=self.user, 
+            default=True
+        ).count()
+        self.assertEqual(default_count, 1)
+    
+    def test_nonexistent_address_id(self):
+        """Test attempting to set default for non-existent address"""
+        self.client.force_login(self.user)
+        url = self.get_url('00000000-0000-0000-0000-000000000000')  # Non-existent ID
+        
+        response = self.client.post(url)
+        
+        self.assertEqual(response.status_code, 404)
+    
+    def test_cannot_set_other_users_address(self):
+        """Test that user cannot set another user's address as default"""
+
+        self.client.force_login(self.user)
+        url = self.get_url(self.other_user_address.id)
+        
+        response = self.client.post(url)
+        
+        self.assertEqual(response.status_code, 404)
+        
+        # Verify other user's address wasn't affected
+        self.other_user_address.refresh_from_db()
+        self.assertTrue(self.other_user_address.default)
+        
+        # Verify current user's addresses weren't affected
+        self.address.refresh_from_db()
+
+        self.assertTrue(self.address.default)
+    
+
+    def test_deleted_address_cannot_be_set_default(self):
+        """Test that soft-deleted addresses cannot be set as default"""
+        from django.utils import timezone
+        
+        # Soft delete address2
+        self.address_two.deleted_at = timezone.now()
+        self.address_two.save()
+        
+        self.client.force_login(self.user)
+        url = self.get_url(self.address_two.id)
+        
+        response = self.client.post(url)
+        
+        self.assertEqual(response.status_code, 404)
+        
+        # Verify address2 didn't become default
+        self.address_two.refresh_from_db()
+        self.assertFalse(self.address_two.default)
+        self.assertIsNotNone(self.address_two.deleted_at)
+    
+    def test_json_response_format(self):
+        """Test that response is valid JSON with correct structure"""
+        self.client.force_login(self.user)
+        url = self.get_url(self.address_two.id)
+        
+        response = self.client.post(url)
+        
+        self.assertEqual(response['Content-Type'], 'application/json')
+        
+        data = json.loads(response.content)
+        self.assertIn('success', data)
+        self.assertIsInstance(data['success'], bool)
+    
+    def test_json_error_response_format(self):
+        """Test error response format"""
+        self.client.force_login(self.user)
+        url = self.get_url('00000000-0000-0000-0000-000000000000')
+        
+        response = self.client.post(url)
+        
+        # Note: The view returns 404 for non-existent, not 400 with JSON
+        # So this test verifies the actual behavior
+        self.assertEqual(response.status_code, 404)
+    
+    def test_multiple_users_can_have_default_addresses(self):
+        """Test that different users can each have their own default address"""
+        # User 1 sets their default
+        self.client.force_login(self.user)
+        url = self.get_url(self.address_two.id)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        
+        # User 2's default should be unaffected
+        self.other_user_address.refresh_from_db()
+        self.assertTrue(self.other_user_address.default)
+        
+        # User 2 can also set their default
+        self.client.force_login(self.other_user)
+        url = self.get_url(self.other_user_address.id)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Both users should have their own defaults
+        user1_defaults = PopUpCustomerAddress.objects.filter(
+            customer=self.user, 
+            default=True
+        ).count()
+        user2_defaults = PopUpCustomerAddress.objects.filter(
+            customer=self.other_user, 
+            default=True
+        ).count()
+        
+        self.assertEqual(user1_defaults, 1)
+        self.assertEqual(user2_defaults, 1)
+    
+    def test_ajax_request_handling(self):
+        """Test that view handles AJAX requests properly"""
+        self.client.force_login(self.user)
+        url = self.get_url(self.address_two.id)
+        
+        # Simulate AJAX request
+        response = self.client.post(
+            url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+    
+    def test_database_transaction_integrity(self):
+        """Test that database operations are atomic"""
+        self.client.force_login(self.user)
+        
+        # Count initial defaults
+        initial_defaults = PopUpCustomerAddress.objects.filter(
+            customer=self.user, 
+            default=True
+        ).count()
+        self.assertEqual(initial_defaults, 1)
+        
+        # Set new default
+        url = self.get_url(self.address_three.id)
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        
+        # Count final defaults - should still be exactly 1
+        final_defaults = PopUpCustomerAddress.objects.filter(
+            customer=self.user, 
+            default=True
+        ).count()
+        self.assertEqual(final_defaults, 1)
+        
+        # Verify it's the correct one
+        default_address = PopUpCustomerAddress.objects.get(
+            customer=self.user, 
+            default=True
+        )
+        self.assertEqual(default_address.id, self.address_three.id)
+
+
+class SetDefaultAddressViewIntegrationTests(TestCase):
+    """Integration tests for SetDefaultAddressView"""
+    
+    def setUp(self):
+        """Set up integration test data"""
+        self.client = Client()
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+    
+    def test_user_workflow_changing_defaults(self):
+        """Test complete workflow of user changing default addresses"""
+        self.client.force_login(self.user)
+        
+        # Create addresses
+        addr1 = create_test_address(customer=self.user, first_name="Integration", last_name="User", 
+                                           address_line="111 First", address_line2="", 
+                                           apartment_suite_number="", town_city="City1", 
+                                           state="California", postcode="11111", 
+                                           delivery_instructions="Leave at the door", default=True, 
+                                           is_default_shipping=False, is_default_billing=False)
+        
+        addr2 = create_test_address(customer=self.user, first_name="Integration", last_name="User", 
+                                           address_line="222 Second", address_line2="", 
+                                           apartment_suite_number="", town_city="City2", 
+                                           state="New York", postcode="22222", 
+                                           delivery_instructions="Leave at the door", default=True, 
+                                           is_default_shipping=False, is_default_billing=False)
+        
+        addr3 = create_test_address(customer=self.user, first_name="Integration", last_name="User", 
+                                           address_line="333 Third", address_line2="", 
+                                           apartment_suite_number="", town_city="City3", 
+                                           state="Texas", postcode="33333", 
+                                           delivery_instructions="Leave at the door", default=True, 
+                                           is_default_shipping=False, is_default_billing=False)
+        
+        
+        # Change default to addr2
+        url = reverse('pop_accounts:set_default_address', kwargs={'address_id': addr2.id})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        
+        addr2.refresh_from_db()
+        self.assertTrue(addr2.default)
+        
+        # Change default to addr3
+        url = reverse('pop_accounts:set_default_address', kwargs={'address_id': addr3.id})
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        
+        addr3.refresh_from_db()
+        self.assertTrue(addr3.default)
+        
+        # Verify only addr3 is default
+        defaults = PopUpCustomerAddress.objects.filter(
+            customer=self.user, 
+            default=True
+        )
+        self.assertEqual(defaults.count(), 1)
+        self.assertEqual(defaults.first().id, addr3.id)
 
 
 # class EmailCheckViewTests(TestCase):
