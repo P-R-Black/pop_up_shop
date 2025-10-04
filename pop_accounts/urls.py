@@ -1,11 +1,11 @@
 from django.urls import path
 from . import views
 from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, 
-                    UserLogOutView, UserDashboardView, Verify2FACodeView,
+                    UserLogOutView, UserDashboardView, Verify2FACodeView, AccountDeletedView,
                     UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
                     UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
                     UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, 
-                    DeleteAddressView, SetDefaultAddressView, DeleteAccountView)
+                    DeleteAddressView, SetDefaultAddressView, DeleteAccountView, UserPasswordResetConfirmView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -26,10 +26,7 @@ urlpatterns = [
     path('auth/verify-code/', Verify2FACodeView.as_view(), name='verify_2fa'),
     path('auth/send-reset-link/', views.send_password_reset_link, name='send_reset_link'),
     path('resend-code/', views.resend_2fa_code, name='resend_2fa_code'),
-    path('password-reset/<uidb64>/<token>/', views.user_password_reset_confirm, name='password_reset_confirm'),
-
-
-    # path('login/', UserLoginAfterPasswordResetView.as_view(), name='login'),
+    path('password-reset/<uidb64>/<token>/', UserPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('logout/',UserLogOutView.as_view(), name='logout'),
        
     # path('place-bid/', DashboardPlaceBidView.as_view(), name='place_bid'),
@@ -39,9 +36,9 @@ urlpatterns = [
     path('personal-information/', views.PersonalInfoView.as_view(), name='personal_info'),
     path('delete-account/', DeleteAccountView.as_view(), name='delete_account'),
 
-    # path('delete-account/', views.delete_account, name='delete_account'),
+    path('account-deleted/', AccountDeletedView.as_view(), name='account_deleted'),
+    # path('account-deleted/', views.account_deleted, name="account_deleted"),
     
-    path('account-deleted/', views.account_deleted, name="account_deleted"),
     path('get-address/<uuid:address_id>/', GetAddressView.as_view(), name='get_address'),
     path('delete-address/<uuid:address_id>/', DeleteAddressView.as_view(), name='delete_address'),
     path('set-default-address/<uuid:address_id>/', SetDefaultAddressView.as_view(), name='set_default_address'),

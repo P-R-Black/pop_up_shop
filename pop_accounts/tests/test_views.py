@@ -2,7 +2,8 @@ from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
-from pop_up_auction.models import PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType
+from pop_up_auction.models import (PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
+                                   PopUpProductSpecificationValue)
 from pop_accounts.views import PersonalInfoView
 from unittest.mock import patch
 from django.utils import timezone
@@ -1471,6 +1472,508 @@ class DeleteAccountViewIntegrationTests(TestCase):
         # User can access protected pages
         response = self.client.get(reverse('pop_accounts:dashboard'))
         self.assertEqual(response.status_code, 200)
+
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+
+class UserPasswordResetConfirmViewTest(TestCase):
+    def setUp(self):
+        """Set up test data"""
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.user.is_active = True
+        self.user.save()
+        self.other_user.is_active = True
+        self.other_user.save()
+        
+        # endcode UID
+        self.uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        self.token = default_token_generator.make_token(self.user)
+
+        self.url = reverse('pop_accounts:password_reset_confirm', kwargs={'uidb64': self.uidb64, 'token': self.token})
+
+
+    def test_valid_get_request_renders_form(self):
+        """GET with valid uid/token should render the password reset form."""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "pop_accounts/login/password_reset_confirm.html")
+        self.assertIn('validlink', response.context)
+        self.assertTrue(response.context['validlink'])
+
+
+    def test_invalid_get_request_renders_invalid_page(self):
+        """GET with invalid uid should show invalid link page."""
+        bad_uid = urlsafe_base64_encode(force_bytes('00000000-0000-0000-0000-000000000000'))  # non-existent user
+        bad_url = reverse("pop_accounts:password_reset_confirm", kwargs={"uidb64": bad_uid, "token": self.token})
+        response = self.client.get(bad_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("validlink", response.context)
+        self.assertFalse(response.context["validlink"])
+
+
+    def test_post_with_invalid_uid_returns_json_error(self):
+        """POST with invalid uid should return JSON error."""
+        bad_uid = urlsafe_base64_encode(force_bytes('00000000-0000-0000-0000-000000000000'))
+        bad_url = reverse("pop_accounts:password_reset_confirm", kwargs={"uidb64": bad_uid, "token": self.token})
+        response = self.client.post(bad_url, {"password": "NewPass123!", "password2": "NewPass123!"})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {"success": False, "error": "Invalid reset link."})
+
+
+    def test_post_with_missing_fields_returns_error(self):
+        """POST with missing password fields should return error."""
+        response = self.client.post(self.url, {"password": "", "password2": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {"success": False, "error": "All fields are required."})
+
+
+    def test_post_with_mismatched_passwords_returns_error(self):
+        """POST with mismatched passwords should return error."""
+        response = self.client.post(self.url, {"password": "Pass1", "password2": "Pass2"})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {"success": False, "error": "Passwords do not match."})
+
+
+    def test_post_with_valid_data_resets_password(self):
+        """POST with valid data should reset password successfully."""
+        response = self.client.post(self.url, {"password": "NewPassword123!", "password2": "NewPassword123!"})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {"success": True, "message": "Password reset successful."})
+
+        # Verify user password is updated
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("NewPassword123!"))
+
+
+class OpenBidsViewTests(TestCase):
+    """Test suite for OpenBidsView"""
+    def setUp(self):
+        self.client = Client()
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+        self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
+                                           address_line="111 First", address_line2="", 
+                                           apartment_suite_number="", town_city="City1", 
+                                           state="California", postcode="11111", 
+                                           delivery_instructions="Leave at the door", default=True, 
+                                           is_default_shipping=False, is_default_billing=False)
+        
+
+        test_brand = create_brand('Jordan')
+        test_category = create_category('Jordan 3', is_active=True)
+        test_product_type = create_product_type('shoe', is_active=True)
+
+        test_category_two = create_category('Jordan 4', is_active=True)
+        test_category_three = create_category('Jordan 11', is_active=True)
+
+        self.test_prod_one = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Jordan 3 Retro", 
+            secondary_product_title="OG Rare Air", description="Brand new sneakers", 
+            slug="jordan-3-retro-og-rare-air", buy_now_price="230.00", current_highest_bid="0", 
+            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="in_inventory", bid_count=0, reserve_price="165.00", is_active="True")
+
+
+        self.test_prod_two = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Jordan 4 Retro", 
+            secondary_product_title="White Cement", description="Brand new sneakers", 
+            slug="jordan-4-white-cement", buy_now_price="230.00", current_highest_bid="0", 
+            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="in_inventory", bid_count=0, reserve_price="165.00", is_active="True")
+
+        self.test_prod_three = create_test_product(
+            product_type=test_product_type, category=test_category_three, product_title="Jordan 11 Retro", 
+            secondary_product_title="Concord", description="Brand new Jordan 11", 
+            slug="jordan-11-concord", buy_now_price="350.00", current_highest_bid="0", 
+            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active="False")
+
+        # Create specifications for products
+        self.size_spec = PopUpProductSpecification.objects.create(product_type=test_product_type,name='Size')
+        self.color_spec = PopUpProductSpecification.objects.create(product_type=test_product_type,name='colorway')
+        
+        
+        PopUpProductSpecificationValue.objects.create(
+            product=self.test_prod_one,
+            specification=self.size_spec,
+            value='10'
+        )
+        PopUpProductSpecificationValue.objects.create(
+            product=self.test_prod_one,
+            specification=self.color_spec,
+            value='Red'
+        )
+        
+        # Create bids
+        self.bid1 = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_one,
+            amount=Decimal('105.00'),
+            is_active=True
+        )
+
+        # Create other user's bid (should not appear in user's view)
+        self.other_user_bid = PopUpBid.objects.create(
+            customer=self.other_user,
+            product=self.test_prod_one,
+            amount=Decimal('115.00'),
+            is_active=True
+        )
+
+        self.bid2 = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_one,
+            amount=Decimal('125.00'),
+            is_active=True
+        )
+        
+        self.bid2 = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_two,
+            amount=Decimal('175.00'),
+            is_active=True
+        )
+        
+        
+        # Create inactive bid (should not appear)
+        self.inactive_bid = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_one,
+            amount=Decimal('176.00'),
+            is_active=False
+        )
+        
+        # Create bid on inactive product
+        self.bid_on_inactive = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_three,
+            amount=Decimal('80.00'),
+            is_active=True
+        )
+        
+       
+        
+        # Add products to user's interests
+        self.user.prods_interested_in.add(self.test_prod_one)
+        self.user.prods_on_notice_for.add(self.test_prod_two)
+        
+        self.url = reverse('pop_accounts:open_bids')
+    
+    def test_view_requires_login(self):
+        """Test that view requires authentication"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+
+
+    def test_get_request_authenticated(self):
+        """Test GET request for authenticated user"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/user_accounts/dashboard_pages/open_bids.html')
+    
+
+    def test_context_contains_required_data(self):
+        """Test that context contains all required variables"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('user', response.context)
+        self.assertIn('addresses', response.context)
+        self.assertIn('prod_interested_in', response.context)
+        self.assertIn('prods_on_notice_for', response.context)
+        self.assertIn('highest_bid_objects', response.context)
+        self.assertIn('open_bids', response.context)
+        self.assertIn('quick_bid_increments', response.context)
+        
+        self.assertEqual(response.context['user'], self.user)
+
+
+    def test_only_highest_bids_shown(self):
+        """Test that only the highest bid per product is shown"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        highest_bid_objects = response.context['highest_bid_objects']
+        
+        # Should have 3 bids (test_prod_one and test_prod_two, not product3 which is inactive)
+        self.assertEqual(len(highest_bid_objects), 3)
+        
+        # Find the bid for product1
+        product1_bid = None
+        for bid in highest_bid_objects:
+            if bid.product_id == self.test_prod_one.id:
+                product1_bid = bid
+                break
+        
+        # Should be the highest bid (110.00), not the lower one (105.00)
+        self.assertIsNotNone(product1_bid)
+        self.assertEqual(product1_bid.amount, Decimal('125.00'))
+
+
+
+    def test_inactive_bids_excluded(self):
+        """Test that inactive bids are not shown"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        highest_bid_objects = list(response.context['highest_bid_objects'])
+        
+        # Inactive bid should not appear
+        bid_amounts = [bid.amount for bid in highest_bid_objects]
+        self.assertNotIn(Decimal('120.00'), bid_amounts)
+
+    def test_inactive_products_excluded(self):
+        """Test that bids on inactive products are excluded"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        open_bids = response.context['open_bids']
+        
+        # Should not include product3 (inactive)
+        product_ids = [bid_data['product'].id for bid_data in open_bids]
+        self.assertNotIn(self.test_prod_three.id, product_ids)
+    
+
+    def test_only_users_bids_shown(self):
+        """Test that only authenticated user's bids are shown"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        highest_bid_objects = response.context['highest_bid_objects']
+        
+        # All bids should belong to self.user
+        for bid in highest_bid_objects:
+            self.assertEqual(bid.customer_id, self.user.id)
+
+    def test_enriched_data_structure(self):
+        """Test that enriched bid data has correct structure"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        open_bids = response.context['open_bids']
+        
+        self.assertGreater(len(open_bids), 0)
+        
+        # Check structure of first bid data
+        bid_data = open_bids[0]
+        self.assertIn('highest_user_bid', bid_data)
+        self.assertIn('product', bid_data)
+        self.assertIn('specs', bid_data)
+        self.assertIn('current_highest', bid_data)
+        self.assertIn('bid_count', bid_data)
+        self.assertIn('duration', bid_data)
+        self.assertIn('retail_price', bid_data)
+
+
+    def test_product_specifications_included(self):
+        """Test that product specifications are included in enriched data"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        open_bids = response.context['open_bids']
+        
+        # Find product1 in open_bids
+        product1_data = None
+        for bid_data in open_bids:
+            if bid_data['product'].id == self.test_prod_one.id:
+                product1_data = bid_data
+                break
+        
+        self.assertIsNotNone(product1_data)
+        self.assertGreater(len(product1_data['specs']), 0)
+        
+        # Check that specs contain expected data
+        spec_values = [spec.value for spec in product1_data['specs']]
+        self.assertIn('10', spec_values)  # Size
+        self.assertIn('Red', spec_values)  # Color
+    
+
+    def test_quick_bid_increments(self):
+        """Test that quick bid increments are provided"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        increments = response.context['quick_bid_increments']
+        
+        self.assertEqual(increments, [10, 20, 30])
+    
+    def test_default_address_retrieved(self):
+        """Test that user's default address is retrieved"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        addresses = response.context['addresses']
+        
+        self.assertEqual(len(addresses), 1)
+        self.assertEqual(addresses[0].id, self.address.id)
+        self.assertTrue(addresses[0].default)
+    
+
+    def test_interested_products_retrieved(self):
+        """Test that products user is interested in are retrieved"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        prod_interested_in = list(response.context['prod_interested_in'])
+        
+        self.assertEqual(len(prod_interested_in), 1)
+        self.assertEqual(prod_interested_in[0].id, self.test_prod_one.id)
+    
+
+    def test_notice_products_retrieved(self):
+        """Test that products user is on notice for are retrieved"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        prods_on_notice_for = list(response.context['prods_on_notice_for'])
+        
+        self.assertEqual(len(prods_on_notice_for), 1)
+        self.assertEqual(prods_on_notice_for[0].id, self.test_prod_two.id)
+    
+
+    def test_user_with_no_bids(self):
+        """Test view for user with no active bids"""
+        # Create user with no bids
+        no_bid_user = PopUpCustomer.objects.create_user(
+            email='nobids@example.com',
+            password='testpass123'
+        )
+        no_bid_user.is_active = True
+        no_bid_user.save(update_fields=['is_active'])
+        
+        self.client.force_login(no_bid_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        open_bids = response.context['open_bids']
+        self.assertEqual(len(open_bids), 0)
+    
+
+    def test_user_with_no_default_address(self):
+        """Test view for user without default address"""
+        # Create user with no default address
+        no_addr_user = PopUpCustomer.objects.create_user(
+            email='noaddr@example.com',
+            password='testpass123'
+        )
+        no_addr_user.is_active = True
+        no_addr_user.save(update_fields=['is_active'])
+        
+        self.client.force_login(no_addr_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        addresses = response.context['addresses']
+        self.assertEqual(len(addresses), 0)
+    
+
+    def test_post_request(self):
+        """Test POST request behavior"""
+        self.client.force_login(self.user)
+        response = self.client.post(self.url)
+        
+        # Currently just re-renders template
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/user_accounts/dashboard_pages/open_bids.html')
+    
+    
+    def test_multiple_bids_same_product(self):
+        """Test that only highest bid shown when user has multiple bids on same product"""
+        # Create additional higher bid on product1
+        higher_bid = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_one,
+            amount=Decimal('126.00'),
+            is_active=True
+        )
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        highest_bid_objects = list(response.context['highest_bid_objects'])
+        
+        # Find product1 bid
+        product1_bids = [bid for bid in highest_bid_objects if bid.product_id == self.test_prod_one.id]
+        
+        # Should only have one bid for product1
+        self.assertEqual(len(product1_bids), 1)
+        # Should be the highest amount
+        self.assertEqual(product1_bids[0].amount, Decimal('126.00'))
+    
+    def test_bid_count_and_current_highest(self):
+        """Test that bid count and current highest bid are included"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        open_bids = response.context['open_bids']
+        
+        # Each bid should have bid_count and current_highest
+        for bid_data in open_bids:
+            self.assertIn('bid_count', bid_data)
+            self.assertIn('current_highest', bid_data)
+            self.assertIsNotNone(bid_data['bid_count'])
+
+
+
+class OpenBidsViewIntegrationTests(TestCase):
+    """Integration tests for OpenBidsView"""
+    
+    def setUp(self):
+        self.client = Client()
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+       
+        self.url = reverse('pop_accounts:open_bids')
+    
+    def test_complete_bidding_workflow(self):
+        """Test complete workflow from placing bid to viewing in open bids"""
+        # Create product
+        test_brand = create_brand('Jordan')
+        test_category = create_category('Jordan 3', is_active=True)
+        test_product_type = create_product_type('shoe', is_active=True)
+        
+        product = create_test_product(
+            product_type=test_product_type, category=test_category, product_title="Jordan 3 Retro", 
+            secondary_product_title="OG Rare Air", description="Brand new sneakers", 
+            slug="jordan-3-retro-og-rare-air", buy_now_price="230.00", current_highest_bid="0", 
+            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="in_inventory", bid_count=0, reserve_price="165.00", is_active="True")
+       
+        
+        # User places bid
+        bid = PopUpBid.objects.create(
+            customer=self.user,
+            product=product,
+            amount=Decimal('80.00'),
+            is_active=True
+        )
+        
+        # User views open bids
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        open_bids = response.context['open_bids']
+        self.assertEqual(len(open_bids), 1)
+        self.assertEqual(open_bids[0]['product'].id, product.id)
+        self.assertEqual(open_bids[0]['highest_user_bid'].amount, Decimal('80.00'))
 
 
 

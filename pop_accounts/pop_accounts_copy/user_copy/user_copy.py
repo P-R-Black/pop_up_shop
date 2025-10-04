@@ -75,6 +75,18 @@ USER_ON_NOTICE_COPY = {
     ],
 }
 
+USER_OPEN_BIDS_COPY = {
+    "page_title": "Open Bids",
+    "open_bids_headers": [
+        {"headers": "Item"},
+        {"headers": "Size"},
+        {"headers": "Last Bid"},
+        {"headers": "Bid Status"},
+        {"headers": "Bid Action"},
+    ],
+}
+
+
 
 USER_SHIPPING_TRACKING = {"page_title": "Shipping and Tracking"}
 TRACKING_CATEGORIES =[

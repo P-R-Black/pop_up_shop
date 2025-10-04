@@ -12,16 +12,14 @@ Auction
 
 <div class="section_container">
     <div class="page_title">
-        <h2>Open Bids</h2>
+        <h2>{{ user_open_bids_copy.page_title }}</h2>
     </div>
     <div class="interested_in_container">
         <div class="interested_in_open_bids_container">
             <div class="interested_in_databox_headers">
-                <h3>Items</h3>
-                <h3>Size</h3>
-                <h3>Last Bid</h3>
-                <h3>Bid Status</h3>
-                <h3>Bid Action</h3>
+                {% for i in user_open_bids_copy.open_bids_headers %}
+                <h3>{{ i.headers }}</h3>
+                {% endfor %}
             </div>
             <div class="open_bids_open_bids">
                 {% for hb in open_bids %}
@@ -182,5 +180,4 @@ Auction
             </div>
         </div>
     </div>
-
     {% endblock %}

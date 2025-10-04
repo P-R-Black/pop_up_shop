@@ -23,4 +23,9 @@
 
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
-@media screen and (max-width: 450px) {}
+@media screen and (max-width: 450px) {
+    .open_bids_open_bids {
+        width: 130%;
+
+    }
+}

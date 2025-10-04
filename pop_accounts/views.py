@@ -63,7 +63,7 @@ from .pop_accounts_copy.admin_copy.admin_copy import (ADMIN_NAVIGATION_COPY, ADM
                                                       ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE)
 from .pop_accounts_copy.user_copy.user_copy import (
     USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
-    USER_ON_NOTICE_COPY, PERSONAL_INFO_COPY, USER_PASSWORD_RESET_PAGE)
+    USER_ON_NOTICE_COPY, PERSONAL_INFO_COPY, USER_PASSWORD_RESET_PAGE, USER_OPEN_BIDS_COPY)
 from django.db.models import Count, Max, Q
 from django.http import Http404
 from social_django.utils import load_strategy, load_backend
@@ -111,32 +111,48 @@ class UserLogOutView(LoginRequiredMixin, View):
         return redirect('/')
     
 
-
-
-def user_password_reset_confirm(request, uidb64, token):
+class UserPasswordResetConfirmView(View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested in later view
+    # ✅ Mobile / Tablet Media Query Completed
     """
-    Updates user password after password change
+    Handles user password reset confirmation via a password reset link.
+
+    - GET: Verify the reset link validity and renders the rest form
+    - POST: Validate and updates the user's password
     """
+    template_name = "pop_accounts/login/password_reset_confirm.html"
     user_password_rest_page = USER_PASSWORD_RESET_PAGE
-    try:
-        uid = urlsafe_base64_decode(uidb64).decode()
-        user = PopUpCustomer.objects.get(pk=uid)
 
-    except (TypeError, ValueError, OverflowError, PopUpCustomer.DoesNotExist) as e:
-        user = None
+    def _get_user_form_uid(self, uidb64):
+        """
+        Decode UID and fetch the user. Returns None if invalid
+        """
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            return PopUpCustomer.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, PopUpCustomer.DoesNotExist) as e:
+            return None
     
-    if request.method == 'GET':
+    def get(self, request, uidb64, token, *args, **kwargs):
+        """
+        Validate the password reset token and render the form
+        """
+        user = self._get_user_form_uid(uidb64)
+
         if user is not None and default_token_generator.check_token(user, token):
-            return render(request, 'pop_accounts/login/password_reset_confirm.html', {
-                'validlink': True, 
-                'uidb64': uidb64, 
-                'token': token
-                })
+            context = {"validlink": True, "uidb64": uidb64, "token": token, 'user_password_rest_page': self.user_password_rest_page}
         else:
-            return render(request, 'pop_accounts/login/password_reset_confirm.html', 
-                          {'validlink': False, 'user_password_rest_page': user_password_rest_page})
-        
-    elif request.method == 'POST':
+            context = {"validlink": False, 'user_password_rest_page': self.user_password_rest_page}
+
+        return render(request, self.template_name, context)
+    
+
+    def post(self, request, uidb64, token, *args, **kwargs):
+        """
+        Process the password reset form submission
+        """
+        user = self._get_user_form_uid(uidb64)
         if user is None:
             return JsonResponse({'success': False, 'error': 'Invalid reset link.'})
         
@@ -467,7 +483,6 @@ class UserOnNoticeView(LoginRequiredMixin, View):
 
 class MarkProductOnNoticeView(LoginRequiredMixin, View):
     # 🟢 View Test Completed
-   
     """
     Handles adding or removing products from a user's "notify me list" list.
 
@@ -785,20 +800,68 @@ class DeleteAccountView(LoginRequiredMixin, View):
 
 
 
-
-def account_deleted(request):
+class AccountDeletedView(View):
+    # ⚪️ No View Test, Testing Done In Deleted Account View
+    # ✅ Mobile / Tablet Media Query Completed
     """
     View to confirm account deletion
     """
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/account_deleted.html')
-
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/account_deleted.html'
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+    
 
 
 class OpenBidsView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be Pop Up Auction App
+    # ✅ Mobile / Tablet Media Query Completed
     """
-    View that shows user all items that they have an open bid on.
+    Displays all active bids that the authenticated user has placed.
+
+    This view retrieves all products on which the user currently holds open (active) bids,
+    enriches each bid with product and auction-related metadata, and renders them in
+    the user's "Open Bids" dashboard page.
+
+    ---
+    **GET Request:**
+        - Retrieves:
+            • User's default shipping address.
+            • Products the user is interested in (`prods_interested_in`).
+            • Products the user is on notice for (`prods_on_notice_for`).
+            • All active bids placed by the user, filtered to show only the highest bid
+              per product (via `Subquery` and `OuterRef` optimization).
+        - Enriches bid data with:
+            • Related product details.
+            • Product specifications.
+            • Current highest bid.
+            • Total number of bids on that product.
+            • Auction duration and retail price.
+        - Adds quick-bid increment options (e.g., +10, +20, +30).
+
+        Returns:
+            Rendered HTML page:
+            `pop_accounts/user_accounts/dashboard_pages/open_bids.html`
+
+    **POST Request:**
+        - Currently a placeholder.
+        - Simply re-renders the same template (can be extended for AJAX interactions later).
+
+    ---
+    **Context Variables:**
+        - `user`: Authenticated user.
+        - `addresses`: User’s default shipping address(es).
+        - `prod_interested_in`: Products user has shown interest in.
+        - `prods_on_notice_for`: Products user is monitoring.
+        - `highest_bid_objects`: Queryset of user's highest active bids.
+        - `open_bids`: Enriched list of product and bid data dictionaries.
+        - `quick_bid_increments`: Predefined bid increment options.
+
+    **Template:**
+        `pop_accounts/user_accounts/dashboard_pages/open_bids.html`
     """
     template_name = 'pop_accounts/user_accounts/dashboard_pages/open_bids.html'
+    user_open_bids_copy = USER_OPEN_BIDS_COPY
     def get(self, request):
         user = request.user
         addresses = user.address.filter(default=True)
@@ -847,7 +910,8 @@ class OpenBidsView(LoginRequiredMixin, View):
         quick_bid_increments = [10, 20, 30]
         context = {'user': user, 'addresses': addresses, 'prod_interested_in': prod_interested_in, 
                    'prods_on_notice_for': prods_on_notice_for, 'highest_bid_objects': highest_bid_objects, 
-                   'quick_bid_increments':quick_bid_increments, 'open_bids':enriched_data
+                   'quick_bid_increments':quick_bid_increments, 'open_bids':enriched_data, 
+                   'user_open_bids_copy': self.user_open_bids_copy
                    }
         return render(request, self.template_name, context)
 
