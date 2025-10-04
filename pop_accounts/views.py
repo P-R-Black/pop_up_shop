@@ -9,7 +9,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPassesTestMixin
 from django.views.generic import DetailView, ListView
-from django.views.generic.edit import UpdateView
+from django.views.generic.edit import UpdateView, FormView
 from .token import account_activation_token
 from pop_up_order.views import user_orders, user_shipments
 from pop_up_order.models import PopUpOrderItem, PopUpCustomerOrder
@@ -63,7 +63,7 @@ from .pop_accounts_copy.admin_copy.admin_copy import (ADMIN_NAVIGATION_COPY, ADM
                                                       ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE)
 from .pop_accounts_copy.user_copy.user_copy import (
     USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
-    USER_ON_NOTICE_COPY, PERSONAL_INFO_COPY)
+    USER_ON_NOTICE_COPY, PERSONAL_INFO_COPY, USER_PASSWORD_RESET_PAGE)
 from django.db.models import Count, Max, Q
 from django.http import Http404
 from social_django.utils import load_strategy, load_backend
@@ -79,25 +79,25 @@ logger  = logging.getLogger('security')
 
 
 # Create your views here.
-class UserLoginView(View):
-    """
-    Accessible from email sent to user after password reset
-    """
-    template_name = 'pop_accounts/login/login.html'
-    form_class = PopUpUserLoginForm
-    success_url = '/dashboard/'  # Change to wherever you want to redirect on success
+# class UserLoginAfterPasswordResetView(FormView):
+#     """
+#     Simple Login Form
+#     """
+#     template_name = 'pop_accounts/login/login.html'
+#     form_class = PopUpUserLoginForm
+#     success_url = '/dashboard/'  # Change to wherever you want to redirect on success
 
-    def form_valid(self, form):
-        email = form.cleaned_data['email']
-        password = form.cleaned_data['password']
+#     def form_valid(self, form):
+#         email = form.cleaned_data['email']
+#         password = form.cleaned_data['password']
 
-        user = authenticate(self.request, username=email, password=password)
-        if user is not None:
-            login(self.request, user)
-            return redirect(self.get_success_url())
-        else:
-            form.add_error(None, 'Invalid email or password')
-            return self.form_invalid(form)
+#         user = authenticate(self.request, username=email, password=password)
+#         if user is not None:
+#             login(self.request, user)
+#             return redirect(self.get_success_url())
+#         else:
+#             form.add_error(None, 'Invalid email or password')
+#             return self.form_invalid(form)
         
 
 
@@ -117,6 +117,7 @@ def user_password_reset_confirm(request, uidb64, token):
     """
     Updates user password after password change
     """
+    user_password_rest_page = USER_PASSWORD_RESET_PAGE
     try:
         uid = urlsafe_base64_decode(uidb64).decode()
         user = PopUpCustomer.objects.get(pk=uid)
@@ -132,7 +133,8 @@ def user_password_reset_confirm(request, uidb64, token):
                 'token': token
                 })
         else:
-            return render(request, 'pop_accounts/login/password_reset_confirm.html', {'validlink': False})
+            return render(request, 'pop_accounts/login/password_reset_confirm.html', 
+                          {'validlink': False, 'user_password_rest_page': user_password_rest_page})
         
     elif request.method == 'POST':
         if user is None:
@@ -769,42 +771,21 @@ class SetDefaultAddressView(LoginRequiredMixin, View):
         return JsonResponse({'success': False, 'error': 'Invalid Request'}, status=400)
 
 
-# @login_required
-# def set_default_address(request, address_id):
-#     """
-#     Allows user to set a default address
-#     """
-#     user = request.user
-#     try:
-#         address = get_object_or_404(PopUpCustomerAddress, id=address_id, customer=request.user, deleted_at__isnull=True)
-#         # Unset all other address
-#         PopUpCustomerAddress.objects.filter(customer=user, default=True).update(default=False)
 
-#         # Set selected address as default
-#         address.default = True
-#         address.save()
-
-#         return JsonResponse({'success': True})
-#     except PopUpCustomerAddress.DoesNotExist:
-#         return JsonResponse({'success': False, 'error': 'Address not found'}, status=404)
-
-
-
-
-@login_required
-def delete_account(request):
-    """
-    Allows user to delete account
-    """
-    if request.method == "POST":
-        print('delete_account called on user', request.user)
+class DeleteAccountView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    def post(self, request, *args, **kwargs):
         user = request.user
         user.soft_delete()
-        logout(request)
+        # logout(request)
         return redirect('pop_accounts:account_deleted')
     
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({'success': False, 'error':'Invalid Request'}, status=400)
 
-@login_required
+
+
+
 def account_deleted(request):
     """
     View to confirm account deletion

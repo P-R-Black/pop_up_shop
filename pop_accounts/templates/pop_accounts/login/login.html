@@ -8,41 +8,34 @@ Login
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="login_section_container">
-        {% comment %}
-        <div class="page_title">
-            <h2>Login</h2>
+<div class="login_section_container">
+    <div class="login_page_login_container">
+        <div class="login_title">
+            <h2>The Pop Up Login</h2>
         </div>
-        {% endcomment %}
-        <div class="login_page_login_container">
-            <div class="login_title">
-                <h2>The Pop Up Login</h2>
-            </div>
-            <div class="login_input_container">
-                <form action="{% url 'pop_accounts:login' %}" method="post" class="">
-                    {% csrf_token %}
-                    {{ form.email }}
-                    {{ form.password }}
+        <div class="login_input_container">
+            <form action="{% url 'pop_accounts:login' %}" method="post" class="">
+                {% csrf_token %}
+                {{ form.email }}
+                {{ form.password }}
 
-                    {% comment %}
-                    <input class="login_input" type="text" name="email" placeholder="name">
-                    <input class="login_input" type="text" name="password" placeholder="password">
-                    {% endcomment %}
+                {% comment %}
+                <input class="login_input" type="text" name="email" placeholder="name">
+                <input class="login_input" type="text" name="password" placeholder="password">
+                {% endcomment %}
 
-                    {% if form.errors %}
-                    <div class="login_alert" role="alert">Error: Incorrect Username or Password.</div>
-                    {% endif %}
+                {% if form.errors %}
+                <div class="login_alert" role="alert">Error: Incorrect Username or Password.</div>
+                {% endif %}
 
-                    <input type="submit" value="Sign In" class="button_medium">
-                </form>
-            </div>
-            <div class="login_user_options_container">
-                <a href="password-reset">Forgot Password</a>
-                <p class="signUpModalBtn">Sign Up</p>
-            </div>
+                <input type="submit" value="Sign In" class="button_medium">
+            </form>
+        </div>
+        <div class="login_user_options_container">
+            <a href="password-reset">Forgot Password</a>
+            <p class="signUpModalBtn">Sign Up</p>
         </div>
     </div>
-</section>
+</div>
 
 {% endblock %}

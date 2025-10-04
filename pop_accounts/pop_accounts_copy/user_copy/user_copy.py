@@ -89,3 +89,13 @@ TRACKING_CATEGORIES =[
 USER_ORDERS_PAGE =  {"page_title": "Orders"}
 
 USER_ORDER_DETAILS_PAGE = [{'page_title': "Order Details", "box_title": "Order No."}]
+
+USER_PASSWORD_RESET_PAGE =  {"page_title": "Password Reset Confirm", 
+                             "logo": "The Pop Up", 
+                             "expired_link_message": "The reset Link is invalid or has expired",
+                             "page_links": [
+                                {"link": "Log In", "class_name": "signUpModalBtn"},
+                                {"link": "Sign Up", "class_name": "signUpModalBtn"}
+                             ]}
+
+

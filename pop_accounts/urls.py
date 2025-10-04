@@ -1,11 +1,11 @@
 from django.urls import path
 from . import views
 from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, 
-                    UserLoginView, UserLogOutView, UserDashboardView, Verify2FACodeView,
+                    UserLogOutView, UserDashboardView, Verify2FACodeView,
                     UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
                     UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
                     UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, 
-                    DeleteAddressView, SetDefaultAddressView)
+                    DeleteAddressView, SetDefaultAddressView, DeleteAccountView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -29,7 +29,7 @@ urlpatterns = [
     path('password-reset/<uidb64>/<token>/', views.user_password_reset_confirm, name='password_reset_confirm'),
 
 
-    path('login/', UserLoginView.as_view(), name='login'),
+    # path('login/', UserLoginAfterPasswordResetView.as_view(), name='login'),
     path('logout/',UserLogOutView.as_view(), name='logout'),
        
     # path('place-bid/', DashboardPlaceBidView.as_view(), name='place_bid'),
@@ -37,7 +37,10 @@ urlpatterns = [
     # User Info
     path('dashboard/', UserDashboardView.as_view(), name='dashboard'),
     path('personal-information/', views.PersonalInfoView.as_view(), name='personal_info'),
-    path('delete-account/', views.delete_account, name='delete_account'),
+    path('delete-account/', DeleteAccountView.as_view(), name='delete_account'),
+
+    # path('delete-account/', views.delete_account, name='delete_account'),
+    
     path('account-deleted/', views.account_deleted, name="account_deleted"),
     path('get-address/<uuid:address_id>/', GetAddressView.as_view(), name='get_address'),
     path('delete-address/<uuid:address_id>/', DeleteAddressView.as_view(), name='delete_address'),

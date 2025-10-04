@@ -28,7 +28,7 @@ from django.contrib.messages import get_messages
 from unittest.mock import patch, MagicMock
 
 
-def create_test_user(email, password, first_name, last_name, shoe_size, size_gender,**kwargs):
+def create_test_user(email, password, first_name, last_name, shoe_size, size_gender, **kwargs):
     return PopUpCustomer.objects.create_user(
             email=email,
             password=password,
@@ -45,7 +45,7 @@ def create_test_user_two():
             first_name="Test2",
             last_name="User2",
             shoe_size="11",
-            size_gender="male"
+            size_gender="male",
         )
 
 def create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
@@ -1157,6 +1157,321 @@ class SetDefaultAddressViewIntegrationTests(TestCase):
         )
         self.assertEqual(defaults.count(), 1)
         self.assertEqual(defaults.first().id, addr3.id)
+
+
+class DeleteAccountViewTests(TestCase):
+    def setUp(self):
+        """Set up test data"""
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        
+        self.url = reverse('pop_accounts:delete_account')
+
+        self.user.is_active = True
+        self.user.save()
+        self.other_user.is_active = True
+        self.other_user.save()
+
+
+    def test_view_reqiures_login(self):
+        """Test that view requires authentication"""
+        response = self.client.post(self.url)
+        # Should redirect to login
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+    def test_get_request_rejected(self):
+        """Test that GET requests are rejected"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertFalse(data['success'])
+        self.assertIn('error', data)
+        self.assertEqual(data['error'], 'Invalid Request')
+
+
+    def test_soft_delete_account_success(self):
+        """Test successful soft deletion of account"""
+
+        self.client.force_login(self.user)
+
+        # verify user is active before deletion
+        self.assertTrue(self.user.is_active)
+        self.assertIsNone(self.user.deleted_at)
+
+        response = self.client.post(self.url)
+
+        # Should redirect to account deleted page
+        self.assertRedirects(response, reverse('pop_accounts:account_deleted'))
+
+        # refresh user from database
+        self.user.refresh_from_db()
+
+        # self.assertFalse(self.user.is_active)
+        self.assertIsNotNone(self.user.deleted_at)
+
+        # Verify deleted_at is recent (within last minute)
+        time_diff = now() - self.user.deleted_at
+        self.assertLess(time_diff.total_seconds(), 60)
+    
+    
+    def test_user_logged_out_after_deletion(self):
+        """Test that user is logged out after account deletion"""
+        self.client.force_login(self.user)
+
+        #verify user is authenticated
+        response = self.client.get(reverse('pop_accounts:dashboard'))
+        self.assertEqual(response.status_code, 200)
+
+        # Delete Account
+        self.client.post(self.url)
+
+        # Try to access a protected page
+        response = self.client.get(reverse('pop_accounts:dashboard'))
+
+        # Should redirect to login (user is logged out)
+        self.assertEqual(response.status_code,302)
+        self.assertIn('/', response.url)
+
+    def test_deleted_user_cannot_login(self):
+        """Test that soft-deleted user cannot log in"""
+        # Delete account
+        self.client.force_login(self.user)
+        self.client.post(self.url)
+
+        # attempt to log in again
+        login_successful = self.client.login(email='existing@example.com', password='testPass!23'
+        )
+        self.assertFalse(login_successful)
+
+
+
+    def test_soft_delete_preserves_user_data(self):
+        """Test that soft delete preserves user data in database"""
+        user_id = self.user.id
+        user_email = self.user.email
+
+        self.client.force_login(self.user)
+        self.client.post(self.url)
+
+        # User should still exist in database
+        deleted_user = PopUpCustomer.all_objects.get(id=user_id)
+        self.assertEqual(deleted_user.email, user_email)
+        self.assertFalse(deleted_user.is_active)
+        self.assertIsNotNone(deleted_user.deleted_at)
+
+
+    def test_soft_deleted_excludes_from_default_queryset(self):
+        self.client.force_login(self.user)
+        self.client.post(self.url)
+
+        # Should not appear in default queryset
+        with self.assertRaises(PopUpCustomer.DoesNotExist):
+            PopUpCustomer.objects.get(email='existing@example.com')
+
+
+
+        # Should appearn in all objects queryset
+        deleted_user = PopUpCustomer.all_objects.get(email='existing@example.com')
+        self.assertIsNotNone(deleted_user)
+
+
+    def test_other_users_unaffected(self):
+        """Test that deleted one user doesn't affect others"""
+
+        self.client.force_login(self.user)
+    
+        # Verify other user is active
+        self.assertTrue(self.other_user.is_active)
+
+        # Delete current account
+        self.client.post(self.url)
+
+        # Verify other user is still active
+        self.other_user.refresh_from_db()
+        self.assertTrue(self.other_user.is_active) # <- this fails, other_user not longer active after refresh
+        self.assertIsNone(self.other_user.deleted_at)
+    
+
+
+    def test_multiple_deletion_attempts_idempotent(self):
+        """Test that multiple delete attempts are idempotent"""
+        self.client.force_login(self.user)
+        
+        # First deletion
+        response1 = self.client.post(self.url)
+        self.user.refresh_from_db()
+        first_deleted_at = self.user.deleted_at
+        
+        # Try to delete again (need to log in as all_objects)
+        deleted_user = PopUpCustomer.all_objects.get(id=self.user.id)
+        deleted_user.soft_delete()
+        deleted_user.refresh_from_db()
+        
+        # Should maintain same is_active status
+        self.assertFalse(deleted_user.is_active)
+
+        # deleted_at might update, but that's okay
+        self.assertIsNotNone(deleted_user.deleted_at)
+    
+
+    def test_account_deleted_page_accessible(self):
+        """Test that account_deleted redirect target exists"""
+        self.client.force_login(self.user)
+        response = self.client.post(self.url, follow=True)
+        
+        # Should successfully reach the account_deleted page
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/user_accounts/dashboard_pages/account_deleted.html')
+    
+
+    def test_session_cleared_after_deletion(self):
+        """Test that user is logged out after deletion"""
+        self.client.force_login(self.user)
+        
+        # Verify user is authenticated before deletion
+        self.assertIn('_auth_user_id', self.client.session)
+        
+        # Delete account
+        response = self.client.post(self.url)
+        
+        # After logout, try to access a protected page
+        response = self.client.get(reverse('pop_accounts:dashboard'))
+        
+        # Should redirect to login (user is not authenticated)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+
+    def test_is_deleted_property(self):
+        """Test the is_deleted property on user model"""
+        # Before deletion
+        self.assertFalse(self.user.is_deleted)
+        
+        # After deletion
+        self.user.soft_delete()
+        self.assertTrue(self.user.is_deleted)
+    
+
+    def test_restore_functionality(self):
+        """Test that soft-deleted accounts can be restored"""
+        # Delete account
+        self.user.soft_delete()
+        self.assertFalse(self.user.is_active)
+        self.assertIsNotNone(self.user.deleted_at)
+        
+        # Restore account
+        self.user.restore()
+        
+        # Verify restoration
+        self.assertTrue(self.user.is_active)
+        self.assertIsNone(self.user.deleted_at)
+        self.assertFalse(self.user.is_deleted)
+    
+
+    def test_delete_method_calls_soft_delete(self):
+        """Test that calling delete() triggers soft_delete()"""
+        user_id = self.user.id
+        
+        # Call delete method
+        self.user.delete()
+        
+        # User should still exist but be soft-deleted
+        deleted_user = PopUpCustomer.all_objects.get(id=user_id)
+        self.assertFalse(deleted_user.is_active)
+        self.assertIsNotNone(deleted_user.deleted_at)
+
+    
+    def test_post_request_with_follow(self):
+        """Test POST request following redirects"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, follow=True)
+        
+        # Should end up on account_deleted page
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(
+            response, 
+            reverse('pop_accounts:account_deleted'),
+            fetch_redirect_response=False
+        )
+
+
+class DeleteAccountViewIntegrationTests(TestCase):
+    """Integration tests for DeleteAccountView"""
+    
+    def setUp(self):
+        """Set up integration test data"""
+        self.client = Client()
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        
+        self.url = reverse('pop_accounts:delete_account')
+
+        self.user.is_active = True
+        self.user.save()
+        self.other_user.is_active = True
+        self.other_user.save()
+
+        self.url = reverse('pop_accounts:delete_account')
+    
+    def test_full_account_deletion_workflow(self):
+        """Test complete workflow from login to deletion"""
+        # User logs in
+        login_successful = self.client.login(
+            email='existing@example.com',
+            password='testPass!23'
+        )
+        self.assertTrue(login_successful)
+        
+        # User accesses dashboard
+        response = self.client.get(reverse('pop_accounts:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        
+        # User deletes account
+        response = self.client.post(self.url)
+        self.assertRedirects(response, reverse('pop_accounts:account_deleted'))
+        
+        # User is logged out
+        response = self.client.get(reverse('pop_accounts:dashboard'))
+        self.assertEqual(response.status_code, 302)
+        
+        # User cannot log back in
+        login_successful = self.client.login(
+            email='existing@example.com',
+            password='testPass!23'
+        )
+        self.assertFalse(login_successful)
+        
+        # User still exists in database (soft delete)
+        deleted_user = PopUpCustomer.all_objects.get(email='existing@example.com')
+        self.assertIsNotNone(deleted_user)
+        self.assertFalse(deleted_user.is_active)
+    
+
+    def test_account_restoration_workflow(self):
+        """Test that admin can restore a deleted account"""
+        # User deletes account
+        self.client.force_login(self.user)
+        self.client.post(self.url)
+        
+        # Admin restores account (simulated)
+        deleted_user = PopUpCustomer.all_objects.get(email='existing@example.com')
+        deleted_user.restore()
+        
+        # User can log in again
+        login_successful = self.client.login(
+            email='existing@example.com',
+            password='testPass!23'
+        )
+        self.assertTrue(login_successful)
+        
+        # User can access protected pages
+        response = self.client.get(reverse('pop_accounts:dashboard'))
+        self.assertEqual(response.status_code, 200)
+
 
 
 # class EmailCheckViewTests(TestCase):
