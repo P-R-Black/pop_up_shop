@@ -17,7 +17,7 @@ def get_customer_bid_history_context(customer_id):
     # Get the latest bid for each product by this customer
     latest_bids_data = (
         PopUpBid.objects
-        .filter(customer_id=customer_id, is_active=True)
+        .filter(customer_id=customer_id, is_active=False)
         .values('product_id')
         .annotate(last_bid_time=Max('timestamp'))
     )
@@ -39,7 +39,7 @@ def get_customer_bid_history_context(customer_id):
         last_bid = PopUpBid.objects.filter(
             customer_id=customer_id, 
             product_id=product_id, 
-            is_active=True
+            is_active=False
         ).select_related('product').order_by('-timestamp').first()
         if last_bid:
             latest_bids.append(last_bid)

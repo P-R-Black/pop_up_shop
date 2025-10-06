@@ -1,0 +1,81 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+    .past_purchases_databox_headers {
+        width: 150%;
+    }
+
+
+    .past_purchases_inner_container {
+        width: 150%;
+    }
+
+
+    .past_purchases_items_container {
+        width: 100%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+    .past_purchases_databox_headers {
+        width: 200%;
+    }
+
+
+    .past_purchases_inner_container {
+        width: 200%;
+    }
+
+
+    .past_purchases_items_container {
+        width: 100%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+
+@media screen and (max-width: 640px) {
+    .past_purchases_databox_headers {
+        width: 200%;
+    }
+
+
+    .past_purchases_inner_container {
+        width: 200%;
+    }
+
+
+    .past_purchases_items_container {
+        width: 100%;
+    }
+
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+
+    .past_purchases_databox_headers {
+        width: 223%;
+    }
+
+
+    .past_purchases_inner_container {
+        width: 150%;
+    }
+
+
+    .past_purchases_items_container {
+        width: 150%;
+    }
+
+}

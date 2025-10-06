@@ -1,5 +1,7 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
+from pop_up_order.utils.utils import user_orders
+from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
 from pop_up_auction.models import (PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
@@ -27,6 +29,8 @@ from django.utils.text import slugify
 from .conftest import create_seed_data
 from django.contrib.messages import get_messages
 from unittest.mock import patch, MagicMock
+from pop_up_auction.utils.utils import get_customer_bid_history_context  # Adjust import path
+from pop_accounts.pop_accounts_copy.user_copy.user_copy import USER_PAST_BIDS_COPY  # Adjust import p
 
 
 def create_test_user(email, password, first_name, last_name, shoe_size, size_gender, **kwargs):
@@ -91,7 +95,7 @@ def create_product_type(name, is_active):
 
 def create_test_product(product_type, category, product_title, secondary_product_title, description, slug, 
                         buy_now_price, current_highest_bid, retail_price, brand, auction_start_date, 
-                        auction_end_date, inventory_status, bid_count, reserve_price, is_active
+                        auction_end_date, inventory_status, bid_count, reserve_price, is_active, *args, **kwargs
                         ):
         
         return PopUpProduct.objects.create(
@@ -112,6 +116,14 @@ def create_test_product(product_type, category, product_title, secondary_product
             reserve_price=reserve_price, 
             is_active=is_active
         )
+
+
+def create_test_order(user, full_name, email, address1, postal_code, city, state, phone, total_paid, order_key):
+    return PopUpCustomerOrder.objects.create(
+        user=user, full_name=full_name, email=email, address1=address1, 
+        postal_code=postal_code, city=city, state=state, phone=phone, 
+        total_paid=total_paid, order_key=order_key
+    )
 
 class TestPopUpUserDashboardView(TestCase):
     def setUp(self):
@@ -1976,6 +1988,648 @@ class OpenBidsViewIntegrationTests(TestCase):
         self.assertEqual(open_bids[0]['highest_user_bid'].amount, Decimal('80.00'))
 
 
+class PastBidsViewTest(TestCase):
+    """Test Suite for PastBidsView"""
+
+    def setUp(self):
+        self.client = Client()
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])        
+
+        test_brand = create_brand('Jordan')
+        test_category = create_category('Jordan 3', is_active=True)
+        test_product_type = create_product_type('shoe', is_active=True)
+
+        test_category_two = create_category('Jordan 4', is_active=True)
+        test_category_three = create_category('Jordan 11', is_active=True)
+
+        self.test_prod_one = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Past Bid Product 1", 
+            secondary_product_title="Past Bid 1", description="Brand new sneakers", 
+            slug="past-bid-product-1", buy_now_price="250.00", current_highest_bid="0", 
+            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="sold_out", bid_count=0, reserve_price="100.00", is_active=False)
+
+
+        self.test_prod_two = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Past Bid Product 2", 
+            secondary_product_title="Past Bid 2", description="Brand new sneakers", 
+            slug="past-bid-product-2", buy_now_price="300.00", current_highest_bid="0", 
+            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="sold_out", bid_count=0, reserve_price="150.00", is_active=False)
+
+        self.test_prod_three = create_test_product(
+            product_type=test_product_type, category=test_category_three, product_title="Jordan 11 Retro", 
+            secondary_product_title="Concord", description="Brand new Jordan 11", 
+            slug="jordan-11-concord", buy_now_price="350.00", current_highest_bid="0", 
+            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active="False")
+
+
+        # Create past bids (inactive)
+        self.bid1 = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_one,
+            amount=Decimal('110.00'),
+            is_active=False
+        )
+
+        self.bid2 = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_two,
+            amount=Decimal('160.00'),
+            is_active=False
+        )
+
+        
+        self.url = reverse('pop_accounts:past_bids')
+        
+
+    def test_view_requires_login(self):
+        """Test that view requires authentication"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+        
+    
+    def test_get_request_authenticated(self):
+        """Test GET request for authenticated user"""
+        self.client.force_login(self.user)
+        
+        with patch('pop_up_auction.utils.utils.get_customer_bid_history_context') as mock_func:
+            mock_func.return_value = {
+                'bid_history': [],
+                'statistics': {}
+            }
+            
+            response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/user_accounts/dashboard_pages/past_bids.html')
+
+
+    def test_context_contains_required_data(self):
+        """Test that context contains all required variables"""
+        # Create real bid data
+        bid = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_one,
+            amount=Decimal('100.00'),
+            is_active=False
+        )
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        # Verify context structure
+        self.assertIn('bid_history', response.context)
+        self.assertIn('statistics', response.context)
+        self.assertIn('user_past_bids_copy', response.context)
+        
+        # Verify data types
+        self.assertIsInstance(response.context['bid_history'], list)
+        self.assertIsInstance(response.context['statistics'], dict)
+        
+        # Verify bid history has data
+        self.assertGreater(len(response.context['bid_history']), 0)
+    
+
+    def test_get_customer_bid_history_context_called_with_user_id(self):
+        """Test that utility function is called with correct user ID"""
+        self.client.force_login(self.user)
+        
+        with patch('pop_accounts.views.get_customer_bid_history_context') as mock_func:
+            mock_func.return_value = {
+                'bid_history': [],
+                'statistics': {}
+            }
+            
+            response = self.client.get(self.url)
+            
+            # Verify function was called with user's ID
+            mock_func.assert_called_once_with(self.user.id)
+    
+
+    def test_user_past_bids_copy_in_context(self):
+        """Test that static copy is included in context"""
+        self.client.force_login(self.user)
+        
+        with patch('pop_accounts.views.get_customer_bid_history_context') as mock_func:
+            mock_func.return_value = {
+                'bid_history': [],
+                'statistics': {}
+            }
+            
+            response = self.client.get(self.url)
+        
+        self.assertIn('user_past_bids_copy', response.context)
+        self.assertEqual(response.context['user_past_bids_copy'], USER_PAST_BIDS_COPY)
+    
+
+    def test_empty_bid_history(self):
+        """Test view with user who has no past bids"""
+        # Create user with no bids
+        no_bid_user = PopUpCustomer.objects.create_user(
+            email='nobids@example.com',
+            password='testpass123'
+        )
+        no_bid_user.is_active = True
+        no_bid_user.save(update_fields=['is_active'])
+        
+        self.client.force_login(no_bid_user)
+        
+        with patch('pop_accounts.views.get_customer_bid_history_context') as mock_func:
+            mock_func.return_value = {
+                'bid_history': [],
+                'statistics': {
+                    'total_bids': 0,
+                    'won_bids': 0,
+                    'lost_bids': 0
+                }
+            }
+            
+            response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['bid_history']), 0)
+        self.assertEqual(response.context['statistics']['total_bids'], 0)
+    
+
+    def test_multiple_past_bids(self):
+        """Test view with user who has multiple past bids"""
+        self.client.force_login(self.user)
+        
+        mock_bid_history = [
+            {
+                'id': 1,
+                'product': self.test_prod_one,  # Use actual product object
+                'product_name': 'Product 1',
+                'product_slug': 'product-1',
+                'bid_amount': Decimal('100.00'),
+                'bid_time': timezone.now(),
+                'is_winning': True,
+                'status': 'Winning',
+                'status_class': 'success',
+                'has_auto_bid': False,
+                'max_auto_bid': None,
+                'bid_increment': Decimal('5.00'),
+                'is_auction_active': False,
+                'auction_status': 'closed',
+                'sale_outcome': 'sold',
+                'is_finalized': True,
+                'current_highest_bid': Decimal('100.00'),
+                'time_since_bid': timezone.timedelta(days=1),
+                'specifications': {},
+                'mptt_specs': {},
+                'all_specs': {}
+            },
+            {
+            'id': 2,
+            'product': self.test_prod_two,  # Use actual product object
+            'product_name': 'Product 1',
+            'product_slug': 'product-1',
+            'bid_amount': Decimal('100.00'),
+            'bid_time': timezone.now(),
+            'is_winning': True,
+            'status': 'Winning',
+            'status_class': 'success',
+            'has_auto_bid': False,
+            'max_auto_bid': None,
+            'bid_increment': Decimal('5.00'),
+            'is_auction_active': False,
+            'auction_status': 'closed',
+            'sale_outcome': 'sold',
+            'is_finalized': True,
+            'current_highest_bid': Decimal('150.00'),
+            'time_since_bid': timezone.timedelta(days=1),
+            'specifications': {},
+            'mptt_specs': {},
+            'all_specs': {}
+            },
+            {
+            'id': 3,
+            'product': self.test_prod_three,  # Use actual product object
+            'product_name': 'Product 1',
+            'product_slug': 'product-1',
+            'bid_amount': Decimal('100.00'),
+            'bid_time': timezone.now(),
+            'is_winning': True,
+            'status': 'Winning',
+            'status_class': 'success',
+            'has_auto_bid': False,
+            'max_auto_bid': None,
+            'bid_increment': Decimal('5.00'),
+            'is_auction_active': False,
+            'auction_status': 'closed',
+            'sale_outcome': 'sold',
+            'is_finalized': True,
+            'current_highest_bid': Decimal('200.00'),
+            'time_since_bid': timezone.timedelta(days=1),
+            'specifications': {},
+            'mptt_specs': {},
+            'all_specs': {}
+            },
+        ]
+        
+        with patch('pop_accounts.views.get_customer_bid_history_context') as mock_func:
+            mock_func.return_value = {
+                'bid_history': mock_bid_history,
+                'statistics': {'total_bids': 3}
+            }
+            
+            response = self.client.get(self.url)
+        
+        self.assertEqual(len(response.context['bid_history']), 3)
+    
+
+    def test_statistics_structure(self):
+        """Test that statistics have expected structure"""
+        self.client.force_login(self.user)
+        
+        expected_statistics = {
+            'total_bids': 10,
+            'won_bids': 3,
+            'lost_bids': 7,
+            'average_bid_amount': Decimal('125.50'),
+            'total_spent': Decimal('450.00')
+        }
+        
+
+        with patch('pop_accounts.views.get_customer_bid_history_context') as mock_func:
+            mock_func.return_value = {
+                'bid_history': [],
+                'statistics': expected_statistics
+            }
+            
+            response = self.client.get(self.url)
+        
+        statistics = response.context['statistics']
+        self.assertEqual(statistics['total_bids'], 10)
+        self.assertEqual(statistics['won_bids'], 3)
+        self.assertEqual(statistics['lost_bids'], 7)
+
+    
+    def test_user_isolation(self):
+        """Test that users only see their own bid history"""
+        self.client.force_login(self.user)
+        
+        # Mock should only be called with self.user.id
+        with patch('pop_accounts.views.get_customer_bid_history_context') as mock_func:
+            mock_func.return_value = {
+                'bid_history': [],
+                'statistics': {}
+            }
+            
+            response = self.client.get(self.url)
+            
+            # Verify it was called with the correct user ID
+            mock_func.assert_called_once_with(self.user.id)
+            self.assertNotEqual(mock_func.call_args[0][0], self.other_user.id)
+
+    
+    def test_view_handles_exception_from_utility_function(self):
+        """Test view handles exceptions from get_customer_bid_history_context"""
+        self.client.force_login(self.user)
+        
+        with patch('pop_accounts.views.get_customer_bid_history_context') as mock_func:
+            mock_func.side_effect = Exception("Database error")
+            
+            # View should handle the exception gracefully
+            # Depending on your error handling, adjust the assertion
+            with self.assertRaises(Exception):
+                response = self.client.get(self.url)
+
+    
+    def test_only_post_method_not_allowed(self):
+        """Test that POST requests are not handled"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, {})
+        
+        # Should return 405 Method Not Allowed
+        self.assertEqual(response.status_code, 405)
+
+
+
+class PastBidsViewIntegrationTests(TestCase):
+    """Integration tests for PastBidsView with real utility function"""
+    
+    def setUp(self):
+        self.client = Client()
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active']) 
+
+        test_brand = create_brand('Jordan')
+        test_category = create_category('Jordan 3', is_active=True)
+        test_product_type = create_product_type('shoe', is_active=True)
+
+        test_category_two = create_category('Jordan 4', is_active=True)
+        test_category_three = create_category('Jordan 11', is_active=True)
+
+        self.test_prod_one = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Integration Product 1'", 
+            secondary_product_title="Past Bid 1", description="Brand new sneakers", 
+            slug="integration-product-1'", buy_now_price="250.00", current_highest_bid="0", 
+            retail_price="100.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="sold_out", bid_count=0, reserve_price="75.00", is_active=False)
+
+
+        self.test_prod_two = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Integration Product 2", 
+            secondary_product_title="Past Bid 2", description="Brand new sneakers", 
+            slug="integration-product-2", buy_now_price="300.00", current_highest_bid="0", 
+            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="sold_out", bid_count=0, reserve_price="100.00", is_active=False)
+
+        
+        self.url = reverse('pop_accounts:past_bids')
+    
+    def test_real_bid_history_retrieval(self):
+        """Test with real get_customer_bid_history_context function"""
+        # Create past bids in order (lowest to highest per product)
+        bid1 = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_one,
+            amount=Decimal('100.00'),
+            is_active=True
+        )
+        bid1.is_active = False
+        bid1.save(update_fields=['is_active'])
+        
+        bid2 = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_two,
+            amount=Decimal('110.00'),
+            is_active=True
+        )
+        bid2.is_active = False
+        bid2.save(update_fields=['is_active'])
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify bid history is populated
+        bid_history = response.context['bid_history']
+        self.assertIsNotNone(bid_history)
+        
+        # Verify statistics are populated
+        statistics = response.context['statistics']
+        self.assertIsNotNone(statistics)
+    
+    def test_complete_bidding_lifecycle(self):
+        """Test complete lifecycle: active bid -> closed bid -> past bids view"""
+        # Create active bid
+        bid = PopUpBid.objects.create(
+            customer=self.user,
+            product=self.test_prod_one,
+            amount=Decimal('85.00'),
+            is_active=True
+        )
+        
+        # Close the bid (simulate auction ending)
+        bid.is_active = False
+        bid.save(update_fields=['is_active'])
+        
+        # View past bids
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Bid should appear in history
+        bid_history = response.context['bid_history']
+
+        # Structure depends on your get_customer_bid_history_context implementation
+        self.assertIsNotNone(bid_history)
+
+
+class PastPurchaseViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        
+
+        test_brand = create_brand('Jordan')
+        test_category = create_category('Jordan 3', is_active=True)
+        test_product_type = create_product_type('shoe', is_active=True)
+
+        test_category_two = create_category('Jordan 4', is_active=True)
+        test_category_three = create_category('Jordan 11', is_active=True)
+
+        self.test_prod_one = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Integration Product 1'", 
+            secondary_product_title="Past Bid 1", description="Brand new sneakers", 
+            slug="integration-product-1'", buy_now_price="250.00", current_highest_bid="0", 
+            retail_price="100.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="in_inventory", bid_count=0, reserve_price="75.00", is_active=True)
+        
+
+        self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
+                                           address_line="111 First", address_line2="", 
+                                           apartment_suite_number="", town_city="City1", 
+                                           state="California", postcode="11111", 
+                                           delivery_instructions="Leave at the door", default=True, 
+                                           is_default_shipping=False, is_default_billing=False)
+
+        # def create_test_order(user, full_name, email, address1, postal_code, city, state, phone, total_paid, order_key):
+
+        self.order = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            email=self.user.email,
+            billing_status=True,
+            address1="111 Test St",
+            city="New York",
+            state="NY",
+            postal_code="10001",
+            total_paid="100.00"
+        )
+
+       
+
+        # Add items to the order if your model supports it
+        self.order_item = PopUpOrderItem.objects.create(
+            order=self.order,
+            product=self.test_prod_one,
+            product_title="Test Product",
+            quantity=1,
+            price=100.00
+        )
+
+        self.url = reverse('pop_accounts:past_purchases')
+
+
+    def test_view_requires_login(self):
+        """Test that view requires authentication"""
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+
+
+    def test_authenticated_user_can_view_past_purchases(self):
+        """Authenticated users should see their past purchase page."""
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, "pop_accounts/user_accounts/dashboard_pages/past_purchases.html"
+        )
+        self.assertIn("orders", response.context)
+        self.assertIn("user_past_purchase_copy", response.context)
+        self.assertContains(response, "Past Purchases")
+    
+
+    def test_orders_are_filtered_by_logged_in_user(self):
+        """Ensure only orders belonging to the logged-in user are displayed."""
+
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        orders = response.context["orders"]
+        self.assertEqual(orders.count(), 1)
+        self.assertEqual(orders.first().user, self.user)
+
+    
+    def test_unauthenticated_user_redirected_to_login(self):
+        """Unauthenticated users should be redirected to login page."""
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/", response.url)
+    
+
+    def test_context_contains_user_past_purchase_copy(self):
+        """Check that the static page copy is correctly included in context."""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertIn("user_past_purchase_copy", response.context)
+        self.assertIsInstance(response.context["user_past_purchase_copy"], dict)
+
+
+class TestUserOrdersUtility(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])        
+
+        test_brand = create_brand('Jordan')
+        test_category = create_category('Jordan 3', is_active=True)
+        test_product_type = create_product_type('shoe', is_active=True)
+
+        test_category_two = create_category('Jordan 4', is_active=True)
+        test_category_three = create_category('Jordan 11', is_active=True)
+
+        self.test_prod_one = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Past Bid Product 1", 
+            secondary_product_title="Past Bid 1", description="Brand new sneakers", 
+            slug="past-bid-product-1", buy_now_price="250.00", current_highest_bid="0", 
+            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="sold_out", bid_count=0, reserve_price="100.00", is_active=False)
+
+
+        self.test_prod_two = create_test_product(
+            product_type=test_product_type, category=test_category_two, product_title="Past Bid Product 2", 
+            secondary_product_title="Past Bid 2", description="Brand new sneakers", 
+            slug="past-bid-product-2", buy_now_price="300.00", current_highest_bid="0", 
+            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="sold_out", bid_count=0, reserve_price="150.00", is_active=False)
+
+        self.test_prod_three = create_test_product(
+            product_type=test_product_type, category=test_category_three, product_title="Jordan 11 Retro", 
+            secondary_product_title="Concord", description="Brand new Jordan 11", 
+            slug="jordan-11-concord", buy_now_price="350.00", current_highest_bid="0", 
+            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active="False")
+
+        # Orders for the main user
+        self.completed_order = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            email=self.user.email,
+            billing_status=True,
+            address1="111 Test St",
+            city="New York",
+            state="NY",
+            postal_code="10001",
+            total_paid="100.00"
+        )
+
+
+        self.incompleted_order = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            email=self.user.email,
+            billing_status=False,
+            address1="111 Test St",
+            city="Chicago",
+            state="IL",
+            postal_code="60601",
+            total_paid="110.00"
+        )
+
+        self.other_user_order = PopUpCustomerOrder.objects.create(
+            user=self.other_user,
+            email=self.other_user.email,
+            billing_status=True,
+            address1="111 Test St",
+            city="Chicago",
+            state="IL",
+            postal_code="60601",
+            total_paid="110.00"
+        )
+
+
+        # Add items to the order if your model supports it
+        self.order_item = PopUpOrderItem.objects.create(
+            order=self.completed_order,
+            product=self.test_prod_one,
+            product_title="Test Product",
+            quantity=1,
+            price=100.00
+        )
+    
+    def test_returns_only_completed_orders_for_user(self):
+        """Should only return orders with billing_status=True for the user."""
+        self.client.force_login(self.user)
+        orders = user_orders(self.user.id)
+        self.assertEqual(orders.count(), 1)
+        self.assertEqual(orders.first(), self.completed_order)
+
+
+    def test_does_not_return_other_users_orders(self):
+        """Ensure the utility does not leak other users' data."""
+        self.client.force_login(self.user)
+        orders = user_orders(self.user.id)
+        user_ids = [o.user_id for o in orders]
+        self.assertNotIn(self.other_user.id, user_ids)
+    
+
+    def test_prefetch_related_items_are_accessible(self):
+        """The returned orders should have pre-fetched items for performance."""
+        self.client.force_login(self.user)
+        orders = user_orders(self.user.id)
+        order = orders.first()
+        with self.assertNumQueries(0):  # Ensures prefetch_related works
+            _ = list(order.items.all())
+
 
 # class EmailCheckViewTests(TestCase):
 #     def setUp(self):
@@ -2978,32 +3632,32 @@ class OpenBidsViewIntegrationTests(TestCase):
     # """
 
 
-    """
-    # Debug output
-    # print(f"Response status: {response.status_code}")
-    # print(f"Form data sent: {form_data}")
+"""
+# Debug output
+# print(f"Response status: {response.status_code}")
+# print(f"Form data sent: {form_data}")
 
-    # # Check if it's being detected as address form
-    # view = PersonalInfoView()
-    # view.request = response.wsgi_request
-    # print(f"Detected as address form: {view._is_address_form_submission()}")
+# # Check if it's being detected as address form
+# view = PersonalInfoView()
+# view.request = response.wsgi_request
+# print(f"Detected as address form: {view._is_address_form_submission()}")
 
-    # if response.status_code == 200:
-    #     print("Form didn't redirect - checking for validation errors")
-    #     if hasattr(response, 'context') and 'address_form' in response.context:
-    #         address_form = response.context['address_form']
-    #         if hasattr(address_form, 'errors'):
-    #             print(f"Address form errors: {address_form.errors}")
-    
-    # print(f"Response content preview: {response.content.decode()[:500]}")
+# if response.status_code == 200:
+#     print("Form didn't redirect - checking for validation errors")
+#     if hasattr(response, 'context') and 'address_form' in response.context:
+#         address_form = response.context['address_form']
+#         if hasattr(address_form, 'errors'):
+#             print(f"Address form errors: {address_form.errors}")
 
-    # Debug output
-    # print(f"Response status: {response.status_code}")
-    # print(f"Is personal form: {response.wsgi_request.POST}")
-    # print(f"response.content: {response.content.decode()[:500]}")
+# print(f"Response content preview: {response.content.decode()[:500]}")
 
-    # if hasattr(response, 'context') and response.context:
-    #     form = response.context.get('form')
-    #     if form and hasattr(form, 'errors'):
-    #         print(f"Form errors: {form.errors}")
-    """
+# Debug output
+# print(f"Response status: {response.status_code}")
+# print(f"Is personal form: {response.wsgi_request.POST}")
+# print(f"response.content: {response.content.decode()[:500]}")
+
+# if hasattr(response, 'context') and response.context:
+#     form = response.context.get('form')
+#     if form and hasattr(form, 'errors'):
+#         print(f"Form errors: {form.errors}")
+"""

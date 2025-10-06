@@ -87,6 +87,28 @@ USER_OPEN_BIDS_COPY = {
 }
 
 
+USER_PAST_BIDS_COPY = {
+    "page_title": "Past Bids",
+    "past_bids_headers": [
+        {"headers": "Date"},
+        {"headers": "Item"},
+        {"headers": "Size"},
+        {"headers": "Last Bid"},
+        {"headers": "Bid Status"},
+    ],
+}
+
+
+USER_PAST_PURCHASES_COPY = {
+    "page_title": "Past Purchases",
+    "past_purchases_headers": [
+        {"headers": "Item"},
+        {"headers": "Date Purchased"},
+        {"headers": "Order No."},
+    ],
+}
+
+
 
 USER_SHIPPING_TRACKING = {"page_title": "Shipping and Tracking"}
 TRACKING_CATEGORIES =[

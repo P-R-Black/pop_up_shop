@@ -1,11 +1,12 @@
 from django.urls import path
 from . import views
-from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, 
+from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView, PastPurchaseView,
                     UserLogOutView, UserDashboardView, Verify2FACodeView, AccountDeletedView,
-                    UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView,
+                    UserInterestedInView, MarkProductInterestedView, MarkProductOnNoticeView, 
                     UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
-                    UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, 
-                    DeleteAddressView, SetDefaultAddressView, DeleteAccountView, UserPasswordResetConfirmView)
+                    UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, PastBidView,
+                    DeleteAddressView, SetDefaultAddressView, DeleteAccountView, UserPasswordResetConfirmView,
+                    ShippingTrackingView, UserOrderPager)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -35,23 +36,20 @@ urlpatterns = [
     path('dashboard/', UserDashboardView.as_view(), name='dashboard'),
     path('personal-information/', views.PersonalInfoView.as_view(), name='personal_info'),
     path('delete-account/', DeleteAccountView.as_view(), name='delete_account'),
-
-    path('account-deleted/', AccountDeletedView.as_view(), name='account_deleted'),
-    # path('account-deleted/', views.account_deleted, name="account_deleted"),
-    
+    path('account-deleted/', AccountDeletedView.as_view(), name='account_deleted'),    
     path('get-address/<uuid:address_id>/', GetAddressView.as_view(), name='get_address'),
     path('delete-address/<uuid:address_id>/', DeleteAddressView.as_view(), name='delete_address'),
     path('set-default-address/<uuid:address_id>/', SetDefaultAddressView.as_view(), name='set_default_address'),
-    # path('set-default-address/<uuid:address_id>/', views.set_default_address, name='set_default_address'),
     path('interested-in/', UserInterestedInView.as_view(), name='interested_in'),
     path('mark-interested/', MarkProductInterestedView.as_view(), name='mark_interested'),
     path('on-notice/', UserOnNoticeView.as_view(), name='on_notice'),
     path('mark-on-notice/', MarkProductOnNoticeView.as_view(), name='mark_on_notice'),
     path('open-bids/', OpenBidsView.as_view(), name="open_bids"),
-    path('bids-history/', views.past_bids, name='past_bids'),
-    path('purchase-history/', views.past_purchases, name='past_purchases'),
-    path('shipping-tracking/', views.shipping_tracking, name='shipping_tracking'),
-    path('customer-order/<uuid:order_id>/', views.user_orders_page, name='customer_order'),
+    path('bids-history/', PastBidView.as_view(), name='past_bids'),
+    path('purchase-history/', PastPurchaseView.as_view(), name='past_purchases'),
+    path('shipping-tracking/', ShippingTrackingView.as_view(), name='shipping_tracking'),
+    path('customer-order/<uuid:order_id>/', UserOrderPager.as_view(), name='customer_order'),
+    # path('customer-order/<uuid:order_id>/', views.user_orders_page, name='customer_order'),
 
     # admin dashboard
     path('dashboard-admin/',views.dashboard_admin, name='dashboard_admin'),
@@ -63,12 +61,22 @@ urlpatterns = [
     path('total-open-bids-admin/', views.total_open_bids, name='total_open_bids'),
     path('total-accounts-admin/', views.total_accounts, name='total_accounts'),
     path('account-sizes-admin/', views.account_sizes, name='account_sizes'),
+    path('pending-okay-to-ship/', views.pending_okay_to_ship, name='pending_okay_to_ship'),
+    path('get-pending-order-shipping-detail/<uuid:order_no>/', views.get_pending_order_shipping_detail, name='get_order_details'),
 
-    # Adding products
+    path('update-shipping-admin/', views.update_shipping, name='update_shipping'),
+    path('update-shipping-admin/<int:shipment_id>/', views.update_shipping_post, name='update_shipping_post'),
+    path('get-shipping-detail/<int:shipment_id>/', views.get_order_shipping_detail, name='get_shipping_detail'),
+
+    path('shipments-admin/', views.view_shipments, name='shipments'),
+    path('dashboard-en-route/', EnRouteView.as_view(), name='enroute'),
+    path('dashboard-en-route/<slug:slug>/', EnRouteView.as_view(), name='enroute'),
+
+    # admin dashboard | Adding products
     path('add-products-admin/', AddProductsView.as_view(), name='add_products'),
     path('add-products-admin/<int:product_type_id>/', views.add_products_get, name='add_products_get'),
 
-    # Updating products
+    # admin dashboard | Updating products
     path('update-product-admin/', UpdateProductView.as_view(), name='update_product'),
     path('update-product-admin/<int:product_id>/', UpdateProductView.as_view(), name='update_product_detail'),
     # path('get-product-detail/<int:product_id>/<int:product_type_id>/', ProductDetailView.as_view(), name='get_product_detail'),
@@ -79,15 +87,6 @@ urlpatterns = [
     # path('update-product-admin/<int:product_id>/', views.update_product_post, name='update_product_post'),
     # path('get-product-detail/<int:product_id>/', views.get_order_product_detail, name='get_product_detail'),
 
-    path('pending-okay-to-ship/', views.pending_okay_to_ship, name='pending_okay_to_ship'),
-    path('get-pending-order-shipping-detail/<uuid:order_no>/', views.get_pending_order_shipping_detail, name='get_order_details'),
-
-    path('update-shipping-admin/', views.update_shipping, name='update_shipping'),
-    path('update-shipping-admin/<int:shipment_id>/', views.update_shipping_post, name='update_shipping_post'),
-    path('get-shipping-detail/<int:shipment_id>/', views.get_order_shipping_detail, name='get_shipping_detail'),
-
-    path('shipments-admin/', views.view_shipments, name='shipments'),
-    path('dashboard-en-route/', EnRouteView.as_view(), name='enroute'),
-    path('dashboard-en-route/<slug:slug>/', EnRouteView.as_view(), name='enroute')
+    
 
 ]

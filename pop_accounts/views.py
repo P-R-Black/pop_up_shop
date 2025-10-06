@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPass
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import UpdateView, FormView
 from .token import account_activation_token
-from pop_up_order.views import user_orders, user_shipments
+from pop_up_order.utils.utils import user_orders, user_shipments 
 from pop_up_order.models import PopUpOrderItem, PopUpCustomerOrder
 from django.db.models import Prefetch
 from django.http import JsonResponse, HttpResponse
@@ -63,7 +63,8 @@ from .pop_accounts_copy.admin_copy.admin_copy import (ADMIN_NAVIGATION_COPY, ADM
                                                       ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE)
 from .pop_accounts_copy.user_copy.user_copy import (
     USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
-    USER_ON_NOTICE_COPY, PERSONAL_INFO_COPY, USER_PASSWORD_RESET_PAGE, USER_OPEN_BIDS_COPY)
+    USER_ON_NOTICE_COPY, PERSONAL_INFO_COPY, USER_PASSWORD_RESET_PAGE, USER_OPEN_BIDS_COPY, USER_PAST_BIDS_COPY,
+    USER_PAST_PURCHASES_COPY)
 from django.db.models import Count, Max, Q
 from django.http import Http404
 from social_django.utils import load_strategy, load_backend
@@ -249,10 +250,10 @@ class UserDashboardView(LoginRequiredMixin, View):
         )
 
         # user orders
-        orders = user_orders(request)
+        orders = user_orders(request.user.id)
         
         # user shipments
-        shipments = user_shipments(request)
+        shipments = user_shipments(request.user.id)
 
         # past bids
         bid_data = get_customer_bid_history_context(user.id)
@@ -919,43 +920,192 @@ class OpenBidsView(LoginRequiredMixin, View):
         return render(request, self.template_name)
     
 
-@login_required
-def past_bids(request):
+class PastBidView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested PopUpCustomer
+    # ✅ Mobile / Tablet Media Query Completed
     """
-    Shows user past bids
-    """
-    user = request.user
-    user_id = user.id
-    bid_data = get_customer_bid_history_context(user_id)
-    
-    context = {
-        'bid_history': bid_data['bid_history'],
-        'statistics': bid_data['statistics']}
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_bids.html', context)
+    Displays the user's past bidding activity and summary statistics.
 
-@login_required
-def past_purchases(request):
-    """
-    Shows Users past purchases
-    """
-    orders = user_orders(request)
-    context = {'orders': orders}
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/past_purchases.html', context)
+    This view retrieves all closed or inactive bids associated with the
+    authenticated user and presents them alongside aggregated statistics
+    (e.g., total bids placed, won/lost counts, or average bid amounts)
+    in the user's "Past Bids" dashboard page.
 
-@login_required
-def shipping_tracking(request):
+    ---
+    **GET Request:**
+        - Fetches the user’s complete bid history via
+          `get_customer_bid_history_context(user_id)`, which returns:
+            • `bid_history`: A list or queryset of the user’s previous bids.
+            • `statistics`: Aggregated metrics summarizing the user’s bidding behavior.
+        - Populates static page copy from `USER_PAST_BIDS_COPY` for display text.
+
+        Returns:
+            Rendered HTML page:
+            `pop_accounts/user_accounts/dashboard_pages/past_bids.html`
+
+    ---
+    **Context Variables:**
+        - `bid_history`: List or queryset of the user’s previous bids.
+        - `statistics`: Summary data of the user’s past bidding activity.
+        - `user_past_bids_copy`: Static text or copy for the past bids page.
+
+    **Template:**
+        `pop_accounts/user_accounts/dashboard_pages/past_bids.html`
     """
-    View that allows user to track orders
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/past_bids.html'
+    user_past_bids_copy = USER_PAST_BIDS_COPY
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        user_id = user.id
+        bid_data = get_customer_bid_history_context(user_id)
+        context= {'bid_history': bid_data['bid_history'], 'statistics': bid_data['statistics'], 
+                  'user_past_bids_copy':self.user_past_bids_copy}
+        
+        return render(request, self.template_name, context)
+
+
+
+class PastPurchaseView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested PopUpCustomer
+    # ✅ Mobile / Tablet Media Query Completed
+
     """
+    Displays the user's past purchase history in their account dashboard.
+
+    This view retrieves all completed orders associated with the authenticated user
+    and renders them on the "Past Purchases" dashboard page. It allows users to
+    review items they’ve previously bought, including order details such as
+    products, dates, and totals.
+
+    ---
+    **GET Request:**
+        - Fetches the user’s order history via the `user_orders(request)` helper function.
+        - Loads static page copy from `USER_PAST_PURCHASES_COPY` for display content.
+
+        Returns:
+            Rendered HTML page:
+            `pop_accounts/user_accounts/dashboard_pages/past_purchases.html`
+
+    ---
+    **Context Variables:**
+        - `orders`: A list or queryset of the user’s past completed orders.
+        - `user_past_purchase_copy`: Static copy or metadata used for page content.
+
+    **Template:**
+        `pop_accounts/user_accounts/dashboard_pages/past_purchases.html`
+    """
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/past_purchases.html'
+    user_past_purchase_copy = USER_PAST_PURCHASES_COPY
+
+    def get(self, request, *args, **kwargs):
+        orders = user_orders(request.user.id)
+        context = {'orders': orders, 'user_past_purchase_copy': self.user_past_purchase_copy}
+        return render(request, self.template_name, context)
+
+
+
+class ShippingTrackingView(LoginRequiredMixin, View):
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/shipping_tracking.html'
     user_shipping_copy = USER_SHIPPING_TRACKING
     tracking_categories = TRACKING_CATEGORIES
-    shipments = user_shipments(request)
+    def get(self, request, *args, **kwargs):
+        shipments = user_shipments(request.user.id)
 
-    context = {'shipments': shipments, 'user_shipping_copy': user_shipping_copy, 
-               'tracking_categories': tracking_categories}
+        context = {'shipments': shipments, 'user_shipping_copy': self.user_shipping_copy, 
+                    'tracking_categories': self.tracking_categories}
 
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/shipping_tracking.html', context)
+        return render(request, self.template_name, context)
 
+
+class UserOrderPager(LoginRequiredMixin, View):
+    """
+    Displays the details of a specific user order, including all products,
+    their specifications, and related shipment/billing info.
+
+    ---
+    **GET Request:**
+        - Retrieves the order by `order_id` for the logged-in user.
+        - Prefetches related product data and specifications for efficiency.
+        - Combines product and order item details for rich display.
+
+        Returns:
+            Rendered HTML page:
+            `pop_accounts/user_accounts/dashboard_pages/user_orders.html`
+
+    ---
+    **Context Variables:**
+        - `order`: The selected `PopUpCustomerOrder` instance.
+        - `items`: List of order items, each enriched with:
+            - product details and specifications
+            - model year, product sex, featured image
+            - item total
+        - `total_cost`: The order’s total cost.
+        - `shipment`: Shipment details, if available.
+        - `user_order_details_page`: Static copy for page content.
+
+    ---
+    **Template:**
+        `pop_accounts/user_accounts/dashboard_pages/user_orders.html`
+    """
+
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/user_orders.html'
+    user_order_details_page = USER_ORDER_DETAILS_PAGE
+    def get(self, request, order_id, *args, **wargs):
+        user = request.user
+    
+        order = get_object_or_404(
+            PopUpCustomerOrder.objects.select_related(
+                'shipping_address',
+                'billing_address',
+                'coupon',
+                'shipment'
+            ).prefetch_related(
+                Prefetch(
+                    'items__product',
+                    queryset=PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set__specification'),
+                )
+            ),
+            id=order_id,
+            user=user
+        )
+        
+        # Get products with specs
+        products_in_order = [item.product for item in order.items.all()]
+        products_with_specs = add_specs_to_products(products_in_order)
+    
+        
+        # Combine order items with product details
+        items_with_details = []
+        for order_item in order.items.all():
+            product_with_specs = next(p for p in products_with_specs if p.id == order_item.product.id)
+            # Get the featured image
+            featured_image = order_item.product.product_image.filter(is_feature=True).first()
+            items_with_details.append({
+                'order_item': order_item,
+                'product': product_with_specs,
+                'model_year': product_with_specs.specs.get('model_year'),
+                'product_sex': product_with_specs.specs.get('product_sex'),
+                'featured_image': featured_image,
+                'item_total': order_item.get_cost(),
+            })
+
+        # Check if shipment exists
+        shipment = getattr(order, 'shipment', None)
+        
+        context = {
+            'order': order,
+            'items': items_with_details,
+            'total_cost': order.get_total_cost(),
+            'shipment': shipment,
+            'user_order_details_page': self.user_order_details_page
+        }
+
+
+        return render(request, self.template_name, context)
+        
 
 
 @login_required
@@ -1781,6 +1931,9 @@ def add_products_get(request, product_type_id):
             })
 
 
+"""
+Log in / Registration Views
+"""
 
 class EmailCheckView(View):
     """

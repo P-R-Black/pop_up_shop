@@ -10,14 +10,14 @@ Past Purchases
 
 <div class="section_container">
     <div class="page_title">
-        <h2>Past Purchases</h2>
+        <h2>{{ user_past_purchase_copy.page_title }}</h2>
     </div>
     <div class="interested_in_container">
         <div class="interested_in_open_bids_container">
             <div class="past_purchases_databox_headers">
-                <h3>Item</h3>
-                <h3>Date Purchased</h3>
-                <h3>Order No.</h3>
+                {% for i in user_past_purchase_copy.past_purchases_headers %}
+                <h3>{{ i.headers }}</h3>
+                {% endfor %}
             </div>
             <div class="past_purchases_inner_container">
                 {% for order in orders %}
