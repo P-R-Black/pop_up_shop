@@ -1,6 +1,8 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
-from pop_up_order.utils.utils import user_orders
+from pop_up_order.utils.utils import user_orders, user_shipments
+from pop_up_shipping.models import PopUpShipment
+
 from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
@@ -10,7 +12,7 @@ from pop_accounts.views import PersonalInfoView
 from unittest.mock import patch
 from django.utils import timezone
 from django.utils.timezone import now, make_aware
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from uuid import uuid4
 from django.middleware.csrf import CsrfViewMiddleware
 from django.http import HttpRequest
@@ -18,6 +20,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.test import RequestFactory
 from django.http import JsonResponse
 import json
+import uuid
 from django.core import mail
 from pop_accounts.utils.utils import validate_password_strength
 from django.core.exceptions import ValidationError
@@ -118,12 +121,139 @@ def create_test_product(product_type, category, product_title, secondary_product
         )
 
 
-def create_test_order(user, full_name, email, address1, postal_code, city, state, phone, total_paid, order_key):
-    return PopUpCustomerOrder.objects.create(
-        user=user, full_name=full_name, email=email, address1=address1, 
-        postal_code=postal_code, city=city, state=state, phone=phone, 
-        total_paid=total_paid, order_key=order_key
+
+def create_test_product_one(*args, **kwargs):
+    return PopUpProduct.objects.create(
+        product_type=create_product_type('shoe', is_active=True), category=create_category('Jordan 3', is_active=True), 
+        product_title="Past Bid Product 1", secondary_product_title="Past Bid 1", description="Brand new sneakers", 
+        slug="past-bid-product-1", buy_now_price="250.00", current_highest_bid="0", retail_price="150.00", 
+        brand=create_brand('Jordan'), auction_start_date=None,  auction_end_date=None, inventory_status="sold_out",
+        bid_count=0, reserve_price="100.00", is_active=False
     )
+
+def create_test_product_two(*args, **kwargs):
+        return PopUpProduct.objects.create(
+            product_type_id=1, category=create_category('Jordan 4', is_active=True), 
+            product_title="Past Bid Product 2", secondary_product_title="Past Bid 2", description="Brand new sneakers", 
+            slug="past-bid-product-2", buy_now_price="300.00", current_highest_bid="0", 
+            retail_price="200.00", brand_id=1, auction_start_date=None,  auction_end_date=None, 
+            inventory_status="sold_out", bid_count=0, reserve_price="150.00", is_active=False
+        )
+
+
+
+def create_test_product_three(*args, **kwargs):
+        return PopUpProduct.objects.create(
+            product_type=create_product_type('gaming system', is_active=True), 
+            category=create_category('Switch', is_active=True), product_title="Switch 2", 
+            secondary_product_title="", description="New Nintendo Switch 2", 
+            slug="switch-2", buy_now_price="350.00", current_highest_bid="0", 
+            retail_price="200.00", brand=create_brand('Nintendo'), auction_start_date=None,  auction_end_date=None, 
+            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active="False"
+        )
+
+
+def create_test_shipping_address_one(*args, **kwargs):
+    return PopUpCustomerAddress.objects.create(
+            first_name='John',
+            last_name='Doe',
+            address_line='123 Test St',
+            town_city='Test City',
+            state='Tennessee',
+            postcode='12345',
+            **kwargs,
+        )
+
+"""
+ user = models.ForeignKey("pop_accounts.PopUpCustomer", on_delete=models.CASCADE, related_name='order_user')
+    full_name = models.CharField(max_length=50)
+    email = models.EmailField(_('email'))
+    address1 = models.CharField(_('address'), max_length=250)
+    address2 = models.CharField(_('address'), max_length=250, blank=True, null=True)
+    postal_code = models.CharField(_('postal code'), max_length=20)
+    apartment_suite_number = models.CharField(_("Apartment/Suite"), max_length=50, blank=True)
+    city = models.CharField(_('city'), max_length=100)
+    state = models.CharField(_("State"), max_length=100)
+    phone = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    total_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    order_key = models.CharField(max_length=200)
+    billing_status = models.BooleanField(default=False)
+    shipping_address = models.ForeignKey(PopUpCustomerAddress, on_delete=models.SET_NULL, null=True, related_name="order_shipping")
+    billing_address = models.ForeignKey(PopUpCustomerAddress, on_delete=models.SET_NULL, null=True, related_name="order_billing")
+    payment_data_id = models.CharField(max_length=150, blank=True)
+    coupon = models.ForeignKey(PopUpCoupon, related_name='orders', null=True, blank=True, on_delete=models.SET_NULL)
+    discount = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+"""
+
+def create_test_order_one(*args, **kwargs):
+    return PopUpCustomerOrder.objects.create(
+            billing_status=True,
+            address1="111 Test St",
+            city="New York",
+            state="NY",
+            postal_code="10001",
+            total_paid="100.00",
+            **kwargs
+        )
+
+def create_test_order_two(*args, **kwargs):
+    return PopUpCustomerOrder.objects.create(
+            billing_status=True,
+            address1="123 Test St",
+            city="South Ozone Park",
+            state="NY",
+            postal_code="11434",
+            total_paid="100.00",
+            **kwargs
+    )
+
+def create_test_shipment_one(status, *args, **kwargs):
+    return PopUpShipment.objects.create(
+        carrier='USPS',
+        tracking_number='1Z999AA10123456784',
+        # shipped_at=None,
+        # estimated_delivery=None,
+        shipped_at=datetime(2024, 1, 15, tzinfo=timezone.utc),
+        estimated_delivery=datetime(2024, 1, 20, tzinfo=timezone.utc),
+        delivered_at=None,
+        status=status, # pending, cancelled, in_dispute, shipped, returned, delivered
+        **kwargs
+    )
+
+def create_test_shipment_two_pending(status, *args, **kwargs):
+    print('kwargs', kwargs)
+    print('args',)
+    return PopUpShipment.objects.create(
+        carrier='USPS',
+        tracking_number='1Z999AA10123456784',
+        shipped_at=None,
+        estimated_delivery=None,
+        delivered_at=None,
+        status="pending", # pending, cancelled, in_dispute, shipped, returned, delivered
+        **kwargs
+    )
+
+
+"""
+order
+carrier
+tracking_number
+shipped_at
+estimated_delivery
+delivered_at
+status
+"""
+
+# self.shipment = PopUpShipment.objects.create(
+        #     carrier='UPS',
+        #     tracking_number='1Z999AA10123456784',
+        #     shipped_at=datetime(2024, 1, 15, tzinfo=timezone.utc),
+        #     estimated_delivery=datetime(2024, 1, 20, tzinfo=timezone.utc),
+        #     status='in_transit'
+        # )
+
 
 class TestPopUpUserDashboardView(TestCase):
     def setUp(self):
@@ -1956,6 +2086,7 @@ class OpenBidsViewIntegrationTests(TestCase):
     def test_complete_bidding_workflow(self):
         """Test complete workflow from placing bid to viewing in open bids"""
         # Create product
+
         test_brand = create_brand('Jordan')
         test_category = create_category('Jordan 3', is_active=True)
         test_product_type = create_product_type('shoe', is_active=True)
@@ -2001,34 +2132,10 @@ class PastBidsViewTest(TestCase):
         self.other_user.is_active = True
         self.other_user.save(update_fields=['is_active'])        
 
-        test_brand = create_brand('Jordan')
-        test_category = create_category('Jordan 3', is_active=True)
-        test_product_type = create_product_type('shoe', is_active=True)
-
-        test_category_two = create_category('Jordan 4', is_active=True)
-        test_category_three = create_category('Jordan 11', is_active=True)
-
-        self.test_prod_one = create_test_product(
-            product_type=test_product_type, category=test_category_two, product_title="Past Bid Product 1", 
-            secondary_product_title="Past Bid 1", description="Brand new sneakers", 
-            slug="past-bid-product-1", buy_now_price="250.00", current_highest_bid="0", 
-            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="sold_out", bid_count=0, reserve_price="100.00", is_active=False)
-
-
-        self.test_prod_two = create_test_product(
-            product_type=test_product_type, category=test_category_two, product_title="Past Bid Product 2", 
-            secondary_product_title="Past Bid 2", description="Brand new sneakers", 
-            slug="past-bid-product-2", buy_now_price="300.00", current_highest_bid="0", 
-            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="sold_out", bid_count=0, reserve_price="150.00", is_active=False)
-
-        self.test_prod_three = create_test_product(
-            product_type=test_product_type, category=test_category_three, product_title="Jordan 11 Retro", 
-            secondary_product_title="Concord", description="Brand new Jordan 11", 
-            slug="jordan-11-concord", buy_now_price="350.00", current_highest_bid="0", 
-            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active="False")
+        # create_product
+        self.test_prod_one = create_test_product_one()
+        self.test_prod_two = create_test_product_two()
+        self.test_prod_three = create_test_product_three()
 
 
         # Create past bids (inactive)
@@ -2172,7 +2279,7 @@ class PastBidsViewTest(TestCase):
                 'product_name': 'Product 1',
                 'product_slug': 'product-1',
                 'bid_amount': Decimal('100.00'),
-                'bid_time': timezone.now(),
+                'bid_time': datetime.now(),
                 'is_winning': True,
                 'status': 'Winning',
                 'status_class': 'success',
@@ -2184,7 +2291,7 @@ class PastBidsViewTest(TestCase):
                 'sale_outcome': 'sold',
                 'is_finalized': True,
                 'current_highest_bid': Decimal('100.00'),
-                'time_since_bid': timezone.timedelta(days=1),
+                'time_since_bid': datetime.now() + timedelta(days=1),
                 'specifications': {},
                 'mptt_specs': {},
                 'all_specs': {}
@@ -2195,7 +2302,7 @@ class PastBidsViewTest(TestCase):
             'product_name': 'Product 1',
             'product_slug': 'product-1',
             'bid_amount': Decimal('100.00'),
-            'bid_time': timezone.now(),
+            'bid_time': datetime.now(),
             'is_winning': True,
             'status': 'Winning',
             'status_class': 'success',
@@ -2207,7 +2314,7 @@ class PastBidsViewTest(TestCase):
             'sale_outcome': 'sold',
             'is_finalized': True,
             'current_highest_bid': Decimal('150.00'),
-            'time_since_bid': timezone.timedelta(days=1),
+            'time_since_bid': datetime.now() + timedelta(days=1),
             'specifications': {},
             'mptt_specs': {},
             'all_specs': {}
@@ -2218,7 +2325,7 @@ class PastBidsViewTest(TestCase):
             'product_name': 'Product 1',
             'product_slug': 'product-1',
             'bid_amount': Decimal('100.00'),
-            'bid_time': timezone.now(),
+            'bid_time': datetime.now(),
             'is_winning': True,
             'status': 'Winning',
             'status_class': 'success',
@@ -2230,7 +2337,7 @@ class PastBidsViewTest(TestCase):
             'sale_outcome': 'sold',
             'is_finalized': True,
             'current_highest_bid': Decimal('200.00'),
-            'time_since_bid': timezone.timedelta(days=1),
+            'time_since_bid':datetime.now() + timedelta(days=1),
             'specifications': {},
             'mptt_specs': {},
             'all_specs': {}
@@ -2325,29 +2432,11 @@ class PastBidsViewIntegrationTests(TestCase):
 
         self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
         self.user.is_active = True
-        self.user.save(update_fields=['is_active']) 
+        self.user.save(update_fields=['is_active'])
 
-        test_brand = create_brand('Jordan')
-        test_category = create_category('Jordan 3', is_active=True)
-        test_product_type = create_product_type('shoe', is_active=True)
-
-        test_category_two = create_category('Jordan 4', is_active=True)
-        test_category_three = create_category('Jordan 11', is_active=True)
-
-        self.test_prod_one = create_test_product(
-            product_type=test_product_type, category=test_category_two, product_title="Integration Product 1'", 
-            secondary_product_title="Past Bid 1", description="Brand new sneakers", 
-            slug="integration-product-1'", buy_now_price="250.00", current_highest_bid="0", 
-            retail_price="100.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="sold_out", bid_count=0, reserve_price="75.00", is_active=False)
-
-
-        self.test_prod_two = create_test_product(
-            product_type=test_product_type, category=test_category_two, product_title="Integration Product 2", 
-            secondary_product_title="Past Bid 2", description="Brand new sneakers", 
-            slug="integration-product-2", buy_now_price="300.00", current_highest_bid="0", 
-            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="sold_out", bid_count=0, reserve_price="100.00", is_active=False)
+        # create product
+        self.test_prod_one = create_test_product_one()
+        self.test_prod_two = create_test_product_two()
 
         
         self.url = reverse('pop_accounts:past_bids')
@@ -2421,21 +2510,7 @@ class PastPurchaseViewTest(TestCase):
         self.user.is_active = True
         self.user.save(update_fields=['is_active'])
 
-        
-
-        test_brand = create_brand('Jordan')
-        test_category = create_category('Jordan 3', is_active=True)
-        test_product_type = create_product_type('shoe', is_active=True)
-
-        test_category_two = create_category('Jordan 4', is_active=True)
-        test_category_three = create_category('Jordan 11', is_active=True)
-
-        self.test_prod_one = create_test_product(
-            product_type=test_product_type, category=test_category_two, product_title="Integration Product 1'", 
-            secondary_product_title="Past Bid 1", description="Brand new sneakers", 
-            slug="integration-product-1'", buy_now_price="250.00", current_highest_bid="0", 
-            retail_price="100.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="in_inventory", bid_count=0, reserve_price="75.00", is_active=True)
+        self.test_prod_one = create_test_product_one()
         
 
         self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
@@ -2458,7 +2533,6 @@ class PastPurchaseViewTest(TestCase):
             total_paid="100.00"
         )
 
-       
 
         # Add items to the order if your model supports it
         self.order_item = PopUpOrderItem.objects.create(
@@ -2530,36 +2604,11 @@ class TestUserOrdersUtility(TestCase):
 
         self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
         self.other_user.is_active = True
-        self.other_user.save(update_fields=['is_active'])        
+        self.other_user.save(update_fields=['is_active'])
 
-        test_brand = create_brand('Jordan')
-        test_category = create_category('Jordan 3', is_active=True)
-        test_product_type = create_product_type('shoe', is_active=True)
+        self.test_prod_one = create_test_product_one()
+        self.test_prod_two = create_test_product_two()   
 
-        test_category_two = create_category('Jordan 4', is_active=True)
-        test_category_three = create_category('Jordan 11', is_active=True)
-
-        self.test_prod_one = create_test_product(
-            product_type=test_product_type, category=test_category_two, product_title="Past Bid Product 1", 
-            secondary_product_title="Past Bid 1", description="Brand new sneakers", 
-            slug="past-bid-product-1", buy_now_price="250.00", current_highest_bid="0", 
-            retail_price="150.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="sold_out", bid_count=0, reserve_price="100.00", is_active=False)
-
-
-        self.test_prod_two = create_test_product(
-            product_type=test_product_type, category=test_category_two, product_title="Past Bid Product 2", 
-            secondary_product_title="Past Bid 2", description="Brand new sneakers", 
-            slug="past-bid-product-2", buy_now_price="300.00", current_highest_bid="0", 
-            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="sold_out", bid_count=0, reserve_price="150.00", is_active=False)
-
-        self.test_prod_three = create_test_product(
-            product_type=test_product_type, category=test_category_three, product_title="Jordan 11 Retro", 
-            secondary_product_title="Concord", description="Brand new Jordan 11", 
-            slug="jordan-11-concord", buy_now_price="350.00", current_highest_bid="0", 
-            retail_price="200.00", brand=test_brand, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active="False")
 
         # Orders for the main user
         self.completed_order = PopUpCustomerOrder.objects.create(
@@ -2629,6 +2678,420 @@ class TestUserOrdersUtility(TestCase):
         order = orders.first()
         with self.assertNumQueries(0):  # Ensures prefetch_related works
             _ = list(order.items.all())
+
+
+
+class UserShipmentsUtilityTests(TestCase):
+    """Tests for the user_shipments utility function"""
+    
+    def setUp(self):
+        self.client = Client()
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+        
+        # Create test product
+        self.test_product_one = create_test_product_one()
+        self.test_product_two = create_test_product_two()
+        self.test_product_three = create_test_product_three()
+
+        
+        # Create shipping address
+        self.shipping_address = create_test_shipping_address_one(customer=self.user)
+
+        # Create order
+        self.create_order = create_test_order_one(user=self.user, email=self.user.email)
+
+        # Create shipment
+        self.create_shipment = create_test_shipment_one(status="shipped", order=self.create_order)
+        # Status | pending, cancelled, in_dispute, shipped, returned, delivered
+
+
+        # Create order with Shipping Address
+        self.create_order_with_shipping_address = create_test_order_two(user=self.user, email=self.user.email, shipping_address=self.shipping_address)
+
+        # Create shipment with Shipping Address
+        self.create_shipment_with_shipping_address = create_test_shipment_one(status="shipped", order=self.create_order_with_shipping_address)
+
+        # Create pending shipment
+        # self.create_pending_shipment = create_test_shipment_two_pending(status="pending", order=self.create_order)
+    
+
+
+    @patch('pop_accounts.utils.utils.add_specs_to_products')
+    def test_user_shipments_returns_correct_structure(self, mock_add_specs):
+        """Test that user_shipments returns data in the expected format"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id 
+        mock_product.product_title = self.test_product_one.product_title
+        mock_product.secondary_product_title = self.test_product_one.secondary_product_title
+        mock_product.specs = {'model_year': '2024', 'color': 'Blue'}
+        mock_add_specs.return_value = [mock_product]
+
+
+        # Add items to the order
+        order_item = PopUpOrderItem.objects.create(
+            order=self.create_order_with_shipping_address,
+            product=self.test_product_one,
+            product_title=self.test_product_one.product_title,
+            quantity=2,
+            price=99.99,
+            size='M',
+            color='Blue'
+        )
+
+        result = user_shipments(self.user.id)
+
+        self.assertEqual(len(result), 1)
+        shipment_data = result[0]
+
+        # Verify structure
+        self.assertEqual(shipment_data['order_id'], self.create_order_with_shipping_address.id)
+        self.assertEqual(shipment_data['product_id'], self.test_product_one.id)
+        self.assertEqual(shipment_data['product_title'], 'Past Bid Product 1')
+
+        # Verify order_item data
+        self.assertEqual(shipment_data['order_item']['quantity'], 2)
+        self.assertEqual(shipment_data['order_item']['price'], Decimal('99.99'))
+
+        # Verify shipment data
+        self.assertEqual(shipment_data['shipment']['carrier'], 'USPS')
+        self.assertEqual(shipment_data['shipment']['tracking_number'], '1Z999AA10123456784')
+        self.assertEqual(shipment_data['shipment']['status'], 'shipped')
+
+        # Verify billing address        
+        self.assertEqual(shipment_data['shipping_address']['address_line'], '123 Test St')
+        self.assertEqual(shipment_data['shipping_address']['town_city'], 'Test City')
+    
+
+    def test_user_shipments_excludes_orders_without_shipment(self):
+        """Test that orders without shipment are not included"""
+        # Create order without shipment
+        order_no_shipment = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            email=self.user.email,
+            billing_status=True,
+            address1="456 Test St",
+            city="New York",
+            state="NY",
+            postal_code="10001",
+            total_paid="100.00",
+        )
+
+        result = user_shipments(self.user.id)
+
+        # Should only return orders with shipments
+        order_ids = [item['order_id'] for item in result]
+        self.assertNotIn(self.create_order.id, order_ids)
+    
+
+    def test_user_shipments_filters_by_user(self):
+        """Test that only the specified user's shipments are returned"""
+        other_user = self.other_user
+        
+        other_order = create_test_order_one(user=other_user, email=other_user.email)
+        
+        result = user_shipments(self.other_user.id)
+        
+        # Should not include other user's orders
+        order_ids = [item['order_id'] for item in result]
+        self.assertNotIn(other_order.id, order_ids)
+
+
+    @patch('pop_accounts.utils.utils.add_specs_to_products')
+    def test_user_shipments_handles_null_shipping_address(self, mock_add_specs):
+        """Test handling of orders without shipping address"""
+        """Test that user_shipments returns data in the expected format"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id 
+        mock_product.product_title = "Test Product"
+        mock_product.secondary_product_title = 'Test Secondary'
+        mock_product.specs = {'model_year': '2024', 'color': 'Blue'}
+        mock_add_specs.return_value = [mock_product]
+
+        order_no_address = self.create_order
+
+        # Add items to the order if your model supports it
+        order_item = PopUpOrderItem.objects.create(
+            order=order_no_address,
+            product=self.test_product_one,
+            product_title="Past Bid Product 1",
+            quantity=2,
+            price=99.99,
+            size='M',
+            color='Blue'
+        )
+
+
+        result = user_shipments(self.user.id)
+
+        # Find the order without address
+        no_address_result = next(
+            item for item in result 
+            if item['order_id'] == order_no_address.id
+        )
+        
+        self.assertIsNone(no_address_result['shipping_address'])
+
+
+
+class ShippingTrackingViewTests(TestCase):
+    """Tests for the ShippingTrackingView"""
+    
+    def setUp(self):
+        # self.factory = RequestFactory()
+
+        self.client = Client()
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+        # Create shipping address
+        self.shipping_address = create_test_shipping_address_one(customer=self.user)
+
+        # Create order
+        self.create_order = create_test_order_one(user=self.user, email=self.user.email)
+
+        self.url = reverse('pop_accounts:shipping_tracking')
+        
+    
+
+    @patch('pop_accounts.views.user_shipments')
+    def test_get_request_authenticated_user(self, mock_user_shipments):
+        """Test GET request with authenticated user"""
+
+        self.client.force_login(self.user)        
+       
+        
+        # Use UUIDs instead of integers for order_id
+        order_uuid = uuid.uuid4()
+        
+        mock_shipments = [
+            {
+                'order_id': order_uuid,  # Changed to UUID
+                'product_id': 1,
+                'product_title': 'Test Product',
+                'secondary_product_title': 'Test Secondary',
+                'model_year': '2024',
+                'all_specs': {},
+                'order_item': {
+                    'quantity': 1,
+                    'price': 99.99,
+                    'size': 'M',
+                    'color': 'Blue'
+                },
+                'shipment': {
+                    'carrier': 'UPS',
+                    'tracking_number': 'TEST123',
+                    'shipped_at': None,
+                    'estimated_delivery': None,
+                    'delivered_at': None,
+                    'status': 'pending'
+                },
+                'billing_address': {},
+                'shipping_address': {}
+            }
+        ]
+
+        mock_user_shipments.return_value = mock_shipments
+        
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        mock_user_shipments.assert_called_once_with(self.user.id)
+
+
+    @patch('pop_accounts:views.user_shipments')
+    def test_context_data_includes_all_required_fields(self, mock_user_shipments):
+            """Test that context contains all required data"""
+
+            self.client.force_login(self.user) 
+
+            mock_shipments = []
+            mock_user_shipments.return_value = mock_shipments
+            response = self.client.get(self.url)
+            
+            # Check that context variables are passed
+            self.assertIn(b'shipments', response.content)
+    
+
+    def test_unauthenticated_user_redirected(self):
+        """Test that unauthenticated users are redirected to login"""
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+
+    def test_view_uses_correct_template(self):
+        """Test that the correct template is used"""
+         
+        self.client.force_login(self.user)
+        
+        response = self.client.get('/pop_accounts/shipping-tracking/')  # Adjust URL as needed
+        
+        self.assertTemplateUsed(
+            response, 
+            'pop_accounts/user_accounts/dashboard_pages/shipping_tracking.html'
+        )
+
+    @patch('pop_accounts.views.user_shipments')
+    def test_empty_shipments_handled_correctly(self, mock_user_shipments):
+        """Test view handles empty shipments list"""
+        self.client.force_login(self.user)
+        mock_user_shipments.return_value = []
+
+        
+        response = self.client.get('/pop_accounts/shipping-tracking/')
+    
+        self.assertEqual(response.status_code, 200)
+    
+    @patch('pop_accounts.views.user_shipments')
+    def test_multiple_shipments_displayed(self, mock_user_shipments):
+        """Test view with multiple shipments"""
+        self.client.force_login(self.user)
+
+        order_uuid = uuid.uuid4()
+        order_uuid2 = uuid.uuid4()
+        order_uuid3 = uuid.uuid4()
+
+        mock_shipments = [
+            {
+                'order_id': order_uuid,  # Changed to UUID
+                'product_id': 1,
+                'product_title': 'Test Product 1',
+                'secondary_product_title': 'Test Secondary 1',
+                'model_year': '2024',
+                'all_specs': {},
+                'order_item': {
+                    'quantity': 1,
+                    'price': 99.99,
+                    'size': 'M',
+                    'color': 'Blue'
+                },
+                'shipment': {
+                    'carrier': 'USPS',
+                    'tracking_number': 'TEST123',
+                    'shipped_at': None,
+                    'estimated_delivery': None,
+                    'delivered_at': None,
+                    'status': 'pending'
+                },
+                'billing_address': {},
+                'shipping_address': {}
+            },
+            {
+                'order_id': order_uuid2,  # Changed to UUID
+                'product_id': 2,
+                'product_title': 'Test Product 2',
+                'secondary_product_title': 'Test Secondary 2',
+                'model_year': '2024',
+                'all_specs': {},
+                'order_item': {
+                    'quantity': 1,
+                    'price': 109.99,
+                    'size': 'M',
+                    'color': 'Blue'
+                },
+                'shipment': {
+                    'carrier': 'USPS',
+                    'tracking_number': 'TEST123',
+                    'shipped_at': None,
+                    'estimated_delivery': None,
+                    'delivered_at': None,
+                    'status': 'pending'
+                },
+                'billing_address': {},
+                'shipping_address': {}
+            },
+            {
+                'order_id': order_uuid3,  # Changed to UUID
+                'product_id': 3,
+                'product_title': 'Test Product 3',
+                'secondary_product_title': 'Test Secondary 3',
+                'model_year': '2024',
+                'all_specs': {},
+                'order_item': {
+                    'quantity': 1,
+                    'price': 119.99,
+                    'size': 'M',
+                    'color': 'Blue'
+                },
+                'shipment': {
+                    'carrier': 'USPS',
+                    'tracking_number': 'TEST123',
+                    'shipped_at': None,
+                    'estimated_delivery': None,
+                    'delivered_at': None,
+                    'status': 'pending'
+                },
+                'billing_address': {},
+                'shipping_address': {}
+            }
+        ]
+        mock_user_shipments.return_value = mock_shipments
+        
+        response = self.client.get('/pop_accounts/shipping-tracking/')
+        
+        self.assertEqual(response.status_code, 200)
+        mock_user_shipments.assert_called_once_with(self.user.id)
+
+
+class IntegrationTests(TestCase):
+    """Integration tests for the complete flow"""
+    
+    def setUp(self):
+        self.client = Client()
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+    
+
+    def test_full_shipping_tracking_flow(self):
+        """Test the complete flow from login to viewing shipments"""
+        # Login
+        # self.client.login(username=self.user.email, password='testpass!23')
+        self.client.force_login(self.user)
+
+        # Create complete test data
+        test_prod_one = create_test_product_one()       
+
+        create_order = create_test_order_one(user=self.user, email=self.user.email)
+
+        # Create shipment
+        create_shipment = create_test_shipment_one(status="delivered", order=create_order)
+        
+        print('create_shipment', create_shipment)
+        PopUpOrderItem.objects.create(
+            order=create_order,
+            product=test_prod_one,
+            quantity=1,
+            price=100.00
+        )
+        
+        # Access the view
+        response = self.client.get('/pop_accounts/shipping-tracking/')  # Adjust URL
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Shipping and Tracking')
+        self.assertContains(response, '1Z999AA10123456784')
+        self.assertContains(response, create_shipment)
+
 
 
 # class EmailCheckViewTests(TestCase):

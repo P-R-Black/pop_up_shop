@@ -1008,6 +1008,9 @@ class PastPurchaseView(LoginRequiredMixin, View):
 
 
 class ShippingTrackingView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_shpping
+    # ✅ Mobile / Tablet Media Query Completed
     template_name = 'pop_accounts/user_accounts/dashboard_pages/shipping_tracking.html'
     user_shipping_copy = USER_SHIPPING_TRACKING
     tracking_categories = TRACKING_CATEGORIES
