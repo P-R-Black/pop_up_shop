@@ -1024,6 +1024,7 @@ class ShippingTrackingView(LoginRequiredMixin, View):
 
 
 class UserOrderPager(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
     """
     Displays the details of a specific user order, including all products,
     their specifications, and related shipment/billing info.
@@ -1110,65 +1111,6 @@ class UserOrderPager(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
         
 
-
-@login_required
-def user_orders_page(request, order_id):
-    """
-    Displays user orders
-    """
-    user_order_details_page = USER_ORDER_DETAILS_PAGE
-
-    user = request.user
-    
-    order = get_object_or_404(
-        PopUpCustomerOrder.objects.select_related(
-            'shipping_address',
-            'billing_address',
-            'coupon',
-            'shipment'
-        ).prefetch_related(
-            Prefetch(
-                'items__product',
-                queryset=PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set__specification'),
-            )
-        ),
-        id=order_id,
-        user=user
-    )
-    
-    # Get products with specs
-    products_in_order = [item.product for item in order.items.all()]
-    products_with_specs = add_specs_to_products(products_in_order)
-   
-    
-    # Combine order items with product details
-    items_with_details = []
-    for order_item in order.items.all():
-        product_with_specs = next(p for p in products_with_specs if p.id == order_item.product.id)
-        # Get the featured image
-        featured_image = order_item.product.product_image.filter(is_feature=True).first()
-        items_with_details.append({
-            'order_item': order_item,
-            'product': product_with_specs,
-            'model_year': product_with_specs.specs.get('model_year'),
-            'product_sex': product_with_specs.specs.get('product_sex'),
-            'featured_image': featured_image,
-            'item_total': order_item.get_cost(),
-        })
-
-    # Check if shipment exists
-    shipment = getattr(order, 'shipment', None)
-    
-    context = {
-        'order': order,
-        'items': items_with_details,
-        'total_cost': order.get_total_cost(),
-        'shipment': shipment,
-        'user_order_details_page': user_order_details_page
-    }
-
-
-    return render(request, 'pop_accounts/user_accounts/dashboard_pages/user_orders.html', context)
 
 
 # ADMIN DASHBOARD

@@ -49,7 +49,6 @@ urlpatterns = [
     path('purchase-history/', PastPurchaseView.as_view(), name='past_purchases'),
     path('shipping-tracking/', ShippingTrackingView.as_view(), name='shipping_tracking'),
     path('customer-order/<uuid:order_id>/', UserOrderPager.as_view(), name='customer_order'),
-    # path('customer-order/<uuid:order_id>/', views.user_orders_page, name='customer_order'),
 
     # admin dashboard
     path('dashboard-admin/',views.dashboard_admin, name='dashboard_admin'),

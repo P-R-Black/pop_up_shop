@@ -2,7 +2,7 @@ from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from pop_up_order.utils.utils import user_orders, user_shipments
 from pop_up_shipping.models import PopUpShipment
-
+from pop_up_auction.models import PopUpProductImage
 from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
@@ -163,29 +163,6 @@ def create_test_shipping_address_one(*args, **kwargs):
             postcode='12345',
             **kwargs,
         )
-
-"""
- user = models.ForeignKey("pop_accounts.PopUpCustomer", on_delete=models.CASCADE, related_name='order_user')
-    full_name = models.CharField(max_length=50)
-    email = models.EmailField(_('email'))
-    address1 = models.CharField(_('address'), max_length=250)
-    address2 = models.CharField(_('address'), max_length=250, blank=True, null=True)
-    postal_code = models.CharField(_('postal code'), max_length=20)
-    apartment_suite_number = models.CharField(_("Apartment/Suite"), max_length=50, blank=True)
-    city = models.CharField(_('city'), max_length=100)
-    state = models.CharField(_("State"), max_length=100)
-    phone = models.CharField(max_length=100, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    total_paid = models.DecimalField(max_digits=10, decimal_places=2)
-    order_key = models.CharField(max_length=200)
-    billing_status = models.BooleanField(default=False)
-    shipping_address = models.ForeignKey(PopUpCustomerAddress, on_delete=models.SET_NULL, null=True, related_name="order_shipping")
-    billing_address = models.ForeignKey(PopUpCustomerAddress, on_delete=models.SET_NULL, null=True, related_name="order_billing")
-    payment_data_id = models.CharField(max_length=150, blank=True)
-    coupon = models.ForeignKey(PopUpCoupon, related_name='orders', null=True, blank=True, on_delete=models.SET_NULL)
-    discount = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
-"""
 
 def create_test_order_one(*args, **kwargs):
     return PopUpCustomerOrder.objects.create(
@@ -2534,7 +2511,7 @@ class PastPurchaseViewTest(TestCase):
         )
 
 
-        # Add items to the order if your model supports it
+        # Add item to the order
         self.order_item = PopUpOrderItem.objects.create(
             order=self.order,
             product=self.test_prod_one,
@@ -2646,7 +2623,7 @@ class TestUserOrdersUtility(TestCase):
         )
 
 
-        # Add items to the order if your model supports it
+        # Add items to the order
         self.order_item = PopUpOrderItem.objects.create(
             order=self.completed_order,
             product=self.test_prod_one,
@@ -2816,7 +2793,7 @@ class UserShipmentsUtilityTests(TestCase):
 
         order_no_address = self.create_order
 
-        # Add items to the order if your model supports it
+        # Add items to the order
         order_item = PopUpOrderItem.objects.create(
             order=order_no_address,
             product=self.test_product_one,
@@ -3076,7 +3053,6 @@ class IntegrationTests(TestCase):
         # Create shipment
         create_shipment = create_test_shipment_one(status="delivered", order=create_order)
         
-        print('create_shipment', create_shipment)
         PopUpOrderItem.objects.create(
             order=create_order,
             product=test_prod_one,
@@ -3091,6 +3067,591 @@ class IntegrationTests(TestCase):
         self.assertContains(response, 'Shipping and Tracking')
         self.assertContains(response, '1Z999AA10123456784')
         self.assertContains(response, create_shipment)
+
+
+
+class UserOrderPagerTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+        
+        # Create test product
+        self.test_product_one = create_test_product_one()
+        self.test_product_two = create_test_product_two()
+        self.test_product_three = create_test_product_three()
+
+        # create featured image for product
+        self.featured_image = PopUpProductImage.objects.create(
+            product=self.test_product_one,
+            image='path/to/image.jpg',
+            alt_text='Air Jordan 1',
+            is_feature=True
+        )
+
+        # Create non-featured image
+        self.regular_image = PopUpProductImage.objects.create(
+            product=self.test_product_two,
+            image='path/to/image2.jpg',
+            alt_text='Air Jordan 1 Side View',
+            is_feature=False
+        )
+
+        # Create shipping address
+        self.shipping_address = create_test_shipping_address_one(customer=self.user)
+
+        
+        # Create order with Shipping Address
+        self.create_order_with_shipping_address = create_test_order_two(user=self.user, email=self.user.email, shipping_address=self.shipping_address)
+        self.create_shipment = create_test_shipment_one(status="shipped", order=self.create_order_with_shipping_address)
+        self.create_order_with_shipping_address.shipment = self.create_shipment
+        self.create_order_with_shipping_address.save()
+
+        # Create shipment with Shipping Address
+        # self.create_shipment_with_shipping_address = create_test_shipment_one(status="shipped", order=self.create_order_with_shipping_address)
+        self.order_item_with_shipping = PopUpOrderItem.objects.create(
+            order=self.create_order_with_shipping_address,
+            product=self.test_product_one,
+            product_title="Past Bid Product 1",
+            quantity=2,
+            price=Decimal(170.00),
+            size='10',
+            color='Chicago'
+        )
+
+        # Create order
+        self.create_order = create_test_order_one(user=self.user, email=self.user.email)
+
+        # Create shipment
+        self.create_shipment = create_test_shipment_one(status="shipped", order=self.create_order)
+        # # Status | pending, cancelled, in_dispute, shipped, returned, delivered
+
+
+        # create order item
+        self.order_item_without_shipping = PopUpOrderItem.objects.create(
+            order=self.create_order,
+            product=self.test_product_one,
+            product_title="Past Bid Product 1",
+            quantity=1,
+            price=Decimal(170.00),
+            size='11',
+            color='Bred'
+        )
+
+        # Create pending shipment
+        # self.create_pending_shipment = create_test_shipment_two_pending(status="pending", order=self.create_order)
+
+         # URLs for both orders
+        self.url_with_shipping = reverse('pop_accounts:customer_order', kwargs={'order_id': self.create_order_with_shipping_address.id})
+
+        self.url_without_shipping = reverse('pop_accounts:customer_order', kwargs={'order_id': self.create_order.id})
+    
+
+    def test_view_requires_login(self):
+        """Test that view requires authentication"""       
+        response = self.client.get(self.url_without_shipping)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_get_request_authenticated_user(self, mock_add_specs):
+        """Test GET request returns order details for authenticated user"""
+        # Mock the add_specs_to_products function
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.self.test_product_one = 'Air Jordan 1'
+        mock_product.secondary_product_title = 'Retro High OG'
+        mock_product.specs = {
+            'model_year': '2024',
+            'product_sex': 'Male',
+            'colorway': 'Chicago'
+        }
+        mock_add_specs.return_value = [mock_product]
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_with_shipping)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/user_accounts/dashboard_pages/user_orders.html'
+        )
+
+        # Check context
+        self.assertEqual(response.context['order'].id, self.create_order_with_shipping_address.id)
+        self.assertEqual(len(response.context['items']), 1)
+        self.assertIsNotNone(response.context['shipment'])
+        self.assertEqual(response.context['shipment'].tracking_number, '1Z999AA10123456784')
+
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_user_cannot_access_other_users_order(self, mock_add_specs):
+        """Test that users cannot view orders that don't belong to them"""
+        # Login as other_user
+        self.client.force_login(self.other_user)
+        response = self.client.get(self.url_without_shipping)
+        
+        # Should return 404
+        self.assertEqual(response.status_code, 404)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_invalid_order_id_returns_404(self, mock_add_specs):
+        """Test that invalid order ID returns 404"""
+        invalid_url = reverse(
+            'pop_accounts:customer_order',
+            kwargs={'order_id': uuid.uuid4()}
+        )
+        
+        self.client.force_login(self.user)
+        response = self.client.get(invalid_url)
+        
+        self.assertEqual(response.status_code, 404)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_context_contains_all_required_fields(self, mock_add_specs):
+        """Test that context contains all required fields"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {'model_year': '2024', 'product_sex': 'Male'}
+        mock_add_specs.return_value = [mock_product]
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_without_shipping)
+        
+        # Check all required context keys
+        self.assertIn('order', response.context)
+        self.assertIn('items', response.context)
+        self.assertIn('total_cost', response.context)
+        self.assertIn('shipment', response.context)
+        self.assertIn('user_order_details_page', response.context)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_items_with_details_structure(self, mock_add_specs):
+        """Test that items_with_details has correct structure"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {'model_year': '2024', 'product_sex': 'Male'}
+        mock_add_specs.return_value = [mock_product]
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_without_shipping)
+        
+        items = response.context['items']
+        self.assertEqual(len(items), 1)
+        
+        item = items[0]
+        # Check structure
+        self.assertIn('order_item', item)
+        self.assertIn('product', item)
+        self.assertIn('model_year', item)
+        self.assertIn('product_sex', item)
+        self.assertIn('featured_image', item)
+        self.assertIn('item_total', item)
+        
+        # Verify values
+        self.assertEqual(item['order_item'].id, self.order_item_without_shipping.id)
+        self.assertEqual(item['model_year'], '2024')
+        self.assertEqual(item['product_sex'], 'Male')
+        self.assertIsNotNone(item['featured_image'])
+    
+    
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_featured_image_selection(self, mock_add_specs):
+        """Test that featured image is correctly selected"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}
+        mock_add_specs.return_value = [mock_product]
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_without_shipping)
+        
+        items = response.context['items']
+        featured_image = items[0]['featured_image']
+        
+        # Should get the featured image, not the regular one
+        self.assertEqual(featured_image.id, self.featured_image.id)
+        self.assertTrue(featured_image.is_feature)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_order_without_shipment(self, mock_add_specs):
+        """Test handling of order without shipment"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}
+        mock_add_specs.return_value = [mock_product]
+        
+        # Create order without shipment
+        order_no_shipment_id = uuid.uuid4()
+        # self.create_order = create_test_order_one(user=self.user, email=self.user.email)
+
+        order_no_shipment= PopUpCustomerOrder.objects.create(
+            billing_status=True,
+            address1="456 Test Ave",
+            city="Test City",
+            state="TN",
+            postal_code="21321",
+            total_paid="100.00",
+            user=self.user,
+            email=self.user.email
+        )
+
+            
+        PopUpOrderItem.objects.create(
+            order=order_no_shipment,
+            product=self.test_product_one,
+            product_title="Past Bid Product 1",
+            quantity=2,
+            price=99.99,
+            size='M',
+            color='Blue'
+        )
+        
+        url = reverse('pop_accounts:customer_order', kwargs={'order_id': order_no_shipment.id})
+        self.client.force_login(self.user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context['shipment'])
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_multiple_items_in_order(self, mock_add_specs):
+        """Test order with multiple items"""
+
+        product2 = self.test_product_two
+        
+        PopUpProductImage.objects.create(
+            product=product2,
+            image='path/to/dunk.jpg',
+            alt_text='Nike Dunk',
+            is_feature=True
+        )
+        
+        # Add second item to order
+        PopUpOrderItem.objects.create(
+            order=self.create_order,
+            product=product2,
+            quantity=2,
+            price=Decimal('110.00'),
+            size='9',
+            color='Black/White'
+        )
+        
+        # Mock specs for both products
+        mock_product1 = MagicMock()
+        mock_product1.id = self.test_product_one.id
+        mock_product1.specs = {'model_year': '2024'}
+        
+        mock_product2 = MagicMock()
+        mock_product2.id = product2.id
+        mock_product2.specs = {'model_year': '2023'}
+        
+        mock_add_specs.return_value = [mock_product1, mock_product2]
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_without_shipping)
+        
+        items = response.context['items']
+        self.assertEqual(len(items), 2)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_order_without_shipment(self, mock_add_specs):
+        """Test handling of order without shipment"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}
+        mock_add_specs.return_value = [mock_product]
+        
+        # Create order without shipment
+        order_no_shipment_id = uuid.uuid4()
+        order_no_shipment = PopUpCustomerOrder.objects.create(
+            billing_status=True,
+            address1="456 Test Ave",
+            city="Test City",
+            state="TN",
+            postal_code="12345",
+            total_paid="100.00",
+            user=self.user,
+            email=self.user.email
+        )
+        
+        PopUpOrderItem.objects.create(
+            order=order_no_shipment,
+            product=self.test_product_one,
+            product_title="Past Bid Product 1",
+            quantity=1,
+            price=170,
+            size='M',
+            color='Blue'
+        )
+        
+        url = reverse('pop_accounts:customer_order', kwargs={'order_id': order_no_shipment.id})
+        self.client.force_login(self.user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context['shipment'])
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_total_cost_calculation(self, mock_add_specs):
+        """Test that total cost is correctly calculated"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}
+        mock_add_specs.return_value = [mock_product]
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_without_shipping)
+        
+        # Verify total cost matches order total
+        expected_total = self.create_order.get_total_cost()
+        self.assertEqual(response.context['total_cost'], expected_total)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_shipping_address_display(self, mock_add_specs):
+        """Test that shipping address is correctly passed to template"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}
+        mock_add_specs.return_value = [mock_product]
+        
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url_with_shipping)
+   
+
+        order = response.context['order']
+
+        # Verify order exists and has correct ID
+        self.assertEqual(order.id, self.create_order_with_shipping_address.id)
+
+        # Access the related shipping_address object
+        self.assertTrue(hasattr(order, 'shipping_address'))
+        self.assertIsNotNone(order.shipping_address)
+        
+        
+        self.assertIsNotNone(order.shipping_address)
+        self.assertEqual(order.shipping_address.first_name, 'John')
+        self.assertEqual(order.shipping_address.last_name, 'Doe')
+        self.assertEqual(order.shipping_address.address_line, '123 Test St')
+    
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_order_without_explicit_shipping_address(self, mock_add_specs):
+        """Test order that uses billing address as shipping address"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}
+        mock_add_specs.return_value = [mock_product]
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_without_shipping)
+        
+        order = response.context['order']
+
+        # Verify order exists and has correct ID
+        self.assertEqual(order.id, self.create_order.id)
+
+        # Access the related shipping_address object
+        self.assertTrue(hasattr(order, 'billing_address'))
+        self.assertTrue(order.billing_status)
+
+        self.assertEqual(order.user.first_name, 'Test')
+        self.assertEqual(order.user.last_name, 'User')
+
+        self.assertEqual(order.address1, '111 Test St')
+        self.assertEqual(order.city, 'New York')
+        self.assertEqual(order.state, 'NY')
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_order_with_null_specs(self, mock_add_specs):
+        """Test handling when product has no specs"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}  # Empty specs
+        mock_add_specs.return_value = [mock_product]
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_without_shipping)
+        
+        items = response.context['items']
+        # Should handle gracefully with None values
+        self.assertIsNone(items[0]['model_year'])
+        self.assertIsNone(items[0]['product_sex'])
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_delivered_shipment_display(self, mock_add_specs):
+        """Test order with delivered shipment"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}
+        mock_add_specs.return_value = [mock_product]
+        
+        # Update shipment to delivered
+        self.create_shipment.delivered_at = datetime(2024, 1, 18, tzinfo=timezone.utc)
+        self.create_shipment.status = 'delivered'
+        self.create_shipment.save()
+        
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_without_shipping)
+        
+        shipment = response.context['shipment']
+        self.assertIsNotNone(shipment.delivered_at)
+        self.assertEqual(shipment.status, 'delivered')
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_order_without_optional_fields(self, mock_add_specs):
+        """Test order without optional fields like address2, phone"""
+        mock_product = MagicMock()
+        mock_product.id = self.test_product_one.id
+        mock_product.specs = {}
+        mock_add_specs.return_value = [mock_product]
+        
+        # Create order without optional fields
+        minimal_order_id = uuid.uuid4()
+
+        minimal_order = PopUpCustomerOrder.objects.create(
+            billing_status=True,
+            address1="111 Test St",
+            city="New York",
+            state="NY",
+            postal_code="10001",
+            total_paid="100.00",
+            user=self.user,
+            email=self.user.email
+        )
+
+        PopUpOrderItem.objects.create(
+            order=minimal_order,
+            product=self.test_product_one,
+            product_title="Past Bid Product 1",
+            quantity=1,
+            price=Decimal('170.00')
+        )
+        
+        url = reverse('pop_accounts:customer_order', kwargs={'order_id': minimal_order.id})
+        self.client.force_login(self.user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        order = response.context['order']
+        self.assertIsNone(order.address2)
+        self.assertIsNone(order.phone)
+
+
+class UserOrderPagerIntegrationTests(TestCase):
+    """Integration tests for UserOrderPager view"""
+
+    def setUp(self):
+        self.client = Client()
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+        
+        # Create test product
+        self.test_product_one = create_test_product_one()
+        self.test_product_two = create_test_product_two()
+        self.test_product_three = create_test_product_three()
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_full_order_flow(self, mock_add_specs):
+        """Test complete flow from creating order to viewing details"""
+        # Create product with all details
+        product = self.test_product_two
+        
+        PopUpProductImage.objects.create(
+            product=product,
+            image='test.jpg',
+            alt_text='Test',
+            is_feature=True
+        )
+
+        # Create shipping address
+        shipping_address = create_test_shipping_address_one(customer=self.user)
+
+        
+        # Create order with Shipping Address
+        create_order_with_shipping_address = create_test_order_two(user=self.user, email=self.user.email, shipping_address=shipping_address)
+        create_shipment = create_test_shipment_one(status="shipped", order=create_order_with_shipping_address)
+        create_order_with_shipping_address.shipment = create_shipment
+        create_order_with_shipping_address.save()
+
+        # Create shipment with Shipping Address
+        # self.create_shipment_with_shipping_address = create_test_shipment_one(status="shipped", order=self.create_order_with_shipping_address)
+        order_item_with_shipping = PopUpOrderItem.objects.create(
+            order=create_order_with_shipping_address,
+            product=self.test_product_one,
+            product_title="Past Bid Product 1",
+            quantity=2,
+            price=Decimal(170.00),
+            size='10',
+            color='Chicago'
+        )
+
+        # Create complete order
+        create_order = create_test_order_one(user=self.user, email=self.user.email)
+
+        # Create shipment
+        create_shipment = create_test_shipment_one(status="shipped", order=create_order)
+        # # Status | pending, cancelled, in_dispute, shipped, returned, delivered
+
+        print('create_shipment', create_shipment)
+
+        # create order item
+        order_item_without_shipping = PopUpOrderItem.objects.create(
+            order=create_order,
+            product=product,
+            product_title="Past Bid Product 1",
+            quantity=1,
+            price=Decimal(170.00),
+            size='11',
+            color='Bred'
+        )
+    
+        
+        # Mock specs
+        mock_product = MagicMock()
+        mock_product.id = product.id
+        mock_product.specs = {'model_year': '2024', 'product_sex': 'Male'}
+        mock_add_specs.return_value = [mock_product]
+        
+        # Login and access
+        self.client.force_login(self.user)
+        url = reverse('pop_accounts:customer_order', kwargs={'order_id': create_order.id})
+        response = self.client.get(url)
+        
+        # Verify everything works
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Past Bid Product 1')
+        self.assertContains(response, create_order.id)
+        self.assertEqual(response.context['items'][0]['model_year'], '2024')
 
 
 
