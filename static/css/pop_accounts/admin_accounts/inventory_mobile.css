@@ -2,18 +2,35 @@
 @media screen and (max-width: 1350px) {}
 
 /* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
-@media screen and (max-width: 1245px) {}
+@media screen and (max-width: 1245px) {
+    .inventory_item_select {
+        min-width: 70%;
+    }
+}
 
 
 /* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
-@media screen and (max-width: 1000px) {}
+@media screen and (max-width: 1000px) {
+    .inventory_item_select {
+        min-width: 100%;
+    }
+}
 
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
 @media screen and (max-width: 800px) {
 
     .inventory_item_select {
+        height: auto;
         width: 80%;
+    }
+
+    .inventory_item_select ul {
+        align-items: flex-start;
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        gap: .25rem;
     }
 
     .inventory_shoe_items_container ul li {

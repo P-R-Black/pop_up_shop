@@ -6,7 +6,7 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
                     UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, PastBidView,
                     DeleteAddressView, SetDefaultAddressView, DeleteAccountView, UserPasswordResetConfirmView,
-                    ShippingTrackingView, UserOrderPager)
+                    ShippingTrackingView, UserOrderPager, AdminDashboardView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -51,7 +51,7 @@ urlpatterns = [
     path('customer-order/<uuid:order_id>/', UserOrderPager.as_view(), name='customer_order'),
 
     # admin dashboard
-    path('dashboard-admin/',views.dashboard_admin, name='dashboard_admin'),
+    path('dashboard-admin/', AdminDashboardView.as_view(), name='dashboard_admin'),
     path('inventory-admin/', AdminInventoryView.as_view(), name='inventory_admin'),
     path('inventory-admin/<slug:slug>/', AdminInventoryView.as_view(), name='inventory_admin'),
     path('sales-admin/', views.sales, name='sales_admin'),

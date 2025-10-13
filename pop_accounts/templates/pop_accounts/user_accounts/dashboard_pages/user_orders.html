@@ -17,12 +17,11 @@
 
             <div class="dashboard_databox_large">
 
-                <div class="dashboard_databox_title">
-                    <div class="blank_div"></div>
+                <div class="order_details_databox_title">
                     {% for t in user_order_details_page %}
-                    <h2>{{ t.box_title }} {{ order.id }}</h2>
+                    <h2>{{ t.box_title }}</h2>
+                    <h2>{{ order.id }}</h2>
                     {% endfor %}
-                    <div class="blank_div"></div>
                 </div>
                 {% for item in items %}
                 <div class="order_details_inner_container">
@@ -74,6 +73,7 @@
                             {% endif %}
                         </div>
                         <div class="order_dets_shipped_to_container">
+                            <h3>Shipped To</h3>
                             {% if shipment.shipped_at %}
                             {% if order.shipping_address.first_name %}
                             <h4>
@@ -89,7 +89,7 @@
                             <h4>{{ order.shipping_address.address_line2 }}</h4>
                             {% endif %}
                             {% if order.shipping_address.apartment_suite_number %}
-                            <h4>{{ order.shipping_address.apartment_suite_number }}</h4>
+                            <h4>Apt/Ste: {{ order.shipping_address.apartment_suite_number }}</h4>
                             {% endif %}
                             <h4>
                                 {{ order.shipping_address.town_city }},
@@ -100,6 +100,7 @@
                         </div>
                     </div>
                     <div class="order_dets_cust_dets_container">
+                        <h3>Billed To</h3>
                         <h4>{{ order.full_name }}</h4>
                         <h4>{{ order.address1 }}</h4>
                         {% if order.address2 %}

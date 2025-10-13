@@ -1,14 +1,15 @@
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from pop_up_order.utils.utils import user_orders, user_shipments
+from pop_up_payment.models import PopUpPayment
 from pop_up_shipping.models import PopUpShipment
 from pop_up_auction.models import PopUpProductImage
 from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
 from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
-from pop_up_auction.models import (PopUpProduct,PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
+from pop_up_auction.models import (PopUpProduct, PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
                                    PopUpProductSpecificationValue)
-from pop_accounts.views import PersonalInfoView
+from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView)
 from unittest.mock import patch
 from django.utils import timezone
 from django.utils.timezone import now, make_aware
@@ -34,6 +35,7 @@ from django.contrib.messages import get_messages
 from unittest.mock import patch, MagicMock
 from pop_up_auction.utils.utils import get_customer_bid_history_context  # Adjust import path
 from pop_accounts.pop_accounts_copy.user_copy.user_copy import USER_PAST_BIDS_COPY  # Adjust import p
+User = get_user_model()
 
 
 def create_test_user(email, password, first_name, last_name, shoe_size, size_gender, **kwargs):
@@ -55,6 +57,18 @@ def create_test_user_two():
             shoe_size="11",
             size_gender="male",
         )
+
+# create staff user
+def create_test_staff_user():
+    return PopUpCustomer.objects.create_user(
+        email="staffuser@staff.com",
+        password="staffPassword!232",
+        first_name="Staff",
+        last_name="User",
+        shoe_size="9",
+        size_gender="male",
+        is_staff=True
+    )
 
 def create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
                         town_city, state, postcode, delivery_instructions, default=True, is_default_shipping=False,
@@ -149,7 +163,7 @@ def create_test_product_three(*args, **kwargs):
             secondary_product_title="", description="New Nintendo Switch 2", 
             slug="switch-2", buy_now_price="350.00", current_highest_bid="0", 
             retail_price="200.00", brand=create_brand('Nintendo'), auction_start_date=None,  auction_end_date=None, 
-            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active="False"
+            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active=False
         )
 
 
@@ -200,8 +214,6 @@ def create_test_shipment_one(status, *args, **kwargs):
     )
 
 def create_test_shipment_two_pending(status, *args, **kwargs):
-    print('kwargs', kwargs)
-    print('args',)
     return PopUpShipment.objects.create(
         carrier='USPS',
         tracking_number='1Z999AA10123456784',
@@ -212,6 +224,15 @@ def create_test_shipment_two_pending(status, *args, **kwargs):
         **kwargs
     )
 
+def create_test_payment_one(order, amount, status, payment_method, suspicious_flagged, notified_ready_to_ship):
+        return PopUpPayment.objects.create(
+            order=order,
+            amount=Decimal(amount),
+            status=status,
+            payment_method=payment_method,
+            suspicious_flagged=suspicious_flagged,
+            notified_ready_to_ship=notified_ready_to_ship
+        )
 
 """
 order
@@ -1596,7 +1617,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 
-class UserPasswordResetConfirmViewTest(TestCase):
+class TestUserPasswordResetConfirmView(TestCase):
     def setUp(self):
         """Set up test data"""
         self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
@@ -1666,7 +1687,7 @@ class UserPasswordResetConfirmViewTest(TestCase):
         self.assertTrue(self.user.check_password("NewPassword123!"))
 
 
-class OpenBidsViewTests(TestCase):
+class TestOpenBidsView(TestCase):
     """Test suite for OpenBidsView"""
     def setUp(self):
         self.client = Client()
@@ -2048,7 +2069,7 @@ class OpenBidsViewTests(TestCase):
 
 
 
-class OpenBidsViewIntegrationTests(TestCase):
+class TestOpenBidsViewIntegration(TestCase):
     """Integration tests for OpenBidsView"""
     
     def setUp(self):
@@ -2096,7 +2117,7 @@ class OpenBidsViewIntegrationTests(TestCase):
         self.assertEqual(open_bids[0]['highest_user_bid'].amount, Decimal('80.00'))
 
 
-class PastBidsViewTest(TestCase):
+class TestPastBidsView(TestCase):
     """Test Suite for PastBidsView"""
 
     def setUp(self):
@@ -2401,7 +2422,7 @@ class PastBidsViewTest(TestCase):
 
 
 
-class PastBidsViewIntegrationTests(TestCase):
+class TestPastBidsViewIntegration(TestCase):
     """Integration tests for PastBidsView with real utility function"""
     
     def setUp(self):
@@ -2479,7 +2500,7 @@ class PastBidsViewIntegrationTests(TestCase):
         self.assertIsNotNone(bid_history)
 
 
-class PastPurchaseViewTest(TestCase):
+class TestPastPurchaseView(TestCase):
     def setUp(self):
         self.client = Client()
 
@@ -2658,7 +2679,7 @@ class TestUserOrdersUtility(TestCase):
 
 
 
-class UserShipmentsUtilityTests(TestCase):
+class TestUserShipmentsUtility(TestCase):
     """Tests for the user_shipments utility function"""
     
     def setUp(self):
@@ -2817,7 +2838,7 @@ class UserShipmentsUtilityTests(TestCase):
 
 
 
-class ShippingTrackingViewTests(TestCase):
+class TestShippingTrackingView(TestCase):
     """Tests for the ShippingTrackingView"""
     
     def setUp(self):
@@ -3024,7 +3045,7 @@ class ShippingTrackingViewTests(TestCase):
         mock_user_shipments.assert_called_once_with(self.user.id)
 
 
-class IntegrationTests(TestCase):
+class TestIntegration(TestCase):
     """Integration tests for the complete flow"""
     
     def setUp(self):
@@ -3070,7 +3091,7 @@ class IntegrationTests(TestCase):
 
 
 
-class UserOrderPagerTest(TestCase):
+class TestUserOrderPager(TestCase):
     def setUp(self):
         self.client = Client()
 
@@ -3559,7 +3580,7 @@ class UserOrderPagerTest(TestCase):
         self.assertIsNone(order.phone)
 
 
-class UserOrderPagerIntegrationTests(TestCase):
+class TestUserOrderPagerIntegration(TestCase):
     """Integration tests for UserOrderPager view"""
 
     def setUp(self):
@@ -3652,6 +3673,1224 @@ class UserOrderPagerIntegrationTests(TestCase):
         self.assertContains(response, 'Past Bid Product 1')
         self.assertContains(response, create_order.id)
         self.assertEqual(response.context['items'][0]['model_year'], '2024')
+
+
+class TestAdminDashboardViewAccess(TestCase):
+    """Tests for authentication and authorization"""
+
+    def setUp(self):
+        self.client = Client()
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.url = reverse('pop_accounts:dashboard_admin')
+    
+    def test_unauthenticated_user_redirected(self):
+        """Test that unauthenticated users are redirected to login"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+    
+    def test_non_staff_user_redirected(self):
+        """Test that non-staff users cannot access admin dashboard"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        # Should redirect to admin login
+        self.assertEqual(response.status_code, 403)
+    
+
+    def test_staff_user_can_access(self):
+        """Test that staff users can access admin dashboard"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, 
+            'pop_accounts/admin_accounts/dashboard_pages/dashboard.html'
+        )
+
+class TestAdminDashboardContext(TestCase):
+    """Tests for context data and template variables"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:dashboard_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_context_contains_all_required_keys(self, mock_revenue, mock_specs):
+        """Test that context has all expected keys"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('0.00')
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        expected_keys = [
+            'product_inventory',
+            'en_route',
+            'top_interested_products',
+            'top_notified_products',
+            'total_active_accounts',
+            'size_counts',
+            'yearly_sales',
+            'payment_status_pending',
+            'payment_status_cleared',
+        ]
+        
+        for key in expected_keys:
+            self.assertIn(key, response.context, f"Missing key: {key}")
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_empty_data_renders_correctly(self, mock_revenue, mock_specs):
+        """Test view handles empty datasets gracefully"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('0.00')
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['product_inventory']), 0)
+        self.assertEqual(len(response.context['en_route']), 0)
+
+
+class TestAdminDashboardProductInventory(TestCase):
+    """Tests for product inventory queries"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:dashboard_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        # self.test_product_one = create_test_product_one()
+        # self.test_product_two = create_test_product_two()
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_product_inventory_shows_active_products(self, mock_specs):
+        """Test that inventory shows only active products"""
+
+        # Create active products
+        for i in range(5):
+            PopUpProduct.objects.create(
+                product_type=create_product_type(f'shoe-{i}', is_active=True), 
+                category=create_category(f'Jordan 3 {i}', is_active=True), 
+                product_title=f"Past Bid Product 1 {i}", secondary_product_title=f"Past Bid 1 {i}", 
+                description="Brand new sneakers", 
+                slug=f"past-bid-product-1-{i}", buy_now_price="250.00", current_highest_bid="0", retail_price="150.00", 
+                brand=create_brand(f'Jordan{i}'), auction_start_date=None,  auction_end_date=None, 
+                inventory_status="sold_out",
+                bid_count=0, reserve_price="100.00", is_active=True
+            )
+
+        
+        # Create inactive product
+        PopUpProduct.objects.create(
+                product_type=create_product_type('shoe', is_active=True), 
+                category=create_category('Jordan 3', is_active=True), 
+                product_title=f"Past Bid Product 2", secondary_product_title="Past Bid 2", 
+                description="Brand new sneakers", slug="past-bid-product-2", buy_now_price="250.00", 
+                current_highest_bid="0", retail_price="150.00", brand=create_brand('Jordan'), 
+                auction_start_date=None,  auction_end_date=None, inventory_status="sold_out",
+                bid_count=0, reserve_price="100.00", is_active=False
+            )
+        
+        mock_specs.return_value = []
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Should only show top 3 active products
+        self.assertLessEqual(len(response.context['product_inventory']), 3)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_en_route_shows_in_transit_only(self, mock_specs):
+        """Test en_route shows only products in transit"""
+
+        # In transit product
+        self.test_product_one = create_test_product_one()
+        self.test_product_one.inventory_status ='in_transit'
+        self.test_product_one.save(update_fields=['inventory_status'])
+     
+        # Other statuses
+        self.test_product_two = create_test_product_two()
+        self.test_product_two.inventory_status ='in_transit'
+        self.test_product_two.save(update_fields=['inventory_status'])
+        
+        mock_specs.return_value = []
+
+        view = AdminDashboardView()
+        en_route = view.get_en_route_products()
+        
+        self.assertIsNotNone(en_route)
+
+
+class TestAdminDashboardInterest(TestCase):
+    """Tests for interested and notified products"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:dashboard_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create customers
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_most_interested_only_shows_products_with_interest(self, mock_specs):
+        """Test that products without interest are excluded"""
+
+        # Product with interest
+        product_with_interest = create_test_product_one()
+        product_with_interest.interested_users.add(self.user, self.other_user)
+        
+        # Product without interest
+        product_with_interest_two = create_test_product_two()
+        
+        mock_product = MagicMock()
+        mock_product.interest_count = 2
+        mock_specs.return_value = [mock_product]
+        
+        view = AdminDashboardView()
+        interested = view.get_most_interested_products()
+        
+        # Should only return products with interest > 0
+        self.assertIsNotNone(interested)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_most_notified_only_shows_products_with_notifications(self, mock_specs):
+        """Test that products without notification requests are excluded"""
+   
+    
+        # Product with notifications
+        product_with_on_notice = create_test_product_one()
+        product_with_on_notice.notified_users.add(self.user)
+        
+        # Product without notifications
+        product_with_on_notice_two = create_test_product_two()
+        
+        mock_product = MagicMock()
+        mock_product.notification_count = 1
+        mock_specs.return_value = [mock_product]
+        
+        view = AdminDashboardView()
+        notified = view.get_most_notified_products()
+        
+        self.assertIsNotNone(notified)
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_template_shows_empty_message_for_no_interest(self, mock_specs):
+        """Test template displays message when no products have interest"""
+        mock_specs.return_value = []        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, 'Nothing in Most Interest List')
+    
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_template_shows_empty_message_for_no_notifications(self, mock_specs):
+        """Test template displays message when no notification requests"""
+        mock_specs.return_value = []
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, 'Nothing in Notify Me List')
+
+
+class TestAdminDashboardAccount(TestCase):
+    """Tests for account-related data"""
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:dashboard_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create customers
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+    
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_active_accounts_count(self, mock_revenue, mock_specs):
+        """Test that active accounts are counted correctly"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('0.00')
+        
+        # Create active customers
+        for i in range(5):
+            PopUpCustomer.objects.create_user(
+                email=f"test_user_{i}@mail.com",
+                password="staffPassword!232",
+                first_name=f"Test{i}",
+                last_name="User",
+                shoe_size="9",
+                size_gender="male",
+                is_active = True
+            )
+            
+
+        # Create inactive customer
+        PopUpCustomer.objects.create_user(
+
+                email=f"test_user{i}@mail.com",
+                password="staffPassword!232",
+                first_name=f"Test{i}",
+                last_name="User",
+                shoe_size="9",
+                size_gender="male",
+            ),
+
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Should count only active accounts
+        # for loop 5 + test_user, staff_user, other user
+        self.assertEqual(response.context['total_active_accounts'], 8)
+    
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_size_distribution_shows_top_3(self, mock_revenue, mock_specs):
+        """Test that size distribution shows top 3 sizes"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('0.00')
+        
+        # Create customers with different sizes
+        sizes = [
+            ('10', 'male', 5),   # Most common
+            ('9', 'male', 3),
+            ('8', 'female', 2),
+            ('11', 'male', 1),
+        ]
+
+        for size, gender, count in sizes:
+           for i in range(count):
+                PopUpCustomer.objects.create_user(
+                email=f"test_user_{size}_{gender}_{i}@mail.com",
+                password="staffPassword!232",
+                first_name=f"Test{i}",
+                last_name="User",
+                shoe_size=size,
+                size_gender=gender,
+                is_active = True
+            )
+            
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        size_counts = response.context['size_counts']
+        
+        # Should return top 3
+        self.assertLessEqual(len(size_counts), 3)
+        
+        # First should be most common
+        if len(size_counts) > 0:
+            self.assertEqual(size_counts[0]['shoe_size'], '10')
+            self.assertEqual(size_counts[0]['count'], 5)
+
+    
+
+class TestAdminDashboardPayment(TestCase):
+    """Tests for payment and shipping status"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:dashboard_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create customers
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_pending_shipments_shown(self, mock_revenue, mock_specs):
+        """Test pending 'okay to ship' payments are shown"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('0.00')
+        
+        # Create order
+        order = create_test_order_one(user=self.user, email=self.user.email)
+
+        # Create pending payment
+        payment = create_test_payment_one(order, '100.00', 'pending', 'stripe', False, False)
+
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending = response.context['payment_status_pending']
+        self.assertEqual(len(pending), 1)
+        self.assertEqual(pending[0].id, payment.id)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_cleared_shipments_excludes_shipped(self, mock_revenue, mock_specs):
+        """Test cleared payments exclude already shipped orders"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('0.00')
+        
+        order = create_test_order_one(user=self.user, email=self.user.email)
+
+        # Create order with shipment
+        self.create_shipment = create_test_shipment_one(status="shipped", order=order)
+        # Status | pending, cancelled, in_dispute, shipped, returned, delivered
+
+    
+        # Create cleared payment & ready to ship
+        payment = create_test_payment_one(order, '100.00', 'paid', 'stripe', False, True)
+        
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Should not show already shipped orders
+        cleared = response.context['payment_status_cleared']
+        self.assertEqual(len(cleared), 0)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_cleared_shipments_shows_ready_to_ship(self, mock_revenue, mock_specs):
+        """Test cleared payments that are ready to ship are shown"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('0.00')
+        
+        # Create order without shipment yet
+        order = create_test_order_one(user=self.user, email=self.user.email)
+        
+        # Create cleared payment
+        payment = create_test_payment_one(order, '100.00', 'paid', 'stripe', False, True)
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        cleared = response.context['payment_status_cleared']
+        print('cleared', cleared)
+        self.assertEqual(len(cleared), 1)
+        self.assertEqual(cleared[0].id, payment.id)
+
+
+
+class TestAdminDashboardTemplate(TestCase):
+    """Tests for template rendering"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:dashboard_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create customers
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_template_contains_all_sections(self, mock_revenue, mock_specs):
+        """Test that template renders all dashboard sections"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('150000.00')
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Check for section headers
+        self.assertContains(response, 'Pending Okay To Ship')
+        self.assertContains(response, 'Okay To Ship')
+        self.assertContains(response, 'En Route')
+        self.assertContains(response, 'Inventory')
+        self.assertContains(response, 'Most On Notice')
+        self.assertContains(response, 'Most Interested')
+        self.assertContains(response, 'Sales')
+        self.assertContains(response, 'Total Accounts')
+        self.assertContains(response, 'Account Sizes')
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_template_renders_yearly_sales(self, mock_revenue, mock_specs):
+        """Test that yearly sales are displayed with formatting"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('150000.00')
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Should use humanize intcomma filter
+        self.assertContains(response, '$150,000')
+    
+    @patch('pop_accounts.views.add_specs_to_products')
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_template_has_see_more_links(self, mock_revenue, mock_specs):
+        """Test that all sections have 'See More' links"""
+        mock_specs.return_value = []
+        mock_revenue.return_value = Decimal('0.00')
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Check for see more links
+        see_more_count = response.content.decode('utf-8').count('See More')
+        self.assertGreater(see_more_count, 5)  # At least 5 sections have "See More"
+
+
+class TestAdminDashboardIntegration(TestCase):
+    """Integration tests with real data"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:dashboard_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create customers
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = False
+        self.other_user.save(update_fields=['is_active'])
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    def test_complete_dashboard_with_real_data(self, mock_revenue):
+        """Test dashboard with realistic data"""
+        mock_revenue.return_value = Decimal('50000.00')
+        
+        # Create products
+        product = create_test_product_one()
+        
+        # Add interest
+        product.interested_users.add(self.user)
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        print('response.context', response.context)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_active_accounts'], 2)
+        self.assertContains(response, '$50,000')
+
+
+
+class TestAdminInventoryViewAccess(TestCase):
+    """Tests for authentication and authorization"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:inventory_admin')
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create customers
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+        
+
+    def test_unauthenticated_user_redirected(self):
+        """Test that unauthenticated users are redirected to login"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+
+    def test_non_staff_user_forbidden(self):
+        """Test that non-staff users get 403 Forbidden"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 403)
+
+
+    def test_staff_user_can_access(self):
+        """Test that staff users can access inventory"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/inventory.html'
+        )
+
+class TestAdminInventoryViewContext(TestCase):
+    """Tests for context data and template variables"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:inventory_admin')
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes',
+            is_active=True
+        )
+        
+        self.product_type_apparel = PopUpProductType.objects.create(
+            name='Apparel',
+            slug='apparel',
+            is_active=True
+        )
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_context_contains_required_keys(self, mock_specs):
+        """Test that context has all expected keys"""
+        mock_specs.return_value = []
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        expected_keys = [
+            'inventory',
+            'product_types',
+            'product_type',
+        ]
+        
+        for key in expected_keys:
+            self.assertIn(key, response.context, f"Missing key: {key}")
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_all_product_types_in_context(self, mock_specs):
+        """Test that all product types are available in context"""
+        mock_specs.return_value = []
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        product_types = response.context['product_types']
+        self.assertEqual(len(product_types), 2)
+        
+        # Check both types exist
+        type_slugs = [pt.slug for pt in product_types]
+        self.assertIn('shoes', type_slugs)
+        self.assertIn('apparel', type_slugs)
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_product_type_none_when_no_slug(self, mock_specs):
+        """Test that product_type is None when no slug provided"""
+        mock_specs.return_value = []
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIsNone(response.context['product_type'])
+
+
+class TestAdminInventoryViewQuery(TestCase):
+    """Tests for queryset filtering"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:inventory_admin')
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes',
+            is_active=True
+        )
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_queryset_filters_active_products_only(self, mock_specs):
+        """Test that only active products are shown"""
+        # Create active product
+        active_product = create_test_product_one()
+        
+        # Create inactive product
+        inactive_product = create_test_product_three()
+
+        mock_specs.return_value = [active_product]
+        
+        # Use client to make request (properly sets up view)
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Check what was returned
+        queryset = response.context['inventory']
+        
+        # Should only include active product
+        self.assertEqual(len(queryset), 1)
+        self.assertEqual(queryset[0], active_product)
+    
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_queryset_filters_inventory_status(self, mock_specs):
+        """Test that only 'in_inventory' and 'reserved' status products are shown"""
+
+        # Create in_inventory product
+        in_inventory = create_test_product_one()
+        
+        # Create reserved product
+        reserved =  create_test_product_two(inventory_status='reserved')
+    
+        # Create in_transit product (should not show)
+        in_transit =  create_test_product_three(inventory_status='in_transit')
+        
+       
+        mock_specs.return_value = [in_inventory, reserved]
+
+        # Use client to make request (properly sets up view)
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        queryset = response.context['inventory']
+        
+        # Should only show in_inventory and reserved
+        self.assertEqual(len(queryset), 2)
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_queryset_calls_add_specs_to_products(self, mock_specs):
+        """Test that add_specs_to_products is called"""
+        mock_specs.return_value = []
+        
+        # Use client to make request (properly sets up view)
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Verify the function was called at least once
+        self.assertTrue(mock_specs.called)
+
+
+class TestAdminInventoryViewFilterByType(TestCase):
+    """Tests for filtering by product type"""
+
+    def setUp(self):
+        self.client = Client()
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+        
+        self.product_type_apparel = PopUpProductType.objects.create(
+            name='Apparel',
+            slug='apparel'
+        )
+    
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_filter_by_product_type_slug(self, mock_specs):
+        """Test that filtering by slug works correctly"""
+
+        # Create products
+        shoes_product = create_test_product_one()
+        
+        apparel_product = create_test_product_two(product_type=self.product_type_apparel)
+        
+        mock_specs.return_value = [shoes_product]
+        
+        # Access URL with slug
+        url = reverse('pop_accounts:inventory_admin', kwargs={'slug': 'shoes'})
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        # Should have product_type in context
+        self.assertIsNotNone(response.context['product_type'])
+        self.assertEqual(response.context['product_type'].slug, 'shoes')
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_invalid_slug_returns_404(self, mock_specs):
+        """Test that invalid product type slug returns 404"""
+        mock_specs.return_value = []
+        
+        url = reverse('pop_accounts:inventory_admin', kwargs={'slug': 'nonexistent'})
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 404)
+
+
+class TestAdminInventoryViewInventoryList(TestCase):
+    """Tests for inventory list display"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:inventory_admin')
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        self.shoe_product = create_test_product_one(is_active=True)
+        self.shoe_product.save(update_fields=['is_active'])
+        self.shoe_product_two = create_test_product_two(is_active=True)
+        self.shoe_product_two.save(update_fields=['is_active'])
+        self.gaming_product = create_test_product_three(is_active=True)
+        self.gaming_product.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+        
+        self.product_type_apparel = PopUpProductType.objects.create(
+            name='Apparel',
+            slug='apparel'
+        )
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_empty_inventory_message(self, mock_specs):
+        """Test that 'Nothing in Inventory' message appears when empty"""
+        mock_specs.return_value = []
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, 'Nothing in Inventory')
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_inventory_items_displayed(self, mock_specs):
+        """Test that inventory items are displayed in template"""
+        
+        # Create mock product with specs
+        mock_product = self.shoe_product
+        mock_product.id = self.shoe_product.id
+        mock_product.product_title = 'Air Jordan 1'
+        mock_product.secondary_product_title = 'Retro High'
+        mock_product.specs = {
+            'model_year': '2024',
+            'size': '10',
+            'product_sex': 'Male'
+        }
+        
+        mock_specs.return_value = [mock_product]
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Check inventory is in context
+        self.assertEqual(len(response.context['inventory']), 1)
+        
+        # Check product details in template
+        self.assertContains(response, 'Air Jordan 1')
+        self.assertContains(response, 'Retro High')
+        self.assertContains(response, '2024')
+        self.assertContains(response, '10 US')
+        self.assertContains(response, 'M')
+        
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_multiple_inventory_items(self, mock_specs):
+        """Test that multiple inventory items are displayed"""
+        mock_products = []
+       
+        products = [self.shoe_product, self.shoe_product_two, self.gaming_product]
+        for p in products:
+            mock_products.append(p)
+        
+        mock_specs.return_value = mock_products
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        inventory = response.context['inventory']
+        self.assertEqual(len(inventory), 3)
+
+        self.assertContains(response, 'Past Bid Product 1')
+        self.assertContains(response, 'Past Bid Product 2')
+        self.assertContains(response, 'Switch 2')
+        
+
+    
+class TestAdminInventoryViewTemplate(TestCase):
+    """Tests for template rendering and UI elements"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:inventory_admin')
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        self.shoe_product = create_test_product_one(is_active=True)
+        self.shoe_product.save(update_fields=['is_active'])
+        self.shoe_product_two = create_test_product_two(is_active=True)
+        self.shoe_product_two.save(update_fields=['is_active'])
+        self.gaming_product = create_test_product_three(is_active=True)
+        self.gaming_product.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+        
+        self.product_type_apparel = PopUpProductType.objects.create(
+            name='Apparel',
+            slug='apparel'
+        )
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_template_has_product_type_filter_links(self, mock_specs):
+        """Test that filter links are displayed for each product type"""
+        mock_specs.return_value = []
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Check "All" link
+        self.assertContains(response, reverse('pop_accounts:inventory_admin'))
+        
+        # Check product type links
+        shoes_url = reverse('pop_accounts:inventory_admin', kwargs={'slug': 'shoes'})
+        apparel_url = reverse('pop_accounts:inventory_admin', kwargs={'slug': 'apparel'})
+        
+        self.assertContains(response, shoes_url)
+        self.assertContains(response, apparel_url)
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_selected_filter_has_active_class(self, mock_specs):
+        """Test that selected product type filter has 'selected' class"""
+        mock_specs.return_value = []
+        
+        url = reverse('pop_accounts:inventory_admin', kwargs={'slug': 'shoes'})
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        # The selected filter should have the 'selected' class
+        self.assertContains(response, 'class="selected"')
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_all_filter_selected_by_default(self, mock_specs):
+        """Test that 'All' filter is selected when no slug provided"""
+        mock_specs.return_value = []
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Check that 'All' link has selected class
+        content = response.content.decode()
+        # Look for the All link with selected class
+        self.assertIn('class="selected"', content)
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_edit_button_present_for_products(self, mock_specs):
+        """Test that Edit button is present for each product"""
+        mock_product = MagicMock()
+        mock_product.id = 1
+        mock_product.product_title = 'Test Product'
+        mock_product.secondary_product_title = 'Test'
+        # mock_product.get_absolute_url.return_value = '/products/test/'
+        mock_product.specs = {
+            'model_year': '2024',
+            'size': '10',
+            'product_sex': 'Male'
+        }
+        
+        mock_specs.return_value = [self.shoe_product]
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Check for Edit button
+        self.assertContains(response, 'Edit')
+        self.assertContains(response, 'pop_accounts/update-product-admin/')
+
+
+class TestAdminInventoryViewSpecsDisplay(TestCase):
+    """Tests for product specs display"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:inventory_admin')
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        self.shoe_product = create_test_product_one(is_active=True)
+        self.shoe_product.save(update_fields=['is_active'])
+
+        self.shoe_product_two = create_test_product_two(is_active=True)
+        self.shoe_product_two.save(update_fields=['is_active'])
+
+        self.gaming_product = create_test_product_three(is_active=True)
+        self.gaming_product.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+        
+        self.product_type_apparel = PopUpProductType.objects.create(
+            name='Apparel',
+            slug='apparel'
+        )
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_displays_model_year(self, mock_specs):
+        """Test that model year is displayed"""
+        mock_product = self.shoe_product
+        mock_product.id = self.shoe_product.id
+        mock_product.product_title = self.shoe_product.product_title
+        mock_product.secondary_product_title = self.shoe_product.secondary_product_title
+        mock_product.specs = {'model_year': '2025'}
+        
+        mock_specs.return_value = [mock_product]
+
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, '2025')
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_displays_size_or_na(self, mock_specs):
+        """Test that size is displayed or N/A if not present"""
+        # Product with size
+        mock_product_with_size = self.shoe_product
+        mock_product_with_size.id = self.shoe_product.id
+        mock_product_with_size.product_title = self.shoe_product.product_title
+        mock_product_with_size.secondary_product_title = self.shoe_product.secondary_product_title
+        mock_product_with_size.specs = {'size': '11'}
+        
+        # Product without size
+        mock_product_no_size = self.gaming_product
+        mock_product_no_size.id = self.gaming_product.id
+        mock_product_no_size.product_title = self.gaming_product.product_title
+        mock_product_no_size.secondary_product_title = self.gaming_product.secondary_product_title
+        mock_product_no_size.specs = {}
+        
+        mock_specs.return_value = [mock_product_with_size, mock_product_no_size]
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, '11 US')
+        self.assertContains(response, 'N/A')
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_displays_product_sex(self, mock_specs):
+        """Test that product sex is displayed correctly"""
+        # Male product
+        mock_male = self.shoe_product
+        mock_male.id = self.shoe_product.id
+        mock_male.product_title = self.shoe_product.product_title
+        mock_male.secondary_product_title = self.shoe_product.secondary_product_title
+        mock_male.specs = {'product_sex': 'Male'}
+        
+        # Female product
+        mock_female = self.shoe_product_two
+        mock_female.id = self.shoe_product_two.id
+        mock_female.product_title = self.shoe_product_two.product_title
+        mock_female.secondary_product_title = self.shoe_product_two.secondary_product_title
+        mock_female.specs = {'product_sex': 'Female'}
+        
+        # No gender
+        mock_no_gender = self.gaming_product
+        mock_no_gender.id = self.gaming_product.id
+        mock_no_gender.product_title = self.gaming_product.product_title
+        mock_no_gender.secondary_product_title = self.gaming_product.secondary_product_title
+        mock_no_gender.specs = {}
+        
+        mock_specs.return_value = [mock_male, mock_female, mock_no_gender]
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        content = response.content.decode()
+        # Count M and F displays
+        self.assertIn('M', content)
+        self.assertIn('F', content)
+        self.assertIn('--', content)
+
+
+class TestAdminInventoryViewIntegration(TestCase):
+    """Integration tests with complete flow"""
+
+    def setUp(self):
+        self.client = Client()
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        self.shoe_product = create_test_product_one(is_active=True)
+        self.shoe_product.save(update_fields=['is_active'])
+
+        self.shoe_product_two = create_test_product_two(is_active=True)
+        self.shoe_product_two.save(update_fields=['is_active'])
+
+        self.gaming_product = create_test_product_three(is_active=True)
+        self.gaming_product.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+        
+        self.product_type_apparel = PopUpProductType.objects.create(
+            name='Apparel',
+            slug='apparel'
+        )
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_complete_inventory_flow_all_products(self, mock_specs):
+        """Test complete flow: access inventory, see all products"""
+        mock_products = []
+        
+        products = [self.shoe_product, self.shoe_product_two]
+
+        for p in products:
+            mock_products.append(p)
+        
+        mock_specs.return_value = mock_products
+        
+        url = reverse('pop_accounts:inventory_admin')
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['inventory']), 2)
+        self.assertIsNone(response.context['product_type'])
+        self.assertContains(response, 'Past Bid Product 1')
+        self.assertContains(response, 'Past Bid Product 2')
+
+
+    @patch('pop_accounts.views.add_specs_to_products')
+    def test_complete_inventory_flow_filtered_by_type(self, mock_specs):
+        """Test complete flow: access inventory filtered by type"""
+        mock_product = self.shoe_product
+        mock_product.id = self.shoe_product.id
+        mock_product.product_title = self.shoe_product.product_title
+        mock_product.secondary_product_title = self.shoe_product.secondary_product_title
+        mock_product.specs = {
+            'model_year': '2024',
+            'size': '10',
+            'product_sex': 'Male'
+        }
+        
+        mock_specs.return_value = [mock_product]
+        
+        url = reverse('pop_accounts:inventory_admin', kwargs={'slug': 'shoes'})
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['inventory']), 1)
+        self.assertIsNotNone(response.context['product_type'])
+        self.assertEqual(response.context['product_type'].slug, 'shoes')
+        self.assertContains(response, 'Past Bid Product 1')
+
+
+
+
+
+
+
 
 
 

@@ -2,224 +2,221 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}
-Dashboard
-{% endblock %}
+{% block title %}Admin Dashboard{% endblock %}
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>Dashboard</h2>
-        </div>
-        <div class="the_dashboard_container">
-            <div class="personal_interest_notice_container">
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Pending Okay To Ship</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_inventory_container">
-                        <ul>
-                            {% for psp in payment_status_pending %}
-                            <li>
-                                <a href="{% url 'pop_accounts:pending_okay_to_ship' %}">
-                                    {{ psp.order }} - {{ psp.order.full_name}}
-                                </a>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:pending_okay_to_ship' %}">See More</a>
-                    </div>
+<div class="section_container">
+    <div class="page_title">
+        <h2>{{ admin_dashboard_copy.page_title }}</h2>
+    </div>
+    <div class="the_dashboard_container">
+        <div class="personal_interest_notice_container">
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Pending Okay To Ship</h2>
+                    <div class="blank_div"></div>
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Okay To Ship</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_inventory_container">
-                        <ul>
-                            {% for psc in payment_status_cleared %}
-                            <li>
-                                <a href="{% url 'pop_accounts:update_shipping' %}" data-shipment-id="{{ psc.id }}">
-                                    {{ psc.order }} - {{ psc.order.full_name}}
-                                </a>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:update_shipping' %}">See More</a>
-                    </div>
+                <div class="dashboard_admin_inventory_container">
+                    <ul>
+                        {% for psp in payment_status_pending %}
+                        <li>
+                            <a href="{% url 'pop_accounts:pending_okay_to_ship' %}">
+                                {{ psp.order }} - {{ psp.order.full_name}}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>En Route</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_inventory_container">
-                        <ul>
-                            {% for en in en_route %}
-                            <li>
-                                <a href="{{ pi.get_absolute_url }}"> {{ en.specs.model_year}} {{ en.product_title }}
-                                    {{ en.secondary_product_title}}
-                                </a>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:enroute' %}">See More</a>
-                    </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:pending_okay_to_ship' %}">See More</a>
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Inventory</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_inventory_container">
-                        <ul>
-                            {% for pi in product_inventory %}
-                            {% for spec in pi.popupproductspecificationvalue_set.all|slice:"2:3" %}
-                            <li>
-                                <a href="{{ pi.get_absolute_url }}">{{ spec }} {{ pi.product_title }}
-                                    {{ pi.secondary_product_title}}
-                                </a>
-                            </li>
-                            {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:inventory_admin' %}">See More</a>
-                    </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Okay To Ship</h2>
+                    <div class="blank_div"></div>
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Most On Notice</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_inventory_container">
-                        {% if top_notified_products %}
-                        <ul>
-                            {% for tnp in top_notified_products %}
-                            <li>
-                                <a href="{{ tnp.get_absolute_url }}">
-                                    {{ tnp.specs.model_year }} {{ tnp.product_title }} {{tnp.secondary_product_title }}
-                                </a>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% else %}
-                        <p>Nothing in Notify Me List</p>
-                        {% endif %}
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:most_on_notice' %}">See More</a>
-                    </div>
+                <div class="dashboard_admin_inventory_container">
+                    <ul>
+                        {% for psc in payment_status_cleared %}
+                        <li>
+                            <a href="{% url 'pop_accounts:update_shipping' %}" data-shipment-id="{{ psc.id }}">
+                                {{ psc.order }} - {{ psc.order.full_name}}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Most Interested</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_inventory_container">
-                        {% if top_interested_products%}
-                        <ul>
-                            {% for tip in top_interested_products %}
-                            <li>
-                                <a href="#">
-                                    {{ tip.specs.model_year }} {{ tip.product_title }} {{ tip.secondary_product_title }}
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:update_shipping' %}">See More</a>
+                </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>En Route</h2>
+                    <div class="blank_div"></div>
+                </div>
+                <div class="dashboard_admin_inventory_container">
+                    <ul>
+                        {% for en in en_route %}
+                        <li>
+                            <a href="{{ pi.get_absolute_url }}"> {{ en.specs.model_year}} {{ en.product_title }}
+                                {{ en.secondary_product_title}}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:enroute' %}">See More</a>
+                </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Inventory</h2>
+                    <div class="blank_div"></div>
+                </div>
+                <div class="dashboard_admin_inventory_container">
+                    <ul>
+                        {% for pi in product_inventory %}
+                        {% for spec in pi.popupproductspecificationvalue_set.all|slice:"2:3" %}
+                        <li>
+                            <a href="{{ pi.get_absolute_url }}">{{ spec }} {{ pi.product_title }}
+                                {{ pi.secondary_product_title}}
+                            </a>
+                        </li>
+                        {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:inventory_admin' %}">See More</a>
+                </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Most On Notice</h2>
+                    <div class="blank_div"></div>
+                </div>
+                <div class="dashboard_admin_inventory_container">
+                    {% if top_notified_products %}
+                    <ul>
+                        {% for tnp in top_notified_products %}
+                        <li>
+                            <a href="{{ tnp.get_absolute_url }}">
+                                {{ tnp.specs.model_year }} {{ tnp.product_title }} {{tnp.secondary_product_title }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>Nothing in Notify Me List</p>
+                    {% endif %}
+                </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:most_on_notice' %}">See More</a>
+                </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Most Interested</h2>
+                    <div class="blank_div"></div>
+                </div>
+                <div class="dashboard_admin_inventory_container">
+                    {% if top_interested_products%}
+                    <ul>
+                        {% for tip in top_interested_products %}
+                        <li>
+                            <a href="#">
+                                {{ tip.specs.model_year }} {{ tip.product_title }} {{ tip.secondary_product_title }}
 
-                                </a>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% else %}
-                        <p>Nothing in Most Interest List</p>
-                        {% endif %}
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:most_interested' %}">See More</a>
-                    </div>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>Nothing in Most Interest List</p>
+                    {% endif %}
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Total Open Bids</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>{{ admin_stats.total_open_bids }}</h2>
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:total_open_bids' %}">See More</a>
-                    </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:most_interested' %}">See More</a>
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Sales</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>${{ yearly_sales|intcomma }}</h2>
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:sales_admin' %}">See More</a>
-                    </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Total Open Bids</h2>
+                    <div class="blank_div"></div>
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Total Accounts</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sales_container">
-                        <h2>{{ total_active_accounts }}</h2>
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:total_accounts' %}">See More</a>
-                    </div>
+                <div class="dashboard_admin_sales_container">
+                    <h2>{{ admin_stats.total_open_bids }}</h2>
                 </div>
-                <div class="dashboard_databox_small">
-                    <div class="dashboard_databox_title">
-                        <div class="blank_div"></div>
-                        <h2>Account Sizes</h2>
-                        <div class="blank_div"></div>
-                    </div>
-                    <div class="dashboard_admin_sizes_container">
-                        {% if size_counts %}
-                        <ul>
-                            {% for sc in size_counts %}
-                            <li>
-                                <p>{{ sc.count }}</p>
-                                <p>{{ sc.shoe_size }} US</p>
-                                {% if sc.size_gender == "male"%}
-                                <p>M</p>
-                                {% else %}
-                                <p>F</p>
-                                {% endif %}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% endif %}
-                    </div>
-                    <div class="dashboard_admin_more_container">
-                        <a href="{% url 'pop_accounts:account_sizes' %}">See More</a>
-                    </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:total_open_bids' %}">See More</a>
+                </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Sales</h2>
+                    <div class="blank_div"></div>
+                </div>
+                <div class="dashboard_admin_sales_container">
+                    <h2>${{ yearly_sales|intcomma }}</h2>
+                </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:sales_admin' %}">See More</a>
+                </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Total Accounts</h2>
+                    <div class="blank_div"></div>
+                </div>
+                <div class="dashboard_admin_sales_container">
+                    <h2>{{ total_active_accounts }}</h2>
+                </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:total_accounts' %}">See More</a>
+                </div>
+            </div>
+            <div class="dashboard_databox_small">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>Account Sizes</h2>
+                    <div class="blank_div"></div>
+                </div>
+                <div class="dashboard_admin_sizes_container">
+                    {% if size_counts %}
+                    <ul>
+                        {% for sc in size_counts %}
+                        <li>
+                            <p>{{ sc.count }}</p>
+                            <p>{{ sc.shoe_size }} US</p>
+                            {% if sc.size_gender == "male"%}
+                            <p>M</p>
+                            {% else %}
+                            <p>F</p>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                <div class="dashboard_admin_more_container">
+                    <a href="{% url 'pop_accounts:account_sizes' %}">See More</a>
                 </div>
             </div>
         </div>
-</section>
+    </div>
+</div>
 
 {% endblock %}

@@ -39,9 +39,6 @@ class AllAuctionView(View):
 
         quick_bid_increments = [10, 20, 30]
 
-        for a in in_auction:
-            print('in_auct', a)
-
         context = {
             "in_auction": in_auction, "product_specifications": product_specifications, 
             "quick_bid_increments": quick_bid_increments, "user_zip":user_zip

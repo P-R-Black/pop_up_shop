@@ -8,7 +8,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin, UserPassesTestMixin
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import UpdateView, FormView
 from .token import account_activation_token
 from pop_up_order.utils.utils import user_orders, user_shipments 
@@ -59,8 +59,10 @@ from django.utils.safestring import mark_safe
 import logging
 from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
-from .pop_accounts_copy.admin_copy.admin_copy import (ADMIN_NAVIGATION_COPY, ADMIN_SHIPPING_UPDATE, 
-                                                      ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE)
+from .pop_accounts_copy.admin_copy.admin_copy import (
+    ADMIN_DASHBOARD_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, 
+    ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE
+    )
 from .pop_accounts_copy.user_copy.user_copy import (
     USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
     USER_ON_NOTICE_COPY, PERSONAL_INFO_COPY, USER_PASSWORD_RESET_PAGE, USER_OPEN_BIDS_COPY, USER_PAST_BIDS_COPY,
@@ -1025,6 +1027,8 @@ class ShippingTrackingView(LoginRequiredMixin, View):
 
 class UserOrderPager(LoginRequiredMixin, View):
     # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
     Displays the details of a specific user order, including all products,
     their specifications, and related shipment/billing info.
@@ -1113,92 +1117,155 @@ class UserOrderPager(LoginRequiredMixin, View):
 
 
 
-# ADMIN DASHBOARD
-@staff_member_required
-def dashboard_admin(request):
+class AdminDashboardView(UserPassesTestMixin, TemplateView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    Admin Dashboard View
+    Class-based view for Admin Dashboard 
+
+    Provides a snapshot of Admin Items:
+    - Pending skay to ship (2 business day window for payment to process before item shipped)
+    - Okay to ship: 2 business day window closed, no payment dispute, okay to ship item
+    - En Route: Items ordered for inventory but not yet in inventory
+    - Inventory: Items in inventory
+    - Most on Notice: Items users have put on notice the most
+    - Most Interested: Items users have marked as interested in the most
+    - Total Open Bids: How many opend bids
+    - Sales: Yearly Sales Number
+    - Total Accounts: Total Active Accouts
+    - Account Sizes; Active users grouped by shoe size
+
+    Attributes:
+        template_name (str): Template used to render the dashboard page.
+        admin_dashboard_copy (dict): Static copy/content used in dashboard display (from ADMIN_DASHBOARD_COPY).
+
+    Methods:
+        get(request):
+            Retrieves and prepares all context data for rendering the dashboard, including:
+                - Orders pending shipping
+                - Recent orders and shipments
+                - Items en route
+                - Inventory
+                - Top 3 most interested products
+                - Top 3 products on notice
+                - Number of active bids and enriched product info
+                - Recent orders and shipments
+                - Sales History
+            Renders the template with the prepared context.
+
+        post(request):
+            Currently returns the template with static dashboard copy only.
+            Can be extended to handle POST requests from dashboard actions in the future.
     """
-    admin_navigation = ADMIN_NAVIGATION_COPY
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/dashboard.html"
+    admin_dashboard_copy = ADMIN_DASHBOARD_COPY
 
-    # Get product inventory
-    product_inventory_qs = PopUpProduct.objects.prefetch_related(
-        'popupproductspecificationvalue_set__specification'
-    ).filter(
-        is_active=True,
-        inventory_status__in=['in_inventory', 'reserved']
-    )[:3]
+    def test_func(self):
+        return self.request.user.is_staff
     
-    # Convert to list and add specs
-    product_inventory = add_specs_to_products(product_inventory_qs)
+    def get_product_inventory(self):
+        """Get top 3 products in inventory"""
+        # Get product inventory
+        product_inventory_qs = PopUpProduct.objects.prefetch_related(
+            'popupproductspecificationvalue_set__specification'
+        ).filter(
+            is_active=True,
+            inventory_status__in=['in_inventory', 'reserved']
+        )[:3]
+        return add_specs_to_products(product_inventory_qs)
 
-    # Get en route products
-    en_route_qs = PopUpProduct.objects.prefetch_related(
-        'popupproductspecificationvalue_set__specification'
-    ).filter(
-        is_active=False, 
-        inventory_status="in_transit"
-    )[:3]
-    
-    # Convert to list and add specs
-    en_route = add_specs_to_products(en_route_qs)
+    def get_en_route_products(self):
+        """ Get top 3 products in transit"""
+        # Get en route products
+        en_route_qs = PopUpProduct.objects.prefetch_related(
+            'popupproductspecificationvalue_set__specification'
+        ).filter(
+            is_active=False, 
+            inventory_status="in_transit"
+        )[:3]
+        
+        # Convert to list and add specs
+        return add_specs_to_products(en_route_qs)
 
-    # Most interested products - ONLY show products with at least 1 interested user
-    most_interested_products = PopUpProduct.objects.annotate(
-        interest_count=Count('interested_users')
-    ).filter(
-        interest_count__gt=0  # Only products with actual interest
-    ).prefetch_related(
-        'popupproductspecificationvalue_set__specification'
-    ).order_by('-interest_count')[:3] 
+    def get_most_interested_products(self):
+        """Get top 3 product with most user interest"""
+        # Most interested products - ONLY show products with at least 1 interested user
+        most_interested_products = PopUpProduct.objects.annotate(
+            interest_count=Count('interested_users')
+        ).filter(
+            interest_count__gt=0  # Only products with actual interest
+        ).prefetch_related(
+            'popupproductspecificationvalue_set__specification'
+        ).order_by('-interest_count')[:3] 
 
-    # Most notification requested products - ONLY show products with at least 1 notification request
-    most_notified_products = PopUpProduct.objects.annotate(
-        notification_count=Count('notified_users')
-    ).filter(
-        notification_count__gt=0  # Only products with actual notification requests
-    ).prefetch_related(
-        'popupproductspecificationvalue_set__specification'
-    ).order_by('-notification_count')[:3]
-
-    # Query to get counts grouped by shoe_size and size_gender
-    size_counts = PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
-        count=Count('id')
-    ).order_by('-count')[:3]
+        return add_specs_to_products(most_interested_products)
 
 
-    top_interested_products = add_specs_to_products(most_interested_products)
-    top_notified_products = add_specs_to_products(most_notified_products)
-    total_active_accounts = PopUpCustomer.objects.filter(is_active=True).count()
-    yearly_sales = get_yearly_revenue_aggregated()
+    def get_most_notified_products(self):
+        # Most notification requested products - ONLY show products with at least 1 notification request
+        most_notified_products = PopUpProduct.objects.annotate(
+            notification_count=Count('notified_users')
+        ).filter(
+            notification_count__gt=0  # Only products with actual notification requests
+        ).prefetch_related(
+            'popupproductspecificationvalue_set__specification'
+        ).order_by('-notification_count')[:3]
 
-    # Pending 'Okay' to Ship
-    payment_status_pending = PopUpPayment.objects.filter(notified_ready_to_ship=False)[:3]
 
-    # Okay to Ship
-    payment_status_cleared = PopUpPayment.objects.filter(
-    notified_ready_to_ship=True
-        ).exclude(
-            order__shipment__status='shipped'
-        ).exclude(order__shipment__status='delivered').select_related('order')[:3]
-   
+        return add_specs_to_products(most_notified_products)
 
-    context = {
-        "admin_navigation": admin_navigation, 
-        'product_inventory': product_inventory, 
-        'en_route': en_route, 'top_interested_products': top_interested_products,
-        'top_notified_products':top_notified_products,
-        'total_active_accounts': total_active_accounts,
-        'size_counts': size_counts,
-        'yearly_sales': yearly_sales,
-        'payment_status_pending': payment_status_pending,
-        'payment_status_cleared': payment_status_cleared
-    }
+    def get_size_distribution(self):
+        """Get top 3 most common shoe sizes amoung customers"""
+        # Query to get counts grouped by shoe_size and size_gender
+        return PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
+            count=Count('id')
+        ).order_by('-count')[:3]
+        
 
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/dashboard.html', context)
+    def get_active_accounts_count(self):
+        """Get total number of active customer accounts"""
+        return PopUpCustomer.objects.filter(is_active=True).count()
+
+
+    def get_pending_shipments(self):
+        """Get top 3 payments pending 'Okay to Ship' notification"""
+        # Pending 'Okay' to Ship
+        return PopUpPayment.objects.filter(notified_ready_to_ship=False)[:2]
+
+    def get_cleared_shipments(self):
+        """Get top 3 payments cleared to ship but not yet shipped/delivered"""
+        # Okay to Ship
+        return PopUpPayment.objects.filter( notified_ready_to_ship=True
+            ).exclude(
+                order__shipment__status='shipped'
+            ).exclude(order__shipment__status='delivered').select_related('order')[:3]
+
+
+    def get_context_data(self, **kwargs):
+        """Build context with all dashboard data"""
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'product_inventory': self.get_product_inventory(),
+            'en_route': self.get_en_route_products(),
+            'top_interested_products': self.get_most_interested_products(),
+            'top_notified_products': self.get_most_notified_products(),
+            'total_active_accounts': self.get_active_accounts_count(),
+            'size_counts': self.get_size_distribution(),
+            'yearly_sales': get_yearly_revenue_aggregated(),
+            'payment_status_pending': self.get_pending_shipments(),
+            'payment_status_cleared': self.get_cleared_shipments(),
+            'admin_dashboard_copy': self.admin_dashboard_copy
+        })
+
+        return context
+
 
 
 class AdminInventoryView(UserPassesTestMixin, ListView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
     Admin Inventory View
     """
@@ -1210,6 +1277,7 @@ class AdminInventoryView(UserPassesTestMixin, ListView):
         return self.request.user.is_staff
 
     def get_queryset(self):
+
         base_queryset = PopUpProduct.objects.prefetch_related(
         'popupproductspecificationvalue_set__specification'
         ).filter(
@@ -1217,21 +1285,15 @@ class AdminInventoryView(UserPassesTestMixin, ListView):
             inventory_status__in=['in_inventory', 'reserved']
         )
 
+        inventory = add_specs_to_products(base_queryset)
+
     
         slug = self.kwargs.get('slug')
         if slug:
             product_type = get_object_or_404(PopUpProductType, slug=slug)
             base_queryset = base_queryset.filter(product_type=product_type)
-    
-        # Convert to list to force evaluation and add specs
-        products = list(base_queryset)
-        for product in products:
-            product.specs = {
-                spec.specification.name: spec.value
-                for spec in product.popupproductspecificationvalue_set.all()
-            }
         
-        return products
+        return inventory
 
     def get_context_data(self, **kwargs):
         """Add product_types, product_type, and coming_soon products to context"""
@@ -2178,7 +2240,7 @@ class CompleteProfileView(UpdateView):
             raise Http404("Pending social user not found.")
 
     def form_valid(self, form):
-        # 1️⃣ Save form updates
+        # 1️Save form updates
         user = form.save()
 
         # Log in user immediately so they appear authenticated
@@ -2208,7 +2270,7 @@ class CompleteProfileView(UpdateView):
         # 3️⃣ Fallback: if pipeline wasn’t present or didn’t redirect
         login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-        # Get response to incorporate into sign-in registratio modal
+        # Get response to incorporate into sign-in registration modal
         if self.request.headers.get("x-request-with") == "XMLHttpRequest":
             return JsonResponse({
                 "success": True,
