@@ -28,12 +28,11 @@
 
 }
 
+.account_on_notice_no p,
 .interested_in_year p,
 .interested_in_item p,
 .interested_in_size p {
-    /* font-size: 1.15rem; */
     font-size: clamp(1rem, 1.15rem, 2vw);
-
 }
 
 .interested_in_item a p {
@@ -46,8 +45,3 @@
     color: var(--text-color);
     transition: var(--tran-01);
 }
-
-/* .interested_in_condition {
-    display: flex;
-    justify-content: center;
-} */

@@ -9,113 +9,112 @@ Most on Notice
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>Most On Notice</h2>
-        </div>
-        <div class="interested_in_container">
-            <div class="admin_most_on_notice_container">
-                <div class="admin_most_on_notice_databox_headers">
-                    <h3>Accounts on Notice</h3>
-                    <h3>Year</h3>
-                    <h3>Item</h3>
-                    <h3>Size</h3>
-                </div>
+<div class="section_container">
+    <div class="page_title">
+        <h2>{{ most_on_notice_copy.page_title }}</h2>
+    </div>
+    <div class="interested_in_container">
+        <div class="admin_most_on_notice_container">
+            <div class="admin_most_on_notice_databox_headers">
+                {% for headers in most_on_notice_copy.page_item_list %}
+                <h3>{{ headers.header }}</h3>
+                {% endfor %}
+            </div>
+            <div class="interested_in_open_bids">
                 {% if most_notified %}
                 {% for product in most_notified %}
-                <div class="interested_in_open_bids">
-                    <div class="admin_most_on_notice_items_container">
-                        <div class="interested_in_year">
-                            <p><strong>{{ product.notification_count }}</strong></p>
-                        </div>
-                        <div class="interested_in_year">
-                            <p>{{ product.specs.model_year }}</p>
-                        </div>
-                        <div class="interested_in_item">
-                            <a href="product-details">
-                                <p>{{ product.product_title }} {{ product.secondary_product_title }}</p>
-                            </a>
-                        </div>
-                        <div class="interested_in_size">
-                            {% if i.specs.size %}
-                            {% if i.specs.size|is_val_integer %}
-                            <p class="inventory_size">{{ i.specs.size}} US</p>
-                            {% elif not i.specs.size|is_val_integer %}
-                            <p class="inventory_size">{{ i.specs.size}}</p>
-                            {% endif %}
+                <div class="admin_most_on_notice_items_container">
+                    <div class="account_on_notice_no">
+                        <p><strong>{{ product.notification_count }}</strong></p>
+                    </div>
+                    <div class="interested_in_year">
+                        <p>{{ product.specs.model_year }}</p>
+                    </div>
+                    <div class="interested_in_item">
+                        <a href="product-details">
+                            <p>{{ product.product_title }} {{ product.secondary_product_title }}</p>
+                        </a>
+                    </div>
+                    <div class="interested_in_size">
+                        {% if i.specs.size %}
+                        {% if i.specs.size|is_val_integer %}
+                        <p class="inventory_size">{{ i.specs.size}} US</p>
+                        {% elif not i.specs.size|is_val_integer %}
+                        <p class="inventory_size">{{ i.specs.size}}</p>
+                        {% endif %}
 
-                            {% if i.specs.product_sex == "Male" %}
-                            <p class="inventory_gen">M</p>
-                            {% elif i.specs.product_sex == "Female" %}
-                            <p class="inventory_gen">F</p>
-                            {% else %}
-                            <p>--</p>
-                            {% endif %}
+                        {% if i.specs.product_sex == "Male" %}
+                        <p class="inventory_gen">M</p>
+                        {% elif i.specs.product_sex == "Female" %}
+                        <p class="inventory_gen">F</p>
+                        {% else %}
+                        <p>--</p>
+                        {% endif %}
 
-                            {% endif %}
-                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
+                {% else %}
+                <p>Nothing On Notice</p>
                 {% endif %}
-                <hr class="data-line-break">
+            </div>
+            <hr class="data-line-break">
 
-                <div class="admin_bottom_data_container">
-                    <a href="{% url 'pop_accounts:most_on_notice' %}" class="dashboard_databox_smaller">
-                        <div class="dashboard_databox_title">
-                            <div class="blank_div"></div>
-                            <h3>Items on Notice</h3>
-                            <div class="blank_div"></div>
-                        </div>
-                        <div class="dashboard_admin_sales_container">
-                            <h2>{{ admin_stats.total_notification_instances }}</h2>
-                        </div>
-                    </a>
-                    <a href="{% url 'pop_accounts:most_interested' %}" class="dashboard_databox_smaller">
-                        <div class="dashboard_databox_title">
-                            <div class="blank_div"></div>
-                            <h3>Most Interesteds</h3>
-                            <div class="blank_div"></div>
-                        </div>
-                        <div class="dashboard_admin_sales_container">
-                            <h2>{{ admin_stats.total_interest_instances }}</h2>
-                        </div>
-                    </a>
-                    <a href="{% url 'pop_accounts:total_open_bids' %}" class="dashboard_databox_smaller">
-                        <div class="dashboard_databox_title">
-                            <div class="blank_div"></div>
-                            <h3>Total Open Bids</h3>
-                            <div class="blank_div"></div>
-                        </div>
-                        <div class="dashboard_admin_sales_container">
-                            <h2>{{ admin_stats.total_open_bids }}</h2>
-                        </div>
-                    </a>
-                    <a href="{% url 'pop_accounts:total_accounts' %}" class="dashboard_databox_smaller">
-                        <div class="dashboard_databox_title">
-                            <div class="blank_div"></div>
-                            <h3>Total Active Accounts</h3>
-                            <div class="blank_div"></div>
-                        </div>
-                        <div class="dashboard_admin_sales_container">
-                            <h2>{{ admin_stats.total_active_accounts }}</h2>
-                        </div>
-                    </a>
-                    <a href="{% url 'pop_accounts:account_sizes' %}" class="dashboard_databox_smaller">
-                        <div class="dashboard_databox_title">
-                            <div class="blank_div"></div>
-                            <h3>Account Sizes</h3>
-                            <div class="blank_div"></div>
-                        </div>
-                        <div class="dashboard_admin_sales_container">
-                            <h2>{{ admin_stats.most_common_size }}</h2>
-                        </div>
-                    </a>
-                </div>
+            <div class="admin_bottom_data_container">
+                <a href="{% url 'pop_accounts:most_on_notice' %}" class="dashboard_databox_smaller">
+                    <div class="dashboard_databox_title">
+                        <div class="blank_div"></div>
+                        <h3>Items on Notice</h3>
+                        <div class="blank_div"></div>
+                    </div>
+                    <div class="dashboard_admin_sales_container">
+                        <h2>{{ admin_stats.total_notification_instances }}</h2>
+                    </div>
+                </a>
+                <a href="{% url 'pop_accounts:most_interested' %}" class="dashboard_databox_smaller">
+                    <div class="dashboard_databox_title">
+                        <div class="blank_div"></div>
+                        <h3>Most Interesteds</h3>
+                        <div class="blank_div"></div>
+                    </div>
+                    <div class="dashboard_admin_sales_container">
+                        <h2>{{ admin_stats.total_interest_instances }}</h2>
+                    </div>
+                </a>
+                <a href="{% url 'pop_accounts:total_open_bids' %}" class="dashboard_databox_smaller">
+                    <div class="dashboard_databox_title">
+                        <div class="blank_div"></div>
+                        <h3>Total Open Bids</h3>
+                        <div class="blank_div"></div>
+                    </div>
+                    <div class="dashboard_admin_sales_container">
+                        <h2>{{ admin_stats.total_open_bids }}</h2>
+                    </div>
+                </a>
+                <a href="{% url 'pop_accounts:total_accounts' %}" class="dashboard_databox_smaller">
+                    <div class="dashboard_databox_title">
+                        <div class="blank_div"></div>
+                        <h3>Total Active Accounts</h3>
+                        <div class="blank_div"></div>
+                    </div>
+                    <div class="dashboard_admin_sales_container">
+                        <h2>{{ admin_stats.total_active_accounts }}</h2>
+                    </div>
+                </a>
+                <a href="{% url 'pop_accounts:account_sizes' %}" class="dashboard_databox_smaller">
+                    <div class="dashboard_databox_title">
+                        <div class="blank_div"></div>
+                        <h3>Account Sizes</h3>
+                        <div class="blank_div"></div>
+                    </div>
+                    <div class="dashboard_admin_sales_container">
+                        <h2>{{ admin_stats.most_common_size }}</h2>
+                    </div>
+                </a>
             </div>
         </div>
     </div>
-</section>
+</div>
 
 {% endblock %}

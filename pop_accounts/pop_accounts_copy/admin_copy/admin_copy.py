@@ -55,3 +55,27 @@ ADMIN_PRODUCT_UPDATE = {
     "product_title_box_coming_soon_title": "Coming Soon",
     "product_title_box_in_inventory_title": "In Inventory",
     }
+
+
+MOST_ON_NOTICE_COPY = {
+    "page_title": "Most On Notice", 
+    "page_item_list": [
+        {"header": "Accounts on Notice"},
+        {"header": "Year"},
+        {"header": "Item"},
+        {"header": "Size"}
+    ]
+
+}
+
+
+MOST_INTERESTED_COPY = {
+    "page_title": "Most Interested", 
+    "page_item_list": [
+        {"header": "Accounts Interested"},
+        {"header": "Year"},
+        {"header": "Item"},
+        {"header": "Size"}
+    ]
+
+}

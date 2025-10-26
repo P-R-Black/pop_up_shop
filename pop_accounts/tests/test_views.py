@@ -13,7 +13,7 @@ from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashb
 from unittest.mock import patch
 from django.utils import timezone
 from django.utils.timezone import now, make_aware
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta, datetime, timezone, date
 from uuid import uuid4
 from django.middleware.csrf import CsrfViewMiddleware
 from django.http import HttpRequest
@@ -137,34 +137,71 @@ def create_test_product(product_type, category, product_title, secondary_product
 
 
 def create_test_product_one(*args, **kwargs):
-    return PopUpProduct.objects.create(
-        product_type=create_product_type('shoe', is_active=True), category=create_category('Jordan 3', is_active=True), 
-        product_title="Past Bid Product 1", secondary_product_title="Past Bid 1", description="Brand new sneakers", 
-        slug="past-bid-product-1", buy_now_price="250.00", current_highest_bid="0", retail_price="150.00", 
-        brand=create_brand('Jordan'), auction_start_date=None,  auction_end_date=None, inventory_status="sold_out",
-        bid_count=0, reserve_price="100.00", is_active=False
-    )
+    # Set default values
+    defaults = {
+        'product_type': create_product_type('shoe', is_active=True),
+        'category': create_category('Jordan 3', is_active=True),
+        'product_title': "Past Bid Product 1",
+        'secondary_product_title': "Past Bid 1",
+        'description': "Brand new sneakers",
+        'slug': "past-bid-product-1",
+        'buy_now_price': "250.00",
+        'current_highest_bid': "0",
+        'retail_price': "150.00",
+        'brand': create_brand('Jordan'),
+        'auction_start_date': None,
+        'auction_end_date': None,
+        'inventory_status': "sold_out",  # Default value
+        'bid_count': 0,
+        'reserve_price': "100.00",
+        'is_active': False  # Default value
+    }
+    # Override defaults with any kwargs passed in
+    defaults.update(kwargs)
+    
+    # Create and return the product
+    return PopUpProduct.objects.create(**defaults)
+
 
 def create_test_product_two(*args, **kwargs):
-        return PopUpProduct.objects.create(
-            product_type_id=1, category=create_category('Jordan 4', is_active=True), 
-            product_title="Past Bid Product 2", secondary_product_title="Past Bid 2", description="Brand new sneakers", 
-            slug="past-bid-product-2", buy_now_price="300.00", current_highest_bid="0", 
-            retail_price="200.00", brand_id=1, auction_start_date=None,  auction_end_date=None, 
-            inventory_status="sold_out", bid_count=0, reserve_price="150.00", is_active=False
-        )
+    # Set default values
+    defaults = {
+        'product_type_id': 1, 'category': create_category('Jordan 4', is_active=True),
+        'product_title': "Past Bid Product 2", 'secondary_product_title': "Past Bid 2",
+        'description': "Brand new sneakers", 'slug': "past-bid-product-2", 'buy_now_price': "300.00", 
+        'current_highest_bid': "0", 'retail_price': "200.00", 'brand_id': 1, 'auction_start_date': None, 
+        'auction_end_date': None, 'inventory_status': "sold_out", 'bid_count': 0, 'reserve_price': "150.00",
+        'is_active': False  # Default value
+    }
+
+    # Override defaults with any kwargs passed in
+    defaults.update(kwargs)
+    
+    # Create and return the product
+    return PopUpProduct.objects.create(**defaults)
+
 
 
 
 def create_test_product_three(*args, **kwargs):
-        return PopUpProduct.objects.create(
-            product_type=create_product_type('gaming system', is_active=True), 
-            category=create_category('Switch', is_active=True), product_title="Switch 2", 
-            secondary_product_title="", description="New Nintendo Switch 2", 
-            slug="switch-2", buy_now_price="350.00", current_highest_bid="0", 
-            retail_price="200.00", brand=create_brand('Nintendo'), auction_start_date=None,  auction_end_date=None, 
-            inventory_status="in_inventory", bid_count=0, reserve_price="225.00", is_active=False
-        )
+        # Set default values
+        defaults = {
+            'product_type': create_product_type('gaming system', is_active=True), 
+            'category': create_category('Switch', is_active=True), 'product_title': "Switch 2", 
+            'secondary_product_title': "", 'description': "New Nintendo Switch 2", 
+            'slug': "switch-2", 'buy_now_price': "350.00", 'current_highest_bid': "0", 
+            'retail_price': "250.00", 'brand': create_brand('Nintendo'), 'auction_start_date': None, 
+            'auction_end_date': None, 'inventory_status': "in_inventory", 'bid_count': 0, 
+            'reserve_price': "225.00",
+            'is_active': False  # Default value
+        }
+
+        # Override defaults with any kwargs passed in
+        defaults.update(kwargs)
+        
+        # Create and return the product
+        return PopUpProduct.objects.create(**defaults)
+
 
 
 def create_test_shipping_address_one(*args, **kwargs):
@@ -233,16 +270,6 @@ def create_test_payment_one(order, amount, status, payment_method, suspicious_fl
             suspicious_flagged=suspicious_flagged,
             notified_ready_to_ship=notified_ready_to_ship
         )
-
-"""
-order
-carrier
-tracking_number
-shipped_at
-estimated_delivery
-delivered_at
-status
-"""
 
 # self.shipment = PopUpShipment.objects.create(
         #     carrier='UPS',
@@ -3063,7 +3090,6 @@ class TestIntegration(TestCase):
     def test_full_shipping_tracking_flow(self):
         """Test the complete flow from login to viewing shipments"""
         # Login
-        # self.client.login(username=self.user.email, password='testpass!23')
         self.client.force_login(self.user)
 
         # Create complete test data
@@ -4888,10 +4914,1355 @@ class TestAdminInventoryViewIntegration(TestCase):
 
 
 
+class TestEnRouteViewAccess(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:enroute')
+
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create customers
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+        self.shoe_product = create_test_product_one(is_active=True)
+        self.shoe_product.save(update_fields=['is_active'])
+
+        self.shoe_product_two = create_test_product_two(is_active=True)
+        self.shoe_product_two.save(update_fields=['is_active'])
+
+        self.gaming_product = create_test_product_three(is_active=True)
+        self.gaming_product.save(update_fields=['is_active'])
+    
+    def test_unauthenticated_user_redirected(self):
+        """Test that unauthenticated users are redirected to login"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+    def test_non_staff_user_forbidden(self):
+        """Test that non-staff users get 403 Forbidden"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 403)
+    
+    def test_staff_user_can_access(self):
+        """Test that staff users can access en route page"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/en_route.html'
+        )
+    
+
+
+class TestEnRouteViewContext(TestCase):
+    """Tests for context data and template variables"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:enroute')
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+        
+
+
+    def test_context_contains_required_keys(self):
+        """Test that context has all expected keys"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        expected_keys = [
+            'en_route',
+            'coming_soon',
+            'product_types',
+            'product_type',
+        ]
+        
+        for key in expected_keys:
+            self.assertIn(key, response.context, f"Missing key: {key}")
+
+
+    def test_product_type_none_when_no_slug(self):
+        """Test that product_type is None when no slug provided"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIsNone(response.context['product_type'])
+    
+
+    def test_all_product_types_in_context(self):
+        """Test that all product types are in context"""
+        # Create additional product type
+        PopUpProductType.objects.create(name='Apparel', slug='apparel')
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        product_types = response.context['product_types']
+        self.assertEqual(len(product_types), 2)
+
+
+class TestEnRouteViewQuery(TestCase):
+    """Tests for queryset filtering"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:enroute')
+
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+
+        # Create Product In Transit
+        self.shoe_product = create_test_product_one(is_active=False, inventory_status="in_transit")
+        self.shoe_product.save(update_fields=['is_active', 'inventory_status'])
+
+        # Create Product In Inventory
+        self.shoe_product_two = create_test_product_two(is_active=True, inventory_status="in_transit")
+        self.shoe_product_two.save(update_fields=['is_active', 'inventory_status'])
+
+    def test_only_shows_in_transit_products(self):
+        """Test that only products with 'in_transit' status are shown"""
+
+        # Create in_transit product (should show)
+        in_transit = self.shoe_product
+
+        # Create in_inventory product (should NOT show)
+        in_inventory = self.shoe_product_two
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        en_route = response.context['en_route']
+        
+        # Should only have in_transit product
+        self.assertEqual(len(en_route), 1)
+        self.assertEqual(en_route[0].product_title, 'Past Bid Product 1')
+
+
+    def test_only_shows_inactive_products(self):
+        """Test that only inactive products are shown"""
+
+        # Create active, in_transit product (should NOT show)
+        active_transit = self.shoe_product_two
+
+        # Create inactive, in_transit product (should show)
+        inactive_transit = self.shoe_product
+        
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        en_route = response.context['en_route']
+        
+        # Should only show inactive product
+        self.assertEqual(len(en_route), 1)
+        self.assertEqual(en_route[0].product_title, 'Past Bid Product 1')
+
+
+    def test_excludes_different_inventory_statuses(self):
+        """Test that reserved, sold, etc. products are excluded"""
+        # Create products with various statuses
+        
+        in_transit_product = self.shoe_product
+        reserved_product = create_test_product_three(is_active=False, inventory_status="reserved")
+
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        en_route = response.context['en_route']
+        
+        # Should only show the in_transit product
+        self.assertEqual(len(en_route), 1)
+        self.assertEqual(en_route[0].product_title, 'Past Bid Product 1')
+
+
+class TestEnRouteViewFilterByType(TestCase):
+    """Tests for filtering by product type"""
+
+    def setUp(self):
+        self.client = Client()
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+
+        self.product_type_apparel = PopUpProductType.objects.create(
+            name='Apparel',
+            slug='apparel'
+        )
+
+        # Create Product In Transit
+        self.shoe_product = create_test_product_one(is_active=False, product_type=self.product_type_shoes, inventory_status="in_transit")
+        self.shoe_product.save(update_fields=['is_active', 'inventory_status'])
+
+        # Create Product In Inventory
+        self.shoe_product_two = create_test_product_two(is_active=True, inventory_status="in_transit")
+        self.shoe_product_two.save(update_fields=['is_active', 'inventory_status'])
+
+        self.gaming_product = create_test_product_three(is_active=False, inventory_status="in_transit")
+    
+        
+    def test_filter_by_product_type_slug(self):
+        """Test that filtering by slug works correctly"""
+        # Create shoes product
+        shoes_product =self.shoe_product 
+        
+        # Create apparel product
+        apparel_product = self.shoe_product_two
+        
+        # Filter by shoes
+        url = reverse('pop_accounts:enroute', kwargs={'slug': 'shoes'})
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        # Should only show shoes
+        en_route = response.context['en_route']
+        self.assertEqual(len(en_route), 1)
+        self.assertEqual(en_route[0].product_title, 'Past Bid Product 1')
+        
+        # Check product_type in context
+        self.assertIsNotNone(response.context['product_type'])
+        self.assertEqual(response.context['product_type'].slug, 'shoes')
+
+
+    def test_all_products_shown_without_slug(self):
+        """Test that all in_transit products shown without slug filter"""
+        # Create products of different types
+        shoes_product = self.shoe_product 
+        gaming_product = self.gaming_product 
+        
+        
+        url = reverse('pop_accounts:enroute')
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        # Should show both products
+        en_route = response.context['en_route']
+        self.assertEqual(len(en_route), 2)
+
+
+    def test_invalid_slug_returns_404(self):
+        """Test that invalid product type slug returns 404"""
+        url = reverse('pop_accounts:enroute', kwargs={'slug': 'nonexistent'})
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 404)
+
+
+
+class TestEnRouteViewIntegration(TestCase):
+    """Integration tests with complete flow"""
+
+    def setUp(self):
+        self.client = Client()
+        
+        # Create staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+        
+        # Create product types
+        self.product_type_shoes = PopUpProductType.objects.create(
+            name='Shoes',
+            slug='shoes'
+        )
+
+        self.product_type_gaming = PopUpProductType.objects.create(
+            name='Game System',
+            slug='game-system'
+        )
+
+
+    
+    def test_complete_en_route_flow(self):
+        """Test complete flow: view all en route products with specs"""
+        # Create in_transit products
+        self.shoe_product = create_test_product_one(is_active=False,  inventory_status="in_transit")
+        self.gaming_product = create_test_product_three(is_active=False, inventory_status="in_transit")
+
+        # Create specifications
+        self.size_spec = PopUpProductSpecification.objects.create(
+            product_type=self.product_type_shoes,
+            name='size')
+        
+        self.color_spec = PopUpProductSpecification.objects.create(
+            product_type=self.product_type_shoes,
+            name='colorway')
+ 
+
+        PopUpProductSpecificationValue.objects.create(
+            product=self.shoe_product,
+            specification=self.size_spec,
+            value='9'
+        )
+
+        PopUpProductSpecificationValue.objects.create(
+            product=self.shoe_product,
+            specification=self.color_spec,
+            value='black'
+        )
+
+
+         # Create specifications
+        self.size_spec = PopUpProductSpecification.objects.create(
+            product_type=self.product_type_gaming ,
+            name='size')
+        
+        self.color_spec = PopUpProductSpecification.objects.create(
+            product_type=self.product_type_gaming ,
+            name='colorway')
+
+
+        PopUpProductSpecificationValue.objects.create(
+            product=self.gaming_product,
+            specification=self.color_spec,
+            value='black'
+        )
+
+        PopUpProductSpecificationValue.objects.create(
+            product=self.gaming_product,
+            specification=self.size_spec,
+            value='N/A'
+        )
+        
+        url = reverse('pop_accounts:enroute')
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['en_route']), 2)
+        self.assertIsNone(response.context['product_type'])
+        
+        # Check specs were added
+        print('response.context', response.context['en_route'])
+        for product in response.context['en_route']:
+            self.assertTrue(hasattr(product, 'specs'))
+            self.assertIn('size', product.specs)
+            self.assertIn('colorway', product.specs)
+    
+
+    def test_complete_flow_with_type_filter(self):
+        """Test complete flow: filtered by product type"""
+        
+        shoe_product = create_test_product_one(is_active=False, 
+                                               product_type=self.product_type_shoes, 
+                                               inventory_status="in_transit")
+
+
+        size_spec = PopUpProductSpecification.objects.create(
+            product_type=self.product_type_shoes,
+            name='size')
+    
+
+        PopUpProductSpecificationValue.objects.create(
+            product=shoe_product,
+            specification=size_spec,
+            value='9'
+        )
+        
+        url = reverse('pop_accounts:enroute', kwargs={'slug': 'shoes'})
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['en_route']), 1)
+        self.assertIsNotNone(response.context['product_type'])
+        self.assertEqual(response.context['product_type'].slug, 'shoes')
+        
+        # Verify specs
+        product = response.context['en_route'][0]
+        self.assertEqual(product.specs['size'], '9')
+
+
+class TestSalesViewAccess(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:sales_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create customers
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+    
+    def test_unauthenticated_user_redirected(self):
+        """Test that unauthenticated users are redirected to login"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+    
+    def test_non_staff_user_redirected(self):
+        """Test that non-staff users are redirected"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+
+        # Should redirect to admin page
+        self.assertEqual(response.status_code, 403)
+
+
+    def test_staff_user_can_access(self):
+        """Test that staff users can access sales page"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/sales.html')
+    
+
+class TestSalesViewContext(TestCase):
+    """Tests for context data"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:sales_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_context_contains_all_required_keys(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly
+        ):
+        """Test that context has all expected keys"""
+        # Mock return values
+        mock_yearly.return_value = Decimal('50000.00')
+        mock_monthly.return_value = Decimal('5000.00')
+        mock_weekly.return_value = Decimal('1200.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        expected_keys = [
+            'year',
+            'month',
+            'yearly_sales',
+            'monthly_sales',
+            'weekly_sales',
+            'past_twenty_day_sales_json',
+            'past_twelve_months_sales_json',
+            'past_five_years_sales_json',
+            'day_over_day_sales_comp_json',
+            'year_over_year_comp_json',
+            'month_over_month_comp_json',
+        ]
+        
+        for key in expected_keys:
+            self.assertIn(key, response.context, f"Missing key: {key}")
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_current_date_info(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that year and month are current date"""
+        # Mock all return values
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        current_date = date.today()
+        expected_year = current_date.strftime("%Y")
+        expected_month = current_date.strftime("%B")
+        
+        self.assertEqual(response.context['year'], expected_year)
+        self.assertEqual(response.context['month'], expected_month)
+
+
+class TestSalesViewAggregateSales(TestCase):
+    """Tests for aggregate sales data"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:sales_admin')
+                
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_yearly_sales_displayed(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that yearly sales are displayed correctly"""
+        mock_yearly.return_value = Decimal('125000.50')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.context['yearly_sales'], Decimal('125000.50'))
+        
+        # Check it's formatted with commas in template
+        self.assertContains(response, '$125,000.50')
+
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_monthly_sales_displayed(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that monthly sales are displayed correctly"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('15250.75')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.context['monthly_sales'], Decimal('15250.75'))
+        self.assertContains(response, '$15,250.75')
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_weekly_sales_displayed(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that weekly sales are displayed correctly"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('3450.25')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.context['weekly_sales'], Decimal('3450.25'))
+        self.assertContains(response, '$3,450.25')
+
+
+class TestSalesViewHistoricalData(TestCase):
+    """Tests for historical sales data (JSON)"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:sales_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_past_twenty_day_sales_json(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that 20-day sales data is JSON formatted"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {
+            'labels': ['2024-01-01', '2024-01-02'],
+            'data': [100.50, 250.75]
+        }
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Get JSON from context
+        json_data = response.context['past_twenty_day_sales_json']
+        
+        # Parse it back
+        parsed = json.loads(json_data)
+        
+        self.assertEqual(parsed['labels'], ['2024-01-01', '2024-01-02'])
+        self.assertEqual(parsed['data'], [100.50, 250.75])
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_past_twelve_months_sales_json(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that 12-month sales data is JSON formatted"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {
+            'labels': ['2024-01', '2024-02'],
+            'data': [5000, 6000]
+        }
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        json_data = response.context['past_twelve_months_sales_json']
+        parsed = json.loads(json_data)
+        
+        self.assertEqual(parsed['labels'], ['2024-01', '2024-02'])
+        self.assertEqual(parsed['data'], [5000, 6000])
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_past_five_years_sales_json(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that 5-year sales data is JSON formatted"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {
+            'labels': ['2020', '2021', '2022', '2023', '2024'],
+            'data': [50000, 60000, 75000, 90000, 100000]
+        }
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        json_data = response.context['past_five_years_sales_json']
+        parsed = json.loads(json_data)
+        
+        self.assertEqual(len(parsed['labels']), 5)
+        self.assertEqual(parsed['data'][4], 100000)
+
+
+class TestSalesViewComparisonData(TestCase):
+    """Tests for comparison metrics (JSON)"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:sales_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_day_over_day_comparison_json(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that day-over-day comparison data is JSON formatted"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {
+            'labels': ['01-15', '01-16'],
+            'current_year': [100, 120],
+            'previous_year': [90, 110]
+        }
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        json_data = response.context['day_over_day_sales_comp_json']
+        parsed = json.loads(json_data)
+        
+        self.assertIn('current_year', parsed)
+        self.assertIn('previous_year', parsed)
+        self.assertEqual(parsed['current_year'], [100, 120])
+        self.assertEqual(parsed['previous_year'], [90, 110])
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_year_over_year_comparison_json(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly):
+        """Test that year-over-year comparison data is JSON formatted"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {
+            'labels': ['Jan', 'Feb', 'Mar'],
+            'current_year': [5000, 6000, 7000],
+            'previous_year': [4500, 5500, 6500]
+        }
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        json_data = response.context['year_over_year_comp_json']
+        parsed = json.loads(json_data)
+        
+        self.assertEqual(parsed['labels'], ['Jan', 'Feb', 'Mar'])
+        self.assertEqual(len(parsed['current_year']), 3)
+        self.assertEqual(len(parsed['previous_year']), 3)
+
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_month_over_month_comparison_json(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly
+    ):
+        """Test that month-over-month comparison data is JSON formatted"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {
+            'labels': ['2024-01', '2024-02'],
+            'current_year': [10000, 12000],
+            'previous_year': [9000, 11000]
+        }
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        json_data = response.context['month_over_month_comp_json']
+        parsed = json.loads(json_data)
+        
+        self.assertEqual(parsed['labels'], ['2024-01', '2024-02'])
+        self.assertGreater(parsed['current_year'][1], parsed['current_year'][0])
+
+
+class TestSalesViewTemplate(TestCase):
+    """Tests for template rendering"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:sales_admin')
+        
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+
+    @patch('pop_accounts.views.get_yearly_revenue_aggregated')
+    @patch('pop_accounts.views.get_monthly_revenue')
+    @patch('pop_accounts.views.get_weekly_revenue')
+    @patch('pop_accounts.views.get_last_20_days_sales')
+    @patch('pop_accounts.views.get_last_12_months_sales')
+    @patch('pop_accounts.views.get_last_5_years_sales')
+    @patch('pop_accounts.views.get_yoy_day_sales')
+    @patch('pop_accounts.views.get_year_over_year_comparison')
+    @patch('pop_accounts.views.get_month_over_month_comparison')
+    def test_template_has_sales_filter(
+        self, mock_mom, mock_yoy, mock_day, mock_5y, mock_12m, mock_20d,
+        mock_weekly, mock_monthly, mock_yearly
+    ):
+        """Test that template includes filter links"""
+        mock_yearly.return_value = Decimal('0.00')
+        mock_monthly.return_value = Decimal('0.00')
+        mock_weekly.return_value = Decimal('0.00')
+        mock_20d.return_value = {'labels': [], 'data': []}
+        mock_12m.return_value = {'labels': [], 'data': []}
+        mock_5y.return_value = {'labels': [], 'data': []}
+        mock_day.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_yoy.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        mock_mom.return_value = {'labels': [], 'current_year': [], 'previous_year': []}
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Check for filter options
+        self.assertContains(response, 'data-view="day"')
+        self.assertContains(response, 'data-view="month"')
+        self.assertContains(response, 'data-view="year"')
 
 
 
 
+class TestMostOnNoticeView(TestCase):
+    """Test suite for MostOnNoticeView"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.client = Client()
+        
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+        
+        # Create some notification users
+        self.notified_user1 = create_test_user('notified1@test.com', 'testpass123', 'Notified', 'User1', '9', 'male', is_active=False)
+        self.notified_user1.is_active = True
+        self.notified_user1.save(update_fields=['is_active'])
+
+        self.notified_user2 = create_test_user('notified2@test.com','testpass123', 'Notified', 'User2', '8', 'female', is_active=False)
+        self.notified_user2.is_active = True
+        self.notified_user2.save(update_fields=['is_active'])
+
+        self.notified_user3 = create_test_user('notified3@test.com','testpass123', 'Notified', 'User3', '7', 'male', is_active=False)
+        self.notified_user3.is_active = True
+        self.notified_user3.save(update_fields=['is_active'])
+
+        
+        # Create test products
+        # 'product_type': create_product_type('shoe', is_active=True),
+        # 'category': create_category('Jordan 3', is_active=True),
+        #  'brand': create_brand('Jordan'),
+        self.test_prod_one = create_test_product_one()
+        self.test_prod_two = create_test_product_two()
+        self.test_prod_three = create_test_product_three()
+        self.product_no_request = create_test_product(
+            product_type=create_product_type('nicknack', is_active=True), 
+            category=create_category('Nicknack 1', is_active=True), 
+            product_title="Product No Request", 
+            secondary_product_title="No Request", 
+            description="There is no request for this product", 
+            slug=slugify("Product No Request No Request"), 
+            buy_now_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=create_brand('Acme'), 
+            auction_start_date=None, 
+            auction_end_date=None, 
+            inventory_status="in_inventory", 
+            bid_count="0", 
+            reserve_price="0", 
+            is_active=True)
+        
+
+        self.user.prods_on_notice_for.add(self.test_prod_one)
+        self.other_user.prods_on_notice_for.add(self.test_prod_one)
+        self.notified_user1.prods_on_notice_for.add(self.test_prod_one)
+
+        self.user.prods_on_notice_for.add(self.test_prod_two)
+        self.other_user.prods_on_notice_for.add(self.test_prod_two)
+
+        self.other_user.prods_on_notice_for.add(self.test_prod_three)
+        
+        # URL for the view
+        self.url = reverse('pop_accounts:most_on_notice')  # Adjust name to match your URL pattern
+    
+    
+    def test_unauthenticated_user_redirected(self):
+        """Test that unauthenticated users are redirected to login"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+    def test_non_staff_user_forbidden(self):
+        """Test that non-staff users get 403 Forbidden"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 403)
+    
+    def test_staff_user_can_access(self):
+        """Test that staff users can access On Notice"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/most_on_notice.html'
+        )
+
+    def test_context_contains_most_notified(self):
+        """Test that context contains 'most_notified' key"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('most_notified', response.context)
+
+        most_notified = response.context['most_notified']
+        # Should show 3 products (excluding product_no_requests)
+        self.assertEqual(len(most_notified), 3)
+        
+        # Verify product with no requests is not in the list
+        product_ids = [p.id for p in most_notified]
+        self.assertNotIn(self.product_no_request.id, product_ids)
+    
+
+    def test_products_ordered_by_request_count(self):
+        """Test that products are ordered by notification request count (descending)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        most_notified = list(response.context['most_notified'])
+        
+        # Verify order: Product 1 (3 requests), Product 2 (2), Product 3 (1)
+        self.assertEqual(most_notified[0].id, self.test_prod_one.id)
+        self.assertEqual(most_notified[1].id, self.test_prod_two.id)
+        self.assertEqual(most_notified[2].id, self.test_prod_three.id)
+    
+
+    def test_notification_count_annotation(self):
+        """Test that products have correct notification_count values"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        most_notified = list(response.context['most_notified'])
+        
+        # Verify notification counts match expected values
+        self.assertEqual(most_notified[0].notification_count, 3)
+        self.assertEqual(most_notified[1].notification_count, 2)
+        self.assertEqual(most_notified[2].notification_count, 1)
+    
+
+    def test_empty_results_when_no_requests(self):
+        """Test view shows empty list when no products have notification requests"""
+        # Remove all notification requests
+        self.user.prods_on_notice_for.clear()
+        self.other_user.prods_on_notice_for.clear()
+        self.notified_user1.prods_on_notice_for.clear()
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        most_notified = response.context['most_notified']
+        self.assertEqual(len(most_notified), 0)
+
+
+    def test_dynamic_count_updates(self):
+        """Test that counts update when users add/remove notification requests"""
+        self.client.force_login(self.staff_user)
+        
+        # Initial state: product1 has 3 requests
+        response = self.client.get(self.url)
+        most_notified = list(response.context['most_notified'])
+        self.assertEqual(most_notified[0].notification_count, 3)
+        
+        # Remove one user's request for product1
+        self.user.prods_on_notice_for.remove(self.test_prod_one)
+        
+        # Verify count decreased
+        response = self.client.get(self.url)
+        most_notified = list(response.context['most_notified'])
+        product1_result = [p for p in most_notified if p.id == self.test_prod_one.id][0]
+        self.assertEqual(product1_result.notification_count, 2)
+
+
+    def test_product_with_single_request_still_shown(self):
+        """Test that products with exactly 1 request are included (boundary test)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        most_notified = response.context['most_notified']
+        product_ids = [p.id for p in most_notified]
+        
+        # Product 3 has exactly 1 request and should be shown
+        self.assertIn(self.test_prod_three.id, product_ids)
+    
+
+    def test_product_drops_from_list_when_last_request_removed(self):
+        """Test that product is removed from list when its last notification request is removed"""
+        self.client.force_login(self.staff_user)
+        
+        # Remove the only request for product3
+        self.other_user.prods_on_notice_for.remove(self.test_prod_three)
+        
+        response = self.client.get(self.url)
+        most_notified = response.context['most_notified']
+        product_ids = [p.id for p in most_notified]
+        
+        # Product 3 should no longer appear
+        self.assertNotIn(self.test_prod_three.id, product_ids)
+        
+        # Should now only have 2 products
+        self.assertEqual(len(most_notified), 2)
+
+
+class TestMostInterestedView(TestCase):
+    """Test suite for MostInterestedView"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.client = Client()
+        
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.other_user = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.other_user.is_active = True
+        self.other_user.save(update_fields=['is_active'])
+
+        
+        # Create some notification users
+        self.notified_user1 = create_test_user('notified1@test.com', 'testpass123', 'Notified', 'User1', '9', 'male', is_active=False)
+        self.notified_user1.is_active = True
+        self.notified_user1.save(update_fields=['is_active'])
+
+        self.notified_user2 = create_test_user('notified2@test.com','testpass123', 'Notified', 'User2', '8', 'female', is_active=False)
+        self.notified_user2.is_active = True
+        self.notified_user2.save(update_fields=['is_active'])
+
+        self.notified_user3 = create_test_user('notified3@test.com','testpass123', 'Notified', 'User3', '7', 'male', is_active=False)
+        self.notified_user3.is_active = True
+        self.notified_user3.save(update_fields=['is_active'])
+
+        
+        # Create test products
+        # 'product_type': create_product_type('shoe', is_active=True),
+        # 'category': create_category('Jordan 3', is_active=True),
+        #  'brand': create_brand('Jordan'),
+        self.test_prod_one = create_test_product_one()
+        self.test_prod_two = create_test_product_two()
+        self.test_prod_three = create_test_product_three()
+        self.product_no_request = create_test_product(
+            product_type=create_product_type('nicknack', is_active=True), 
+            category=create_category('Nicknack 1', is_active=True), 
+            product_title="Product No Request", 
+            secondary_product_title="No Request", 
+            description="There is no request for this product", 
+            slug=slugify("Product No Request No Request"), 
+            buy_now_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=create_brand('Acme'), 
+            auction_start_date=None, 
+            auction_end_date=None, 
+            inventory_status="in_inventory", 
+            bid_count="0", 
+            reserve_price="0", 
+            is_active=True)
+        
+
+        self.user.prods_interested_in.add(self.test_prod_one)
+        self.other_user.prods_interested_in.add(self.test_prod_one)
+        self.notified_user1.prods_interested_in.add(self.test_prod_one)
+
+        self.user.prods_interested_in.add(self.test_prod_two)
+        self.other_user.prods_interested_in.add(self.test_prod_two)
+
+        self.other_user.prods_interested_in.add(self.test_prod_three)
+        
+        # URL for the view
+        self.url = reverse('pop_accounts:most_interested')  # Adjust name to match your URL pattern
+    
+    
+    def test_unauthenticated_user_redirected(self):
+        """Test that unauthenticated users are redirected to login"""
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+    def test_non_staff_user_forbidden(self):
+        """Test that non-staff users get 403 Forbidden"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 403)
+    
+    def test_staff_user_can_access(self):
+        """Test that staff users can access On Notice"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/most_interested.html'
+        )
+
+    def test_context_contains_most_interested(self):
+        """Test that context contains 'most_notified' key"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('most_interested', response.context)
+
+        most_interested = response.context['most_interested']
+        # Should show 3 products (excluding product_no_requests)
+        self.assertEqual(len(most_interested), 3)
+        
+        # Verify product with no requests is not in the list
+        product_ids = [p.id for p in most_interested]
+        self.assertNotIn(self.product_no_request.id, product_ids)
+    
+
+    def test_products_ordered_by_request_count(self):
+        """Test that products are ordered by notification request count (descending)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        most_interested = list(response.context['most_interested'])
+        
+        # Verify order: Product 1 (3 requests), Product 2 (2), Product 3 (1)
+        self.assertEqual(most_interested[0].id, self.test_prod_one.id)
+        self.assertEqual(most_interested[1].id, self.test_prod_two.id)
+        self.assertEqual(most_interested[2].id, self.test_prod_three.id)
+    
+
+    def test_notification_count_annotation(self):
+        """Test that products have correct notification_count values"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        most_interested = list(response.context['most_interested'])
+        
+        # Verify notification counts match expected values
+        self.assertEqual(most_interested[0].interest_count, 3)
+        self.assertEqual(most_interested[1].interest_count, 2)
+        self.assertEqual(most_interested[2].interest_count, 1)
+    
+
+    def test_empty_results_when_no_requests(self):
+        """Test view shows empty list when no products have notification requests"""
+        # Remove all notification requests
+        self.user.prods_interested_in.clear()
+        self.other_user.prods_interested_in.clear()
+        self.notified_user1.prods_interested_in.clear()
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        most_interested = response.context['most_interested']
+        self.assertEqual(len(most_interested), 0)
+
+
+    def test_dynamic_count_updates(self):
+        """Test that counts update when users add/remove notification requests"""
+        self.client.force_login(self.staff_user)
+        
+        # Initial state: product1 has 3 requests
+        response = self.client.get(self.url)
+        most_interested = list(response.context['most_interested'])
+        self.assertEqual(most_interested[0].interest_count, 3)
+        
+        # Remove one user's request for product1
+        self.user.prods_interested_in.remove(self.test_prod_one)
+        
+        # Verify count decreased
+        response = self.client.get(self.url)
+        most_interested = list(response.context['most_interested'])
+        product1_result = [p for p in most_interested if p.id == self.test_prod_one.id][0]
+        self.assertEqual(product1_result.interest_count, 2)
+
+
+    def test_product_with_single_request_still_shown(self):
+        """Test that products with exactly 1 request are included (boundary test)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        most_interested = response.context['most_interested']
+        product_ids = [p.id for p in most_interested]
+        
+        # Product 3 has exactly 1 request and should be shown
+        self.assertIn(self.test_prod_three.id, product_ids)
+    
+
+    def test_product_drops_from_list_when_last_request_removed(self):
+        """Test that product is removed from list when its last notification request is removed"""
+        self.client.force_login(self.staff_user)
+        
+        # Remove the only request for product3
+        self.other_user.prods_interested_in.remove(self.test_prod_three)
+        
+        response = self.client.get(self.url)
+        most_interested = response.context['most_interested']
+        product_ids = [p.id for p in most_interested]
+        
+        # Product 3 should no longer appear
+        self.assertNotIn(self.test_prod_three.id, product_ids)
+        
+        # Should now only have 2 products
+        self.assertEqual(len(most_interested), 2)
 
 
 # class EmailCheckViewTests(TestCase):
@@ -5356,23 +6727,23 @@ class TestAdminInventoryViewIntegration(TestCase):
 
    
         
-#         self.product = create_test_product(
-#             product_type=self.product_type, 
-#             category=self.category, 
-#             product_title="Air Jordan 1 Retro", 
-#             secondary_product_title="Carolina Blue", 
-#             description="The most uncomfortable basketball shoe their is", 
-#             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-#             buy_now_price="150.00", 
-#             current_highest_bid="0", 
-#             retail_price="100", 
-#             brand=self.brand, 
-#             auction_start_date=auction_start, 
-#             auction_end_date=auction_end, 
-#             inventory_status="in_inventory", 
-#             bid_count="0", 
-#             reserve_price="0", 
-#             is_active=True)
+        # self.product = create_test_product(
+        #     product_type=self.product_type, 
+        #     category=self.category, 
+        #     product_title="Air Jordan 1 Retro", 
+        #     secondary_product_title="Carolina Blue", 
+        #     description="The most uncomfortable basketball shoe their is", 
+        #     slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
+        #     buy_now_price="150.00", 
+        #     current_highest_bid="0", 
+        #     retail_price="100", 
+        #     brand=self.brand, 
+        #     auction_start_date=auction_start, 
+        #     auction_end_date=auction_end, 
+        #     inventory_status="in_inventory", 
+        #     bid_count="0", 
+        #     reserve_price="0", 
+        #     is_active=True)
         
 #         self.client.login(email="testuser@example.com", password="securePassword!23")
         

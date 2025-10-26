@@ -2,84 +2,78 @@
 {% load static %}
 {% load find_integer %}
 
-{% block title %}
-En Route
-{% endblock %}
+{% block title %}En Route{% endblock %}
 
 {% block main %}
+<div class="section_container">
+    <div class="page_title">
+        <h2>Purchased & En Route</h2>
+    </div>
+    <div class="the_inventory_container">
+        <div class="inventory_item_select">
+            <ul>
+                <li {% if not product_type %} class="selected" {% endif %}>
+                    <a href="{% url 'pop_accounts:enroute' %}">All</a>
+                </li>
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>Purchased & En Route</h2>
+                {% for c in product_types %}
+                {% if product_type and product_type.slug == c.slug %}
+                <li class="selected">
+                    {% else %}
+                <li>
+                    {% endif %}
+                    <a href="{% url 'pop_accounts:enroute' c.slug %}">{{ c.name|capfirst }}</a>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
-        <div class="the_inventory_container">
-            <div class="inventory_item_select">
+        <div class="inventory_notice_container">
+            <div class="inventory_shoe_items_container">
+                {% if en_route %}
                 <ul>
-                    <li {% if not product_type %} class="selected" {% endif %}>
-                        <a href="{% url 'pop_accounts:enroute' %}">All</a>
-                    </li>
-
-                    {% for c in product_types %}
-                    {% if product_type and product_type.slug == c.slug %}
-                    <li class="selected">
-                        {% else %}
+                    {% for i in en_route %}
                     <li>
+                        <p class="inventory_count">1</p>
+                        <p class="inventory_year">
+                            {{ i.specs.model_year}}
+                        </p>
+                        <a class="inventory_item" href="{{ i.get_absolute_url }}">
+                            {{ i.product_title }}
+                            {{ i.secondary_product_title}}
+                        </a>
+
+                        {% if i.specs.size %}
+                        {% if i.specs.size|is_val_integer %}
+                        <p class="inventory_size">{{ i.specs.size}} US</p>
+                        {% elif not i.specs.size|is_val_integer %}
+                        <p class="inventory_size">{{ i.specs.size}}</p>
                         {% endif %}
-                        <a href="{% url 'pop_accounts:enroute' c.slug %}">{{ c.name|capfirst }}</a>
+
+                        {% if i.specs.product_sex == "Male" %}
+                        <p class="inventory_gen">M</p>
+                        {% elif i.specs.product_sex == "Female" %}
+                        <p class="inventory_gen">F</p>
+                        {% else %}
+                        <p>--</p>
+                        {% endif %}
+
+                        {% endif %}
+
+
+                        <button class="button_small">
+                            <a href="{% url 'pop_accounts:update_product_detail' i.id %}"
+                                class="product-link {% if selected_product.id == i.id %}active{% endif %}">
+                                Edit
+                            </a>
+                        </button>
                     </li>
                     {% endfor %}
+                    {% else %}
+                    <p>Nothing en route</p>
+                    {% endif %}
                 </ul>
             </div>
-            <div class="inventory_notice_container">
-                <div class="inventory_shoe_items_container">
-                    {% if en_route %}
-                    <ul>
-                        {% for i in en_route %}
-                        <li>
-                            <p class="inventory_count">1</p>
-                            <p class="inventory_year">
-                                {{ i.specs.model_year}}
-                            </p>
-                            <a class="inventory_item" href="{{ i.get_absolute_url }}">
-                                {{ i.product_title }}
-                                {{ i.secondary_product_title}}
-                            </a>
-
-
-                            {% if i.specs.size %}
-                            {% if i.specs.size|is_val_integer %}
-                            <p class="inventory_size">{{ i.specs.size}} US</p>
-                            {% elif not i.specs.size|is_val_integer %}
-                            <p class="inventory_size">{{ i.specs.size}}</p>
-                            {% endif %}
-
-                            {% if i.specs.product_sex == "Male" %}
-                            <p class="inventory_gen">M</p>
-                            {% elif i.specs.product_sex == "Female" %}
-                            <p class="inventory_gen">F</p>
-                            {% else %}
-                            <p>--</p>
-                            {% endif %}
-
-                            {% endif %}
-
-
-                            <button class="button_small">
-                                <a href="{% url 'pop_accounts:update_product_detail' i.id %}"
-                                    class="product-link {% if selected_product.id == i.id %}active{% endif %}">
-                                    Edit
-                                </a>
-                            </button>
-
-                        </li>
-                        {% endfor %}
-                        {% else %}
-                        <p>Nothing en route</p>
-                        {% endif %}
-                </div>
-            </div>
         </div>
-</section>
+    </div>
 
-{% endblock %}
+    {% endblock %}

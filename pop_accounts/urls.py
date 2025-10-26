@@ -6,7 +6,8 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     UserOnNoticeView, OpenBidsView, AdminInventoryView, EnRouteView, AddProductsView,
                     UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, PastBidView,
                     DeleteAddressView, SetDefaultAddressView, DeleteAccountView, UserPasswordResetConfirmView,
-                    ShippingTrackingView, UserOrderPager, AdminDashboardView)
+                    ShippingTrackingView, UserOrderPager, AdminDashboardView, SalesView, MostOnNotice, 
+                    MostInterested)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -54,9 +55,10 @@ urlpatterns = [
     path('dashboard-admin/', AdminDashboardView.as_view(), name='dashboard_admin'),
     path('inventory-admin/', AdminInventoryView.as_view(), name='inventory_admin'),
     path('inventory-admin/<slug:slug>/', AdminInventoryView.as_view(), name='inventory_admin'),
-    path('sales-admin/', views.sales, name='sales_admin'),
-    path('most-on-notice-admin/', views.most_on_notice, name='most_on_notice'),
-    path('most-interested-admin/', views.most_interested, name='most_interested'),
+    path('sales-admin/', SalesView.as_view(), name='sales_admin'),
+    path('most-on-notice-admin/', MostOnNotice.as_view(), name='most_on_notice'),
+    path('most-interested-admin/', MostInterested.as_view(), name='most_interested'),
+    # path('most-interested-admin/', views.most_interested, name='most_interested'),
     path('total-open-bids-admin/', views.total_open_bids, name='total_open_bids'),
     path('total-accounts-admin/', views.total_accounts, name='total_accounts'),
     path('account-sizes-admin/', views.account_sizes, name='account_sizes'),

@@ -61,7 +61,7 @@ from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
 from .pop_accounts_copy.admin_copy.admin_copy import (
     ADMIN_DASHBOARD_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, 
-    ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE
+    ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE, MOST_INTERESTED_COPY, MOST_ON_NOTICE_COPY,
     )
 from .pop_accounts_copy.user_copy.user_copy import (
     USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
@@ -1320,8 +1320,40 @@ class AdminInventoryView(UserPassesTestMixin, ListView):
     
 
 class EnRouteView(UserPassesTestMixin, ListView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+
     """
-    Admin view that shows items that have been ordered, but not yet in inventory
+    Class-based view for Admin En Route Products
+
+    Displays products that have been ordered by the admin but are not yet in inventory.
+    These items are marked as "in_transit" and represent stock that is on its way to the warehouse
+    or fulfillment center. Allows filtering by product type and provides detailed product
+    specifications for each en route item.
+
+    Attributes:
+        model (PopUpProduct): The product model representing items being tracked.
+        template_name (str): The template used to render the en route products page.
+        context_object_name (str): The variable name for the en route products in the template context.
+
+    Methods:
+        test_func():
+            Ensures that only staff users (admin accounts) can access this view.
+
+        get_queryset():
+            Retrieves products that are inactive (`is_active=False`) and have an 
+            `inventory_status` of `"in_transit"`.
+            Optionally filters by `product_type` if a slug is provided in the URL.
+            Adds product specifications to each product instance for richer template display.
+            Returns a list of enriched product objects.
+
+        get_context_data(**kwargs):
+            Extends the template context with:
+                - `product_types`: All available product categories.
+                - `product_type`: The currently selected product type (if filtering by slug).
+                - `coming_soon`: Additional products marked as "in_transit" to show upcoming arrivals.
+            Returns the complete context for rendering the en route products page.
     """
     model = PopUpProduct
     template_name = "pop_accounts/admin_accounts/dashboard_pages/en_route.html"
@@ -1384,57 +1416,157 @@ class EnRouteView(UserPassesTestMixin, ListView):
         return context
     
 
+class SalesView(UserPassesTestMixin, TemplateView):
+    template_name = 'pop_accounts/admin_accounts/dashboard_pages/sales.html'
 
-@staff_member_required
-def sales(request):
-    """
-    Admin view that shows sales
-    """
-    current_date = date.today()
-    year = current_date.strftime("%Y")
-    month = current_date.strftime("%B")
-    yearly_sales = get_yearly_revenue_aggregated()
-    monthly_sales = get_monthly_revenue()
-    weekly_sales = get_weekly_revenue()
-    past_twenty_day_sales = get_last_20_days_sales()
-    past_twelve_months_sales = get_last_12_months_sales()
-    past_five_years_sales = get_last_5_years_sales()
-    day_over_day_sales_comp = get_yoy_day_sales()
-    year_over_year_comp = get_year_over_year_comparison()
-    month_over_month_comp = get_month_over_month_comparison()
-
-    context = {'yearly_sales': yearly_sales, 'monthly_sales': monthly_sales, 'weekly_sales': weekly_sales,
-               'year': year, 'month': month, 'past_twenty_day_sales_json': mark_safe(json.dumps(past_twenty_day_sales)),
-               'past_twelve_months_sales_json': mark_safe(json.dumps(past_twelve_months_sales)),
-               'past_five_years_sales_json': mark_safe(json.dumps(past_five_years_sales)),
-               'day_over_day_sales_comp_json': mark_safe(json.dumps(day_over_day_sales_comp)),
-               'year_over_year_comp_json': mark_safe(json.dumps(year_over_year_comp)),
-               'month_over_month_comp_json': mark_safe(json.dumps(month_over_month_comp))}
-
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/sales.html', context)
-
-
-@staff_member_required
-def most_on_notice(request):
-    """
-    Admin view that displays items users have on notice
-    """
-    # Get all products with notification counts, ordered by most requested
-    most_notified = PopUpProduct.objects.annotate(
-        notification_count=Count('notified_users')
-    ).filter(
-        notification_count__gt=0  # Only show products with at least 1 notification request
-    ).prefetch_related(
-        'popupproductspecificationvalue_set__specification'
-    ).order_by('-notification_count')
+    def test_func(self):
+        return self.request.user.is_staff
     
-    # Add specs to products
-    most_notified = add_specs_to_products(most_notified)
+
+    def get_current_date_info(self):
+        """Get Current Year and Month for Display"""
+        current_date = date.today()
+        return {
+            'year': current_date.strftime('%Y'),
+            'month': current_date.strftime('%B')
+        }
     
-    context = {
-        'most_notified': most_notified,
-    }
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_on_notice.html', context)
+
+    def get_aggregate_sales(self):
+        """Get aggregate sales totals for different time periods"""
+        return {
+            'yearly_sales': get_yearly_revenue_aggregated(),
+            'monthly_sales': get_monthly_revenue(),
+            'weekly_sales': get_weekly_revenue(),
+        }
+    
+    def get_historical_sales_data(self):
+        """Get historical sales data for charts (as JSON)"""
+        return {
+            'past_twenty_day_sales_json': mark_safe(json.dumps(get_last_20_days_sales())),
+            'past_twelve_months_sales_json': mark_safe(json.dumps(get_last_12_months_sales())),
+            'past_five_years_sales_json': mark_safe(json.dumps(get_last_5_years_sales())),
+        }
+    
+    def get_comparison_data(self):
+        """Get sales comparison metrics (as JSON)"""
+        return {
+            'day_over_day_sales_comp_json': mark_safe(json.dumps(get_yoy_day_sales())),
+            'year_over_year_comp_json': mark_safe(json.dumps(get_year_over_year_comparison())),
+            'month_over_month_comp_json': mark_safe(json.dumps(get_month_over_month_comparison())),
+        }
+    
+    def get_context_data(self, **kwargs):
+        """Build context with all sales data"""
+        context = super().get_context_data(**kwargs)
+
+        # Add all sales data to context
+        context.update(self.get_current_date_info())
+        context.update(self.get_aggregate_sales())
+        context.update(self.get_historical_sales_data())
+        context.update(self.get_comparison_data())
+        return context
+
+
+
+class MostOnNotice(UserPassesTestMixin, ListView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Class-based view for Admin Most On Notice Products
+
+    Displays products that users have requested to be notified about when available.
+    This view helps the admin identify which products are generating the most user interest
+    based on the number of "notify me" requests. Products are ranked in descending order
+    of total notification requests and enriched with specification details.
+
+    Attributes:
+        model (PopUpProduct): The product model representing items users are tracking.
+        template_name (str): The template used to render the most-on-notice products page.
+        context_object_name (str): The variable name for the products list in the template context.
+
+    Methods:
+        test_func():
+            Restricts access to staff users only. Returns True if the current user is a staff member.
+
+        get_queryset():
+            Retrieves products annotated with the count of users who have requested notifications
+            (`notification_count`).
+            Filters to include only products with one or more notification requests.
+            Orders products by descending notification count to prioritize most requested items.
+            Prefetches specification data and enriches each product using `add_specs_to_products()`.
+            Returns the processed queryset for display.
+    """
+    model = PopUpProduct
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/most_on_notice.html"
+    context_object_name = 'most_notified'
+    most_on_notice_copy = MOST_ON_NOTICE_COPY
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get_queryset(self):
+        queryset = PopUpProduct.objects.annotate(notification_count=Count('notified_users')
+        ).filter(
+            notification_count__gt=0  # Only show products with at least 1 notification request
+        ).prefetch_related(
+            'popupproductspecificationvalue_set__specification'
+        ).order_by('-notification_count')
+    
+        # Add specs to products
+        queryset = add_specs_to_products(queryset)
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context.update({
+            "most_on_notice_copy": self.most_on_notice_copy}
+        )
+        return context
+    
+
+
+class MostInterested(UserPassesTestMixin, ListView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    model = PopUpProduct
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/most_interested.html"
+    context_object_name = 'most_interested'
+    most_interested_copy = MOST_INTERESTED_COPY
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get_queryset(self):
+        queryset = PopUpProduct.objects.annotate(
+            interest_count=Count('interested_users')
+            ).filter(
+                interest_count__gt=0  # Only show products with at least 1 interested user
+            ).prefetch_related(
+                'popupproductspecificationvalue_set__specification'
+            ).order_by('-interest_count')
+        
+        # Add specs to products
+        queryset = add_specs_to_products(queryset)
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Total number of interest instances across all products
+        most_interested = context['most_interested']
+        total_interest_instances = sum(product.interest_count for product in most_interested)
+        
+        context.update({
+            "total_interest_instances": total_interest_instances,
+            "most_interested_copy": self.most_interested_copy}
+        )
+
+        return context
 
 
 @staff_member_required
@@ -1463,6 +1595,7 @@ def most_interested(request):
         'total_interest_instances': total_interest_instances
     }
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_interested.html', context)
+
 
 
 @staff_member_required

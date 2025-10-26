@@ -21,6 +21,9 @@
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
 @media screen and (max-width: 450px) {
 
+
+
+
     .interested_in_open_bids_container {
         width: 130%;
     }
