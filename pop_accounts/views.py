@@ -1656,7 +1656,9 @@ class MostInterested(UserPassesTestMixin, ListView):
 
 
 class TotalOpenBidsView(UserPassesTestMixin, ListView):
+    # 🟢 View Test Completed
     # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
     Class-based view for Admin Total Open Bids
 
@@ -1792,21 +1794,6 @@ class TotalAccountsView(TemplateView):
 
         return context
 
-
-@staff_member_required
-def total_accounts(request):
-    # ✅ Mobile / Tablet Media Query Completed
-    """
-    Admin view that shows total number of active accounts
-    """
-    admin_total_accounts_copy = ADMIN_TOTAL_ACCOUNTS_COPY
-    # Total active accounts
-    total_active_accounts = PopUpCustomer.objects.filter(is_active=True).count()
-    context = {
-        'total_active_accounts':total_active_accounts,
-        'admin_total_accounts_copy': admin_total_accounts_copy
-    }
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_accounts.html', context)
 
 
 @staff_member_required
