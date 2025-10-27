@@ -160,8 +160,6 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
         super().delete()
     
 
-
-
     def email_user(self, subject, message):
         send_mail(
             subject,
@@ -302,9 +300,7 @@ class PopUpBid(models.Model):
         latest_bid = PopUpBid.objects.filter(product=self.product, is_active=True).exclude(pk=self.pk).order_by('-amount').first()
 
         if latest_bid:
-            print('latest_bid', latest_bid)
             if self.amount <= latest_bid.amount:
-                print(f'self.amount: {self.amount} | latest_bid.amount: {latest_bid.amount}')
                 raise ValueError('Bid amount must be higher than the current highest bid.')
         if self.expires_at and self.expires_at < timezone.now():
             self.is_active = False

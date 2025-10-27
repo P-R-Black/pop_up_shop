@@ -29,12 +29,7 @@
     text-align: center;
 }
 
-.account_on_notice_no p strong,
-.interested_in_year p,
-.interested_in_item p,
-.interested_in_size p {
-    font-size: clamp(1rem, 1.25rem, 3vw);
-}
+
 
 .admin_bottom_data_container {
     display: flex;

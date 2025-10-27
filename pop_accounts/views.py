@@ -61,7 +61,8 @@ from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
 from .pop_accounts_copy.admin_copy.admin_copy import (
     ADMIN_DASHBOARD_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, 
-    ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE, MOST_INTERESTED_COPY, MOST_ON_NOTICE_COPY, ADMIN_SALES_COPY,
+    ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE, MOST_INTERESTED_COPY, MOST_ON_NOTICE_COPY, 
+    ADMIN_SALES_COPY, ADMIN_TOTAL_OPEN_BIDS_COPY, ADMIN_TOTAL_ACCOUNTS_COPY
     )
 from .pop_accounts_copy.user_copy.user_copy import (
     USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
@@ -1420,6 +1421,53 @@ class SalesView(UserPassesTestMixin, TemplateView):
     # 🟢 View Test Completed
     # ✅ Mobile / Tablet Media Query Completed
     # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Class-based view for Admin Sales Dashboard
+
+    Displays store-wide sales analytics and performance metrics for the admin dashboard.
+    Provides aggregated, historical, and comparative sales data across multiple time periods,
+    including daily, monthly, and yearly summaries. Designed to help administrators monitor
+    revenue trends and visualize sales performance over time.
+
+    Attributes:
+        template_name (str): The template used to render the sales dashboard page.
+        admin_sales_copy (dict): Static text and labels used for contextual display in the sales dashboard.
+
+    Methods:
+        test_func():
+            Restricts access to staff users only. Returns True if the requesting user is a staff member.
+
+        get_current_date_info():
+            Retrieves and formats the current year and month for display in the dashboard header.
+
+        get_aggregate_sales():
+            Returns aggregated revenue data for the current year, month, and week
+            using helper functions (`get_yearly_revenue_aggregated`, `get_monthly_revenue`, `get_weekly_revenue`).
+
+        get_historical_sales_data():
+            Retrieves historical sales data for visualization charts, including:
+                - Last 20 days
+                - Last 12 months
+                - Last 5 years
+            Converts the data into safe JSON for frontend chart rendering.
+
+        get_comparison_data():
+            Provides comparative sales metrics for analyzing growth trends, including:
+                - Day-over-day
+                - Month-over-month
+                - Year-over-year comparisons
+            Returns data serialized as safe JSON for charting.
+
+        get_context_data(**kwargs):
+            Builds the full context for rendering the sales dashboard, combining:
+                - Current date information
+                - Aggregate totals
+                - Historical chart data
+                - Comparative metrics
+                - Static display copy
+            Returns the complete context for template rendering.
+    """
+
     template_name = 'pop_accounts/admin_accounts/dashboard_pages/sales.html'
     admin_sales_copy = ADMIN_SALES_COPY
 
@@ -1537,6 +1585,38 @@ class MostInterested(UserPassesTestMixin, ListView):
     # 🟢 View Test Completed
     # ✅ Mobile / Tablet Media Query Completed
     # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Class-based view for Admin Most Interested Products
+
+    Displays products that users have marked as "interested in," allowing the admin to
+    identify high-demand or trending items based on direct user engagement. Products are
+    annotated and ranked by the total number of interested users and enriched with detailed
+    product specifications for display.
+
+    Attributes:
+        model (PopUpProduct): The product model representing items of user interest.
+        template_name (str): The template used to render the most-interested products page.
+        context_object_name (str): The variable name for the list of interested products in the template context.
+        most_interested_copy (dict): Static text or UI copy used to provide contextual information in the view.
+
+    Methods:
+        test_func():
+            Restricts access to staff users only. Returns True if the requesting user is a staff member.
+
+        get_queryset():
+            Retrieves products annotated with the number of users who marked them as interested
+            (`interest_count`).
+            Filters to include only products with one or more interested users.
+            Orders the products in descending order of interest count.
+            Prefetches related specification data and enriches each product with `add_specs_to_products()`.
+            Returns the annotated and enriched queryset for display.
+
+        get_context_data(**kwargs):
+            Extends the template context with:
+                - `total_interest_instances`: The total number of interest marks across all displayed products.
+                - `most_interested_copy`: Predefined static copy or context text for the page.
+            Returns the complete context for rendering the admin’s “Most Interested Products” page.
+    """
     model = PopUpProduct
     template_name = "pop_accounts/admin_accounts/dashboard_pages/most_interested.html"
     context_object_name = 'most_interested'
@@ -1574,93 +1654,157 @@ class MostInterested(UserPassesTestMixin, ListView):
         return context
 
 
-@staff_member_required
-def most_interested(request):
+
+class TotalOpenBidsView(UserPassesTestMixin, ListView):
+    # ✅ Mobile / Tablet Media Query Completed
     """
-    Admin view that displays items users are interested in, which tells bots what items to purchase
+    Class-based view for Admin Total Open Bids
+
+    Displays all products currently involved in active auctions, allowing the admin to
+    monitor live bidding activity. Provides detailed information such as the number of
+    active bids, highest bid amount, time remaining, and auction progress for each product.
+
+    Attributes:
+        model (PopUpProduct): The product model representing auctioned items.
+        template_name (str): The template used to render the open bids dashboard page.
+        context_object_name (str): The variable name for the list of products currently in auction.
+
+    Methods:
+        test_func():
+            Restricts access to staff users only. Returns True if the requesting user is a staff member.
+
+        get_queryset():
+            Retrieves products that are currently under auction based on `auction_start_date` and `auction_end_date`.
+            Annotates each product with:
+                - `active_bid_count`: Number of active bids.
+                - `highest_bid`: The highest active bid amount.
+            Prefetches related specification and bidder data for optimization.
+            Enriches each product with:
+                - `latest_bid`: The most recent active bid.
+                - `time_remaining`: Time left until auction closes.
+                - `auction_progress`: Calculated percentage of elapsed auction duration.
+            Returns the fully annotated and enriched queryset for display.
+
+        get_context_data(**kwargs):
+            Extends the template context with:
+                - `total_open_bids`: Total number of active bids across all products.
+                - `total_auction_value`: Combined highest bid values for all open auctions.
+                - `total_products_in_auction`: Count of products currently being bid on.
+                - `admin_total_open_bids_copy`: Static content and labels for page display.
+            Returns the complete context for rendering the admin’s open bids overview.
     """
-    # Get all products with interest counts, ordered by most interested
-    most_interested = PopUpProduct.objects.annotate(
-        interest_count=Count('interested_users')
-    ).filter(
-        interest_count__gt=0  # Only show products with at least 1 interested user
-    ).prefetch_related(
-        'popupproductspecificationvalue_set__specification'
-    ).order_by('-interest_count')
 
-    
-    # Add specs to products
-    most_interested = add_specs_to_products(most_interested)
+    model = PopUpProduct
+    template_name = 'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html'
+    context_object_name = 'open_auction_products'
 
-    # Total number of interest instances across all products
-    total_interest_instances = sum(product.interest_count for product in most_interested)
-    
-    context = {
-        'most_interested': most_interested,
-        'total_interest_instances': total_interest_instances
-    }
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/most_interested.html', context)
+    def test_func(self):
+        return self.request.user.is_staff
 
+    def get_queryset(self):
+        now = timezone.now()
+        queryset = PopUpProduct.objects.filter(
+            auction_start_date__isnull=False,
+            auction_end_date__isnull=False,
+            auction_start_date__lte=now,
+            auction_end_date__gte=now
+        ).annotate(
+            active_bid_count=Count('bids', filter=Q(bids__is_active=True)),
+            highest_bid=Max('bids__amount', filter=Q(bids__is_active=True))
+        ).prefetch_related(
+            'popupproductspecificationvalue_set__specification',
+            'bids__customer'  # For getting bidder info if needed
+        ).order_by('-active_bid_count', '-highest_bid')
 
-
-@staff_member_required
-def total_open_bids(request):
-    """
-    Admin view that display all products currently in auction with their bid counts and details
-    """
-    now = timezone.now()
-    
-    # Get all products with ongoing auctions, annotated with bid counts
-    open_auction_products = PopUpProduct.objects.filter(
-        auction_start_date__isnull=False,
-        auction_end_date__isnull=False,
-        auction_start_date__lte=now,
-        auction_end_date__gte=now
-    ).annotate(
-        active_bid_count=Count('bids', filter=Q(bids__is_active=True)),
-        highest_bid=Max('bids__amount', filter=Q(bids__is_active=True))
-    ).prefetch_related(
-        'popupproductspecificationvalue_set__specification',
-        'bids__customer'  # For getting bidder info if needed
-    ).order_by('-active_bid_count', '-highest_bid')
-    
-    # Add specs to products
-    open_auction_products = add_specs_to_products(open_auction_products)
-    
-    # Add additional auction info to each product
-    for product in open_auction_products:
-        # Get the latest bid for this product
-        latest_bid = PopUpBid.objects.filter(
-            product=product,
-            is_active=True
-        ).order_by('-timestamp').first()
+        # Add specs to products
+        queryset = add_specs_to_products(queryset)
         
-        product.latest_bid = latest_bid
-        product.time_remaining = product.auction_end_date - now
-        product.auction_progress = calculate_auction_progress(product, now)
+        # Add additional auction info to each product
+        for product in queryset:
+            # Get the latest bid for this product
+            latest_bid = PopUpBid.objects.filter(
+                product=product,
+                is_active=True
+            ).order_by('-timestamp').first()
+            
+            product.latest_bid = latest_bid
+            product.time_remaining = product.auction_end_date - now
+            product.auction_progress = calculate_auction_progress(product, now)
+
+        return queryset
     
-    # Calculate totals
-    total_open_bids = sum(product.active_bid_count for product in open_auction_products)
-    total_auction_value = sum(product.highest_bid or 0 for product in open_auction_products)
-    
-    context = {
-        'open_auction_products': open_auction_products,
-        'total_open_bids': total_open_bids,
-        'total_auction_value': total_auction_value,
-        'total_products_in_auction': len(open_auction_products)
-    }
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        open_auction_products = context['open_auction_products']
+
+        # Calculate totals
+        context['total_open_bids'] = sum(
+            product.active_bid_count for product in open_auction_products
+        )
+        context['total_auction_value'] = sum(
+            product.highest_bid or 0 for product in open_auction_products
+        )
+        context['total_products_in_auction'] = len(open_auction_products)
+        context['admin_total_open_bids_copy'] = ADMIN_TOTAL_OPEN_BIDS_COPY
+        
+        return context    
+
+
+class TotalAccountsView(TemplateView):
+    # ✅ Mobile / Tablet Media Query Completed
+    template_name = 'pop_accounts/admin_accounts/dashboard_pages/total_accounts.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get today's data range
+        today = timezone.now().date()
+        today_start = timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.min.time()))
+        today_end = timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.max.time()))
+
+        # Total active accounts
+        context['total_active_accounts'] = PopUpCustomer.objects.filter(
+            is_active=True
+        ).count()
+        
+        # New accounts created today
+        context['new_accounts_today'] = PopUpCustomer.objects.filter(
+            created__gte=today_start,
+            created__lte=today_end
+        ).count()
+        
+        # Site visitors today (assuming you track this via a Visit/Session model)
+        # Adjust this based on how you track visitors
+        # Option 1: If you have a Visit/Session model
+        # context['site_visitors_today'] = Visit.objects.filter(
+        #     timestamp__gte=today_start,
+        #     timestamp__lte=today_end
+        # ).values('user').distinct().count()
+        
+        # Option 2: If you track via User.last_login
+        context['site_visitors_today'] = PopUpCustomer.objects.filter(
+            last_login__gte=today_start,
+            last_login__lte=today_end
+        ).count()
+        
+        # Add copy text
+        context['admin_total_accounts_copy'] = ADMIN_TOTAL_ACCOUNTS_COPY
+
+        return context
 
 
 @staff_member_required
 def total_accounts(request):
+    # ✅ Mobile / Tablet Media Query Completed
     """
     Admin view that shows total number of active accounts
     """
+    admin_total_accounts_copy = ADMIN_TOTAL_ACCOUNTS_COPY
     # Total active accounts
     total_active_accounts = PopUpCustomer.objects.filter(is_active=True).count()
     context = {
-        'total_active_accounts':total_active_accounts
+        'total_active_accounts':total_active_accounts,
+        'admin_total_accounts_copy': admin_total_accounts_copy
     }
     return render(request, 'pop_accounts/admin_accounts/dashboard_pages/total_accounts.html', context)
 

@@ -7,7 +7,7 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, PastBidView,
                     DeleteAddressView, SetDefaultAddressView, DeleteAccountView, UserPasswordResetConfirmView,
                     ShippingTrackingView, UserOrderPager, AdminDashboardView, SalesView, MostOnNotice, 
-                    MostInterested)
+                    MostInterested, TotalOpenBidsView, TotalAccountsView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -58,9 +58,8 @@ urlpatterns = [
     path('sales-admin/', SalesView.as_view(), name='sales_admin'),
     path('most-on-notice-admin/', MostOnNotice.as_view(), name='most_on_notice'),
     path('most-interested-admin/', MostInterested.as_view(), name='most_interested'),
-    # path('most-interested-admin/', views.most_interested, name='most_interested'),
-    path('total-open-bids-admin/', views.total_open_bids, name='total_open_bids'),
-    path('total-accounts-admin/', views.total_accounts, name='total_accounts'),
+    path('total-open-bids-admin/', TotalOpenBidsView.as_view(), name='total_open_bids'),
+    path('total-accounts-admin/', TotalAccountsView.as_view(), name='total_accounts'),
     path('account-sizes-admin/', views.account_sizes, name='account_sizes'),
     path('pending-okay-to-ship/', views.pending_okay_to_ship, name='pending_okay_to_ship'),
     path('get-pending-order-shipping-detail/<uuid:order_no>/', views.get_pending_order_shipping_detail, name='get_order_details'),

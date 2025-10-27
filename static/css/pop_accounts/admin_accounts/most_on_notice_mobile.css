@@ -49,6 +49,12 @@
         width: 40%;
     }
 
+    .number_of_bids p:nth-child(1)::before {
+        color: var(--text-color);
+        content: "Number of Bids: ";
+        width: 40%;
+    }
+
 
     .interested_in_year p:nth-child(1)::before {
         color: var(--text-color);

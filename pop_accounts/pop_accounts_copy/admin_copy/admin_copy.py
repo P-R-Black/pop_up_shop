@@ -88,5 +88,22 @@ MOST_INTERESTED_COPY = {
         {"header": "Item"},
         {"header": "Size"}
     ]
+}
+
+
+ADMIN_TOTAL_OPEN_BIDS_COPY = { 
+    "page_title": "Total Open Bids",
+    "page_item_list": [
+        {"header": "Number of Bids"},
+        {"header": "Year"},
+        {"header": "Item"},
+        {"header": "Size"}
+    ]
+}
+
+
+ADMIN_TOTAL_ACCOUNTS_COPY = {
+    "page_title": "Pop Up Accounts",
 
 }
+

@@ -9,11 +9,11 @@ from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
 from pop_up_auction.models import (PopUpProduct, PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
                                    PopUpProductSpecificationValue)
-from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView)
+from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView, TotalOpenBidsView)
 from unittest.mock import patch
-from django.utils import timezone
 from django.utils.timezone import now, make_aware
-from datetime import timedelta, datetime, timezone, date
+from django.utils import timezone
+from datetime import timedelta, datetime, date 
 from uuid import uuid4
 from django.middleware.csrf import CsrfViewMiddleware
 from django.http import HttpRequest
@@ -750,7 +750,6 @@ class TestPersonalInfoView(TestCase):
         """Test updating another user's address returns 404"""
 
         other_user = create_test_user_two()
-        print('other_user', other_user)
 
         other_address = PopUpCustomerAddress.objects.create(
             customer=other_user,
@@ -3669,8 +3668,6 @@ class TestUserOrderPagerIntegration(TestCase):
         create_shipment = create_test_shipment_one(status="shipped", order=create_order)
         # # Status | pending, cancelled, in_dispute, shipped, returned, delivered
 
-        print('create_shipment', create_shipment)
-
         # create order item
         order_item_without_shipping = PopUpOrderItem.objects.create(
             order=create_order,
@@ -4155,7 +4152,6 @@ class TestAdminDashboardPayment(TestCase):
         response = self.client.get(self.url)
         
         cleared = response.context['payment_status_cleared']
-        print('cleared', cleared)
         self.assertEqual(len(cleared), 1)
         self.assertEqual(cleared[0].id, payment.id)
 
@@ -4267,7 +4263,6 @@ class TestAdminDashboardIntegration(TestCase):
         
         self.client.force_login(self.staff_user)
         response = self.client.get(self.url)
-        print('response.context', response.context)
         
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['total_active_accounts'], 2)
@@ -5274,7 +5269,6 @@ class TestEnRouteViewIntegration(TestCase):
         self.assertIsNone(response.context['product_type'])
         
         # Check specs were added
-        print('response.context', response.context['en_route'])
         for product in response.context['en_route']:
             self.assertTrue(hasattr(product, 'specs'))
             self.assertIn('size', product.specs)
@@ -6118,7 +6112,7 @@ class TestMostInterestedView(TestCase):
             auction_start_date=None, 
             auction_end_date=None, 
             inventory_status="in_inventory", 
-            bid_count="0", 
+            bid_count=0, 
             reserve_price="0", 
             is_active=True)
         
@@ -6263,6 +6257,423 @@ class TestMostInterestedView(TestCase):
         
         # Should now only have 2 products
         self.assertEqual(len(most_interested), 2)
+
+
+
+class TestTotalOpenBidsView(TestCase):
+    """Test suite for admin view showing products in active auctions with bids"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.client = Client()
+
+         # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.bidder1 = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '6', 'female', is_active=False)
+        self.bidder1.is_active = True
+        self.bidder1.save(update_fields=['is_active'])
+
+        self.bidder2 = create_test_user('notified1@test.com', 'testpass123', 'Notified', 'User1', '9', 'male', is_active=False)
+        self.bidder2.is_active = True
+        self.bidder2.save(update_fields=['is_active'])
+
+        self.bidder3 = create_test_user('notified2@test.com','testpass123', 'Notified', 'User2', '8', 'female', is_active=False)
+        self.bidder3.is_active = True
+        self.bidder3.save(update_fields=['is_active'])
+
+        now = timezone.now()
+
+        self.test_prod_one = create_test_product_one(
+            auction_start_date=now - timedelta(days=1), 
+            auction_end_date=now + timedelta(days=2)
+            )
+        self.test_prod_two = create_test_product_two(
+            auction_start_date=now - timedelta(hours=12),
+            auction_end_date=now + timedelta(days=1),
+        )
+        self.test_prod_three = create_test_product_three(
+            auction_start_date=now - timedelta(hours=6),
+            auction_end_date=now + timedelta(hours=12),
+        )
+
+        # Active auction, no bids
+        self.product_no_bid = create_test_product(
+            product_type=create_product_type('nicknack', is_active=True), 
+            category=create_category('Nicknack 1', is_active=True), 
+            product_title="Nicknack One", 
+            secondary_product_title="Just Nacks", 
+            description="There is no request for this product", 
+            slug=slugify("Nicknack One Just Nacks"), 
+            buy_now_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=create_brand('Acme'), 
+            auction_start_date=now - timedelta(hours=3), 
+            auction_end_date=now + timedelta(hours=12), 
+            inventory_status="in_inventory", 
+            bid_count=0, 
+            reserve_price="0", 
+            is_active=True)
+
+        # Auction Not started Yet
+        self.product_future = create_test_product(
+            product_type=create_product_type('art', is_active=True), 
+            category=create_category('Art 1', is_active=True), 
+            product_title="Art Product 1", 
+            secondary_product_title="Art", 
+            description="There is no request for this product", 
+            slug=slugify("Art Product 1 Art"), 
+            buy_now_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=create_brand('Lux Art'), 
+            auction_start_date=now + timedelta(days=1), 
+            auction_end_date=now + timedelta(days=3), 
+            inventory_status="in_inventory", 
+            bid_count=0, 
+            reserve_price="0", 
+            is_active=True)
+        
+        # Auction already ended
+        self.product_past = create_test_product(
+            product_type=create_product_type('new nicknack', is_active=True), 
+            category=create_category('Nicknack 2', is_active=True), 
+            product_title="Nicknack Product 2", 
+            secondary_product_title="Nacks", 
+            description="There is no request for this product", 
+            slug=slugify("Nicknack Product 2 Nacks"), 
+            buy_now_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=create_brand('Acmes'), 
+            auction_start_date=now - timedelta(days=5), 
+            auction_end_date=now - timedelta(days=1), 
+            inventory_status="in_inventory", 
+            bid_count=0, 
+            reserve_price="0", 
+            is_active=True)
+
+        # Auction no dates set
+        self.product_no_auction = create_test_product(
+            product_type=create_product_type('new art', is_active=True), 
+            category=create_category('Artwork 2', is_active=True), 
+            product_title="Artwork Art 2", 
+            secondary_product_title="Art 2", 
+            description="There is no request for this product", 
+            slug=slugify("Artwork Art 2 Art 2"), 
+            buy_now_price="150.00", 
+            current_highest_bid="0", 
+            retail_price="100", 
+            brand=create_brand('Acme Art'), 
+            auction_start_date=None, 
+            auction_end_date=None, 
+            inventory_status="in_inventory", 
+            bid_count=0, 
+            reserve_price="0", 
+            is_active=True)
+        
+        # Create bids for product 1 (3 active bids)
+        PopUpBid.objects.create(
+            product=self.test_prod_one,
+            customer=self.bidder1,
+            amount=Decimal('100.00'),
+            is_active=True,
+            timestamp=now - timedelta(hours=20)
+        )
+
+        PopUpBid.objects.create(
+            product=self.test_prod_one,
+            customer=self.bidder2,
+            amount=Decimal('150.00'),
+            is_active=True,
+            timestamp=now - timedelta(hours=10)
+        )
+        PopUpBid.objects.create(
+            product=self.test_prod_one,
+            customer=self.bidder3,
+            amount=Decimal('200.00'),  # Highest bid
+            is_active=True,
+            timestamp=now - timedelta(hours=2)
+        )
+
+        # Create bids for product 2 (2 active bids)
+        PopUpBid.objects.create(
+            product=self.test_prod_two,
+            customer=self.bidder1,
+            amount=Decimal('80.00'),
+            is_active=True,
+            timestamp=now - timedelta(hours=8)
+        )
+        PopUpBid.objects.create(
+            product=self.test_prod_two,
+            customer=self.bidder2,
+            amount=Decimal('120.00'),
+            is_active=True,
+            timestamp=now - timedelta(hours=4)
+        )
+
+        # Create bid for product 3 (1 active bid)
+        PopUpBid.objects.create(
+            product=self.test_prod_three,
+            customer=self.bidder1,
+            amount=Decimal('50.00'),
+            is_active=True,
+            timestamp=now - timedelta(hours=3)
+        )
+        
+        # Create an inactive bid for product 3 (should not be counted)
+        PopUpBid.objects.create(
+            product=self.test_prod_three,
+            customer=self.bidder2,
+            amount=Decimal('60.00'),
+            is_active=False,
+            timestamp=now - timedelta(hours=5)
+        )
+
+        # Create bids for past auction (should not appear in view)
+        PopUpBid.objects.create(
+            product=self.product_past,
+            customer=self.bidder1,
+            amount=Decimal('75.00'),
+            is_active=True,
+            timestamp=now - timedelta(days=3)
+        )
+        
+        # URL for the view
+        self.url = reverse('pop_accounts:total_open_bids')  # Adjust to match your URL name
+    
+
+    def test_total_open_bids_view_authenticated_admin(self):
+        """Test that admin users can access the view and see correct template"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html'
+        )
+
+    def test_total_open_bids_redirects_if_not_staff(self):
+        """Test that non-staff users are redirected"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)  # UserPassesTestMixin returns 403
+
+    def test_total_open_bids_redirects_if_not_logged_in(self):
+        """Test that anonymous users are redirected"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+
+    def test_context_contains_open_auction_products(self):
+        """Test that context contains 'open_auction_products' queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('open_auction_products', response.context)
+
+
+    def test_only_active_auctions_shown(self):
+        """Test that only products with active auctions are displayed"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = response.context['open_auction_products']
+        product_ids = [p.id for p in open_auction_products]
+        
+        # Should include products with active auctions (even without bids)
+        self.assertIn(self.test_prod_one.id, product_ids)
+        self.assertIn(self.test_prod_two.id, product_ids)
+        self.assertIn(self.test_prod_three.id, product_ids)
+        self.assertIn(self.product_no_bid.id, product_ids)
+        
+        # Should NOT include future, past, or no-auction products
+        self.assertNotIn(self.product_future.id, product_ids)
+        self.assertNotIn(self.product_past.id, product_ids)
+        self.assertNotIn(self.product_no_auction.id, product_ids)
+
+
+    def test_products_ordered_by_bid_count_then_highest_bid(self):
+        """Test that products are ordered by bid count (desc), then highest bid (desc)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = list(response.context['open_auction_products'])
+        
+        # First should be product1 (3 bids, $200 highest)
+        self.assertEqual(open_auction_products[0].id, self.test_prod_one.id)
+        
+        # Second should be product2 (2 bids, $120 highest)
+        self.assertEqual(open_auction_products[1].id, self.test_prod_two.id)
+        
+        # Third should be product3 (1 bid, $50 highest)
+        self.assertEqual(open_auction_products[2].id, self.test_prod_three.id)
+        
+        # Last should be product_no_bids (0 bids)
+        self.assertEqual(open_auction_products[3].id, self.product_no_bid.id)
+
+
+    def test_active_bid_count_annotation(self):
+        """Test that products have correct active_bid_count annotation"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = list(response.context['open_auction_products'])
+        
+        # Find each product and check its bid count
+        product1_result = next(p for p in open_auction_products if p.id == self.test_prod_one.id)
+        product2_result = next(p for p in open_auction_products if p.id == self.test_prod_two.id)
+        product3_result = next(p for p in open_auction_products if p.id == self.test_prod_three.id)
+        product_no_bids_result = next(p for p in open_auction_products if p.id == self.product_no_bid.id)
+        
+        self.assertEqual(product1_result.active_bid_count, 3)
+        self.assertEqual(product2_result.active_bid_count, 2)
+        self.assertEqual(product3_result.active_bid_count, 1)
+        self.assertEqual(product_no_bids_result.active_bid_count, 0)
+    
+
+    def test_highest_bid_annotation(self):
+        """Test that products have correct highest_bid annotation"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = list(response.context['open_auction_products'])
+        
+        product1_result = next(p for p in open_auction_products if p.id == self.test_prod_one.id)
+        product2_result = next(p for p in open_auction_products if p.id == self.test_prod_two.id)
+        product3_result = next(p for p in open_auction_products if p.id == self.test_prod_three.id)
+        product_no_bids_result = next(p for p in open_auction_products if p.id == self.product_no_bid.id)
+        
+        self.assertEqual(product1_result.highest_bid, Decimal('200.00'))
+        self.assertEqual(product2_result.highest_bid, Decimal('120.00'))
+        self.assertEqual(product3_result.highest_bid, Decimal('50.00'))
+        self.assertIsNone(product_no_bids_result.highest_bid)
+    
+
+    def test_inactive_bids_not_counted(self):
+        """Test that inactive bids are not included in counts or highest bid"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = list(response.context['open_auction_products'])
+        product3_result = next(p for p in open_auction_products if p.id == self.test_prod_three.id)
+        
+        # Product 3 has 1 active bid and 1 inactive bid
+        # Should only count the active bid
+        self.assertEqual(product3_result.active_bid_count, 1)
+        self.assertEqual(product3_result.highest_bid, Decimal('50.00'))  # Not $60 from inactive bid
+    
+
+    def test_latest_bid_attached_to_products(self):
+        """Test that latest_bid is attached to each product"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = list(response.context['open_auction_products'])
+        product1_result = next(p for p in open_auction_products if p.id == self.test_prod_one.id)
+        
+        # Product 1's latest bid should be the $200 bid
+        self.assertIsNotNone(product1_result.latest_bid)
+        self.assertEqual(product1_result.latest_bid.amount, Decimal('200.00'))
+        self.assertEqual(product1_result.latest_bid.customer, self.bidder3)
+    
+    def test_time_remaining_calculated(self):
+        """Test that time_remaining is calculated for each product"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = list(response.context['open_auction_products'])
+        
+        for product in open_auction_products:
+            self.assertTrue(hasattr(product, 'time_remaining'))
+            self.assertIsNotNone(product.time_remaining)
+            # Time remaining should be positive for active auctions
+            self.assertGreater(product.time_remaining.total_seconds(), 0)
+    
+    def test_auction_progress_calculated(self):
+        """Test that auction_progress is calculated for each product"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = list(response.context['open_auction_products'])
+        
+        for product in open_auction_products:
+            self.assertTrue(hasattr(product, 'auction_progress'))
+            self.assertIsNotNone(product.auction_progress)
+    
+    def test_total_open_bids_calculation(self):
+        """Test that total_open_bids is correctly calculated"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Total should be 3 + 2 + 1 + 0 = 6 active bids
+        self.assertEqual(response.context['total_open_bids'], 6)
+    
+
+    def test_total_auction_value_calculation(self):
+        """Test that total_auction_value is correctly calculated"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Total should be $200 + $120 + $50 + $0 = $370
+        expected_total = Decimal('200.00') + Decimal('120.00') + Decimal('50.00')
+        self.assertEqual(response.context['total_auction_value'], expected_total)
+    
+
+    def test_total_products_in_auction_count(self):
+        """Test that total_products_in_auction is correctly counted"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        # Should count 4 products with active auctions
+        self.assertEqual(response.context['total_products_in_auction'], 4)
+    
+
+    def test_context_contains_copy_text(self):
+        """Test that admin copy text is in context"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('admin_total_open_bids_copy', response.context)
+    
+    def test_empty_results_when_no_active_auctions(self):
+        """Test view when no products have active auctions"""
+        # End all auctions
+        now = timezone.now()
+        PopUpProduct.objects.filter(
+            auction_end_date__isnull=False
+        ).update(auction_end_date=now - timedelta(days=1))
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        open_auction_products = response.context['open_auction_products']
+        self.assertEqual(len(open_auction_products), 0)
+        self.assertEqual(response.context['total_open_bids'], 0)
+        self.assertEqual(response.context['total_auction_value'], 0)
+        self.assertEqual(response.context['total_products_in_auction'], 0)
+    
+    def test_view_class_attributes(self):
+        """Test that the view has correct class attributes"""
+        self.assertEqual(TotalOpenBidsView.model, PopUpProduct)
+        self.assertEqual(
+            TotalOpenBidsView.template_name,
+            'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html'
+        )
+        self.assertEqual(TotalOpenBidsView.context_object_name, 'open_auction_products')
+
+
 
 
 # class EmailCheckViewTests(TestCase):
@@ -6562,150 +6973,6 @@ class TestMostInterestedView(TestCase):
 #             validate_password_strength('Weakpass1')
 
 
-# class MarkProductInterestedViewTests(TestCase):
-#     def setUp(self):
-#         self.client = Client()
-#         self.user = PopUpCustomer.objects.create_user(
-#             email="testuser@example.com",
-#             password="securePassword!23",
-#             first_name="Test",
-#             last_name="User",
-#             shoe_size="10",
-#             size_gender="male"
-#         )
-
-#         self.brand = PopUpBrand.objects.create(
-#             name="Staries",
-#             slug="staries"
-#         )
-#         self.categories = PopUpCategory.objects.create(
-#             name="Jordan 3",
-#             slug="jordan-3",
-#             is_active=True
-#         )
-#         self.product_type = PopUpProductType.objects.create(
-#             name="shoe",
-#             slug="shoe",
-#             is_active=True
-#         )
-
-#         now = timezone.now()
-#         self.product = PopUpProduct.objects.create(
-#             # id=uuid.uuid4(),
-#             product_type=self.product_type,
-#             category=self.categories,
-#             product_title="Test Sneaker",
-#             secondary_product_title = "Exclusive Drop",
-#             description="New Test Sneaker Exlusive Drop from the best sneaker makers out.",
-#             slug="test-sneaker-exclusive-drop", 
-#             buy_now_price="150.00", 
-#             current_highest_bid="0", 
-#             retail_price="100", 
-#             brand=self.brand, 
-#             auction_start_date=now + timedelta(days=5), 
-#             auction_end_date=now + timedelta(days=10), 
-#             inventory_status="In Inventory", 
-#             bid_count="0", 
-#             reserve_price="0", 
-#             is_active=True
-#         )
-#         self.url = reverse('pop_accounts:mark_interested')
-
-    
-#     def test_authenticated_user_can_mark_product_interested(self):
-#         self.client.login(email="testuser@example.com", password="securePassword!23")
-#         response = self.client.post(
-#             self.url,
-#             data={"product_id": str(self.product.id)},
-#             content_type = "application/json"
-#         )
-#         self.assertEqual(response.status_code, 200)
-#         self.assertEqual(response.json()["status"], "added")
-#         self.assertIn(self.product, self.user.prods_interested_in.all())
-    
-
-#     def test_unathenticated_user_redirected(self):
-#         response = self.client.post(
-#             self.url, data={'product_id': str(self.product.id)}, content_type='application/json'
-#         )
-
-#         # Should redirect to home page
-#         self.assertEqual(response.status_code, 302)
-#         self.assertTrue(response.url.startswith('/'))
-    
-    
-#     def test_product_does_not_exist(self):
-#         self.client.login(email='testuser@example.com', password='securePassword!23')
-#         invalid_id = 999999
-#         response = self.client.post(
-#             self.url, data={'product_id': str(invalid_id)},
-#             content_type='application/json'
-#         )
-#         self.assertEqual(response.status_code, 404)
-#         self.assertEqual(response.json()['status'], 'error')
-
-
-
-# class MarkProductOnNoticeViewTests(TestCase):
-#     def setUp(self):
-#         self.client = Client()
-#         self.user = PopUpCustomer.objects.create_user(
-#             email="testuser@example.com",
-#             password="securePassword!23",
-#             first_name="Test",
-#             last_name="User",
-#             shoe_size="10",
-#             size_gender="male"
-#         )
-
-#         self.brand = PopUpBrand.objects.create(
-#             name="Staries",
-#             slug="staries"
-#         )
-#         self.categories = PopUpCategory.objects.create(
-#             name="Jordan 3",
-#             slug="jordan-3",
-#             is_active=True
-#         )
-#         self.product_type = PopUpProductType.objects.create(
-#             name="shoe",
-#             slug="shoe",
-#             is_active=True
-#         )
-
-#         now = timezone.now()
-#         self.product = PopUpProduct.objects.create(
-#             product_type=self.product_type,
-#             category=self.categories,
-#             product_title="Test Sneaker",
-#             secondary_product_title = "Exclusive Drop",
-#             description="New Test Sneaker Exlusive Drop from the best sneaker makers out.",
-#             slug="test-sneaker-exclusive-drop", 
-#             buy_now_price="150.00", 
-#             current_highest_bid="0", 
-#             retail_price="100", 
-#             brand=self.brand, 
-#             auction_start_date=now + timedelta(days=5), 
-#             auction_end_date=now + timedelta(days=10), 
-#             inventory_status="In Inventory", 
-#             bid_count="0", 
-#             reserve_price="0", 
-#             is_active=True
-#         )
-#         self.url = reverse('pop_accounts:mark_on_notice')
-
-    
-#     def test_authenticated_user_can_mark_product_on_notice(self):
-#         self.client.login(email="testuser@example.com", password="securePassword!23")
-#         response = self.client.post(
-#             self.url,
-#             data={"product_id": str(self.product.id)},
-#             content_type = "application/json"
-#         )
-#         self.assertEqual(response.status_code, 200)
-#         self.assertEqual(response.json()["status"], "added")
-#         self.assertIn(self.product, self.user.prods_on_notice_for.all())
-    
 
 # class ProductBuyViewGETTests(TestCase):
         
@@ -7098,8 +7365,6 @@ class TestMostInterestedView(TestCase):
 
 
 # class ProductBuyGuestTest(TestCase):
-
-    
     
 #     def setUp(self):
 #         self.client = Client()
