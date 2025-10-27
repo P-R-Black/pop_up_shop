@@ -61,7 +61,7 @@ from django.db.models import OuterRef, Subquery, F
 from decimal import Decimal
 from .pop_accounts_copy.admin_copy.admin_copy import (
     ADMIN_DASHBOARD_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, 
-    ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE, MOST_INTERESTED_COPY, MOST_ON_NOTICE_COPY,
+    ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE, MOST_INTERESTED_COPY, MOST_ON_NOTICE_COPY, ADMIN_SALES_COPY,
     )
 from .pop_accounts_copy.user_copy.user_copy import (
     USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
@@ -1417,7 +1417,11 @@ class EnRouteView(UserPassesTestMixin, ListView):
     
 
 class SalesView(UserPassesTestMixin, TemplateView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     template_name = 'pop_accounts/admin_accounts/dashboard_pages/sales.html'
+    admin_sales_copy = ADMIN_SALES_COPY
 
     def test_func(self):
         return self.request.user.is_staff
@@ -1465,6 +1469,7 @@ class SalesView(UserPassesTestMixin, TemplateView):
         context.update(self.get_aggregate_sales())
         context.update(self.get_historical_sales_data())
         context.update(self.get_comparison_data())
+        context.update({"admin_sales_copy": self.admin_sales_copy})
         return context
 
 

@@ -24,7 +24,17 @@
 
 
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
-@media screen and (max-width: 640px) {}
+@media screen and (max-width: 640px) {
+    .sales_items_container {
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .dashboard_databox_smaller {
+        aspect-ratio: 5/1;
+        width: 100%;
+    }
+}
 
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */

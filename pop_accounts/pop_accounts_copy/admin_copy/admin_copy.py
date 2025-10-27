@@ -57,6 +57,17 @@ ADMIN_PRODUCT_UPDATE = {
     }
 
 
+ADMIN_SALES_COPY = {
+    "page_title": "Sales", 
+    "sales_timeline": [
+        {"label": "Day", "href": "#", "data_view": "day"},
+        {"label": "Month", "href": "#", "data_view": "month"},
+        {"label": "Year", "href": "#", "data_view": "year"},
+    ]
+
+
+}
+
 MOST_ON_NOTICE_COPY = {
     "page_title": "Most On Notice", 
     "page_item_list": [
