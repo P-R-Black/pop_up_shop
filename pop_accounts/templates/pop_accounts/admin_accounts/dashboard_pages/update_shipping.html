@@ -2,44 +2,40 @@
 {% load static %}
 
 
-{% block title %}
-Update Shipping
-{% endblock %}
+{% block title %}Update Shipping{% endblock %}
 
 {% block main %}
 
-<section class="auction_section container">
-    <div class="section_container">
-        <div class="page_title">
-            <h2>{{ admin_shipping.page_title }}</h2>
+<div class="section_container">
+    <div class="page_title">
+        <h2>{{ admin_shipping.page_title }}</h2>
+    </div>
+    <div class="the_update_shipping_section">
+        <div class="the_update_shipping_container">
+            <div class="update_shipping_title">
+                <h3>{{ admin_shipping.order_no_title_box }}</h3>
+            </div>
+            <ol>
+                {% for shipment in pending_shipments %}
+                {% if shipment.status == "pending" %}
+                <li>
+                    <a href="{% url 'pop_accounts:get_shipping_detail' shipment.id %}" class="load_shipment"
+                        data-shipment-id="{{ shipment.id }}">
+                        Order #{{ shipment.order.id }} - {{ shipment.order.full_name}} - {{shipment.status|title }}
+                    </a>
+
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ol>
         </div>
-        <div class="the_update_shipping_section">
-            <div class="the_update_shipping_container">
-                <div class="update_shipping_title">
-                    <h3>{{ admin_shipping.order_no_title_box }}</h3>
-                </div>
-                <ol>
-                    {% for shipment in pending_shipments %}
-                    {% if shipment.status == "pending" %}
-                    <li>
-                        <a href="{% url 'pop_accounts:get_shipping_detail' shipment.id %}" class="load_shipment"
-                            data-shipment-id="{{ shipment.id }}">
-                            Order #{{ shipment.order.id }} - {{ shipment.order.full_name}} - {{shipment.status|title }}
-                        </a>
 
-                    </li>
-                    {% endif %}
-                    {% endfor %}
-                </ol>
-            </div>
+        <!-- Placeholder for dynamic order details -->
+        <div class="shipment_detail_container" id="shipment_detail_container">
 
-            <!-- Placeholder for dynamic order details -->
-            <div class="shipment_detail_container" id="shipment_detail_container">
-
-            </div>
         </div>
     </div>
-</section>
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

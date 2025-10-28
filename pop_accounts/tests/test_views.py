@@ -5,14 +5,17 @@ from pop_up_payment.models import PopUpPayment
 from pop_up_shipping.models import PopUpShipment
 from pop_up_auction.models import PopUpProductImage
 from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
-from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpBid
+from pop_accounts.models import (PopUpCustomer, PopUpCustomerAddress, PopUpBid)
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
 from pop_up_auction.models import (PopUpProduct, PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
                                    PopUpProductSpecificationValue)
-from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView, TotalOpenBidsView)
+from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView, 
+                                TotalOpenBidsView, AccountSizesView)
 from unittest.mock import patch
 from django.utils.timezone import now, make_aware
-from django.utils import timezone
+from django.utils import timezone as django_timezone
+from datetime import timezone as dt_timezone, datetime
+
 from datetime import timedelta, datetime, date 
 from uuid import uuid4
 from django.middleware.csrf import CsrfViewMiddleware
@@ -243,8 +246,8 @@ def create_test_shipment_one(status, *args, **kwargs):
         tracking_number='1Z999AA10123456784',
         # shipped_at=None,
         # estimated_delivery=None,
-        shipped_at=datetime(2024, 1, 15, tzinfo=timezone.utc),
-        estimated_delivery=datetime(2024, 1, 20, tzinfo=timezone.utc),
+        shipped_at=datetime(2024, 1, 15, tzinfo=dt_timezone.utc),
+        estimated_delivery=datetime(2024, 1, 20, tzinfo=dt_timezone.utc),
         delivered_at=None,
         status=status, # pending, cancelled, in_dispute, shipped, returned, delivered
         **kwargs
@@ -274,8 +277,8 @@ def create_test_payment_one(order, amount, status, payment_method, suspicious_fl
 # self.shipment = PopUpShipment.objects.create(
         #     carrier='UPS',
         #     tracking_number='1Z999AA10123456784',
-        #     shipped_at=datetime(2024, 1, 15, tzinfo=timezone.utc),
-        #     estimated_delivery=datetime(2024, 1, 20, tzinfo=timezone.utc),
+        #     shipped_at=datetime(2024, 1, 15, tzinfo=dt_timezone.utc),
+        #     estimated_delivery=datetime(2024, 1, 20, tzinfo=dt_timezone.utc),
         #     status='in_transit'
         # )
 
@@ -3553,7 +3556,7 @@ class TestUserOrderPager(TestCase):
         mock_add_specs.return_value = [mock_product]
         
         # Update shipment to delivered
-        self.create_shipment.delivered_at = datetime(2024, 1, 18, tzinfo=timezone.utc)
+        self.create_shipment.delivered_at = datetime(2024, 1, 18, tzinfo=dt_timezone.utc)
         self.create_shipment.status = 'delivered'
         self.create_shipment.save()
         
@@ -6267,11 +6270,10 @@ class TestTotalOpenBidsView(TestCase):
         """Set up test data"""
         self.client = Client()
 
-         # Create a staff user
+        # Create a staff user
         self.staff_user = create_test_staff_user()
         self.staff_user.is_active = True
         self.staff_user.save(update_fields=['is_active'])
-
 
         # Create a regular user
         self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
@@ -6291,7 +6293,7 @@ class TestTotalOpenBidsView(TestCase):
         self.bidder3.is_active = True
         self.bidder3.save(update_fields=['is_active'])
 
-        now = timezone.now()
+        now = django_timezone.now()
 
         self.test_prod_one = create_test_product_one(
             auction_start_date=now - timedelta(days=1), 
@@ -6650,7 +6652,7 @@ class TestTotalOpenBidsView(TestCase):
     def test_empty_results_when_no_active_auctions(self):
         """Test view when no products have active auctions"""
         # End all auctions
-        now = timezone.now()
+        now = django_timezone.now()
         PopUpProduct.objects.filter(
             auction_end_date__isnull=False
         ).update(auction_end_date=now - timedelta(days=1))
@@ -6672,6 +6674,236 @@ class TestTotalOpenBidsView(TestCase):
             'pop_accounts/admin_accounts/dashboard_pages/total_open_bids.html'
         )
         self.assertEqual(TotalOpenBidsView.context_object_name, 'open_auction_products')
+
+
+class TestAccountSizesView(TestCase):
+    """Test suite for admin view showing user shoe size counts"""
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '25', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.user1 = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '10', 'male', is_active=False)
+        self.user1.is_active = True
+        self.user1.save(update_fields=['is_active'])
+
+        self.user2 = create_test_user('notified2@test.com', 'testpass123', 'Notified', 'User2', '10', 'male', is_active=False)
+        self.user2.is_active = True
+        self.user2.save(update_fields=['is_active'])
+
+        self.user3 = create_test_user('notified3@test.com', 'testpass123', 'Notified', 'User3', '10', 'male', is_active=False)
+        self.user3.is_active = True
+        self.user3.save(update_fields=['is_active'])
+
+        self.user4 = create_test_user('notified4@test.com','testpass123', 'Notified', 'User4', '7', 'female', is_active=False)
+        self.user4.is_active = True
+        self.user4.save(update_fields=['is_active'])
+
+        self.user5 = create_test_user('notified5@test.com','testpass123', 'Notified', 'User5', '7', 'female', is_active=False)
+        self.user5.is_active = True
+        self.user5.save(update_fields=['is_active'])
+
+        self.user6 = create_test_user('notified6@test.com','testpass123', 'Notified', 'User6', '9', 'male', is_active=False)
+        self.user6.is_active = True
+        self.user6.save(update_fields=['is_active'])
+
+        self.user7 = create_test_user('notified7@test.com','testpass123', 'Notified', 'User7', '8', 'female', is_active=False)
+        self.user7.is_active = True
+        self.user7.save(update_fields=['is_active'])
+
+        self.user8 = create_test_user('notified8@test.com','testpass123', 'Notified', 'User8', '8', 'female', is_active=False)
+        self.user8.is_active = True
+        self.user8.save(update_fields=['is_active'])
+
+        self.url = reverse('pop_accounts:account_sizes')
+    
+
+    def test_account_sizes_view_authenticated_admin(self):
+        """Test that admin users can access the view and see correct template"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/account_sizes.html'
+        )
+    
+    def test_account_sizes_redirects_if_not_staff(self):
+        """Test that non-staff users cannot access the view"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)  # UserPassesTestMixin returns 403
+    
+    def test_account_sizes_redirects_if_not_logged_in(self):
+        """Test that anonymous users are redirected"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+
+    def test_context_contains_size_counts(self):
+        """Test that context contains 'size_counts' queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('size_counts', response.context)
+    
+
+    def test_context_contains_admin_copy(self):
+        """Test that context contains admin copy text"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('admin_account_size_copy', response.context)
+
+
+    def test_size_counts_grouped_correctly(self):
+        """Test that sizes are grouped by shoe_size and size_gender"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        size_counts = list(response.context['size_counts'])
+        
+        # Should have 4 distinct groups:
+        # - Men's 10 (3 users)
+        # - Women's 7 (2 users)
+        # - Women's 8 (2 users)
+        # - Men's 9 (1 user)
+        # Plus admin and regular user if they have sizes set
+        
+        # Check that we have the expected groups
+        men_10 = next((s for s in size_counts if s['shoe_size'] == '10' and s['size_gender'] == 'male'), None)
+        women_7 = next((s for s in size_counts if s['shoe_size'] == '7' and s['size_gender'] == 'female'), None)
+        women_8 = next((s for s in size_counts if s['shoe_size'] == '8' and s['size_gender'] == 'female'), None)
+        men_9 = next((s for s in size_counts if s['shoe_size'] == '9' and s['size_gender'] == 'male'), None)
+        
+        self.assertIsNotNone(men_10)
+        self.assertIsNotNone(women_7)
+        self.assertIsNotNone(women_8)
+        self.assertIsNotNone(men_9)
+
+
+
+    def test_size_counts_have_correct_counts(self):
+        """Test that each group has the correct count"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        size_counts = list(response.context['size_counts'])
+        
+        # Find each group and verify count
+        men_10 = next((s for s in size_counts if s['shoe_size'] == '10' and s['size_gender'] == 'male'), None)
+        women_7 = next((s for s in size_counts if s['shoe_size'] == '7' and s['size_gender'] == 'female'), None)
+        women_8 = next((s for s in size_counts if s['shoe_size'] == '8' and s['size_gender'] == 'female'), None)
+        men_9 = next((s for s in size_counts if s['shoe_size'] == '9' and s['size_gender'] == 'male'), None)
+    
+        self.assertEqual(men_10['count'], 3)
+        self.assertEqual(women_7['count'], 2)
+        self.assertEqual(women_8['count'], 2)
+        self.assertEqual(men_9['count'], 2) # includes staff user
+
+
+
+    def test_size_counts_ordered_by_count_descending(self):
+        """Test that results are ordered by count in descending order"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        size_counts = list(response.context['size_counts'])
+        
+        # First entry should have the highest count
+        # Men's 10 with 3 users should be first
+        first_entry = size_counts[0]
+        self.assertEqual(first_entry['shoe_size'], '10')
+        self.assertEqual(first_entry['size_gender'], 'male')
+        self.assertEqual(first_entry['count'], 3)
+        
+        # Verify counts are in descending order
+        counts = [entry['count'] for entry in size_counts]
+        self.assertEqual(counts, sorted(counts, reverse=True))
+    
+
+    def test_same_size_different_genders_counted_separately(self):
+        """Test that same shoe size for different genders are counted separately"""
+        # Create a women's size 10 user
+        user_women_10 = create_test_user('user_women10@example.com','testpass!23', 'User', 'Women10', '25', 'female', is_active=False)
+        user_women_10.is_active = True
+        # self.user_women_10.save(update_fields=['is_active'])
+
+        user_women_10.shoe_size = '10'
+        user_women_10.size_gender = 'female'
+        user_women_10.save()
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        size_counts = list(response.context['size_counts'])
+        
+        # Should have separate entries for men's 10 and women's 10
+        men_10 = next((s for s in size_counts if s['shoe_size'] == '10' and s['size_gender'] == 'male'), None)
+        women_10 = next((s for s in size_counts if s['shoe_size'] == '10' and s['size_gender'] == 'female'), None)
+        
+        self.assertIsNotNone(men_10)
+        self.assertIsNotNone(women_10)
+        self.assertEqual(men_10['count'], 3)
+        self.assertEqual(women_10['count'], 1)
+    
+    def test_empty_results_when_no_users_have_sizes(self):
+        """Test view when no users have shoe sizes set"""
+        # Clear all shoe sizes
+        PopUpCustomer.objects.all().update(shoe_size=None)
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        size_counts = list(response.context['size_counts'])
+        
+        # Should have no entries or only entries with null sizes
+        non_null_entries = [s for s in size_counts if s['shoe_size'] is not None]
+        self.assertEqual(len(non_null_entries), 0)
+    
+    def test_new_user_updates_count(self):
+        """Test that adding a new user updates the count dynamically"""
+        self.client.force_login(self.staff_user)
+        
+        # Initial state: Men's 10 has 3 users
+        response = self.client.get(self.url)
+        size_counts = list(response.context['size_counts'])
+        men_10 = next((s for s in size_counts if s['shoe_size'] == '10' and s['size_gender'] == 'male'), None)
+        self.assertEqual(men_10['count'], 3)
+        
+        # Add a new user with men's size 10
+        new_user = create_test_user('newuser@example.com','testpass!23', 'New', 'User', '30', 'male', is_active=False)
+        new_user.shoe_size = '10'
+        new_user.size_gender = 'male'
+        new_user.is_active = True
+        new_user.save()
+        
+        # Verify count increased
+        response = self.client.get(self.url)
+        size_counts = list(response.context['size_counts'])
+        men_10 = next((s for s in size_counts if s['shoe_size'] == '10' and s['size_gender'] == 'male'), None)
+        self.assertEqual(men_10['count'], 4)
+
+
+    def test_view_class_attributes(self):
+        """Test that the view has correct class attributes"""
+        self.assertEqual(AccountSizesView.template_name,
+            'pop_accounts/admin_accounts/dashboard_pages/account_sizes.html'
+        )
+
+
+
+
+
 
 
 

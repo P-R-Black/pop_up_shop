@@ -21,8 +21,9 @@
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
 @media screen and (max-width: 450px) {
     .account_sizes_container {
-        display: grid;
-        grid-template-columns: 50% 50%;
+        align-items: center;
+        display: flex;
+        flex-direction: column;
     }
 
     .dashboard_databox_squared {

@@ -62,7 +62,7 @@ from decimal import Decimal
 from .pop_accounts_copy.admin_copy.admin_copy import (
     ADMIN_DASHBOARD_COPY, ADMIN_SHIPPING_UPDATE, ADMIN_SHIPING_OKAY_PENDING, ADMIN_SHIPMENTS, 
     ADMIN_PRODUCTS_PAGE, ADMIN_PRODUCT_UPDATE, MOST_INTERESTED_COPY, MOST_ON_NOTICE_COPY, 
-    ADMIN_SALES_COPY, ADMIN_TOTAL_OPEN_BIDS_COPY, ADMIN_TOTAL_ACCOUNTS_COPY
+    ADMIN_SALES_COPY, ADMIN_TOTAL_OPEN_BIDS_COPY, ADMIN_TOTAL_ACCOUNTS_COPY, ADMIN_ACCOUNT_SIZE_COPY
     )
 from .pop_accounts_copy.user_copy.user_copy import (
     USER_SHIPPING_TRACKING, TRACKING_CATEGORIES, USER_ORDER_DETAILS_PAGE,USER_DASHBOARD_COPY, USER_INTERESTED_IN_COPY,
@@ -1752,9 +1752,14 @@ class TotalOpenBidsView(UserPassesTestMixin, ListView):
         return context    
 
 
-class TotalAccountsView(TemplateView):
+class TotalAccountsView(UserPassesTestMixin, TemplateView):
+    # 🛑 Need to test after google analytics connected
     # ✅ Mobile / Tablet Media Query Completed
     template_name = 'pop_accounts/admin_accounts/dashboard_pages/total_accounts.html'
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1792,74 +1797,102 @@ class TotalAccountsView(TemplateView):
         # Add copy text
         context['admin_total_accounts_copy'] = ADMIN_TOTAL_ACCOUNTS_COPY
 
+        print('context', context)
         return context
 
 
-
-@staff_member_required
-def account_sizes(request):
+class AccountSizesView(UserPassesTestMixin, TemplateView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    Admin view that shows user sizes.
+    Class-based view for Admin Account Size Distribution
+
+    Displays aggregated statistics of registered users based on their selected shoe size
+    and size gender. This view helps the admin analyze customer size demographics and
+    inventory demand by showing how many active accounts fall into each size category.
+
+    Attributes:
+        template_name (str): The template used to render the account size distribution page.
+
+    Methods:
+        test_func():
+            Restricts access to staff users only. Returns True if the requesting user is a staff member.
+
+        get_context_data(**kwargs):
+            Builds the context containing:
+                - `size_counts`: A queryset of user counts grouped by `shoe_size` and `size_gender`,
+                annotated with the number of users per group and ordered by descending count.
+                - `admin_account_size_copy`: Static copy or content used for display in the page.
+            Returns the complete context for rendering the admin’s account size analytics page.
     """
-    # Query to get counts grouped by shoe_size and size_gender
-    size_counts = PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
-        count=Count('id')
-    ).order_by('-count')
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/account_sizes.html"
 
-    context = {
-        'size_counts':size_counts
-    }
-
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/account_sizes.html', context)
-
-
-@staff_member_required
-def pending_okay_to_ship(request):
-    """
-    View that displays ttems that have been purchased, but in waiting period to verify payment clears
-    """
-    pending_shipping = ADMIN_SHIPING_OKAY_PENDING
-
-    # Pending 'Okay' to Ship
-    payment_status_pending = PopUpPayment.objects.filter(notified_ready_to_ship=False)
+    def test_func(self):
+        return self.request.user.is_staff
     
-    context = {
-        'pending_shipping': pending_shipping,
-        'payment_status_pending': payment_status_pending
-    }
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/pending_okay_to_ship.html', context)
+        # Query to get counts grouped by shoe_size and size_gender
+        context['size_counts'] = PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
+                count=Count('id')).order_by('-count')
+        context['admin_account_size_copy'] = ADMIN_ACCOUNT_SIZE_COPY
+
+        return context
+        
+
+class PendingOkayToShipView(UserPassesTestMixin, ListView):
+    model = PopUpPayment
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/pending_okay_to_ship.html"
+    context_object_name = "payment_status_pending"
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get_queryset(self):
+        return PopUpPayment.objects.filter(notified_ready_to_ship=False)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['admin_pending_shipping_copy'] = ADMIN_SHIPING_OKAY_PENDING
+        return context
 
 
-@staff_member_required
-def get_pending_order_shipping_detail(request, order_no):
-    order_item = PopUpOrderItem.objects.filter(order=order_no)
-    context = {
-        "order_item": order_item,
-    }
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/partials/pending_order_details.html', context)
+class GetPendingOrderShippingDetail(UserPassesTestMixin, ListView):
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/partials/pending_order_details.html"
+    context_object_name = 'order_item'
+    model = PopUpOrderItem
 
+    def test_func(self):
+        return self.request.user.is_staff
 
-@staff_member_required
-def update_shipping(request):
-    """
-    - show orders that have not been shipped: do i need a shipped/fullfilled tag on the orders model or ..
-        can i get unshipped orders by querying PopUpShipment odrders with status 'pending'. That would require
-        creating a shipping instance at every order with just the order_no and pending status. 
-        All other fields left blank. Here, can query all pending orders
-    - able to click on order and see order info and add shipping details to order
-    """
-    admin_shipping = ADMIN_SHIPPING_UPDATE
-    pending_shipments = PopUpShipment.objects.filter(
-        status='pending', order__popuppayment__notified_ready_to_ship=True
+    def get_queryset(self):
+        order_no = self.kwargs['order_no']
+        return PopUpOrderItem.objects.filter(order=order_no)
+
+class UpdateShippingView(UserPassesTestMixin, ListView):
+    model = PopUpShipment
+    template_name = 'pop_accounts/admin_accounts/dashboard_pages/update_shipping.html'
+    context_object_name = "pending_shipments"
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get_queryset(self):
+        return PopUpShipment.objects.filter(
+            status='pending', order__popuppayment__notified_ready_to_ship=True
         ).select_related('order')
 
-    context = {
-        "admin_shipping": admin_shipping,
-        "pending_shipments":pending_shipments
-        }
-    
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/update_shipping.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        print('context', context)
+        context['admin_shipping'] = ADMIN_SHIPPING_UPDATE
+        print('context 2', context)
+        return context
+
+
 
 
 @staff_member_required

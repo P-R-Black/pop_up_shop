@@ -7,7 +7,8 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     UpdateProductView, CompleteProfileView, PersonalInfoView, GetAddressView, PastBidView,
                     DeleteAddressView, SetDefaultAddressView, DeleteAccountView, UserPasswordResetConfirmView,
                     ShippingTrackingView, UserOrderPager, AdminDashboardView, SalesView, MostOnNotice, 
-                    MostInterested, TotalOpenBidsView, TotalAccountsView)
+                    MostInterested, TotalOpenBidsView, TotalAccountsView, AccountSizesView, 
+                    PendingOkayToShipView, GetPendingOrderShippingDetail, UpdateShippingView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -60,11 +61,11 @@ urlpatterns = [
     path('most-interested-admin/', MostInterested.as_view(), name='most_interested'),
     path('total-open-bids-admin/', TotalOpenBidsView.as_view(), name='total_open_bids'),
     path('total-accounts-admin/', TotalAccountsView.as_view(), name='total_accounts'),
-    path('account-sizes-admin/', views.account_sizes, name='account_sizes'),
-    path('pending-okay-to-ship/', views.pending_okay_to_ship, name='pending_okay_to_ship'),
-    path('get-pending-order-shipping-detail/<uuid:order_no>/', views.get_pending_order_shipping_detail, name='get_order_details'),
+    path('account-sizes-admin/', AccountSizesView.as_view(), name='account_sizes'),
+    path('pending-okay-to-ship/', PendingOkayToShipView.as_view(), name='pending_okay_to_ship'),
+    path('get-pending-order-shipping-detail/<uuid:order_no>/', GetPendingOrderShippingDetail.as_view(), name='get_order_details'),
 
-    path('update-shipping-admin/', views.update_shipping, name='update_shipping'),
+    path('update-shipping-admin/', UpdateShippingView.as_view(), name='update_shipping'),
     path('update-shipping-admin/<int:shipment_id>/', views.update_shipping_post, name='update_shipping_post'),
     path('get-shipping-detail/<int:shipment_id>/', views.get_order_shipping_detail, name='get_shipping_detail'),
 

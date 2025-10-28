@@ -104,6 +104,9 @@ ADMIN_TOTAL_OPEN_BIDS_COPY = {
 
 ADMIN_TOTAL_ACCOUNTS_COPY = {
     "page_title": "Pop Up Accounts",
+}
 
+ADMIN_ACCOUNT_SIZE_COPY = {
+    "page_title": "Account Sizes",
 }
 
