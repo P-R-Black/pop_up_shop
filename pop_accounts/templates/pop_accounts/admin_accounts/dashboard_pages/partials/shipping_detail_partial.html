@@ -8,8 +8,8 @@
 
             <li><span><strong>Order No.</strong></span> {{ item.order.id }}</li>
             <li><span><strong>Product:</strong></span> {{ item.product_title }} {{ item.secondary_product_title }}</li>
-            <li><strong><span>Size:</span></strong> {{ item.size }} </li>
-            <li><strong><span>Color:</span></strong> {{ item.color }}</li>
+            <li><span><strong>Size:</strong></span> {{ item.size }} </li>
+            <li><span><strong>Color:</strong></span> {{ item.color }}</li>
             <li><span><strong>Qty:</strong></span> {{ item.quantity }}</li>
             <a href="{% url 'pop_up_shipping:generate_shipping_label' item.order.id %}" class="button_long">Print
                 Shipping Label</a>

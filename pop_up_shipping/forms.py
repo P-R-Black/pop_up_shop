@@ -69,7 +69,7 @@ class ThePopUpShippingForm(forms.ModelForm):
 
     status = forms.ChoiceField(
         label='Status',
-        choices=[("pending", "Pending")] + PopUpShipment.SHIPMENT_STATUS, required=False,
+        choices=PopUpShipment.SHIPMENT_STATUS, required=False,
         widget=forms.Select(attrs={
             'class': 'shipping_status',
             'id': 'shipping_status',

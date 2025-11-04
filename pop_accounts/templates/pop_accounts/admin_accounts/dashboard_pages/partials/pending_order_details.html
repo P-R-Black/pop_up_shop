@@ -4,12 +4,23 @@
             <h3>Order Items</h3>
         </div>
         <ul>
+            {% for order in user_order %}
+            <li><span><strong>Order No.</strong></span> {{ order.id }}</li>
+            <li><span><strong>Name:</strong></span> {{ order.full_name }}</li>
+            <li><strong><span>Total Billed:</span></strong> ${{ order.total_paid }} </li>
+            <li><span><strong>Shipping Address:</strong></span> {{ order.shipping_address }}</li>
+            <li><span><strong>Billing Address:</strong></span> {{ order.billing_address }}</li>
+            {% endfor %}
             {% for item in order_item %}
-            <li><span><strong>Order No.</strong></span> {{ item.order.id }}</li>
-            <li><span><strong>Product:</strong></span> {{ item.product_title }} {{ item.secondary_product_title }}</li>
-            <li><strong><span>Size:</span></strong> {{ item.size }} </li>
-            <li><strong><span>Color:</span></strong> {{ item.color }}</li>
-            <li><span><strong>Qty:</strong></span> {{ item.quantity }}</li>
+            <li><span><strong>Product Title:</strong> {{ item.product_title }}</span></li>
+            <li><span><strong>Secondary Title:</strong> {{ item.secondary_product_title }}</span></li>
+            <li><span><strong>Size:</strong> {% if item.size %}{{ item.size }}{% else %} "N/A" {% endif %}</span></li>
+            <li><span><strong>Color:</strong> {{ item.color }}</span></li>
+            {% endfor %}
+            {% for pay in payment_status %}
+            <li><span><strong>Payment Status:</strong> {{ pay.status|title }}</span></li>
+            <li><span><strong>Suspicious Activity Flagged:</strong> {{ pay.suspicious_flagged }}</span></li>
+            <li><span><strong>Ready To Ship:</strong> {{ pay.notified_ready_to_ship }}</span></li>
             {% endfor %}
         </ul>
     </div>

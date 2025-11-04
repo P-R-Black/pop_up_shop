@@ -100,7 +100,7 @@ def preview_send_customer_shipping_details(request):
     user = request.user
     user_email = request.user.email  
 
-    order_id = "b62171e6-cb4b-48f6-be14-20d971393059"
+    order = "b62171e6-cb4b-48f6-be14-20d971393059"
     carrier = "UPS"
     tracking_no = "6547382910"
     shipped_at = datetime(2025, 7, 11)

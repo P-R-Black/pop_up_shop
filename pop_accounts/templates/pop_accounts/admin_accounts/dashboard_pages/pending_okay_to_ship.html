@@ -2,7 +2,7 @@
 {% load static %}
 
 
-{% block title %}Auction{% endblock %}
+{% block title %}Okay to Ship{% endblock %}
 
 {% block main %}
 <div class="section_container">
@@ -15,8 +15,8 @@
             <ol>
                 {% for shipment in payment_status_pending %}
                 <li>
-                    <a href="{% url 'pop_accounts:get_order_details' shipment.order.id %}" class="load_shipment"
-                        data-shipment-id="{{ shipment.order.id }}">
+                    <a href="{% url 'pop_accounts:get_order_details' shipment.order.id %}" class="load_order"
+                        data-order-id="{{ shipment.order.id }}">
                         Order #{{ shipment.order.id }} - {{ shipment.order.full_name}}
                     </a>
                 </li>
@@ -27,24 +27,25 @@
             {% endif %}
         </div>
 
-        <!-- Placeholder for dynamic order details -->
-        <div class="shipment_detail_container" id="shipment_detail_container">
-
+        <div class="the_update_shipping_section">
+            <!-- Placeholder for dynamic order details -->
+            <div class="order_detail_container" id="order_detail_container"></div>
         </div>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const links = document.querySelectorAll('.load_shipment');
+        const links = document.querySelectorAll('.load_order');
         links.forEach(link => {
             link.addEventListener('click', function (e) {
                 e.preventDefault();
-                const shipmentId = this.dataset.shipmentId;
-                fetch(`/pop_accounts/get-pending-order-shipping-detail/${shipmentId}/`)
+                const orderId = this.dataset.orderId;
+                console.log('orderId', orderId)
+                fetch(`/pop_accounts/get-pending-order-shipping-detail/${orderId}/`)
                     .then(res => res.text())
                     .then(html => {
-                        document.getElementById('shipment_detail_container').innerHTML = html;
+                        document.getElementById('order_detail_container').innerHTML = html;
                     });
             });
         });

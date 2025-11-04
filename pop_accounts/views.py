@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
@@ -1844,6 +1844,37 @@ class AccountSizesView(UserPassesTestMixin, TemplateView):
         
 
 class PendingOkayToShipView(UserPassesTestMixin, ListView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Class-based view for Admin Pending Payment Approval (Okay to Ship)
+
+    Displays orders that are pending payment verification before they can be approved
+    for shipment. This view helps the admin monitor transactions that have not yet been
+    cleared for fulfillment, ensuring that no items are shipped before successful payment
+    confirmation.
+
+    Attributes:
+        model (PopUpPayment): The payment model representing transactions for customer orders.
+        template_name (str): The template used to render the pending payment approval page.
+        context_object_name (str): The variable name for the list of pending payments in the template context.
+
+    Methods:
+        test_func():
+            Restricts access to staff users only. Returns True if the requesting user is a staff member.
+
+        get_queryset():
+            Retrieves all payment records where `notified_ready_to_ship` is False,
+            indicating that the payment has not yet been approved or marked ready for shipment.
+            Returns the filtered queryset for display.
+
+        get_context_data(**kwargs):
+            Extends the template context with:
+                - `admin_pending_shipping_copy`: Static copy or display text for the page.
+            Returns the complete context for rendering the admin’s pending payment approval view.
+    """
+
     model = PopUpPayment
     template_name = "pop_accounts/admin_accounts/dashboard_pages/pending_okay_to_ship.html"
     context_object_name = "payment_status_pending"
@@ -1860,19 +1891,93 @@ class PendingOkayToShipView(UserPassesTestMixin, ListView):
         return context
 
 
-class GetPendingOrderShippingDetail(UserPassesTestMixin, ListView):
+
+class PendingOrderShippingDetailView(UserPassesTestMixin, DetailView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Class-based view for Admin Pending Order Shipping Details
+
+    Displays detailed information about a specific customer order that is pending the 
+    "okay_to_ship" status update. When a new order is created, it enters a 48-hour verification
+    period to ensure that no fraudulent payment activity has occurred. If no issues are detected
+    within that window, a webhook from the respective payment provider (e.g., Stripe, Venmo, PayPal)
+    automatically updates the payment status to "paid" and sets the `notified_ready_to_ship` flag to True.
+
+    Attributes:
+        model (PopUpCustomerOrder): The customer order model being displayed.
+        context_object_name (str): The variable name for the selected order in the template context.
+        pk_url_kwarg (str): The URL parameter used to identify the specific order by its ID.
+        template_name (str): The template used to render the pending order detail view.
+
+    Methods:
+        test_func():
+            Restricts access to staff users only. Returns True if the requesting user is a staff member.
+
+        get_context_data(**kwargs):
+            Builds the context containing:
+                - `user_order`: The specific order record being reviewed.
+                - `order_item`: All items associated with the given order.
+                - `payment_status`: Payment details and current verification status for the order.
+            Returns the full context for rendering the admin’s pending order detail page.
+    """
+    context_object_name = 'user_order'
+    model = PopUpCustomerOrder
+    pk_url_kwarg = 'order_no'
     template_name = "pop_accounts/admin_accounts/dashboard_pages/partials/pending_order_details.html"
-    context_object_name = 'order_item'
-    model = PopUpOrderItem
 
     def test_func(self):
         return self.request.user.is_staff
 
-    def get_queryset(self):
+    def get_context_data(self, **kwargs):
+        """Add order items and payment status to context"""
+        context = super().get_context_data(**kwargs)
         order_no = self.kwargs['order_no']
-        return PopUpOrderItem.objects.filter(order=order_no)
+
+        context['user_order'] = PopUpCustomerOrder.objects.filter(id=order_no)
+
+        # Get order items for this order
+        context['order_item'] = PopUpOrderItem.objects.filter(order=order_no)
+
+        # Get payment status for this order
+        context['payment_status'] = PopUpPayment.objects.filter(order=order_no)
+
+        return context
+
+
 
 class UpdateShippingView(UserPassesTestMixin, ListView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Class-based view for Admin Orders Ready to Ship
+
+    Displays all customer orders that have successfully passed the 48-hour payment verification 
+    window and have been automatically updated to "okay_to_ship". These orders have cleared 
+    fraud checks and payment disputes and are now ready for fulfillment and shipping.
+
+    Attributes:
+        model (PopUpShipment): The shipment model used to retrieve orders pending shipment.
+        template_name (str): Template used to render the "okay to ship" orders page.
+        context_object_name (str): Name of the queryset variable in the template context.
+
+    Methods:
+        test_func():
+            Restricts access to staff users only. Returns True if the requesting user is a staff member.
+
+        get_queryset():
+            Retrieves all shipment records with:
+                - `status='pending'`
+                - An associated order whose payment (`notified_ready_to_ship=True`) 
+                indicates it has cleared the 48-hour verification period.
+            Prefetches related `order` objects for efficient query performance.
+
+        get_context_data(**kwargs):
+            Adds the static admin copy (`ADMIN_SHIPPING_UPDATE`) to the context for template rendering.
+            Returns the final context dictionary for the "Orders Ready to Ship" admin view.
+    """
     model = PopUpShipment
     template_name = 'pop_accounts/admin_accounts/dashboard_pages/update_shipping.html'
     context_object_name = "pending_shipments"
@@ -1887,69 +1992,84 @@ class UpdateShippingView(UserPassesTestMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        print('context', context)
         context['admin_shipping'] = ADMIN_SHIPPING_UPDATE
-        print('context 2', context)
         return context
 
 
 
+class GetOrderShippingDetail(UserPassesTestMixin, DetailView):
+    model = PopUpOrderItem
+    form_class = ThePopUpShippingForm
+    pk_url_kwarg = 'shipment_id'
+    template_name = 'pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html'
 
-@staff_member_required
-def get_order_shipping_detail(request, shipment_id):
-    shipment = get_object_or_404(PopUpShipment, pk=shipment_id)
-    order_item = PopUpOrderItem.objects.filter(order=shipment.order)
-    form = ThePopUpShippingForm(instance=shipment)
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        shipment_id = self.kwargs['shipment_id']
 
-    context = {
-        "shipment":  shipment,
-        "order_item": order_item,
-        'form': form
-        }
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html', context)
+        shipment = get_object_or_404(PopUpShipment, pk=shipment_id)
+        context['shipment'] = shipment
+        context['order_item'] = PopUpOrderItem.objects.filter(order=shipment.order)
+        context['form'] = ThePopUpShippingForm(instance=shipment)
+
+        return context
 
 
+class UpdateShippingPostView(UserPassesTestMixin, UpdateView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    model = PopUpShipment
+    form_class = ThePopUpShippingForm
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html"
+    pk_url_kwarg = "shipment_id"
 
-@staff_member_required
-@require_POST
-def update_shipping_post(request, shipment_id):
-    shipment = get_object_or_404(PopUpShipment, pk=shipment_id)
-    form = ThePopUpShippingForm(request.POST, instance=shipment)
-    payment = PopUpPayment.objects.get(order=shipment.order)
+    def test_func(self):
+        return self.request.user.is_staff
+    
 
-    """
-    Figure out where to put this. Can I get this information from the "updated_shipment" form, or do I have to...
-    ... query database again after shipping info saved and updated?
-    send_customer_shipping_details(user, order=shipment, carrier, tracking_no, shipped_at=timezone.now(), estimated_deliv, status="shipped")
-    """
-    if form.is_valid():
-        #Keep track of whether order was previously shipped
+    def get_context_data(self, **kwargs):
+        context =  super().get_context_data(**kwargs)
+        context['order_items'] = PopUpOrderItem.objects.filter(order=self.object.order)
+        context['shipment'] = self.get_object()
+        return context
+    
+    def form_valid(self, form):
+        shipment = self.get_object()
+        original_status = shipment.status
+        
+        updated_shipment = form.save(commit=False)
         was_unshipped = shipment.status != 'shipped'
 
-        # update PopUpShipment to "shipped"
-        updated_shipment = form.save(commit=False)
 
-        # Check if status is being updated to "delivered"
+        # Check if status is being updated to delivered
         if updated_shipment.status == 'delivered' and not updated_shipment.delivered_at:
             updated_shipment.delivered_at = timezone.now()
         
-        # Clear delivered_at if the status is changed away from "delivered"
-        if updated_shipment.status != 'delivered' and updated_shipment.delivered_at:
+        # Clear delivered at if the status is changed away from "delivered"
+        if updated_shipment.status != "delivered" and updated_shipment.delivered_at:
             updated_shipment.delivered_at = None
         
         updated_shipment.save()
         
-        # update PopUpPayment to "paid"
+        # Updated PopUpPayment to "paid"
         try:
+            payment = PopUpPayment.objects.get(order=shipment.order)
             payment.status = 'paid'
             payment.save()
+        except PopUpPayment.DoesNotExist:
+            messages.warning(self.request, "Payment record not found for this order.")
         except Exception as e:
-            print('payment status update failed', e)
+            print(f'Payment status update failed: {e}')
         
         # Send shipping email if shipment was recently marked as shipped
-        if was_unshipped and updated_shipment.status == 'shipped':
+        if was_unshipped and updated_shipment.status == "shipped":
+       
             send_customer_shipping_details(
-                user=request.user,
+                user=shipment.order.user,
                 order=shipment.order,
                 carrier=updated_shipment.carrier,
                 tracking_no=updated_shipment.tracking_number,
@@ -1958,38 +2078,45 @@ def update_shipping_post(request, shipment_id):
                 status=updated_shipment.status
             )
 
-
-        messages.success(request, "Shipping Information Updated.")
+        messages.success(self.request, "Shipping Information Updated.")
         return redirect('pop_accounts:update_shipping')
-    else:
-        order_items = PopUpOrderItem.objects.filter(order=shipment.order)
-        return render(request, 'pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html', {
-            'shipment': shipment,
-            'form': form,
-            'order_items': order_items
-        })
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
     
-   
+    def get_success_url(self):
+        return reverse_lazy('pop_accounts:updated_shipping')
     
-@staff_member_required
-def view_shipments(request):
-    """
-    - shows orders that have been shipped : admin can use this view to view shipped items
-    - shows orders that have been shipped : admin can use this view to update delivery status
-    """
-    admin_shipping = ADMIN_SHIPMENTS
-    all_shipments = PopUpShipment.objects.filter(order__popuppayment__notified_ready_to_ship=True).select_related('order')
-    pending_delivery = PopUpShipment.objects.filter(status='shipped', order__popuppayment__notified_ready_to_ship=True).select_related('order')
-    delivered = PopUpShipment.objects.filter(status='delivered', order__popuppayment__notified_ready_to_ship=True).select_related('order')
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
 
 
-    context = {
-        "admin_shipping": admin_shipping,
-        "all_shipments": all_shipments,
-        "pending_delivery":pending_delivery,
-        "delivered": delivered,
-        }
-    return render(request, 'pop_accounts/admin_accounts/dashboard_pages/shipments.html', context)
+class ViewShipmentsView(UserPassesTestMixin, TemplateView):
+    template_name = "pop_accounts/admin_accounts/dashboard_pages/shipments.html"
+
+    def test_func(self):
+        return self.request.user.is_staff
+    
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        base_queryset = PopUpShipment.objects.filter(order__popuppayment__notified_ready_to_ship=True).select_related('order')
+
+        # All Shipments
+        context['all_shipments'] = base_queryset
+
+        # Pending Delivery
+        context['pending_delivery'] = base_queryset.filter(status='shipped')
+
+        # Delivered shipments
+        context['delivered'] = base_queryset.filter(status='delivered')
+
+        # Admin copy text
+        context['admin_shipping'] = ADMIN_SHIPMENTS
+
+        return context
+
 
 
 
@@ -2012,7 +2139,6 @@ class UpdateProductView(UserPassesTestMixin, View):
         return render(request, self.template_name, context)
     
     def post(self, request, product_id=None):
-        print('UpdateProductView post method hit!')
         if product_id:
             # Handle form submission for updating a product
             product = get_object_or_404(PopUpProduct, id=product_id)
@@ -2042,7 +2168,6 @@ class UpdateProductView(UserPassesTestMixin, View):
                 self._handle_specifications(request, product)
 
                 # notify interested users based on changes
-                print('product.buy_now_start', product.buy_now_start)
                 if product.buy_now_start and product.buy_now_start != old_buy_now_start:
                     send_interested_in_and_coming_soon_product_update_to_users(
                         product=product,

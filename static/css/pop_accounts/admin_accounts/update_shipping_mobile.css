@@ -1,0 +1,76 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {
+    .shipping_info_data_container input {
+        width: 100%;
+    }
+
+    .shipping_order_items_container ul {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    .shipping_order_items_container ul li:nth-child(1)::before {
+
+        color: var(--primary-color-light);
+        content: "Order: ";
+        font-weight: 600;
+        width: 25%;
+
+
+    }
+
+    .shipping_order_items_container ul li:nth-child(2)::before {
+        color: var(--primary-color-light);
+        content: "Product: ";
+        font-weight: 600;
+        width: 25%;
+    }
+
+    .shipping_order_items_container ul li:nth-child(3)::before {
+        color: var(--primary-color-light);
+        content: "Size: ";
+        font-weight: 600;
+        width: 25%;
+    }
+
+    .shipping_order_items_container ul li:nth-child(4)::before {
+        color: var(--primary-color-light);
+        content: "Color: ";
+        font-weight: 600;
+        width: 25%;
+    }
+
+    .shipping_order_items_container ul li:nth-child(5)::before {
+        color: var(--primary-color-light);
+        content: "Quantity: ";
+        font-weight: 600;
+        width: 25%;
+    }
+
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+    .shipping_order_items_container ul li {
+        display: flex;
+        flex-direction: column;
+    }
+
+}

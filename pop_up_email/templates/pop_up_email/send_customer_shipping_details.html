@@ -58,7 +58,7 @@
                         <td style="padding: 20px 30px 0 30px;">
                             <h4 style="color: #CB3A60">Hello {{ user.first_name }},</h4>
                             <p style="color: #CB3A60">Your order, order #<a
-                                    href="{% url 'pop_accounts:customer_order' order_id %}">{{ order_id }}</a>,
+                                    href="{% url 'pop_accounts:customer_order' order %}">{{ order }}</a>,
                                 has shipped.
                             </p>
                             <p style="color: #CB3A60"><strong>Status:</strong> <span>{{ status }}</span></p>

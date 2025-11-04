@@ -110,7 +110,7 @@ def send_okay_to_ship_email(order):
     Item is "okay to ship" if no payment disputes within waiting period.
     """
     subject = f"✅ OK to Ship Order #{order.id}"
-    message = render_to_string('emails/okay_to_ship_admin_alert.html', {"order": order})
+    message = render_to_string('pop_up_email/okay_to_ship_admin_alert.html', {"order": order})
     recipients = [a.email for a in get_admin_users()]
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipients)
 
@@ -127,21 +127,26 @@ def send_customer_shipping_details(user, order, carrier, tracking_no, shipped_at
     Notifies user that item has been shipped. 
     Provides user with order no and shipping details
     """
+    print('send_customer_shipping_details called', carrier)
     links_to_track_shipment = {
-            "USPS": "https://tools.usps.com/go/TrackConfirmAction_input?_gl=1*ctcvbi*_ga*MjA2NDExMTY3Ni4xNzUxNTA0NzI3*_ga_QM3XHZ2B95*czE3NTI3MDA0MzkkbzExJGcxJHQxNzUyNzAwNTM0JGo2MCRsMCRoMA..",
-            "UPS": "https://www.ups.com/us/en/home",
+            "usps": "https://tools.usps.com/",
+            "ups": "https://www.ups.com/us/en/home",
             "FedEx": "https://www.fedex.com/en-us/tracking.html"
 
     }
+    print('carrier', carrier)
+    print('links test', links_to_track_shipment[carrier])
+    print('order.id is', order.id)
 
     subject = f"Your order has shipped Order #{order.id}."
-    html_message = render_to_string('emails/send_customer_shipping_details.html', {
-        'order': order, 'carrier': carrier,
+    html_message = render_to_string('pop_up_email/send_customer_shipping_details.html', {
+        'order': order.id, 'carrier': carrier,
         'tracking_no': tracking_no, 'shipped_at': shipped_at,
         'estimated_deliv': estimated_deliv, 
         'status': status, 
-        'tracker_link': links_to_track_shipment[carrier]})
+        'tracker_link': links_to_track_shipment[carrier] })
     
+    print('user.email', user.email)
     send_mail(
         subject = subject,
         message = "",

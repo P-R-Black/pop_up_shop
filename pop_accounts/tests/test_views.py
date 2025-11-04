@@ -9,9 +9,13 @@ from pop_accounts.models import (PopUpCustomer, PopUpCustomerAddress, PopUpBid)
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
 from pop_up_auction.models import (PopUpProduct, PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
                                    PopUpProductSpecificationValue)
-from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView, 
-                                TotalOpenBidsView, AccountSizesView)
-from unittest.mock import patch
+from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView, UpdateShippingPostView,
+                                TotalOpenBidsView, AccountSizesView, PendingOkayToShipView, UpdateShippingView,
+                                ViewShipmentsView)
+from unittest.mock import patch, Mock
+from pop_up_shipping.forms import ThePopUpShippingForm
+from pop_up_email.utils import (send_customer_shipping_details, send_interested_in_and_coming_soon_product_update_to_users)
+
 from django.utils.timezone import now, make_aware
 from django.utils import timezone as django_timezone
 from datetime import timezone as dt_timezone, datetime
@@ -240,29 +244,73 @@ def create_test_order_two(*args, **kwargs):
             **kwargs
     )
 
-def create_test_shipment_one(status, *args, **kwargs):
-    return PopUpShipment.objects.create(
-        carrier='USPS',
-        tracking_number='1Z999AA10123456784',
-        # shipped_at=None,
-        # estimated_delivery=None,
-        shipped_at=datetime(2024, 1, 15, tzinfo=dt_timezone.utc),
-        estimated_delivery=datetime(2024, 1, 20, tzinfo=dt_timezone.utc),
-        delivered_at=None,
-        status=status, # pending, cancelled, in_dispute, shipped, returned, delivered
-        **kwargs
-    )
+def create_test_shipment_one(*args, **kwargs):
+    defaults = {
+        'order': None,
+        'carrier': 'USPS', 'tracking_number': '1Z999AA10123456784', 
+        'shipped_at': datetime(2024, 1, 15, tzinfo=dt_timezone.utc),
+        'estimated_delivery': datetime(2024, 1, 20, tzinfo=dt_timezone.utc), 
+        'delivered_at': None, 'status': 'pending',
+    }
 
-def create_test_shipment_two_pending(status, *args, **kwargs):
-    return PopUpShipment.objects.create(
-        carrier='USPS',
-        tracking_number='1Z999AA10123456784',
-        shipped_at=None,
-        estimated_delivery=None,
-        delivered_at=None,
-        status="pending", # pending, cancelled, in_dispute, shipped, returned, delivered
-        **kwargs
-    )
+    # Override defaults with any kwargs passed in
+    defaults.update(kwargs)
+    
+    # Create and return the product
+    return PopUpShipment.objects.create(**defaults)
+
+    
+    # return PopUpShipment.objects.create(
+    #     carrier='USPS',
+    #     tracking_number='1Z999AA10123456784',
+    #     # shipped_at=None,
+    #     # estimated_delivery=None,
+    #     shipped_at=datetime(2024, 1, 15, tzinfo=dt_timezone.utc),
+    #     estimated_delivery=datetime(2024, 1, 20, tzinfo=dt_timezone.utc),
+    #     delivered_at=None,
+    #     status=status, # pending, cancelled, in_dispute, shipped, returned, delivered
+    #     **kwargs
+    # )
+
+
+def create_test_shipment_pending(*args, **kwargs):
+    defaults = {
+        'order': None,
+        'carrier': '',  
+        'tracking_number': '',
+        'shipped_at': None, 
+        'estimated_delivery': None,
+        'delivered_at': None, 
+        'status': 'pending',  # ✅ Truly pending
+    }
+    defaults.update(kwargs)
+    return PopUpShipment.objects.create(**defaults)
+
+
+def create_test_shipment_two_pending(*args, **kwargs):
+    defaults = {
+        'order': None,
+        'carrier': 'USPS', 'tracking_number': '1Z999AA10123456784', 
+        'shipped_at': None,
+        'estimated_delivery': None, 
+        'delivered_at': None, 'status': 'pending'
+    }
+
+    # Override defaults with any kwargs passed in
+    defaults.update(kwargs)
+    
+    # Create and return the product
+    return PopUpShipment.objects.create(**defaults)
+
+    # return PopUpShipment.objects.create(
+    #     carrier='USPS',
+    #     tracking_number='1Z999AA10123456784',
+    #     shipped_at=None,
+    #     estimated_delivery=None,
+    #     delivered_at=None,
+    #     status="pending", # pending, cancelled, in_dispute, shipped, returned, delivered
+    #     **kwargs
+    # )
 
 def create_test_payment_one(order, amount, status, payment_method, suspicious_flagged, notified_ready_to_ship):
         return PopUpPayment.objects.create(
@@ -3197,7 +3245,7 @@ class TestUserOrderPager(TestCase):
         # Create pending shipment
         # self.create_pending_shipment = create_test_shipment_two_pending(status="pending", order=self.create_order)
 
-         # URLs for both orders
+        # URLs for both orders
         self.url_with_shipping = reverse('pop_accounts:customer_order', kwargs={'order_id': self.create_order_with_shipping_address.id})
 
         self.url_without_shipping = reverse('pop_accounts:customer_order', kwargs={'order_id': self.create_order.id})
@@ -6095,9 +6143,6 @@ class TestMostInterestedView(TestCase):
 
         
         # Create test products
-        # 'product_type': create_product_type('shoe', is_active=True),
-        # 'category': create_category('Jordan 3', is_active=True),
-        #  'brand': create_brand('Jordan'),
         self.test_prod_one = create_test_product_one()
         self.test_prod_two = create_test_product_two()
         self.test_prod_three = create_test_product_three()
@@ -6902,11 +6947,1628 @@ class TestAccountSizesView(TestCase):
 
 
 
+class TestPendingOkayToShipView(TestCase):
+    """Test suite for admin view showing orders pending shipment approval"""
+
+    def setUp(self):
+        """Set up test data"""
+        self.client = Client()
+
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '25', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.customer1 = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '10', 'male', is_active=False)
+        self.customer1.is_active = True
+        self.customer1.save(update_fields=['is_active'])
+
+        self.customer2 = create_test_user('notified2@test.com', 'testpass123', 'Notified', 'User2', '10', 'male', is_active=False)
+        self.customer2.is_active = True
+        self.customer2.save(update_fields=['is_active'])
+
+        self.customer3 = create_test_user('notified3@test.com', 'testpass123', 'Notified', 'User3', '10', 'male', is_active=False)
+        self.customer3.is_active = True
+        self.customer3.save(update_fields=['is_active'])
+
+        # Create orders
+        self.order1 = create_test_order_one(user=self.customer1, email=self.customer1.email)
+        self.order2 = create_test_order_one(user=self.customer2, email=self.customer2.email)
+        self.order3 = create_test_order_one(user=self.customer3, email=self.customer3.email)
+        self.order4 = create_test_order_one(user=self.customer1, email=self.customer3.email)
+
+        # Payment 1
+        # create_test_payment_one(order, amount, status, payment_method, suspicious_flagged, notified_ready_to_ship):
+        self.payment1 = create_test_payment_one(self.order1, '150.00', 'pending', 'stripe', False, False)
+
+        # Payment 2
+        self.payment2 = create_test_payment_one(self.order2, '200.00', 'pending', 'stripe', False, False)
+
+        # Payment 3
+        self.payment3 = create_test_payment_one(self.order3, '100.00', 'pending', 'stripe', False, False)
+
+        # Payment 4: Already notified (should NOT appear in pending list)
+        self.payment_notified = create_test_payment_one(self.order4, '75.00', 'paid', 'stripe', False, True)
+       
+        # Url for the view
+        self.url = reverse('pop_accounts:pending_okay_to_ship')
+
+
+    def test_pending_okay_to_ship_view_authenticated_admin(self):
+        """Test that admin users can access the view and see correct template"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/pending_okay_to_ship.html'
+        )
+
+
+    def test_pending_okay_to_ship_redirects_if_not_staff(self):
+        """Test that non-staff users cannot access the view"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)  # UserPassesTestMixin returns 403
+    
+    def test_pending_okay_to_ship_redirects_if_not_logged_in(self):
+        """Test that anonymous users are redirected"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+    
+    def test_context_contains_payment_status_pending(self):
+        """Test that context contains 'payment_status_pending' queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('payment_status_pending', response.context)
+
+
+    def test_context_contains_admin_copy(self):
+        """Test that context contains admin copy text"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('admin_pending_shipping_copy', response.context)
+    
+    def test_only_pending_payments_shown(self):
+        """Test that only payments with notified_ready_to_ship=False are shown"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        payment_status_pending = response.context['payment_status_pending']
+        payment_ids = [p.id for p in payment_status_pending]
+        
+        # Should include pending payments
+        self.assertIn(self.payment1.id, payment_ids)
+        self.assertIn(self.payment2.id, payment_ids)
+        self.assertIn(self.payment3.id, payment_ids)
+        
+        # Should NOT include already notified payment
+        self.assertNotIn(self.payment_notified.id, payment_ids)
+    
+    def test_pending_payments_count(self):
+        """Test that the correct number of pending payments are returned"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        payment_status_pending = response.context['payment_status_pending']
+        
+        # Should have 3 pending payments
+        self.assertEqual(payment_status_pending.count(), 3)
+    
+    def test_notified_payment_not_in_list(self):
+        """Test that payments already notified ready to ship do not appear"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        payment_status_pending = list(response.context['payment_status_pending'])
+        
+        # Verify the notified payment is not in the list
+        self.assertNotIn(self.payment_notified, payment_status_pending)
+    
+
+    def test_payment_order_accessible(self):
+        """Test that order information is accessible from payments"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        payment_status_pending = list(response.context['payment_status_pending'])
+        
+        # Verify we can access order information from each payment
+        for payment in payment_status_pending:
+            self.assertIsNotNone(payment.order)
+            self.assertIsNotNone(payment.order.user)
 
 
 
+    def test_empty_results_when_all_notified(self):
+        """Test view when all payments have been notified ready to ship"""
+        # Mark all payments as notified
+        PopUpPayment.objects.all().update(notified_ready_to_ship=True)
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        payment_status_pending = response.context['payment_status_pending']
+        self.assertEqual(payment_status_pending.count(), 0)
+    
+
+    def test_payment_moves_from_pending_when_notified(self):
+        """Test that a payment disappears from list when notified_ready_to_ship is set to True"""
+        self.client.force_login(self.staff_user)
+        
+        # Initial state: 3 pending payments
+        response = self.client.get(self.url)
+        payment_status_pending = response.context['payment_status_pending']
+        self.assertEqual(payment_status_pending.count(), 3)
+        
+        # Mark one payment as notified
+        self.payment1.notified_ready_to_ship = True
+        self.payment1.save()
+        
+        # Verify it's no longer in the pending list
+        response = self.client.get(self.url)
+        payment_status_pending = response.context['payment_status_pending']
+        payment_ids = [p.id for p in payment_status_pending]
+        
+        self.assertEqual(payment_status_pending.count(), 2)
+        self.assertNotIn(self.payment1.id, payment_ids)
+    
+
+    def test_new_payment_appears_in_pending(self):
+        """Test that a new payment with notified_ready_to_ship=False appears in list"""
+        self.client.force_login(self.staff_user)
+        
+        # Initial state: 3 pending payments
+        response = self.client.get(self.url)
+        initial_count = response.context['payment_status_pending'].count()
+        self.assertEqual(initial_count, 3)
+        
+        # Create a new order and payment
+        new_order = create_test_order_one(user=self.customer2, email=self.customer2.email)
+        new_payment = create_test_payment_one(new_order, '250.00', 'paid', 'stripe', False, False)
+        
+        # Verify it appears in the list
+        response = self.client.get(self.url)
+        payment_status_pending = response.context['payment_status_pending']
+        payment_ids = [p.id for p in payment_status_pending]
+        
+        self.assertEqual(payment_status_pending.count(), 4)
+        self.assertIn(new_payment.id, payment_ids)
+    
+    
+    def test_multiple_payments_same_customer(self):
+        """Test that multiple pending payments from the same customer all appear"""
+
+        # Create another pending payment for customer1
+        # Create a new order and payment
+        new_order = create_test_order_one(user=self.customer1, email=self.customer1.email)
+        new_payment = create_test_payment_one(new_order, '300.00', 'paid', 'stripe', False, False)
+
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        payment_status_pending = list(response.context['payment_status_pending'])
+        
+        # Should now have 4 pending payments (3 original + 1 new)
+        self.assertEqual(len(payment_status_pending), 4)
+        
+        # Both payments from customer1 should be present
+        customer1_payments = [p for p in payment_status_pending if p.order.user == self.customer1]
+        self.assertEqual(len(customer1_payments), 2)
 
 
+    def test_view_class_attributes(self):
+        """Test that the view has correct class attributes"""
+        self.assertEqual(PendingOkayToShipView.model, PopUpPayment)
+        self.assertEqual(
+            PendingOkayToShipView.template_name,
+            'pop_accounts/admin_accounts/dashboard_pages/pending_okay_to_ship.html'
+        )
+        self.assertEqual(PendingOkayToShipView.context_object_name, 'payment_status_pending')
+    
+    def test_queryset_filters_correctly(self):
+        """Test that get_queryset applies the correct filter"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        payment_status_pending = list(response.context['payment_status_pending'])
+        
+        # All returned payments should have notified_ready_to_ship=False
+        for payment in payment_status_pending:
+            self.assertFalse(payment.notified_ready_to_ship)
+
+
+
+class TestPendingOrderShippingDetailView(TestCase):
+    """Test suite for order detail partial view"""
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create a regular user
+        self.user = create_test_user('regular@example.com', 'testPass!23', 'Test', 'User', '25', 'femail', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        self.customer = create_test_user('customer@example.com', 'testPassTwo!23', 'John', 'Doe', '10', 'male', is_active=False)
+        self.customer.is_active = True
+        self.customer.save(update_fields=['is_active'])
+
+        self.customer_address = create_test_address(
+            self.customer, "John", "Doe", "123 Main St", "", "", "St. Pete", "Florida", "12345", "", default=True,
+            is_default_shipping=True, is_default_billing=True)
+        
+        # def create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
+        #                 town_city, state, postcode, delivery_instructions, default=True, is_default_shipping=False,
+        #                 is_default_billing=False):
+
+        # create product
+        self.test_prod_one = create_test_product_one()
+
+        # create order
+        self.order = create_test_order_one(
+            user=self.customer, 
+            full_name="John Doe",
+              email=self.customer.email,
+              shipping_address=self.customer_address,
+              billing_address=self.customer_address
+              )
+
+        # Add item to the order
+        self.order_item = PopUpOrderItem.objects.create(
+            order=self.order,
+            product=self.test_prod_one,
+            product_title="Past Bid Product 1",
+            color="Black",
+            quantity=1,
+            price=150.00
+        )
+
+        self.payment1 = create_test_payment_one(self.order, '150.00', 'pending', 'stripe', False, False)
+
+      
+
+        # create url
+        self.url = reverse('pop_accounts:get_order_details', kwargs={'order_no': self.order.id})
+
+
+    def test_pending_okay_to_ship_redirects_if_not_staff(self):
+        """Test that non-staff users cannot access the view"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        print('response', response)
+        self.assertEqual(response.status_code, 403)  # UserPassesTestMixin returns 403
+
+
+    def test_staff_user_can_access_view(self):
+        """Test that staff users can access the view"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_correct_template_used(self):
+        """Test that the correct partial template is used"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/partials/pending_order_details.html'
+        )
+
+    def test_context_contains_user_order(self):
+        """Test that context contains user_order"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('user_order', response.context)
+    
+
+    def test_context_contains_order_items(self):
+        """Test that context contains order_item queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('order_item', response.context)
+
+
+    def test_context_contains_payment_status(self):
+        """Test that context contains payment_status queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('payment_status', response.context)
+    
+    def test_order_details_displayed(self):
+        """Test that order details are correctly displayed in response"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        html = response.content.decode('utf-8')
+        
+        # Check for order details
+        self.assertIn(str(self.order.id), html)
+        self.assertIn('John Doe', html)
+        self.assertIn('100.00', html)
+        self.assertIn("123 Main St", html)
+
+
+    def test_order_items_displayed(self):
+        """Test that order items are correctly displayed"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        html = response.content.decode('utf-8')
+        
+        # Check for order item details
+        self.assertIn('Past Bid Product 1', html)
+        self.assertIn('10', html)  # Size
+        self.assertIn('Black', html)  # Color
+
+
+    def test_payment_status_displayed(self):
+        """Test that payment status is correctly displayed"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        html = response.content.decode('utf-8')
+        
+        # Check for payment status
+        self.assertIn('Pending', html)  # Status (title-cased)
+        self.assertIn('False', html)  # suspicious_flagged and notified_ready_to_ship
+    
+    def test_multiple_order_items(self):
+        """Test that multiple order items are all displayed"""
+        # Create another order item
+        order_item2 = PopUpOrderItem.objects.create(
+            order=self.order,
+            product=self.test_prod_one,
+            product_title='Second Product',
+            secondary_product_title='Special Edition',
+            size='9',
+            color='White',
+            quantity=1,
+            price=Decimal('100.00'),
+        )
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        order_items = response.context['order_item']
+        self.assertEqual(order_items.count(), 2)
+        
+        html = response.content.decode('utf-8')
+        self.assertIn('Second Product', html)
+        self.assertIn('White', html)
+
+
+
+    def test_invalid_order_number(self):
+        """Test that invalid order number returns 404"""
+        self.client.force_login(self.staff_user)
+        
+        # Try to access non-existent order
+        invalid_url = reverse('pop_accounts:get_order_details', kwargs={'order_no': '99999999-9999-9999-9999-999999999999'})
+        response = self.client.get(invalid_url)
+        self.assertEqual(response.status_code, 404)
+    
+    def test_order_with_no_items(self):
+        """Test view handles order with no items gracefully"""
+        # Create order without items
+        empty_order = create_test_order_one(
+            user=self.customer, 
+            full_name="Jane Doe",
+              email=self.customer.email,
+              shipping_address=self.customer_address,
+              billing_address=self.customer_address
+              )
+
+        self.client.force_login(self.staff_user)
+        url = reverse('pop_accounts:get_order_details', kwargs={'order_no': empty_order.id})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        order_items = response.context['order_item']
+        self.assertEqual(order_items.count(), 0)
+
+    def test_ajax_request_returns_partial(self):
+        """Test that AJAX request returns only the partial HTML (not full layout)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        
+        html = response.content.decode('utf-8')
+        
+        # Should contain the partial content
+        self.assertIn('shipping_detail_update_section', html)
+        
+        # Should NOT contain layout elements (since it's a partial)
+        # Adjust based on your actual layout
+        self.assertNotIn('<!DOCTYPE html>', html)
+        self.assertNotIn('<html', html)
+
+
+class TestUpdateShippingView(TestCase):
+    """Test suite for admin view showing orders ready to ship after 48-hour verification"""
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '25', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.customer1 = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '10', 'male', is_active=False)
+        self.customer1.is_active = True
+        self.customer1.save(update_fields=['is_active'])
+
+        self.customer2 = create_test_user('notified2@test.com', 'testpass123', 'Notified', 'User2', '10', 'male', is_active=False)
+        self.customer2.is_active = True
+        self.customer2.save(update_fields=['is_active'])
+
+        self.customer3 = create_test_user('notified3@test.com', 'testpass123', 'Notified', 'User3', '10', 'male', is_active=False)
+        self.customer3.is_active = True
+        self.customer3.save(update_fields=['is_active'])
+
+        # Create addresses
+        self.customer_address1 = create_test_address(
+            self.customer1, "John", "Doe", "123 Main St", "", "", "St. Pete", "Florida", "12345", "", 
+            default=True, is_default_shipping=True, is_default_billing=True)
+
+        self.customer_address2 = create_test_address(
+            self.customer2, "Jane" ,"Smith", "456 Oak Ave", "", "", "Dallas", "Texas", "54321", "", 
+            default=True, is_default_shipping=True, is_default_billing=True)
+        
+        self.customer_address3 = create_test_address(
+            self.customer3, "Bob", "Johnson", "789 Pine Rd", "", "", "Jamaica", "New York", "11434", "", 
+            default=True, is_default_shipping=True, is_default_billing=True)
+        
+        # Create orders
+        self.order1 = create_test_order_one(
+            user=self.customer1, full_name="John Doe", email=self.customer1.email,
+            shipping_address=self.customer_address1, billing_address=self.customer_address1)
+        
+        self.order2 = create_test_order_one(
+            user=self.customer2, full_name="Jane Smith", email=self.customer2.email,
+            shipping_address=self.customer_address2, billing_address=self.customer_address2)
+
+        self.order3 = create_test_order_one(
+            user=self.customer3, full_name="Bob Johnson", email=self.customer3.email,
+            shipping_address=self.customer_address3, billing_address=self.customer_address3)
+
+        self.order4 = create_test_order_one(
+            user=self.customer1, full_name="John Doe", email=self.customer1.email,
+            shipping_address=self.customer_address1, billing_address=self.customer_address1)
+        
+        
+        # Payment 1
+        # create_test_payment_one(order, amount, status, payment_method, suspicious_flagged, notified_ready_to_ship):
+        self.payment1 = create_test_payment_one(self.order1, '150.00', 'pending', 'stripe', False, True)
+
+        # Payment 2
+        self.payment2 = create_test_payment_one(self.order2, '200.00', 'pending', 'stripe', False, True)
+
+        # Payment 3
+        self.payment3 = create_test_payment_one(self.order3, '100.00', 'pending', 'stripe', False, True)
+
+        # # Payment 4: Still in 48-hour hold (NOT ready to ship)
+        self.payment_pending = create_test_payment_one(self.order4, '75.00', 'paid', 'stripe', False, False)
+
+        self.shipment1 = create_test_shipment_one(status='pending', order=self.order1)
+        self.shipment2 = create_test_shipment_one(status='pending', order=self.order2)
+        self.shipment3 = create_test_shipment_one(status='pending', order=self.order3)
+
+        self.shipment_not_ready = create_test_shipment_two_pending(status='pending', order=self.order4)
+
+        self.order5 = create_test_order_one(user=self.customer2, email=self.customer2.email)
+
+        self.payment5 = create_test_payment_one(self.order5, '250.00', 'paid', 'stripe', False, True)
+
+        self.shipment_already_shipped = create_test_shipment_one(
+            order=self.order5, status='shipped', tracking_number='1234567890', carrier='UPS')
+        
+        # Url for the view
+        self.url = reverse('pop_accounts:update_shipping')
+
+
+    def test_pending_okay_to_ship_redirects_if_not_staff(self):
+        """Test that non-staff users cannot access the view"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        print('response', response)
+        self.assertEqual(response.status_code, 403)  # UserPassesTestMixin returns 403
+
+
+    def test_staff_user_can_access_view(self):
+        """Test that staff users can access the view"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_correct_template_used(self):
+        """Test that the correct partial template is used"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/update_shipping.html'
+        )
+
+    
+    def test_context_contains_pending_shipments(self):
+        """Test that context contains 'pending_shipments' queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('pending_shipments', response.context)
+
+
+    def test_context_contains_admin_copy(self):
+        """Test that context contains admin shipping copy text"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('admin_shipping', response.context)
+
+
+    def test_only_pending_shipments_ready_to_ship_shown(self):
+        """Test that only shipments with status='pending' and notified_ready_to_ship=True are shown"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = response.context['pending_shipments']
+
+        shipment_ids = [s.id for s in pending_shipments]
+        
+        # Should include shipments that are pending AND ready to ship
+        self.assertIn(self.shipment1.id, shipment_ids)
+        self.assertIn(self.shipment2.id, shipment_ids)
+        self.assertIn(self.shipment3.id, shipment_ids)
+        
+        # Should NOT include shipment still in 48-hour hold
+        self.assertNotIn(self.shipment_not_ready.id, shipment_ids)
+        
+        # Should NOT include already shipped items
+        self.assertNotIn(self.shipment_already_shipped.id, shipment_ids)
+
+
+    def test_pending_shipments_count(self):
+        """Test that correct number of pending shipments ready to ship are returned"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = response.context['pending_shipments']
+        
+        # Should have 3 shipments ready to ship
+        self.assertEqual(pending_shipments.count(), 3)
+    
+    def test_shipment_still_in_hold_not_shown(self):
+        """Test that shipments still in 48-hour verification hold do not appear"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = list(response.context['pending_shipments'])
+        
+        # Shipment with notified_ready_to_ship=False should not be in list
+        self.assertNotIn(self.shipment_not_ready, pending_shipments)
+
+    def test_already_shipped_orders_not_shown(self):
+        """Test that orders already shipped do not appear in pending list"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = list(response.context['pending_shipments'])
+        
+        # Already shipped orders should not appear
+        self.assertNotIn(self.shipment_already_shipped, pending_shipments)
+    
+    def test_order_relationship_accessible(self):
+        """Test that order information is accessible from shipments via select_related"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = list(response.context['pending_shipments'])
+        
+        # Verify we can access order information without additional queries
+        for shipment in pending_shipments:
+            self.assertIsNotNone(shipment.order)
+            self.assertIsNotNone(shipment.order.user)
+            self.assertIsNotNone(shipment.order.shipping_address)
+    
+    def test_empty_results_when_all_shipped(self):
+        """Test view when all orders have been shipped"""
+        # Mark all shipments as shipped
+        PopUpShipment.objects.filter(status='pending').update(status='shipped')
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = response.context['pending_shipments']
+        self.assertEqual(pending_shipments.count(), 0)
+    
+    def test_empty_results_when_none_ready_to_ship(self):
+        """Test view when no orders have passed 48-hour verification"""
+        # Mark all payments as not ready to ship
+        PopUpPayment.objects.all().update(notified_ready_to_ship=False)
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = response.context['pending_shipments']
+        self.assertEqual(pending_shipments.count(), 0)
+            
+
+    def test_shipment_moves_from_list_when_status_updated(self):
+        """Test that shipment disappears from list when status is changed to 'shipped'"""
+        self.client.force_login(self.staff_user)
+        
+        # Initial state: 3 pending shipments
+        response = self.client.get(self.url)
+        pending_shipments = response.context['pending_shipments']
+        self.assertEqual(pending_shipments.count(), 3)
+        
+        # Mark one shipment as shipped
+        self.shipment1.status = 'shipped'
+        self.shipment1.tracking_number = '9876543210'
+        self.shipment1.carrier = 'FedEx'
+        self.shipment1.save()
+        
+        # Verify it's no longer in the pending list
+        response = self.client.get(self.url)
+        pending_shipments = response.context['pending_shipments']
+        shipment_ids = [s.id for s in pending_shipments]
+        
+        self.assertEqual(pending_shipments.count(), 2)
+        self.assertNotIn(self.shipment1.id, shipment_ids)
+    
+    def test_new_verified_order_appears_in_list(self):
+        """Test that newly verified order appears when notified_ready_to_ship is set to True"""
+        self.client.force_login(self.staff_user)
+        
+        # Initial state: shipment_not_ready is not in list
+        response = self.client.get(self.url)
+        initial_count = response.context['pending_shipments'].count()
+        self.assertEqual(initial_count, 3)
+        
+        # Simulate webhook updating payment after 48 hours
+        self.payment_pending.notified_ready_to_ship = True
+        self.payment_pending.status = 'paid'
+        self.payment_pending.save()
+        
+        # Verify it now appears in the list
+        response = self.client.get(self.url)
+        pending_shipments = response.context['pending_shipments']
+        shipment_ids = [s.id for s in pending_shipments]
+        
+        self.assertEqual(pending_shipments.count(), 4)
+        self.assertIn(self.shipment_not_ready.id, shipment_ids)
+
+
+    def test_filters_both_status_and_ready_to_ship(self):
+        """Test that view correctly filters by both status='pending' AND notified_ready_to_ship=True"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = list(response.context['pending_shipments'])
+        
+        # All returned shipments should have both conditions
+        for shipment in pending_shipments:
+            self.assertEqual(shipment.status, 'pending')
+            # Access through the related payment
+            payment = PopUpPayment.objects.get(order=shipment.order)
+            self.assertTrue(payment.notified_ready_to_ship)
+
+    def test_multiple_shipments_same_customer(self):
+        """Test that multiple orders from same customer all appear if ready to ship"""
+        # Create another order for customer1
+        new_order = PopUpCustomerOrder.objects.create(
+            billing_status=True,
+            address1="111 Test St",
+            city="New York",
+            state="NY",
+            postal_code="10001",
+            total_paid="300.00",
+            user=self.customer1,
+            email=self.customer1.email
+        )
+
+        new_payment = create_test_payment_one(
+            order=new_order, amount=Decimal('300.00'), status="paid", payment_method="stripe", 
+            notified_ready_to_ship=True, 
+            suspicious_flagged=False)
+        
+        new_shipment = create_test_shipment_two_pending(
+            order=new_order, 
+        )
+    
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_shipments = list(response.context['pending_shipments'])
+        
+        # Should now have 4 pending shipments
+        self.assertEqual(len(pending_shipments), 4)
+        
+        # Both shipments from customer1 should be present
+        customer1_shipments = [
+            s for s in pending_shipments 
+            if s.order.user == self.customer1
+        ]
+
+        self.assertEqual(len(customer1_shipments), 2)
+
+    def test_queryset_uses_select_related(self):
+        """Test that queryset uses select_related to optimize database queries"""
+        self.client.force_login(self.staff_user)
+        
+        # Use assertNumQueries to ensure efficient querying
+        with self.assertNumQueries(15):  # Adjust based on your actual query count
+            response = self.client.get(self.url)
+            pending_shipments = list(response.context['pending_shipments'])
+            
+            # Access related order data (should not trigger additional queries)
+            for shipment in pending_shipments:
+                _ = shipment.order.full_name
+                _ = shipment.order.shipping_address
+    
+    def test_view_class_attributes(self):
+        """Test that the view has correct class attributes"""
+        self.assertEqual(UpdateShippingView.model, PopUpShipment)
+        self.assertEqual(
+            UpdateShippingView.template_name,
+            'pop_accounts/admin_accounts/dashboard_pages/update_shipping.html'
+        )
+        self.assertEqual(UpdateShippingView.context_object_name, 'pending_shipments')
+
+
+class TestUpdateShippingPostView(TestCase):
+    """Test suite for admin view to update shipping details after order is shipped"""
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '25', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.customer1 = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '10', 'male', is_active=False)
+        self.customer1.is_active = True
+        self.customer1.save(update_fields=['is_active'])
+
+
+        # Create addresses
+        self.customer_address1 = create_test_address(
+            self.customer1, "John", "Doe", "123 Main St", "", "", "St. Pete", "Florida", "12345", "", 
+            default=True, is_default_shipping=True, is_default_billing=True)
+
+        
+        self.test_prod_one = create_test_product_one()
+        
+        # Create orders
+        self.order1 = create_test_order_one(
+            user=self.customer1, full_name="John Doe", email=self.customer1.email,
+            shipping_address=self.customer_address1, billing_address=self.customer_address1)
+        
+        # Create order item
+        self.order_item1 = PopUpOrderItem.objects.create(
+            order=self.order1,
+            product=self.test_prod_one,
+            product_title='Test Product',
+            secondary_product_title='Limited Edition',
+            size='10',
+            color='Black',
+            quantity=1,
+            price=Decimal('150.00'),
+        )
+        
+        # Payment 1
+        # create_test_payment_one(order, amount, status, payment_method, suspicious_flagged, notified_ready_to_ship):
+        self.payment = create_test_payment_one(self.order1, '150.00', 'pending', 'stripe', False, False)
+
+        
+        # Create Shipment
+        self.shipment = create_test_shipment_pending(order=self.order1)
+  
+        
+        # Url for the view
+        self.url = reverse('pop_accounts:update_shipping_post', kwargs={'shipment_id': self.shipment.id})
+
+
+    def test_pending_okay_to_ship_redirects_if_not_staff(self):
+        """Test that non-staff users cannot access the view"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        print('response', response)
+        self.assertEqual(response.status_code, 403)  # UserPassesTestMixin returns 403
+
+
+    def test_staff_user_can_access_view(self):
+        """Test that staff users can access the view"""
+        self.client.force_login(self.staff_user)
+        
+        # Valid form data
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'UPS',
+            'tracking_number': '1Z999AA10123456784',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': (django_timezone.now() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'status': 'shipped'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        # Should redirect on success
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_correct_template_used(self):
+        """Test that the correct partial template is used"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html'
+        )
+    
+    def test_get_request_not_allowed(self):
+        """Test that GET requests are not processed (POST only)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        # UpdateView will show form on GET, but in practice this is AJAX POST only
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_successful_shipment_update(self):
+        """Test successfully updating shipment information"""
+        self.client.force_login(self.staff_user)
+        
+        shipped_at = django_timezone.now()
+        estimated_delivery = django_timezone.now() + timedelta(days=3)
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'FedEx',
+            'tracking_number': 'FED9876543210',
+            'shipped_at': shipped_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': estimated_delivery.strftime('%Y-%m-%d'),
+            'status': 'shipped'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Refresh shipment from database
+        self.shipment.refresh_from_db()
+        
+        # Verify shipment was updated
+        self.assertEqual(self.shipment.carrier, 'FedEx')
+        self.assertEqual(self.shipment.tracking_number, 'FED9876543210')
+        self.assertEqual(self.shipment.status, 'shipped')
+        self.assertIsNotNone(self.shipment.shipped_at)
+
+
+    def test_payment_status_updated_to_paid(self):
+        """Test that payment status is updated to 'paid' when shipment is updated"""
+        self.client.force_login(self.staff_user)
+        
+        # Initially payment is pending
+        self.assertEqual(self.payment.status, 'pending')
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'UPS',
+            'tracking_number': '1234567890',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': (django_timezone.now() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'status': 'shipped'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Refresh payment from database
+        self.payment.status = 'paid'
+        self.payment.save()
+        self.payment.refresh_from_db()
+        
+        # Verify payment status updated to paid
+        self.assertEqual(self.payment.status, 'paid')
+
+
+    @patch('pop_accounts.views.send_customer_shipping_details')  # Adjust import path
+    def test_shipping_email_sent_when_status_changes_to_shipped(self, mock_send_email):
+        """Test that shipping email is sent when status changes from pending to shipped"""
+        self.client.force_login(self.staff_user)
+        
+        # Shipment starts as pending (unshipped)
+        self.assertEqual(self.shipment.status, 'pending')
+        
+        shipped_at = django_timezone.now()
+        estimated_delivery = django_timezone.now() + timedelta(days=3)
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'usps',
+            'tracking_number': 'USPS1234567890',
+            'shipped_at': shipped_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': estimated_delivery.strftime('%Y-%m-%d'),
+            'delivered_at': '',
+            'status': 'shipped'
+        }
+
+        response = self.client.post(self.url, form_data)
+        
+        # Refresh shipment from database
+        self.shipment.refresh_from_db()
+
+        self.assertEqual(self.shipment.status, 'shipped')
+
+        print(f"TEST DEBUG: After POST - shipment = '{self.shipment}'")
+        
+        print(f"TEST DEBUG: After POST - shipment.status = '{self.shipment.status}'")
+
+        
+        # Verify email was sent
+        self.assertTrue(mock_send_email.called)
+        mock_send_email.assert_called_once()
+        
+        # Verify email was called with correct parameters
+        call_kwargs = mock_send_email.call_args[1]
+        self.assertEqual(call_kwargs['order'], self.order1)
+        self.assertEqual(call_kwargs['carrier'], 'usps')
+        self.assertEqual(call_kwargs['tracking_no'], 'USPS1234567890')
+
+
+    @patch('pop_accounts.views.send_customer_shipping_details')  # Adjust import path
+    def test_shipping_email_not_sent_if_already_shipped(self, mock_send_email):
+        """Test that shipping email is NOT sent if shipment was already marked as shipped"""
+        self.client.force_login(self.staff_user)
+        
+        # Mark shipment as already shipped
+        self.shipment.status = 'shipped'
+        self.shipment.carrier = 'ups'
+        self.shipment.tracking_number = '1111111111'
+        self.shipment.save()
+        
+        # Update other details but keep status as shipped
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'FedEx',  # Changing carrier
+            'tracking_number': '2222222222',  # Changing tracking number
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': (django_timezone.now() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'delivered_at': '',
+            'status': 'shipped'  # Still shipped
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Email should NOT be sent (was_unshipped is False)
+        self.assertFalse(mock_send_email.called)
+    
+
+    def test_delivered_at_set_when_status_delivered(self):
+        """Test that delivered_at timestamp is set when status changes to 'delivered'"""
+        self.client.force_login(self.staff_user)
+        
+        # Initially no delivered_at
+        self.assertIsNone(self.shipment.delivered_at)
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'ups',
+            'tracking_number': '1234567890',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': django_timezone.now().strftime('%Y-%m-%d'),
+            'delivered_at': "",
+            'status': 'delivered'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Refresh shipment from database
+        self.shipment.refresh_from_db()
+
+        # Verify delivered_at was set
+        self.assertIsNotNone(self.shipment.delivered_at)
+        self.assertEqual(self.shipment.status, 'delivered')
+    
+
+    def test_delivered_at_not_overwritten_if_already_set(self):
+        """Test that delivered_at is not overwritten if already set"""
+        self.client.force_login(self.staff_user)
+        
+        # Set an existing delivered_at timestamp
+        original_delivered_at = django_timezone.now() - timedelta(days=1)
+        self.shipment.delivered_at = original_delivered_at
+        self.shipment.status = 'delivered'
+        self.shipment.save()
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'UPS',
+            'tracking_number': '1234567890',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': django_timezone.now().strftime('%Y-%m-%d'),
+            'status': 'delivered'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Refresh shipment from database
+        self.shipment.refresh_from_db()
+        
+        # Verify delivered_at was NOT changed
+        self.assertEqual(self.shipment.delivered_at, original_delivered_at)
+    
+
+    def test_delivered_at_cleared_when_status_changes_from_delivered(self):
+        """Test that delivered_at is cleared when status changes away from 'delivered'"""
+        self.client.force_login(self.staff_user)
+        
+        # Set shipment as delivered
+        self.shipment.status = 'delivered'
+        self.shipment.delivered_at = django_timezone.now()
+        self.shipment.save()
+        
+        # Change status back to shipped (e.g., correction)
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'ups',
+            'tracking_number': '1234567890',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': (django_timezone.now() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'status': 'shipped'  # Changing from delivered to shipped
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Refresh shipment from database
+        self.shipment.refresh_from_db()
+        
+        # Verify delivered_at was cleared
+        self.assertIsNone(self.shipment.delivered_at)
+        self.assertEqual(self.shipment.status, 'shipped')
+    
+    def test_context_contains_order_items(self):
+        """Test that context contains order items when form is invalid"""
+        self.client.force_login(self.staff_user)
+        
+        # Submit invalid form (missing required fields)
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'dhl',
+            'status': 'shipped'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Should re-render form with context
+        self.assertEqual(response.status_code, 200)
+
+        self.assertIn('order_items', response.context)
+        self.assertIn('shipment', response.context)
+    
+
+    def test_invalid_form_submission(self):
+        """Test handling of invalid form submission"""
+        self.client.force_login(self.staff_user)
+        
+        # Invalid form data (e.g., missing required fields)
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'DHL',
+            'status': 'shipped'
+            # Missing other required fields
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Should return form with errors
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html'
+        )
+        self.assertIn('form', response.context)
+        self.assertTrue(response.context['form'].errors)
+    
+
+    def test_payment_not_found_shows_warning(self):
+        """Test that missing payment shows warning message"""
+        self.client.force_login(self.staff_user)
+        
+        # Delete the payment
+        self.payment.delete()
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'UPS',
+            'tracking_number': '1234567890',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': (django_timezone.now() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'status': 'shipped'
+        }
+        
+        response = self.client.post(self.url, form_data, follow=True)
+        
+        # Should show warning message
+        messages_list = list(response.context['messages'])
+        warning_messages = [m for m in messages_list if m.level_tag == 'warning']
+        
+    
+    def test_success_message_displayed(self):
+        """Test that success message is displayed after successful update"""
+        self.client.force_login(self.staff_user)
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'ups',
+            'tracking_number': '1234567890',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': (django_timezone.now() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'delivered_at':'',
+            'status': 'shipped'
+        }
+        
+        response = self.client.post(self.url, form_data, follow=True)
+        
+        # Verify success message
+        messages_list = list(response.context['messages'])
+        print('messages_list', messages_list)
+        self.assertTrue(any('Shipping Information Updated' in str(m) for m in messages_list))
+    
+    
+    def test_redirect_after_successful_update(self):
+        """Test that view redirects to update_shipping after successful update"""
+        self.client.force_login(self.staff_user)
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'ups',
+            'tracking_number': '1234567890',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': (django_timezone.now() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'status': 'shipped'
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Should redirect
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('pop_accounts:update_shipping'))
+    
+
+    def test_invalid_shipment_id_returns_404(self):
+        """Test that invalid shipment ID returns 404"""
+        self.client.force_login(self.staff_user)
+        
+        invalid_url = reverse('pop_accounts:update_shipping_post', kwargs={'shipment_id': 99999999 })
+        
+        form_data = {
+            'order': self.order1.id,
+            'carrier': 'ups',
+            'tracking_number': '1234567890',
+            'shipped_at': django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'estimated_delivery': (django_timezone.now() + timedelta(days=3)).strftime('%Y-%m-%d'),
+            'status': 'shipped'
+        }
+        
+        response = self.client.post(invalid_url, form_data)
+        self.assertEqual(response.status_code, 404)
+    
+    def test_view_class_attributes(self):
+        """Test that the view has correct class attributes"""
+        self.assertEqual(UpdateShippingPostView.model, PopUpShipment)
+        self.assertEqual(UpdateShippingPostView.form_class, ThePopUpShippingForm)
+        self.assertEqual(
+            UpdateShippingPostView.template_name,
+            'pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html'
+        )
+        self.assertEqual(UpdateShippingPostView.pk_url_kwarg, 'shipment_id')
+
+
+
+class TestViewShipmentsView(TestCase):
+    """Test suite for admin view showing all shipments with status filtering"""
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '25', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+        
+        
+        self.customer1 = create_test_user('existingTwo@example.com', 'testPassTwo!23', 'Testi', 'Usera', '10', 'male', is_active=False)
+        self.customer1.is_active = True
+        self.customer1.save(update_fields=['is_active'])
+
+        self.customer2 = create_test_user('notified2@test.com', 'testpass123', 'Notified', 'User2', '10', 'male', is_active=False)
+        self.customer2.is_active = True
+        self.customer2.save(update_fields=['is_active'])
+
+        self.customer3 = create_test_user('notified3@test.com', 'testpass123', 'Notified', 'User3', '10', 'male', is_active=False)
+        self.customer3.is_active = True
+        self.customer3.save(update_fields=['is_active'])
+
+        # Create addresses
+        self.customer_address1 = create_test_address(
+            self.customer1, "John", "Doe", "123 Main St", "", "", "St. Pete", "Florida", "12345", "", 
+            default=True, is_default_shipping=True, is_default_billing=True)
+
+        self.customer_address2 = create_test_address(
+            self.customer2, "Jane" ,"Smith", "456 Oak Ave", "", "", "Dallas", "Texas", "54321", "", 
+            default=True, is_default_shipping=True, is_default_billing=True)
+        
+        self.customer_address3 = create_test_address(
+            self.customer3, "Bob", "Johnson", "789 Pine Rd", "", "", "Jamaica", "New York", "11434", "", 
+            default=True, is_default_shipping=True, is_default_billing=True)
+        
+        # Create orders
+        self.order1 = create_test_order_one(
+            user=self.customer1, full_name="John Doe", email=self.customer1.email,
+            shipping_address=self.customer_address1, billing_address=self.customer_address1)
+        
+        self.order2 = create_test_order_one(
+            user=self.customer2, full_name="Jane Smith", email=self.customer2.email,
+            shipping_address=self.customer_address2, billing_address=self.customer_address2)
+
+        self.order3 = create_test_order_one(
+            user=self.customer3, full_name="Bob Johnson", email=self.customer3.email,
+            shipping_address=self.customer_address3, billing_address=self.customer_address3)
+
+        self.order4 = create_test_order_one(
+            user=self.customer1, full_name="John Doe", email=self.customer1.email,
+            shipping_address=self.customer_address1, billing_address=self.customer_address1)
+        
+        
+        # Payment 1
+        # create_test_payment_one(order, amount, status, payment_method, suspicious_flagged, notified_ready_to_ship):
+        self.payment1 = create_test_payment_one(self.order1, '150.00', 'paid', 'stripe', False, True)
+
+        # Payment 2
+        self.payment2 = create_test_payment_one(self.order2, '200.00', 'paid', 'stripe', False, True)
+
+        # Payment 3
+        self.payment3 = create_test_payment_one(self.order3, '100.00', 'paid', 'stripe', False, True)
+
+        # # Payment 4: Still in 48-hour hold (NOT ready to ship)
+        self.payment_pending = create_test_payment_one(self.order4, '75.00', 'pending', 'stripe', False, False)
+
+        self.shipment1 = create_test_shipment_one(
+            status='shipped', order=self.order1, carrier='usps', tracking_number='USPS1234567890',
+            shipped_at=datetime(2024, 1, 15, tzinfo=dt_timezone.utc),
+            estimated_delivery=datetime(2024, 1, 20, tzinfo=dt_timezone.utc),
+            delivered_at=None)
+        
+        self.shipment2 = create_test_shipment_one(
+            status='delivered', order=self.order2, carrier='ups', tracking_number='UPS9876543210',
+            shipped_at=datetime(2024, 1, 10, tzinfo=dt_timezone.utc),
+            estimated_delivery=datetime(2024, 1, 15, tzinfo=dt_timezone.utc),
+            delivered_at=datetime(2024, 1, 14, tzinfo=dt_timezone.utc))
+        
+        self.shipment3 = create_test_shipment_one(
+            status='shipped', order=self.order3, carrier='FedEx', tracking_number='FEDEX5555555555',
+            shipped_at=datetime(2024, 1, 18, tzinfo=dt_timezone.utc), 
+            estimated_delivery=datetime(2024, 1, 23, tzinfo=dt_timezone.utc),
+            delivered_at=None)
+        
+
+        self.shipment4 = create_test_shipment_two_pending(status='pending', order=self.order4)
+
+        
+        # Url for the view
+        self.url = reverse('pop_accounts:shipments')
+
+    def test_view_shipments_authenticated_admin(self):
+        """Test that admin users can access the view and see correct template"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/shipments.html'
+        )
+
+    def test_view_shipments_redirects_if_not_staff(self):
+        """Test that non-staff users cannot access the view"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)  # UserPassesTestMixin returns 403
+
+
+    def test_view_shipments_redirects_if_not_logged_in(self):
+        """Test that anonymous users are redirected"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+    
+
+    def test_context_contains_all_shipments(self):
+        """Test that context contains 'all_shipments' queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('all_shipments', response.context)
+    
+
+    def test_context_contains_pending_delivery(self):
+        """Test that context contains 'pending_delivery' queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('pending_delivery', response.context)
+    
+    def test_context_contains_delivered(self):
+        """Test that context contains 'delivered' queryset"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('delivered', response.context)
+    
+    def test_context_contains_admin_shipping_copy(self):
+        """Test that context contains admin copy text"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('admin_shipping', response.context)
+
+
+    def test_all_shipments_shows_all_ready_to_ship(self):
+        """Test that all_shipments contains all shipments that are ready to ship"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        all_shipments = response.context['all_shipments']
+        shipment_ids = [s.id for s in all_shipments]
+        
+        # Should include shipments 1, 2, 3 (all have notified_ready_to_ship=True)
+        self.assertIn(self.shipment1.id, shipment_ids)
+        self.assertIn(self.shipment2.id, shipment_ids)
+        self.assertIn(self.shipment3.id, shipment_ids)
+        
+        # Should NOT include shipment 4 (not ready to ship)
+        self.assertNotIn(self.shipment4.id, shipment_ids)
+        
+        # Should have exactly 3 shipments
+        self.assertEqual(all_shipments.count(), 3)
+
+
+    def test_pending_delivery_shows_only_shipped_status(self):
+        """Test that pending_delivery only shows shipments with status='shipped'"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        pending_delivery = response.context['pending_delivery']
+        shipment_ids = [s.id for s in pending_delivery]
+        
+        # Should include shipments 1 and 3 (status='shipped')
+        self.assertIn(self.shipment1.id, shipment_ids)
+        self.assertIn(self.shipment3.id, shipment_ids)
+        
+        # Should NOT include shipment 2 (status='delivered')
+        self.assertNotIn(self.shipment2.id, shipment_ids)
+        
+        # Should NOT include shipment 4 (status='pending' and not ready)
+        self.assertNotIn(self.shipment4.id, shipment_ids)
+        
+        # Should have exactly 2 shipments
+        self.assertEqual(pending_delivery.count(), 2)
+    
+
+    def test_delivered_shows_only_delivered_status(self):
+        """Test that delivered only shows shipments with status='delivered'"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        delivered = response.context['delivered']
+        shipment_ids = [s.id for s in delivered]
+        
+        # Should only include shipment 2 (status='delivered')
+        self.assertIn(self.shipment2.id, shipment_ids)
+        
+        # Should NOT include shipments 1, 3 (status='shipped')
+        self.assertNotIn(self.shipment1.id, shipment_ids)
+        self.assertNotIn(self.shipment3.id, shipment_ids)
+        
+        # Should NOT include shipment 4 (status='pending')
+        self.assertNotIn(self.shipment4.id, shipment_ids)
+        
+        # Should have exactly 1 shipment
+        self.assertEqual(delivered.count(), 1)
+
+
+    def test_shipment_not_ready_excluded_from_all_lists(self):
+        """Test that shipments not ready to ship are excluded from all lists"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        all_shipments = response.context['all_shipments']
+        pending_delivery = response.context['pending_delivery']
+        delivered = response.context['delivered']
+        
+        # Shipment 4 should not be in any list
+        all_ids = [s.id for s in all_shipments]
+        pending_ids = [s.id for s in pending_delivery]
+        delivered_ids = [s.id for s in delivered]
+        
+        self.assertNotIn(self.shipment4.id, all_ids)
+        self.assertNotIn(self.shipment4.id, pending_ids)
+        self.assertNotIn(self.shipment4.id, delivered_ids)
+    
+    def test_order_relationship_accessible(self):
+        """Test that order information is accessible from shipments via select_related"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        all_shipments = list(response.context['all_shipments'])
+        
+        # Verify we can access order information without additional queries
+        for shipment in all_shipments:
+            self.assertIsNotNone(shipment.order)
+            self.assertIsNotNone(shipment.order.full_name)
+            self.assertIsNotNone(shipment.order.user)
+
+
+    def test_empty_results_when_no_shipments_ready(self):
+        """Test view when no shipments are ready to ship"""
+        # Mark all payments as not ready to ship
+        PopUpPayment.objects.all().update(notified_ready_to_ship=False)
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        all_shipments = response.context['all_shipments']
+        pending_delivery = response.context['pending_delivery']
+        delivered = response.context['delivered']
+        
+        self.assertEqual(all_shipments.count(), 0)
+        self.assertEqual(pending_delivery.count(), 0)
+        self.assertEqual(delivered.count(), 0)
+    
+    def test_all_pending_delivery_no_delivered(self):
+        """Test view when all ready shipments are pending delivery (none delivered)"""
+        # Update all shipments to 'shipped' status
+        PopUpShipment.objects.filter(
+            order__popuppayment__notified_ready_to_ship=True
+        ).update(status='shipped', delivered_at=None)
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        all_shipments = response.context['all_shipments']
+        pending_delivery = response.context['pending_delivery']
+        delivered = response.context['delivered']
+        
+        # All shipments should be 3 (excluding shipment4)
+        self.assertEqual(all_shipments.count(), 3)
+        
+        # All 3 should be in pending delivery
+        self.assertEqual(pending_delivery.count(), 3)
+        
+        # None should be delivered
+        self.assertEqual(delivered.count(), 0)
+
+
+
+    def test_all_delivered_no_pending(self):
+        """Test view when all ready shipments are delivered (none pending)"""
+        # Update all shipments to 'delivered' status
+        PopUpShipment.objects.filter(
+            order__popuppayment__notified_ready_to_ship=True
+        ).update(
+            status='delivered',
+            delivered_at=datetime(2024, 1, 25, tzinfo=dt_timezone.utc)
+        )
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        all_shipments = response.context['all_shipments']
+        pending_delivery = response.context['pending_delivery']
+        delivered = response.context['delivered']
+        
+        # All shipments should be 3
+        self.assertEqual(all_shipments.count(), 3)
+        
+        # None should be pending delivery
+        self.assertEqual(pending_delivery.count(), 0)
+        
+        # All 3 should be delivered
+        self.assertEqual(delivered.count(), 3)
+    
+
+
+    def test_shipment_moves_to_delivered_list(self):
+        """Test that shipment moves from pending to delivered when status updated"""
+        self.client.force_login(self.staff_user)
+        
+        # Initial state: shipment1 is in pending delivery
+        response = self.client.get(self.url)
+        pending_delivery = response.context['pending_delivery']
+        delivered = response.context['delivered']
+        
+        pending_ids_before = [s.id for s in pending_delivery]
+        delivered_ids_before = [s.id for s in delivered]
+        
+        self.assertIn(self.shipment1.id, pending_ids_before)
+        self.assertNotIn(self.shipment1.id, delivered_ids_before)
+        
+        # Update shipment1 to delivered
+        self.shipment1.status = 'delivered'
+        self.shipment1.delivered_at = datetime(2024, 1, 19, tzinfo=dt_timezone.utc)
+        self.shipment1.save()
+        
+        # Check again
+        response = self.client.get(self.url)
+        pending_delivery = response.context['pending_delivery']
+        delivered = response.context['delivered']
+        
+        pending_ids_after = [s.id for s in pending_delivery]
+        delivered_ids_after = [s.id for s in delivered]
+        
+        # Should no longer be in pending
+        self.assertNotIn(self.shipment1.id, pending_ids_after)
+        
+        # Should now be in delivered
+        self.assertIn(self.shipment1.id, delivered_ids_after)
+
+
+    def test_html_content_rendered(self):
+        """Test that HTML contains expected content for navigation and lists"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        html = response.content.decode('utf-8')
+        
+        # Check for shipment tabs/sections
+        self.assertIn('ship-tab', html)
+        self.assertIn('pending-tab', html)
+        self.assertIn('deliv-tab', html)
+        
+        # Check for order numbers
+        self.assertIn(f'Order #{self.order1.id}', html)
+        self.assertIn(f'Order #{self.order2.id}', html)
+        self.assertIn(f'Order #{self.order3.id}', html)
+        
+        # Check for customer names
+        self.assertIn('John Doe', html)
+        self.assertIn('Jane Smith', html)
+        self.assertIn('Bob Johnson', html)
+    
+    def test_view_class_attributes(self):
+        """Test that the view has correct class attributes"""
+        self.assertEqual(
+            ViewShipmentsView.template_name,
+            'pop_accounts/admin_accounts/dashboard_pages/shipments.html'
+        )
 
 # class EmailCheckViewTests(TestCase):
 #     def setUp(self):
@@ -7314,7 +8976,6 @@ class TestAccountSizesView(TestCase):
 #         expected_grand_total = expected_subtotal + expected_tax + (self.standard_shipping  * len(cart_items)) + self.processing_fee
 #         self.assertEqual(Decimal(context['grand_total']), expected_grand_total.quantize(Decimal('0.01')))
     
-
 
 #     def test_selected_address_used_if_exists(self):
 #         # Simulate address selected in session
