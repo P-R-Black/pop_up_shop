@@ -102,6 +102,12 @@ select#shipping_status {
     margin-bottom: .75rem;
 }
 
+
+.shipping_info_data_container div {
+    color: var(--text-color);
+}
+
+
 .ship_form_label {
     color: var(--text-color);
     font-size: 1rem;

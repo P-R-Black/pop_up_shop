@@ -9,7 +9,7 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     ShippingTrackingView, UserOrderPager, AdminDashboardView, SalesView, MostOnNotice, 
                     MostInterested, TotalOpenBidsView, TotalAccountsView, AccountSizesView, 
                     PendingOkayToShipView, PendingOrderShippingDetailView, UpdateShippingView, 
-                    GetOrderShippingDetail, UpdateShippingPostView, ViewShipmentsView)
+                    GetOrderShippingDetail, UpdateShippingPostView, ViewShipmentsView, AddProductsGetView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -76,7 +76,7 @@ urlpatterns = [
 
     # admin dashboard | Adding products
     path('add-products-admin/', AddProductsView.as_view(), name='add_products'),
-    path('add-products-admin/<int:product_type_id>/', views.add_products_get, name='add_products_get'),
+    path('add-products-admin/<int:product_type_id>/', AddProductsGetView.as_view(), name='add_products_get'),
 
     # admin dashboard | Updating products
     path('update-product-admin/', UpdateProductView.as_view(), name='update_product'),

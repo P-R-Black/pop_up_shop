@@ -1998,6 +1998,47 @@ class UpdateShippingView(UserPassesTestMixin, ListView):
 
 
 class GetOrderShippingDetail(UserPassesTestMixin, DetailView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Retrieves and displays detailed shipping information for a specific order
+    within the admin dashboard.  
+    This view renders a partial template used to show and update shipping details
+    for a selected order (via AJAX or inline page rendering).
+
+    Purpose:
+        - Allows admin users to view and manage shipment details for a specific order.
+        - Provides order item information and a shipping update form in a single partial.
+        - Used as a subcomponent (partial) in broader shipping management views.
+
+    Template:
+        pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html
+
+    Context Data:
+        - shipment: The `PopUpShipment` instance corresponding to the shipment being managed.
+        - order_item: A queryset of `PopUpOrderItem` objects linked to the shipment’s order.
+        - form: A pre-populated instance of `ThePopUpShippingForm` bound to the shipment record.
+
+    Access Control:
+        - Restricted to staff users only (validated via `UserPassesTestMixin`).
+        - Non-staff users attempting to access this view are denied.
+
+    Workflow:
+        1. The admin selects an order to view shipping details.
+        2. The system retrieves the associated shipment and order items.
+        3. The form is rendered with the shipment’s existing data, allowing updates
+           to fields such as carrier, tracking number, or status.
+        4. The partial is loaded dynamically into the page (via JavaScript or HTMX).
+
+    Example Use:
+        Triggered by selecting “View Shipping Details” in the admin panel,
+        which loads this partial view dynamically into a modal or inline section.
+
+    Notes:
+        - The rendered form posts updates to `UpdateShippingPostView`.
+        - Includes a link to generate and print the shipping label for the order.
+    """
     model = PopUpOrderItem
     form_class = ThePopUpShippingForm
     pk_url_kwarg = 'shipment_id'
@@ -2022,6 +2063,48 @@ class UpdateShippingPostView(UserPassesTestMixin, UpdateView):
     # 🟢 View Test Completed
     # ✅ Mobile / Tablet Media Query Completed
     # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Handles updates to an order’s shipping information from the admin dashboard.  
+    This view processes the shipping form submission, validates input, saves updates
+    to the `PopUpShipment` record, and triggers related post-update actions.
+
+    Purpose:
+        - Allows staff users to update shipment details such as carrier, tracking number,
+          shipment and delivery dates, and shipment status.
+        - Ensures consistency between order, shipment, and payment data.
+        - Sends an automated email notification to the customer when their order is marked as shipped.
+
+    Template:
+        pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html
+
+    Behavior:
+        - On form submission (`POST`), the shipment record is retrieved and updated.
+        - If the status is changed to `"shipped"` and the order was previously unshipped,
+          an email is sent to the customer with tracking and shipping details.
+        - If the status is changed to `"delivered"`, the `delivered_at` timestamp is set.
+        - If the status is changed away from `"delivered"`, the `delivered_at` field is cleared.
+        - The associated payment (`PopUpPayment`) record is marked as `"paid"` upon successful update.
+
+    Context Data:
+        - shipment: The `PopUpShipment` object being updated.
+        - order_items: A queryset of `PopUpOrderItem` objects linked to the shipment’s order.
+
+    Access Control:
+        - Restricted to staff users only (validated via `UserPassesTestMixin`).
+        - Non-staff users are denied access automatically.
+
+    Workflow:
+        1. Admin loads the order’s shipping detail partial.
+        2. Updates shipping info via the form and submits.
+        3. View validates and saves changes.
+        4. Triggers an update to payment status and optionally sends a shipment notification email.
+        5. Redirects to the shipping management page upon success.
+
+    Notes:
+        - The form used is `ThePopUpShippingForm`.
+        - The redirect target after successful submission is `'pop_accounts:update_shipping'`.
+        - Exceptions during payment updates are gracefully handled and surfaced via Django messages.
+    """
     model = PopUpShipment
     form_class = ThePopUpShippingForm
     template_name = "pop_accounts/admin_accounts/dashboard_pages/partials/shipping_detail_partial.html"
@@ -2093,6 +2176,46 @@ class UpdateShippingPostView(UserPassesTestMixin, UpdateView):
 
 
 class ViewShipmentsView(UserPassesTestMixin, TemplateView):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Displays the admin dashboard page showing all customer shipments and their statuses.
+
+    Purpose:
+        - Provides staff users with a comprehensive overview of all shipments in the system.
+        - Allows filtering shipments by status — pending delivery or delivered.
+        - Enables admins to click on a shipment to view full shipping details and update 
+          shipment information such as tracking number, carrier, or delivery status.
+
+    Template:
+        pop_accounts/admin_accounts/dashboard_pages/shipments.html
+
+    Behavior:
+        - Retrieves all shipments (`PopUpShipment`) linked to paid orders 
+          (where `notified_ready_to_ship=True` in `PopUpPayment`).
+        - Categorizes shipments into three groups:
+            • `all_shipments` — All shipments ready to ship or already shipped.
+            • `pending_delivery` — Shipments with status `"shipped"`, not yet marked as delivered.
+            • `delivered` — Shipments where the delivery has been completed.
+        - Provides contextual admin text via `ADMIN_SHIPMENTS` for display in the template.
+
+    Context Data:
+        - all_shipments: Queryset of all qualifying `PopUpShipment` objects.
+        - pending_delivery: Queryset of shipments currently in transit.
+        - delivered: Queryset of completed deliveries.
+        - admin_shipping: Text or instructions for the admin interface.
+
+    Access Control:
+        - Restricted to staff users only (checked via `UserPassesTestMixin`).
+        - Non-staff users are denied access automatically.
+
+    Workflow:
+        1. Admin visits the Shipments dashboard.
+        2. The view loads categorized shipment lists for quick access.
+        3. Admin can click on a shipment entry to view details or update its status (e.g., mark as delivered).
+    """
+    
     template_name = "pop_accounts/admin_accounts/dashboard_pages/shipments.html"
 
     def test_func(self):
@@ -2101,7 +2224,8 @@ class ViewShipmentsView(UserPassesTestMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        base_queryset = PopUpShipment.objects.filter(order__popuppayment__notified_ready_to_ship=True).select_related('order')
+        base_queryset = PopUpShipment.objects.filter(
+            order__popuppayment__notified_ready_to_ship=True).select_related('order')
 
         # All Shipments
         context['all_shipments'] = base_queryset
@@ -2121,6 +2245,9 @@ class ViewShipmentsView(UserPassesTestMixin, TemplateView):
 
 
 class UpdateProductView(UserPassesTestMixin, View):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
     - shows all products added to database.
     - shows all products that are comming soon.
@@ -2147,7 +2274,7 @@ class UpdateProductView(UserPassesTestMixin, View):
 
             old_buy_now_start = product.buy_now_start                
             old_auction_start = product.auction_start_date
-
+            
             if form.is_valid():
                 form.save()
 
@@ -2264,38 +2391,41 @@ class UpdateProductView(UserPassesTestMixin, View):
 
 
 
-class UpdateProductPostView(UserPassesTestMixin, View):
-    """
-    View for product updates
-    """
-    def test_func(self):
-        return self.request.user.is_staff
+# class UpdateProductPostView(UserPassesTestMixin, View):
+#     """
+#     View for product updates
+#     """
+#     def test_func(self):
+#         return self.request.user.is_staff
     
-    def post(self, request, product_id):
-        product = get_object_or_404(PopUpProduct, id=product_id)
-        form = PopUpAddProductForm(request.POST, instance=product)
+#     def post(self, request, product_id):
+#         product = get_object_or_404(PopUpProduct, id=product_id)
+#         form = PopUpAddProductForm(request.POST, instance=product)
 
-        if form.is_valid():
-            try:
-                updated_product = form.save()
+#         if form.is_valid():
+#             try:
+#                 updated_product = form.save()
 
-                PopUpProductSpecificationValue.objects.filter(product=updated_product).delete()
+#                 PopUpProductSpecificationValue.objects.filter(product=updated_product).delete()
 
-                # Save the new specifications
-                self.save_existing_specifications(request, updated_product)
-                self.save_custom_specifications(request, updated_product)
-                messages.success(request, f'Product "{updated_product.product_title} {updated_product.secondary_product_title} updated successfully!')
-                return redirect('pop_accounts:update_product')
-            except Exception as e:
-                messages.error(request, 'An error occurred while updating the product.')
-                print('Update error:', e)
-        else:
-            messages.error(request, 'Please correct the errors in the form.')
-            print('Form errors', form.errors)
-        return redirect('pop_accounts:updated_product')
+#                 # Save the new specifications
+#                 self.save_existing_specifications(request, updated_product)
+#                 self.save_custom_specifications(request, updated_product)
+#                 messages.success(request, f'Product "{updated_product.product_title} {updated_product.secondary_product_title} updated successfully!')
+#                 return redirect('pop_accounts:update_product')
+#             except Exception as e:
+#                 messages.error(request, 'An error occurred while updating the product.')
+#                 print('Update error:', e)
+#         else:
+#             messages.error(request, 'Please correct the errors in the form.')
+#             print('Form errors', form.errors)
+#         return redirect('pop_accounts:updated_product')
 
 
 class AddProductsView(UserPassesTestMixin, View):
+    # 🟢 View Test Completed
+    # ✅ Mobile / Tablet Media Query Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
     Admin view to add products to database
     """
@@ -2349,20 +2479,63 @@ class AddProductsView(UserPassesTestMixin, View):
 
 
 
-@require_http_methods(['GET'])
-def add_products_get(request, product_type_id):
-    try:
-        specifications = PopUpProductSpecification.objects.filter(
-            product_type_id=product_type_id).values('id', 'name')
-        return JsonResponse({
-            'success': True,
-            'specifications': list(specifications)
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-            })
+class AddProductsGetView(UserPassesTestMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Handles AJAX requests from the admin panel to dynamically load product specifications
+    based on a selected product type when adding a new product.
+
+    This view is used in the custom admin "Add Product" interface (outside the Django admin site).
+    When the admin selects a product type from a dropdown, a JavaScript function (`loadProductSpecifications`)
+    sends an AJAX GET request to this view to retrieve all specification fields associated
+    with that product type.
+
+    The view returns a JSON response containing:
+        - success (bool): Whether the request was successful.
+        - specifications (list): A list of dictionaries, each containing 'id' and 'name' keys
+          representing product specification fields (e.g., "Color", "Size", "Material").
+        - error (str): Included only if an exception occurs.
+
+    Example Frontend Flow (AJAX Trigger):
+        In "Add_Product.html", the JavaScript function:
+            fetch(`/pop_accounts/add-products-admin/${productTypeId}/`)
+        calls this view when a product type is selected.
+        The returned JSON data is then passed to `displaySpecifications()` to render
+        the specification input fields dynamically.
+
+    URL Parameters:
+        product_type_id (int): The ID of the product type selected by the admin.
+
+    Permissions:
+        - Only staff (admin) users can access this view. Non-staff users are denied access.
+
+    Example Response:
+        {
+            "success": True,
+            "specifications": [
+                {"id": 1, "name": "Color"},
+                {"id": 2, "name": "Size"}
+            ]
+        }
+
+    Error Response:
+        {
+            "success": False,
+            "error": "Database connection error"
+        }
+    """
+    def test_func(self):
+        return self.request.user.is_staff
+    
+    def get(self, request, product_type_id):
+        try:
+            specifications = PopUpProductSpecification.objects.filter(
+                product_type_id=product_type_id).values('id', 'name')
+            return JsonResponse({ 'success': True, 'specifications': list(specifications)})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
 
 
 """
@@ -2370,17 +2543,48 @@ Log in / Registration Views
 """
 
 class EmailCheckView(View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    In login/registration modal, verifies that email is on file
-    if email on file, user taken to password entry screen
-    if email not on file, user taken to registration form.
+    Handles AJAX-based email verification for the pop-up authentication flow.
+
+    This view is triggered when a user enters their email in the login/registration modal.
+    It checks whether the provided email is already associated with an existing account
+    and determines the next step in the authentication process:
+
+        - If the email exists in the database:
+            → The user is redirected to the password entry screen.
+            → The email is stored in the session for later authentication.
+
+        - If the email does not exist:
+            → The user is directed to the registration form to create a new account.
+
+        - If the email is invalid or missing:
+            → Returns an error response with status 400.
+
+    The response is returned as a JSON object indicating whether the user is new (`status=True`)
+    or existing (`status=False`).
+
+    Expected POST data:
+        - email (str): The email address entered by the user.
+
+    JSON Response:
+        - {'status': True}  → Email not found (new user, show registration form)
+        - {'status': False} → Email found (existing user, show password form)
+        - {'status': False, 'error': 'Invalid or missing email'} → Invalid input
+
+    Example usage:
+        POST /check-email/
+        Data: {'email': 'user@example.com'}
+        Response: {'status': False}
+
     """
     def post(self, request):
         NewUser = False
-        email = request.POST.get('email')
-        if email and validate_email_address(email):
+        email = request.POST.get('email', '').strip().lower()
 
-            user_exists = PopUpCustomer.objects.filter(email=email).exists()
+        if email and validate_email_address(email):
+            user_exists = PopUpCustomer.objects.filter(email__iexact=email).exists()
             if not user_exists:
                 NewUser = True
                 return JsonResponse({'status': NewUser})
@@ -2390,7 +2594,10 @@ class EmailCheckView(View):
         return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
 
 
+
+
 class RegisterView(View):
+
     """
     In login/ registration modal. This view is for the registration form for users registering with email
     Email verification sent to user upon form submission
@@ -2443,17 +2650,52 @@ class RegisterView(View):
 
 
 class Login2FAView(View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    Creates 2 factor auth by sending user six digit code
-    If email on file, user prompted to enter password
-    Class accepts password, verifies correct email-password and sends 6 digit code
+    Handles the second step of the two-factor authentication (2FA) login process.  
+    This view validates the user's email and password combination and, upon successful 
+    authentication, sends a six-digit verification code to the user's registered email address.
+
+    Workflow:
+    1. The user first submits their email through the login modal.
+       - If the email exists, it is saved in the session under 'auth_email'.
+    2. This view is triggered when the user submits their password.
+       - The email is retrieved from the session, and authentication is attempted.
+    3. If the email/password combination is valid:
+       - A 6-digit 2FA code is generated using `generate_2fa_code()`.
+       - The code is stored in the session and sent via email to the user.
+       - The view returns a JSON response indicating that 2FA verification is required.
+    4. If authentication fails:
+       - The number of failed login attempts is tracked in the session.
+       - After 5 failed attempts, the user is temporarily locked out for 15 minutes.
+       - The lockout timer and attempts counter are also stored in the session.
+    5. If the user account is inactive:
+       - The login attempt is treated as invalid for security consistency.
+
+    Responses:
+        200: {"authenticated": True, "2fa_required": True} — password verified, 2FA code sent  
+        401: {"authenticated": False, "error": "Invalid Credentials."} — invalid password  
+        403: {"authenticated": False, "locked_out": True} — too many failed attempts  
+        429: {"authenticated": False, "error": "Locked out"} — temporary lockout still active  
+
+    Security:
+        - Rate-limits password attempts to mitigate brute-force attacks.
+        - Stores only minimal session data between steps (no plaintext passwords).
+        - Sends 2FA codes using secure email delivery.
+
+    Session Keys Used:
+        - 'auth_email': email address entered in step one
+        - 'pending_login_user_id': temporarily stores user ID after valid password
+        - '2fa_code' / '2fa_code_created_at': the generated verification code and timestamp
+        - 'login_attempts', 'first_attempt_time', 'locked_until': track login attempt and lockout state
     """
     MAX_ATTEMPTS = 5
     LOCKOUT_TIME = timedelta(minutes=15)
 
     def post(self, request):
 
-        email = request.session.get('auth_email')
+        email = request.session.get('auth_email', '').strip().lower()
         password = request.POST.get('password')
         now_time = now()
 
@@ -2467,11 +2709,23 @@ class Login2FAView(View):
             return JsonResponse({'authenticated': False, 'error': 'Locked out'}, status=429)
         
         user = authenticate(request, username=email, password=password)
+
+        # ADDED: Explicitly check if user is active
+        if user and not user.is_active:
+            user = None
+            # # Treat inactive user same as invalid credentials
+            # # Don't increment attempts counter for inactive users (optional - see note below)
+            # return JsonResponse({
+            #     'authenticated': False, 
+            #     'error': 'Account not activated. Please check your email.'
+            # }, status=401)
+        
+
         if user:
             request.session['pending_login_user_id'] = str(user.id)
             request.session.pop('login_attempts', None)
             request.session.pop('first_attempt_time', None)
-            request.session.pop('locked_utnil', None)
+            request.session.pop('locked_until', None)
 
             code = generate_2fa_code()
             request.session['2fa_code'] = code
@@ -2513,17 +2767,59 @@ def generate_2fa_code():
 
 
 class Verify2FACodeView(View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    Verifies six-digit code for 2FA.
+    Handles verification of the 6-digit two-factor authentication (2FA) code sent to the user’s email.  
+    This view is called after the user successfully enters their password and receives a verification code.
+
+    Workflow:
+    1. The user enters the 6-digit code sent to their email address.
+    2. The code, along with session data (`2fa_code`, `2fa_code_created_at`, and `pending_login_user_id`),
+       is validated to ensure authenticity and freshness.
+    3. If the code matches and is within the valid time window (5 minutes):
+       - The user is retrieved from the database and logged in using the custom `EmailBackend`.
+       - Session data related to 2FA is cleared.
+       - A JSON response confirming successful verification is returned.
+    4. If the code is invalid, expired, or the session is missing required data:
+       - A corresponding error message is returned, and the user is not logged in.
+
+    Security:
+        - 2FA codes are valid for 5 minutes to prevent replay attacks.
+        - All 2FA-related session data is deleted after verification or expiration.
+        - Only numeric, 6-digit codes are accepted.
+        - No sensitive data (like passwords) is transmitted in this step.
+
+    Responses:
+        200: {"verified": True, "user_name": "<first_name>"} — code valid, user successfully logged in  
+        400: {"verified": False, "error": "Invalid Code"} — code incorrect or improperly formatted  
+        400: {"verified": False, "error": "Verification code has expired"} — code too old  
+        400: {"verified": False, "error": "Invalid timestamp format"} — session data corrupted  
+        404: {"verified": False, "error": "User not found"} — user no longer exists  
+        200: {"verified": False, "error": "Session expired or invalid"} — session data missing  
+
+    Session Keys Used:
+        - '2fa_code': the six-digit code previously generated and emailed
+        - '2fa_code_created_at': timestamp when the code was generated
+        - 'pending_login_user_id': ID of the authenticated user awaiting 2FA verification
+
+    Notes:
+        - This view is only accessible after a successful password check in `Login2FAView`.
+        - On success, the user is fully authenticated and logged into the system.
     """
     def post(self, request):
-        code_entered = request.POST.get('code')
-        session_code = request.session.get('2fa_code')
+        code_entered = request.POST.get('code', '').strip()
+        session_code = request.session.get('2fa_code', '')
         created_at_str = request.session.get('2fa_code_created_at')
         user_id = request.session.get('pending_login_user_id')
 
         if not all([session_code, created_at_str, user_id]):
             return JsonResponse({"verified": False, "error": "Session expired or invalid"})
+
+        # Check if code is 6 digits
+        if not code_entered or not code_entered.isdigit() or len(code_entered) != 6:
+            return JsonResponse({'verified': False, 'error': 'Invalid Code'}, status=400)
+        
 
         try:
             code_created_at = timezone.datetime.fromisoformat(created_at_str)
@@ -2543,6 +2839,13 @@ class Verify2FACodeView(View):
         if str(code_entered).strip() == str(session_code).strip():
             try:
                 user = PopUpCustomer.objects.get(id=user_id)
+
+                # Check if user is active before login
+                if not user.is_active:
+                    # clean up session data
+                    for key in ['2fa_code', '2fa_code_created_at', 'pending_login_user_id']:
+                        request.session.pop(key, None)
+                    return JsonResponse({'verified': False, 'error': 'Account is not active'}, status=403)
                 login(request, user, backend='pop_accounts.backends.EmailBackend')
                 request.session.save()
 
@@ -2554,7 +2857,6 @@ class Verify2FACodeView(View):
                 return JsonResponse({'verified': False, 'error': 'User not found'}, status=404)
         else:
             return JsonResponse({'verified': False, 'error': 'Invalid Code'}, status=400)
-
 
 
 

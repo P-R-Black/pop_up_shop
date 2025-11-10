@@ -106,22 +106,22 @@ Update Product
                     </div>
                     <div class="product_add_product_titles_container">
                         <div class="product_edit_info_data_container">
-                            <div class=""> {{ form.product_title }}</div>
+                            <div> {{ form.product_title }}</div>
                         </div>
                         <div class="product_edit_info_data_container">
-                            <div class="">{{ form.secondary_product_title }}</div>
+                            <div>{{ form.secondary_product_title }}</div>
                         </div>
 
                         <div class="product_edit_info_data_container">
-                            <div class="">{{ form.description }}</div>
+                            <div>{{ form.description }}</div>
                         </div>
                         <div class="product_edit_info_data_container">
-                            <div class="">
+                            <div>
                                 {{ form.inventory_status.label_tag }}
                             </div>
                             {{ form.inventory_status }}
                         </div>
-                        <div class="product_edit_info_data_container">
+                        <div class="product_edit_info_data_container_checkmark">
                             <span class="checkmark">
                                 {{ form.is_active }}&nbsp
                                 {{form.is_active.label_tag }}

@@ -92,7 +92,6 @@ def handle_password_reset_request(request, email: str):
     return JsonResponse({'success': True, 'message': 'Password reset link sent'})
     
 
-
 def validate_email_address(email):
     try:
         validate_email(email)

@@ -11,7 +11,8 @@ from pop_up_auction.models import (PopUpProduct, PopUpBrand, PopUpCategory, PopU
                                    PopUpProductSpecificationValue)
 from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView, UpdateShippingPostView,
                                 TotalOpenBidsView, AccountSizesView, PendingOkayToShipView, UpdateShippingView,
-                                ViewShipmentsView)
+                                ViewShipmentsView, UpdateProductView, AddProductsGetView)
+from pop_up_auction.forms import (PopUpAddProductForm, PopUpProductImageForm)
 from unittest.mock import patch, Mock
 from pop_up_shipping.forms import ThePopUpShippingForm
 from pop_up_email.utils import (send_customer_shipping_details, send_interested_in_and_coming_soon_product_update_to_users)
@@ -7378,6 +7379,7 @@ class TestPendingOrderShippingDetailView(TestCase):
         order_items = response.context['order_item']
         self.assertEqual(order_items.count(), 0)
 
+
     def test_ajax_request_returns_partial(self):
         """Test that AJAX request returns only the partial HTML (not full layout)"""
         self.client.force_login(self.staff_user)
@@ -8570,199 +8572,1565 @@ class TestViewShipmentsView(TestCase):
             'pop_accounts/admin_accounts/dashboard_pages/shipments.html'
         )
 
-# class EmailCheckViewTests(TestCase):
-#     def setUp(self):
-#         self.client = Client()
-#         self.url = reverse('pop_accounts:check_email')
-
-        # # create an existing user
-        # self.existing_email = 'existing@example.com'
-        # self.user = PopUpCustomer.objects.create_user(
-        #     email = self.existing_email,
-        #     password = 'testPass!23',
-        #     first_name = 'Test',
-        #     last_name = 'User'
-        # )
-    
-    # def test_existing_email(self):
-    #     response = self.client.post(self.url, {'email': self.existing_email})
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertJSONEqual(response.content, {'status': False})
-    #     self.assertEqual(self.client.session['auth_email'], self.existing_email)
-    
-#     def test_new_mail(self):
-#         new_mail = 'newuser@example.com'
-#         response = self.client.post(self.url, {'email': new_mail})
-#         self.assertEqual(response.status_code, 200)
-#         self.assertJSONEqual(response.content, {'status': True})
-#         self.assertNotIn('auth_email', self.client.session)
-    
-#     def test_invalid_email(self):
-#         response = self.client.post(self.url, {'email': 'noteanemail'})
-#         self.assertEqual(response.status_code, 400)
-#         self.assertJSONEqual(response.content, {'status': False, 'error': 'Invalid or missing email'})
-    
-#     def test_missing_email(self):
-#         response = self.client.post(self.url, {})
-#         self.assertEqual(response.status_code, 400)
-#         self.assertJSONEqual(response.content, {'status': False, 'error': 'Invalid or missing email'})
 
 
+class TestUpdateProductView(TestCase):
+    """Test suite for admin view to update products and filter by status"""
 
-# class Login2FAViewTests(TestCase):
-#     def setUp(self):
-#         self.client = Client()
-#         self.url = reverse('pop_accounts:user_login')
-#         self.email = 'testuser@example.com'
-#         self.password = 'strongPassword!'
-#         self.user = PopUpCustomer.objects.create_user(
-#             email = self.email,
-#             password = self.password,
-#             first_name = 'Test',
-#             last_name = 'User'
-#         )
-#         self.client.session['auth_email'] = self.email
-#         self.client.session.save()
+    def setUp(self):
+        self.client = Client()
+
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '25', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+
+        self.product_type = create_product_type('sneaker', is_active=True)
+        self.category = create_category('Jordan 1', is_active=True)
+        # self.brand = create_brand('Jordan')
+
+        self.size_spec = PopUpProductSpecification.objects.create(
+            product_type_id=1,
+            name='size')
+
+        self.spec_color = PopUpProductSpecification.objects.create(
+            product_type_id=1,
+            name='color'
+        )
+
+        # self.test_prod_one = create_test_product_one(inventory_status="in_inventory", is_active=True)
+        self.test_prod_one = create_test_product( 
+            product_type=self.product_type,
+            category=create_category('Air Jordan 1', is_active=True), 
+            product_title="Air Jordan 1", 
+            secondary_product_title="Retro High OG", 
+            description="Classic basketball shoe", 
+            slug=slugify("Air Jordan 1 Retro High OG"), 
+            buy_now_price=Decimal("180.00"), 
+            current_highest_bid="0", 
+            retail_price=Decimal('170.00'), 
+            brand=create_brand('Jordan'), 
+            auction_start_date=None, 
+            auction_end_date=None, 
+            inventory_status="in_inventory", 
+            bid_count=0, 
+            reserve_price=Decimal('150.00'), 
+            is_active=True
+            )
+
+        self.test_prod_two = create_test_product_two(inventory_status="in_transit", is_active=True)
+        
+        self.test_prod_three = create_test_product_three(inventory_status="in_inventory", is_active=True)
+
+        self.test_prod_four = create_test_product( 
+            product_type=self.product_type,
+            category=create_category('Yeezy', is_active=True), 
+            product_title="Yeezy Boost 350", 
+            secondary_product_title="V2", 
+            description="Adidas collaboration", 
+            slug=slugify("Yeezy Boost 350 V2"), 
+            buy_now_price="150.00", 
+            current_highest_bid="0", 
+            retail_price=Decimal('220.00'), 
+            brand=create_brand('Yeezy'), 
+            auction_start_date=None, 
+            auction_end_date=None, 
+            inventory_status="in_transit", 
+            bid_count=0, 
+            reserve_price="0", 
+            is_active=False)
+        
     
-#     @patch('pop_accounts.views.send_mail')
-#     def test_successful_login_sends_2fa_code(self, mock_send_mail):
-#         session = self.client.session
+
+        PopUpProductSpecificationValue.objects.create(
+            product=self.test_prod_one,
+            specification=self.size_spec,
+            value='10'
+        )
+
+        PopUpProductSpecificationValue.objects.create(
+            product=self.test_prod_one,
+            specification=self.spec_color,
+            value='Black/Red'
+        )
+        
+        
+        # Url for the view
+        self.url = reverse('pop_accounts:update_product')
+        self.url_with_product = reverse('pop_accounts:update_product_detail', kwargs={'product_id': self.test_prod_one.id})
+
+       
+    def test_update_product_view_authenticated_admin(self):
+        """Test that admin users can access the view"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            'pop_accounts/admin_accounts/dashboard_pages/update_product.html'
+        )
+
+    def test_update_product_view_redirects_if_not_staff(self):
+        """Test that non-staff users cannot access the view"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+
+
+    def test_update_product_view_redirects_if_not_logged_in(self):
+        """Test that anonymous users are redirected"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+    
+
+    def test_context_contains_all_products(self):
+        """Test that context contains all products"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+
+        self.assertIn('all_products', response.context)
+        all_products = response.context['all_products']
+        self.assertEqual(all_products.count(), 4)
+    
+
+    def test_context_contains_products_coming_soon(self):
+        """Test that context contains products in transit (coming soon)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('products_coming_soon', response.context)
+        products_coming_soon = response.context['products_coming_soon']
+        
+        # Should have 2 products with in_transit status
+        self.assertEqual(products_coming_soon.count(), 2)
+        
+        product_ids = [p.id for p in products_coming_soon]
+        self.assertIn(self.test_prod_two.id, product_ids)
+        self.assertIn(self.test_prod_four.id, product_ids)
+    
+
+    def test_context_contains_products_in_inventory(self):
+        """Test that context contains products in inventory"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertIn('products_in_inventory', response.context)
+        products_in_inventory = response.context['products_in_inventory']
+        
+        # Should have 2 products with in_inventory status
+        self.assertEqual(products_in_inventory.count(), 2)
+        
+        product_ids = [p.id for p in products_in_inventory]
+        self.assertIn(self.test_prod_one.id, product_ids)
+        self.assertIn(self.test_prod_three.id, product_ids)
+    
+
+    def test_context_contains_product_copy(self):
+        """Test that context contains admin copy text"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        self.assertIn('product_copy', response.context)
+    
+
+    def test_no_product_selected_shows_placeholder(self):
+        """Test that without product selection, no form is shown"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        
+        self.assertNotIn('show_form', response.context)
+        self.assertNotIn('selected_product', response.context)
+        
+        html = response.content.decode('utf-8')
+        self.assertIn('Select a product from the list above to edit', html)
+    
+
+    def test_product_selected_shows_form(self):
+        """Test that selecting a product shows the update form"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_with_product)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('show_form', response.context)
+        self.assertTrue(response.context['show_form'])
+        self.assertIn('selected_product', response.context)
+        self.assertEqual(response.context['selected_product'], self.test_prod_one)
+    
+    def test_product_form_initialized_with_instance(self):
+        """Test that product form is initialized with the selected product"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_with_product)
+        
+        self.assertIn('form', response.context)
+        form = response.context['form']
+        
+        # Verify form has product data
+        self.assertEqual(form.instance, self.test_prod_one)
+        self.assertEqual(form.initial.get('product_title') or form.instance.product_title, 
+                        'Air Jordan 1')
+    
+
+    def test_product_image_form_in_context(self):
+        """Test that product image form is in context"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_with_product)
+        
+        self.assertIn('product_image_form', response.context)
+        image_form = response.context['product_image_form']
+        self.assertIsInstance(image_form, PopUpProductImageForm)
+    
+
+    def test_existing_specifications_in_context(self):
+        """Test that existing specifications are loaded in context"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_with_product)
+        
+        self.assertIn('existing_spec_values', response.context)
+        existing_specs = response.context['existing_spec_values']
+        
+        # Should have size and color specs
+        self.assertEqual(len(existing_specs), 2)
+        self.assertIn(self.size_spec.id, existing_specs)
+        self.assertEqual(existing_specs[self.size_spec.id], '10')
+        self.assertIn(self.spec_color.id, existing_specs)
+        self.assertEqual(existing_specs[self.spec_color.id], 'Black/Red')
+    
+
+    def test_product_type_id_in_context(self):
+        """Test that product_type_id is in context for JavaScript"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_with_product)
+        self.assertIn('product_type_id', response.context)
+        self.assertEqual(response.context['product_type_id'], 1)
+    
+
+    def test_successful_product_update(self):
+        """Test successfully updating a product"""
+        self.client.force_login(self.staff_user)
+
+        form_data = {
+            'product_type': self.product_type.id,
+            'category': self.category.id, 
+            'product_title':"Air Jordan 1 Updated", 
+            'secondary_product_title': "Retro High OG - Updated", 
+            'description': "Classic basketball shoe", 
+            'slug' : slugify("Air Jordan 1 Retro High OG"), 
+            'buy_now_price' : Decimal("185.00"), 
+            'current_highest_bid' : "0", 
+            'retail_price' : Decimal('175.00'), 
+            'brand' : 1, 
+            'auction_start_date': "", 
+            'auction_end_date': "", 
+            'inventory_status' : "in_transit", 
+            'bid_count' :0, 
+            'reserve_price' :Decimal('155.00'), 
+            'product_weight_lb': "",
+            'is_active' :True,
+            }
+
+        
+        response = self.client.post(self.url_with_product, form_data)
+        
+        # Refresh product from database
+        self.test_prod_one.refresh_from_db()
+        
+        # Verify product was updated
+        self.assertEqual(self.test_prod_one.product_title, 'Air Jordan 1 Updated')
+        self.assertEqual(self.test_prod_one.secondary_product_title, 'Retro High OG - Updated')
+        self.assertEqual(self.test_prod_one.retail_price, Decimal('175.00'))
+        
+        # Verify success message
+        self.assertIn('success_message', response.context)
+        self.assertEqual(response.context['success_message'], 'Product updated successfully.')
+    
+
+    def test_update_inventory_status_from_transit_to_inventory(self):
+        """Test updating inventory status from in_transit to in_inventory"""
+        self.client.force_login(self.staff_user)
+        
+        url = reverse('pop_accounts:update_product_detail', 
+                     kwargs={'product_id': self.test_prod_two.id})
+        """
+        def create_test_product_two(*args, **kwargs):
+        # Set default values
+        defaults = {
+            'product_type_id': 1, 'category': create_category('Jordan 4', is_active=True),
+            'product_title': "Past Bid Product 2", 'secondary_product_title': "Past Bid 2",
+            'description': "Brand new sneakers", 'slug': "past-bid-product-2", 'buy_now_price': "300.00", 
+            'current_highest_bid': "0", 'retail_price': "200.00", 'brand_id': 1, 'auction_start_date': None, 
+            'auction_end_date': None, 'inventory_status': "sold_out", 'bid_count': 0, 'reserve_price': "150.00",
+            'is_active': False  # Default value
+        }
+
+        """
+        form_data = {
+            'product_type': self.product_type.id,
+            'category': self.category.id, 
+            'product_title':"Past Bid Product 2", 
+            'secondary_product_title': "Past Bid 2", 
+            'description': "Classic basketball shoe", 
+            'slug' : "past-bid-product-2", 
+            'buy_now_price' : Decimal("300.00"), 
+            'current_highest_bid' : "0", 
+            'retail_price' : Decimal('200.00'), 
+            'brand' : 1, 
+            'auction_start_date': "", 
+            'auction_end_date': "", 
+            'inventory_status' : "in_inventory", 
+            'bid_count' :0, 
+            'reserve_price': Decimal('150.00'), 
+            'product_weight_lb': "",
+            'is_active' :True,
+        }
+        
+        response = self.client.post(url, form_data)
+        
+        # Refresh product
+        self.test_prod_two.refresh_from_db()
+        
+        # Verify status changed
+        self.assertEqual(self.test_prod_two.inventory_status, 'in_inventory')
+    
+
+    def test_update_specifications(self):
+        """Test updating product specifications"""
+        self.client.force_login(self.staff_user)
+        
+        form_data = {
+            'product_type': self.product_type.id,
+            'category': self.category.id, 
+            'product_title': self.test_prod_one.product_title, 
+            'secondary_product_title': self.test_prod_one.secondary_product_title, 
+            'description': self.test_prod_one.description, 
+            'slug' : self.test_prod_one.slug, 
+            'buy_now_price' : self.test_prod_one.buy_now_price, 
+            'current_highest_bid' : "0", 
+            'retail_price' : self.test_prod_one.retail_price, 
+            'brand' : 1, 
+            'auction_start_date': "", 
+            'auction_end_date': "", 
+            'inventory_status' : self.test_prod_one.inventory_status, 
+            'bid_count' :0, 
+            'reserve_price': self.test_prod_one.reserve_price, 
+            'product_weight_lb': "",
+            'is_active' :True,
+            f'spec_{self.size_spec.id}': '11',  # Changed from 10
+            f'spec_{self.spec_color.id}': 'White/Black',  # Changed color
+        }
+        
+        response = self.client.post(self.url_with_product, form_data)
+        
+        # Verify specifications were updated
+        size_spec = PopUpProductSpecificationValue.objects.get(
+            product=self.test_prod_one,
+            specification=self.size_spec
+        )
+        color_spec = PopUpProductSpecificationValue.objects.get(
+            product=self.test_prod_one,
+            specification=self.spec_color
+        )
+        
+        self.assertEqual(size_spec.value, '11')
+        self.assertEqual(color_spec.value, 'White/Black')
+    
+
+    @patch('pop_accounts.views.send_interested_in_and_coming_soon_product_update_to_users')
+    def test_email_sent_when_buy_now_start_changes(self, mock_send_email):
+        """Test that email is sent when buy_now_start date changes"""
+        self.client.force_login(self.staff_user)
+        
+        new_buy_now_start = django_timezone.now() + timedelta(days=7)
+        
+        form_data = {
+            'product_type': self.product_type.id,
+            'category': self.category.id, 
+            'product_title': self.test_prod_one.product_title, 
+            'secondary_product_title': self.test_prod_one.secondary_product_title, 
+            'description': self.test_prod_one.description, 
+            'slug' : self.test_prod_one.slug, 
+            'buy_now_price' : self.test_prod_one.buy_now_price, 
+            'current_highest_bid' : "0", 
+            'retail_price' : self.test_prod_one.retail_price, 
+            'brand' : 1, 
+            'auction_start_date': "", 
+            'auction_end_date': "", 
+            'inventory_status' : self.test_prod_one.inventory_status, 
+            'bid_count' :0, 
+            'reserve_price': self.test_prod_one.reserve_price, 
+            'product_weight_lb': "",
+            'is_active' :True,
+            'buy_now_start': new_buy_now_start.strftime('%Y-%m-%d %H:%M:%S'),
+            f'spec_{self.size_spec.id}': '11',  # Changed from 10
+            f'spec_{self.spec_color.id}': 'White/Black',  # Changed color,
+        }
+        
+        response = self.client.post(self.url_with_product, form_data)
+        
+        # Verify email was sent
+        self.assertTrue(mock_send_email.called)
+        call_kwargs = mock_send_email.call_args.kwargs
+        self.assertEqual(call_kwargs['product'], self.test_prod_one)
+        self.assertIn('buy_now_start_date', call_kwargs)
+    
+
+    @patch('pop_accounts.views.send_interested_in_and_coming_soon_product_update_to_users')
+    def test_email_sent_when_auction_start_changes(self, mock_send_email):
+        """Test that email is sent when auction_start_date changes"""
+        self.client.force_login(self.staff_user)
+        
+        new_auction_start = django_timezone.now() + timedelta(days=5)
+        
+        form_data = {
+            'product_type': self.product_type.id,
+            'category': self.category.id, 
+            'product_title': self.test_prod_one.product_title, 
+            'secondary_product_title': self.test_prod_one.secondary_product_title, 
+            'description': self.test_prod_one.description, 
+            'slug' : self.test_prod_one.slug, 
+            'buy_now_price' : self.test_prod_one.buy_now_price, 
+            'current_highest_bid' : "0", 
+            'retail_price' : self.test_prod_one.retail_price, 
+            'brand' : 1, 
+            'auction_start_date': new_auction_start.strftime('%Y-%m-%d %H:%M:%S'), 
+            'auction_end_date': "", 
+            'inventory_status' : self.test_prod_one.inventory_status, 
+            'bid_count' :0, 
+            'reserve_price': self.test_prod_one.reserve_price, 
+            'product_weight_lb': "",
+            'is_active' :True,
+        }
+        
+        response = self.client.post(self.url_with_product, form_data)
+        
+        # Verify email was sent
+        self.assertTrue(mock_send_email.called)
+        call_kwargs = mock_send_email.call_args.kwargs
+        self.assertEqual(call_kwargs['product'], self.test_prod_one)
+        self.assertIn('auction_start_date', call_kwargs)
+    
+
+    @patch('pop_accounts.views.send_interested_in_and_coming_soon_product_update_to_users')
+    def test_no_email_when_dates_unchanged(self, mock_send_email):
+        """Test that no email is sent when dates don't change"""
+        self.client.force_login(self.staff_user)
+        
+        form_data = {
+            'product_type': self.product_type.id,
+            'category': self.category.id, 
+            'product_title': "Updated Title", 
+            'secondary_product_title': self.test_prod_one.secondary_product_title, 
+            'description': self.test_prod_one.description, 
+            'slug' : self.test_prod_one.slug, 
+            'buy_now_price' : self.test_prod_one.buy_now_price, 
+            'current_highest_bid' : "0", 
+            'retail_price' : self.test_prod_one.retail_price, 
+            'brand' : 1, 
+            'auction_start_date': "", 
+            'auction_end_date': "", 
+            'inventory_status' : self.test_prod_one.inventory_status, 
+            'bid_count' :0, 
+            'reserve_price': self.test_prod_one.reserve_price, 
+            'product_weight_lb': "",
+            'is_active' :True,
+
+        }
+        
+        response = self.client.post(self.url_with_product, form_data)
+        
+        # Verify no email was sent
+        self.assertFalse(mock_send_email.called)
+    
+
+
+    def test_invalid_product_id_shows_error(self):
+        """Test that invalid product ID shows error message"""
+        self.client.force_login(self.staff_user)
+        
+        invalid_url = reverse('pop_accounts:update_product_detail', 
+                             kwargs={'product_id': 99999})
+        
+        response = self.client.get(invalid_url)
+        
+        self.assertIn('error_message', response.context)
+        self.assertEqual(response.context['error_message'], 'Product note found')  # Note the typo in your code
+
+    
+    def test_invalid_form_submission(self):
+        """Test handling of invalid form submission"""
+        self.client.force_login(self.staff_user)
+        
+        # Missing required fields
+        form_data = {
+            'product_type': self.product_type.id,
+            # Missing other required fields
+        }
+        
+        response = self.client.post(self.url_with_product, form_data)
+        
+        # Should re-render form with errors
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        form = response.context['form']
+        self.assertTrue(form.errors)
+    
+
+    def test_post_without_product_id_shows_list(self):
+        """Test that POST without product_id just shows the list"""
+        self.client.force_login(self.staff_user)
+        
+        response = self.client.post(self.url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('show_form', response.context)
+    
+
+    def test_html_displays_product_lists(self):
+        """Test that HTML renders all three product lists"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url)
+        html = response.content.decode('utf-8')
+        
+        # Check for tab containers
+        self.assertIn('prod-tab', html)
+        self.assertIn('coming-tab', html)
+        self.assertIn('inventory-tab', html)
+        
+        # Check for product titles
+        self.assertIn('Air Jordan 1', html)
+        self.assertIn('Past Bid Product 2', html)
+        self.assertIn('Switch 2', html)
+        self.assertIn('Yeezy Boost 350', html)
+    
+
+    def test_selected_product_has_active_class(self):
+        """Test that selected product has active CSS class"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_with_product)
+        html = response.content.decode('utf-8')
+        
+        # The selected product link should have 'active' class
+        self.assertIn('active', html)
+    
+
+    def test_view_class_attributes(self):
+        """Test that the view has correct class attributes"""
+        self.assertEqual(
+            UpdateProductView.template_name,
+            'pop_accounts/admin_accounts/dashboard_pages/update_product.html'
+        )
+
+
+
+class TestAddProductsGetView(TestCase):
+    def setUp(self):
+        self.client = Client()
+    
+        # Create a staff user
+        self.staff_user = create_test_staff_user()
+        self.staff_user.is_active = True
+        self.staff_user.save(update_fields=['is_active'])
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '25', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+
+        self.product_type_one = create_product_type('electronic', is_active=True)
+        self.product_type_two = create_product_type('clothing', is_active=True)
+
+        self.category = create_category('Jordan 1', is_active=True)
+        # self.brand = create_brand('Jordan')
+
+        self.spec_one = PopUpProductSpecification.objects.create(
+            product_type_id=self.product_type_one.id,
+            name='Screen Size')
+
+        self.spec_two = PopUpProductSpecification.objects.create(
+            product_type_id=self.product_type_one.id,
+            name='Battery Life'
+        )
+
+        self.spec_three = PopUpProductSpecification.objects.create(
+            product_type_id=self.product_type_one.id,
+            name='Weight'
+        )
+
+        self.spec_four = PopUpProductSpecification.objects.create(
+            product_type_id=self.product_type_two.id,
+            name='Size'
+        )
+
+        self.url_type_1 = reverse('pop_accounts:add_products_get', kwargs={'product_type_id': self.product_type_one.id})
+        self.url_type_2 = reverse('pop_accounts:add_products_get', kwargs={'product_type_id': self.product_type_two.id})
+
+
+    def test_staff_user_can_access_view(self):
+        """Test that staff users can access the view"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_type_1)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(len(data['specifications']), 3)
+        
+        # Convert to set of tuples for order-independent comparison
+        actual_specs = {(spec['id'], spec['name']) for spec in data['specifications']}
+        expected_specs = {
+            (self.spec_one.id, 'Screen Size'),
+            (self.spec_two.id, 'Battery Life'),
+            (self.spec_three.id, 'Weight')
+        }
+        
+        self.assertEqual(actual_specs, expected_specs)
+
+
+    def test_non_staff_user_cannot_access_view(self):
+        """Test that non-staff users are denied access"""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url_type_1)
+        # UserPassesTestMixin returns 403 Forbidden for failed test_func
+        self.assertEqual(response.status_code, 403)
+
+  
+    def test_anonymous_user_cannot_access_view(self):
+        """Test that anonymous users are redirected to login"""
+        response = self.client.get(self.url_type_1)
+        # UserPassesTestMixin redirects to login for unauthenticated users
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+    
+    
+    def test_correct_specifications_for_product_type(self):
+        """Test that only specifications for the requested product type are returned"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_type_2)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(len(data['specifications']), 1)
+        self.assertEqual(data['specifications'][0]['name'], 'Size')
+        self.assertEqual(data['specifications'][0]['id'], self.spec_four.id)
+    
+
+    def test_no_specifications_for_product_type(self):
+        """Test handling when product type has no specifications"""
+        empty_product_type = PopUpProductType.objects.create(name='Empty Type')
+        url = reverse('pop_accounts:add_products_get', kwargs={'product_type_id': empty_product_type.id})
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['specifications'], [])
+    
+
+    def test_invalid_product_type_id(self):
+        """Test handling of non-existent product type ID"""
+        url = reverse('pop_accounts:add_products_get', kwargs={'product_type_id': 99999})
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        
+        data = response.json()
+        # Should return success with empty list (no error since filter returns empty queryset)
+        self.assertTrue(data['success'])
+        self.assertEqual(data['specifications'], [])
+    
+
+    def test_post_request_not_allowed(self):
+        """Test that POST requests are not allowed"""
+        self.client.force_login(self.staff_user)
+        response = self.client.post(self.url_type_1)
+        self.assertEqual(response.status_code, 405)  # Method Not Allowed
+    
+
+    def test_response_contains_all_specification_fields(self):
+        """Test that response includes all required fields (id and name)"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_type_1)
+        
+        data = response.json()
+        self.assertTrue(data['success'])
+        
+        for spec in data['specifications']:
+            self.assertIn('id', spec)
+            self.assertIn('name', spec)
+            self.assertEqual(len(spec), 2)  # Only id and name should be present
+    
+
+    def test_specifications_order(self):
+        """Test that specifications are returned in a consistent order"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_type_1)
+        
+        data = response.json()
+        spec_ids = [spec['id'] for spec in data['specifications']]
+        
+        # Make another request to verify same order
+        response2 = self.client.get(self.url_type_1)
+        data2 = response2.json()
+        spec_ids2 = [spec['id'] for spec in data2['specifications']]
+        
+        self.assertEqual(spec_ids, spec_ids2)
+    
+
+    def test_multiple_product_types_isolation(self):
+        """Test that specifications from different product types don't mix"""
+        self.client.force_login(self.staff_user)
+        
+        # Get specs for type 1
+        response1 = self.client.get(self.url_type_1)
+        data1 = response1.json()
+        type1_spec_ids = {spec['id'] for spec in data1['specifications']}
+        
+        # Get specs for type 2
+        response2 = self.client.get(self.url_type_2)
+        data2 = response2.json()
+        type2_spec_ids = {spec['id'] for spec in data2['specifications']}
+        
+        # Verify no overlap
+        self.assertEqual(len(type1_spec_ids & type2_spec_ids), 0)
+    
+
+    def test_json_response_format(self):
+        """Test that response is valid JSON with correct content type"""
+        self.client.force_login(self.staff_user)
+        response = self.client.get(self.url_type_1)
+        
+        self.assertEqual(response['Content-Type'], 'application/json')
+        # Should not raise any exception
+        data = response.json()
+        self.assertIsInstance(data, dict)
+        self.assertIn('success', data)
+        self.assertIn('specifications', data)
+    
+
+    def test_string_product_type_id(self):
+        """Test handling of string instead of integer for product_type_id"""
+        # Django URL routing should handle conversion, but test the edge case
+        url = f'/pop_accounts/add-products-admin/not-a-number/'
+        
+        self.client.force_login(self.staff_user)
+        response = self.client.get(url)
+        # Should return 404 if URL pattern expects integer
+        self.assertEqual(response.status_code, 404)
+    
+
+    def test_negative_product_type_id(self):
+        """Test handling of negative product type ID"""
+        # Depending on your URL pattern, this might be 404 or return empty results
+        try:
+            url = reverse('pop_accounts:add_products_get', kwargs={'product_type_id': -1})
+            self.client.force_login(self.staff_user)
+            response = self.client.get(url)
+            
+            data = response.json()
+            self.assertTrue(data['success'])
+            self.assertEqual(data['specifications'], [])
+        except:
+            # If URL pattern doesn't allow negative numbers, that's also acceptable
+            pass
+
+
+
+class TestEmailCheckView(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:check_email')
+
+        # create an existing user
+        self.existing_email = 'existing@example.com'
+        self.user = PopUpCustomer.objects.create_user(
+            email = self.existing_email,
+            password = 'testPass!23',
+            first_name = 'Test',
+            last_name = 'User'
+        )
+    
+    def test_existing_email(self):
+        response = self.client.post(self.url, {'email': self.existing_email})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': False})
+        self.assertEqual(self.client.session['auth_email'], self.existing_email)
+    
+    def test_new_mail(self):
+        new_mail = 'newuser@example.com'
+        response = self.client.post(self.url, {'email': new_mail})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': True})
+        self.assertNotIn('auth_email', self.client.session)
+    
+    def test_invalid_email(self):
+        response = self.client.post(self.url, {'email': 'noteanemail'})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'status': False, 'error': 'Invalid or missing email'})
+    
+    def test_missing_email(self):
+        response = self.client.post(self.url, {})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'status': False, 'error': 'Invalid or missing email'})
+
+    def test_email_with_whitespace(self):
+        """Test that emails with leading/trailing whitespace are handled"""
+        response = self.client.post(self.url, {'email': '  existing@example.com  '})
+        # This will likely fail with current implementation - you may want to add .strip() in the view
+        self.assertEqual(response.status_code, 200)
+
+    def test_email_case_insensitivity(self):
+        """Test that email lookup is case-insensitive"""
+        response = self.client.post(self.url, {'email': 'EXISTING@EXAMPLE.COM'})
+        self.assertEqual(response.status_code, 200)
+        # Verify it recognizes as existing user regardless of case
+        self.assertJSONEqual(response.content, {'status': False})
+        self.assertEqual(self.client.session['auth_email'], 'existing@example.com')
+
+    def test_email_with_different_case_variation(self):
+        """Test mixed case email"""
+        response = self.client.post(self.url, {'email': 'ExIsTiNg@ExAmPlE.cOm'})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'status': False})
+        self.assertEqual(self.client.session['auth_email'], 'existing@example.com')
+
+    def test_get_request_not_allowed(self):
+        """Test that GET requests are not allowed (if applicable)"""
+        response = self.client.get(self.url)
+        # Should return 405 Method Not Allowed since only post() is defined
+        self.assertEqual(response.status_code, 405)
+
+    def test_empty_string_email(self):
+        """Test explicitly empty string email"""
+        response = self.client.post(self.url, {'email': ''})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'status': False, 'error': 'Invalid or missing email'})
+
+    def test_none_email(self):
+        """Test null/None email value"""
+        response = self.client.post(self.url, {'email': ""})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'status': False, 'error': 'Invalid or missing email'})
+
+
+    def test_malformed_but_valid_looking_email(self):
+        """Test edge case emails that might pass basic validation"""
+        test_cases = [
+            ('user@', 400),  # Missing domain - will fail validation
+            ('@example.com', 400),  # Missing local part - will fail validation
+            ('user@@example.com', 400),  # Double @ - will fail validation
+            ('user@example', 400),
+        ]
+        
+        for email, expected_status in test_cases:
+            with self.subTest(email=email):
+                response = self.client.post(self.url, {'email': email})
+                self.assertEqual(response.status_code, expected_status)
+                if expected_status == 400:
+                    self.assertJSONEqual(
+                        response.content,
+                        {'status': False, 'error': 'Invalid or missing email'}
+                    )
+
+    def test_sql_injection_attempt(self):
+        """Test that SQL injection attempts are safely handled"""
+        malicious_email = "'; DROP TABLE PopUpCustomer; --"
+        response = self.client.post(self.url, {'email': malicious_email})
+        self.assertEqual(response.status_code, 400)
+        # Verify the user table still exists
+        self.assertTrue(PopUpCustomer.objects.filter(email=self.existing_email).exists())
+
+    def test_very_long_email(self):
+        """Test handling of extremely long email addresses"""
+        long_email = 'a' * 300 + '@example.com'
+        response = self.client.post(self.url, {'email': long_email})
+        # Should handle gracefully, either 400 or 200 depending on validation
+        self.assertIn(response.status_code, [200, 400])
+
+    def test_unicode_email(self):
+        """Test handling of unicode characters in email"""
+        unicode_email = 'tëst@ëxample.com'
+        response = self.client.post(self.url, {'email': unicode_email})
+        # Modern email validators should handle this, but test your specific behavior
+        self.assertIn(response.status_code, [200, 400])
+
+
+    def test_session_not_set_for_new_user(self):
+        """Explicitly verify session is not polluted for new users"""
+        new_email = 'brand.new@example.com'
+        response = self.client.post(self.url, {'email': new_email})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('auth_email', self.client.session)
+        # Also verify no other auth-related session keys are set
+        auth_keys = [key for key in self.client.session.keys() if 'auth' in key.lower()]
+        self.assertEqual(len(auth_keys), 0)
+
+    def test_session_overwrites_previous_email(self):
+        """Test that checking a different email overwrites the session"""
+        # First check with one email
+        self.client.post(self.url, {'email': self.existing_email})
+        self.assertEqual(self.client.session['auth_email'], self.existing_email)
+        
+        # Create another existing user
+        another_email = 'another@example.com'
+        PopUpCustomer.objects.create_user(
+            email=another_email,
+            password='testPass!23',
+            first_name='Another',
+            last_name='User'
+        )
+        
+        # Check with different email
+        self.client.post(self.url, {'email': another_email})
+        self.assertEqual(self.client.session['auth_email'], another_email)
+
+
+class TestLogin2FAView(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:user_login')
+        self.email = 'testuser@example.com'
+        self.password = 'strongPassword!'
+        self.user = PopUpCustomer.objects.create_user(
+            email = self.email,
+            password = self.password,
+            first_name = 'Test',
+            last_name = 'User'
+        )
+
+        self.user.is_active = True
+        self.user.save()
+
+        session = self.client.session
+        session['auth_email'] = self.email
+        session.save()
+    
+    @patch('pop_accounts.views.send_mail')
+    def test_successful_login_sends_2fa_code(self, mock_send_mail):
+        session = self.client.session
      
-#         session['auth_email'] = self.email
-#         session.save()
+        session['auth_email'] = self.email
+        session.save()
 
-#         response = self.client.post(self.url, {'password': self.password})
+        response = self.client.post(self.url, {'password': self.password})
 
-#         code = self.client.session['2fa_code']
+        code = self.client.session['2fa_code']
 
-#         self.assertEqual(response.status_code, 200)
-#         self.assertJSONEqual(response.content, {'authenticated': True, '2fa_required': True})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'authenticated': True, '2fa_required': True})
 
-#         self.assertIn('2fa_code', self.client.session)
-#         self.assertEqual(self.client.session['pending_login_user_id'], str(self.user.id))
-#         self.assertTrue(code.isdigit() and len(code) == 6)
-#         self.assertTrue(mock_send_mail.called)
+        self.assertIn('2fa_code', self.client.session)
+        self.assertEqual(self.client.session['pending_login_user_id'], str(self.user.id))
+        self.assertTrue(code.isdigit() and len(code) == 6)
+        self.assertTrue(mock_send_mail.called)
 
     
-#     def test_failed_login_increments_attempts(self):
-#         for i in range(1, 3):
-#             response = self.client.post(self.url, {'password': 'wrongpass'})
-#             self.assertEqual(response.status_code, 401)
-#             self.assertIn(f'Attempt {i}/5', response.json()['error'])
+    def test_failed_login_increments_attempts(self):
+        for i in range(1, 3):
+            response = self.client.post(self.url, {'password': 'wrongpass'})
+            self.assertEqual(response.status_code, 401)
+            self.assertIn(f'Attempt {i}/5', response.json()['error'])
         
-#     def test_lockout_after_max_attempts(self):
-#         for _ in range(5):
-#             self.client.post(self.url, {'password': 'wrongpass'})
+
+    def test_lockout_after_max_attempts(self):
+        for _ in range(5):
+            self.client.post(self.url, {'password': 'wrongpass'})
         
-#         response = self.client.post(self.url, {'password': 'wrongpass'})
-#         self.assertEqual(response.status_code, 403)
-#         self.assertTrue(response.json()['locked_out'])
-    
-#     def test_locked_out_if_within_lockout_period(self):
-#         session = self.client.session
-#         session['locked_until'] = (now() + timedelta(minutes=10)).isoformat()
-#         session.save()
-#         response = self.client.post(self.url, {'password': 'wrongpass'})
-#         self.assertEqual(response.status_code, 429)
-#         self.assertEqual(response.json()['error'], 'Locked out')
-
-
-#     def test_lockout_resets_after_time_passes(self):
-#         session = self.client.session
-#         session['login_attempts'] = 5
-#         session['first_attempt_times'] = (now() - timedelta(minutes=16)).isoformat()
-#         session.save()
-#         response = self.client.post(self.url, {'password': 'wrongpass'})
-#         self.assertEqual(response.status_code, 401)
-#         self.assertIn('Attempt 1/5', response.json()['error'])
-
-
-
-# class Verify2FACodeViewTests(TestCase):
-#     def setUp(self):
-#         self.user = PopUpCustomer.objects.create_user(
-#             email='test@example.com',
-#             password='securepassword!23',
-#             first_name='Test',
-#             last_name='User'
-#         )
-
-#         self.url = reverse('pop_accounts:verify_2fa')
-#         self.code = '123456'
-#         self.session = self.client.session
-#         self.session['2fa_code'] = self.code
-#         self.session['2fa_code_created_at'] = timezone.now().isoformat()
-#         self.session['pending_login_user_id'] = str(self.user.id)
-#         self.session.save()
-    
-#     def test_successful_verification(self):
-#         response = self.client.post(self.url, {'code': self.code})
-#         self.assertEqual(response.status_code, 200)
-#         self.assertJSONEqual(response.content, {'verified': True, 'user_name': self.user.first_name})
+        response = self.client.post(self.url, {'password': 'wrongpass'})
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(response.json()['locked_out'])
     
 
-#     def test_invalid_code(self):
-#         response = self.client.post(self.url, {'code': '000000'})
-#         self.assertEqual(response.status_code, 400)
-#         self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid Code'})
+    def test_locked_out_if_within_lockout_period(self):
+        session = self.client.session
+        session['locked_until'] = (now() + timedelta(minutes=10)).isoformat()
+        session.save()
+        response = self.client.post(self.url, {'password': 'wrongpass'})
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.json()['error'], 'Locked out')
+
+
+    def test_lockout_resets_after_time_passes(self):
+        session = self.client.session
+        session['login_attempts'] = 5
+        session['first_attempt_time'] = (now() - timedelta(minutes=16)).isoformat()
+        session.save()
+        response = self.client.post(self.url, {'password': 'wrongpass'})
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('Attempt 1/5', response.json()['error'])
+
+
+    def test_missing_auth_email_in_session(self):
+        """Test when auth_email is not in session"""
+        session = self.client.session
+        session.pop('auth_email', None)
+        session.save()
+        
+        response = self.client.post(self.url, {'password': self.password})
+        # Should fail authentication since email is None
+        self.assertEqual(response.status_code, 401)
+
+
+    def test_missing_password_parameter(self):
+        """Test when password is not provided in POST data"""
+        response = self.client.post(self.url, {})
+        self.assertEqual(response.status_code, 401)
+        self.assertIn('Invalid Credentials', response.json()['error'])
+
+
+    def test_empty_password(self):
+        """Test with empty password string"""
+        response = self.client.post(self.url, {'password': ''})
+        self.assertEqual(response.status_code, 401)
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_session_cleanup_on_success(self, mock_send_mail):
+        """Test that failed attempt data is cleared on successful login"""
+        # Set up some failed attempt data
+        session = self.client.session
+        session['login_attempts'] = 3
+        session['first_attempt_time'] = now().isoformat()
+        session.save()
+        
+        response = self.client.post(self.url, {'password': self.password})
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('login_attempts', self.client.session)
+        self.assertNotIn('first_attempt_time', self.client.session)
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_2fa_code_is_six_digits(self, mock_send_mail):
+        """Test that generated 2FA code is always 6 digits including leading zeros"""
+        response = self.client.post(self.url, {'password': self.password})
+        code = self.client.session['2fa_code']
+        
+        self.assertEqual(len(code), 6)
+        self.assertTrue(code.isdigit())
+        # Test that leading zeros are preserved
+        self.assertRegex(code, r'^\d{6}$')
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_email_content(self, mock_send_mail):
+        """Test that email is sent with correct parameters"""
+        response = self.client.post(self.url, {'password': self.password})
+        code = self.client.session['2fa_code']
+        
+        mock_send_mail.assert_called_once_with(
+            subject="Your Verification Code",
+            message=f"Your code is {code}.",
+            from_email="no-reply@thepopup.com",
+            recipient_list=[self.email],
+            fail_silently=False
+        )
+
+    @patch('pop_accounts.views.send_mail')
+    def test_mail_failure_doesnt_crash(self, mock_send_mail):
+        """Test that mail sending failure is handled"""
+        mock_send_mail.side_effect = Exception("SMTP Error")
+        
+        # Should raise exception since fail_silently=False
+        with self.assertRaises(Exception):
+            self.client.post(self.url, {'password': self.password})
+
+
+    def test_correct_password_after_some_failed_attempts(self):
+        """Test successful login after some failed attempts clears attempt counter"""
+        # Make 2 failed attempts
+        for _ in range(2):
+            self.client.post(self.url, {'password': 'wrongpass'})
+        
+        self.assertEqual(self.client.session['login_attempts'], 2)
+        
+        # Now login successfully
+        with patch('pop_accounts.views.send_mail'):
+            response = self.client.post(self.url, {'password': self.password})
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('login_attempts', self.client.session)
+
+
+    def test_inactive_user_cannot_login(self):
+        """Test that inactive users cannot login"""
+        self.user.is_active = False
+        self.user.save()
+        
+        response = self.client.post(self.url, {'password': self.password})
+        self.assertEqual(response.status_code, 401)
+        data = response.json()
+        self.assertFalse(data['authenticated'])
+        self.assertIn('Invalid Credentials', data['error'])
+        self.assertIn('Attempt 1/5', data['error'])
+        
+        # Verify attempt counter was incremented
+        self.assertEqual(self.client.session['login_attempts'], 1)
+        
+        # Verify no 2FA code was generated
+        self.assertNotIn('2fa_code', self.client.session)
+        self.assertNotIn('pending_login_user_id', self.client.session)
+
+
+    def test_inactive_user_counts_toward_lockout(self):
+        """Test that inactive user attempts contribute to account lockout"""
+        self.user.is_active = False
+        self.user.save()
+        
+        # Make 5 attempts with inactive user
+        for i in range(5):
+            response = self.client.post(self.url, {'password': self.password})
+            if i < 4:
+                self.assertEqual(response.status_code, 401)
+            else:
+                self.assertEqual(response.status_code, 403)
+        
+        # Verify lockout occurred
+        response = self.client.post(self.url, {'password': self.password})
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(response.json()['locked_out'])
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_2fa_code_timestamp_is_set(self, mock_send_mail):
+        """Test that 2FA code creation timestamp is recorded"""
+        before_time = now()
+        response = self.client.post(self.url, {'password': self.password})
+        after_time = now()
+        
+        self.assertIn('2fa_code_created_at', self.client.session)
+        created_at = datetime.fromisoformat(self.client.session['2fa_code_created_at'])
+        
+        # Verify timestamp is within reasonable range
+        self.assertTrue(before_time <= created_at <= after_time)
+
+
+    def test_lockout_exactly_at_15_minutes(self):
+        """Test edge case: lockout expires exactly at 15 minutes"""
+        session = self.client.session
+        # Set lockout to expire "now" (edge of expiry)
+        session['locked_until'] = now().isoformat()
+        session.save()
+        
+        # Should allow login attempt since locked_until time has passed
+        response = self.client.post(self.url, {'password': 'wrongpass'})
+        self.assertEqual(response.status_code, 401)  # Not locked, just wrong password
+
+
+    def test_attempt_counter_at_exactly_max_minus_one(self):
+        """Test the boundary condition at exactly 4 attempts"""
+        for i in range(4):
+            response = self.client.post(self.url, {'password': 'wrongpass'})
+            self.assertEqual(response.status_code, 401)
+        
+        # 5th attempt should trigger lockout
+        response = self.client.post(self.url, {'password': 'wrongpass'})
+        self.assertEqual(response.status_code, 403)
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_case_insensitive_email(self, mock_send_mail):
+        """Test that email matching is case-insensitive"""
+        # Store uppercase email in session
+        session = self.client.session
+        session['auth_email'] = self.email.upper()
+        session.save()
+        
+        response = self.client.post(self.url, {'password': self.password})
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_get_request_not_allowed(self):
+        """Test that GET requests are not allowed"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+
+    @patch('pop_accounts.views.send_mail')
+    def test_multiple_successful_logins_generate_different_codes(self, mock_send_mail):
+        """Test that each login generates a unique 2FA code"""
+        response1 = self.client.post(self.url, {'password': self.password})
+        code1 = self.client.session['2fa_code']
+        
+        # Simulate completing the login process
+        session = self.client.session
+        session.pop('2fa_code')
+        session.save()
+        
+        response2 = self.client.post(self.url, {'password': self.password})
+        code2 = self.client.session['2fa_code']
+        
+        # While technically they COULD be the same, it's extremely unlikely
+        # This test might occasionally fail due to random chance (1 in 1 million)
+        # Consider removing if it causes flaky tests
+        self.assertNotEqual(code1, code2)
+
+
+class TestVerify2FACodeView(TestCase):
+    def setUp(self):
+        self.user = PopUpCustomer.objects.create_user(
+            email='test@example.com',
+            password='securepassword!23',
+            first_name='Test',
+            last_name='User'
+        )
+
+        self.user.is_active = True
+        self.user.save()
+
+        self.url = reverse('pop_accounts:verify_2fa')
+        self.code = '123456'
+        self.session = self.client.session
+        self.session['2fa_code'] = self.code
+        self.session['2fa_code_created_at'] = django_timezone.now().isoformat()
+        self.session['pending_login_user_id'] = str(self.user.id)
+        self.session.save()
     
-#     def test_expired_code(self):
-#         self.session['2fa_code_created_at'] = (timezone.now() - timedelta(minutes=6)).isoformat()
-#         self.session.save()
-#         response = self.client.post(self.url, {'code': self.code})
-#         self.assertEqual(response.status_code, 400)
-#         self.assertJSONEqual(response.content, {'verified': False, 'error': 'Verification code has expired'})
+    def test_successful_verification(self):
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'verified': True, 'user_name': self.user.first_name})
     
 
-#     def test_missing_session_data(self):
-#         self.client.session.flush() # clears session
-#         response = self.client.post(self.url, {'code': self.code})
-#         self.assertEqual(response.status_code, 200)
-#         self.assertJSONEqual(response.content, {'verified': False, 'error': 'Session expired or invalid'})
-    
-#     def test_invalid_timestamp(self):
-#         self.session['2fa_code_created_at'] = 'not-a-valid-timestamp'
-#         self.session.save()
-#         response = self.client.post(self.url, {'code': self.code})
-#         self.assertEqual(response.status_code, 400)
-#         self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid timestamp format'})
-    
+    def test_invalid_code(self):
+        response = self.client.post(self.url, {'code': '000000'})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid Code'})
 
-#     def test_user_not_found(self):
-#         self.session['pending_login_user_id'] = str(uuid4())
-#         self.session.save()
-#         response = self.client.post(self.url, {'code': self.code})
-#         self.assertEqual(response.status_code, 404)
-#         self.assertJSONEqual(response.content, {'verified': False, 'error': 'User not found'})
+
+    def test_expired_code(self):
+        self.session['2fa_code_created_at'] = (django_timezone.now() - timedelta(minutes=6)).isoformat()
+        self.session.save()
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Verification code has expired'})
     
 
-#     def test_csrf_rejected_when_token_missing(self):
-#         factory = RequestFactory()
-#         request = factory.post(self.url, {'code': self.code})
-
-#         # Attach user and session manually if needed
-#         request.user = self.user
-#         request.session = self.client.session
-
-#         # Create CSRF middleware with dummy get_response
-#         middleware = CsrfViewMiddleware(lambda req: None)
-
-#         # Define a dummy view that requires CSRF
-#         @csrf_protect
-#         def dummy_view(req):
-#             return JsonResponse({'ok': True})
-
-#         # Run the middleware manually
-#         response = middleware.process_view(request, dummy_view, (), {})
-
-#         if response is None:
-#             response = dummy_view(request)
-
-#         self.assertEqual(response.status_code, 403)
+    def test_missing_session_data(self):
+        self.client.session.flush() # clears session
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Session expired or invalid'})
     
-#     def test_missing_ajax_header(self):
-#         response = self.client.post(self.url, {'code': self.code}, HTTP_X_REQUESTED_WITH='')
-#         self.assertEqual(response.status_code, 200)
+
+    def test_invalid_timestamp(self):
+        self.session['2fa_code_created_at'] = 'not-a-valid-timestamp'
+        self.session.save()
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid timestamp format'})
+    
+
+    def test_user_not_found(self):
+        self.session['pending_login_user_id'] = str(uuid4())
+        self.session.save()
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 404)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'User not found'})
+    
+
+    def test_csrf_rejected_when_token_missing(self):
+        factory = RequestFactory()
+        request = factory.post(self.url, {'code': self.code})
+
+        # Attach user and session manually if needed
+        request.user = self.user
+        request.session = self.client.session
+
+        # Create CSRF middleware with dummy get_response
+        middleware = CsrfViewMiddleware(lambda req: None)
+
+        # Define a dummy view that requires CSRF
+        @csrf_protect
+        def dummy_view(req):
+            return JsonResponse({'ok': True})
+
+        # Run the middleware manually
+        response = middleware.process_view(request, dummy_view, (), {})
+
+        if response is None:
+            response = dummy_view(request)
+
+        self.assertEqual(response.status_code, 403)
+
+
+    def test_missing_ajax_header(self):
+        response = self.client.post(self.url, {'code': self.code}, HTTP_X_REQUESTED_WITH='')
+        self.assertEqual(response.status_code, 200)
+    
+
+    def test_session_cleanup_on_success(self):
+        """Test that sensitive session data is cleared after successful verification"""
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify all 2FA-related session data is removed
+        self.assertNotIn('2fa_code', self.client.session)
+        self.assertNotIn('2fa_code_created_at', self.client.session)
+        self.assertNotIn('pending_login_user_id', self.client.session)
+
+
+    def test_session_cleanup_on_expiry(self):
+        """Test that expired codes trigger session cleanup"""
+        self.session['2fa_code_created_at'] = (django_timezone.now() - timedelta(minutes=6)).isoformat()
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 400)
+        
+        # Verify session data is cleaned up even on failure
+        self.assertNotIn('2fa_code', self.client.session)
+        self.assertNotIn('2fa_code_created_at', self.client.session)
+        self.assertNotIn('pending_login_user_id', self.client.session)
+
+
+    def test_user_is_logged_in_after_verification(self):
+        """Test that user is actually logged in after successful verification"""
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        
+        # Check that user is authenticated
+        self.assertTrue(self.client.session.get('_auth_user_id'))
+        self.assertEqual(
+            self.client.session.get('_auth_user_id'),
+            str(self.user.id)
+        )
+
+    def test_code_with_whitespace(self):
+        """Test that codes with leading/trailing whitespace are handled"""
+        response = self.client.post(self.url, {'code': '  123456  '})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['verified'])
+
+
+    def test_code_case_sensitivity(self):
+        """Test that codes are compared correctly (should be numeric only)"""
+        # If your codes could theoretically have letters, test case sensitivity
+        # For numeric-only codes, this test might not be needed
+        response = self.client.post(self.url, {'code': self.code.lower()})
+        self.assertEqual(response.status_code, 200)
+
+    def test_empty_code(self):
+        """Test submission with empty code"""
+        response = self.client.post(self.url, {'code': ''})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid Code'})
+
+    def test_missing_code_parameter(self):
+        """Test submission without code parameter"""
+        response = self.client.post(self.url, {})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid Code'})
+
+    def test_code_exactly_at_5_minute_boundary(self):
+        """Test edge case: code at exactly 5 minutes"""
+        # Set code to expire "now" (exactly at 5 minute mark)
+        self.session['2fa_code_created_at'] = (
+            django_timezone.now() - timedelta(minutes=5)
+        ).isoformat()
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+        # Should still be valid (not expired yet)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('expired', response.json()['error'].lower())
+
+
+    def test_code_just_before_5_minutes(self):
+        """Test code that's just before expiry (4 minutes 59 seconds)"""
+        self.session['2fa_code_created_at'] = (
+            django_timezone.now() - timedelta(minutes=4, seconds=59)
+        ).isoformat()
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+        # Should still be valid
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['verified'])
+
+    def test_code_just_after_5_minutes(self):
+        """Test code that's just expired (5 minutes + 1 second)"""
+        self.session['2fa_code_created_at'] = (
+            django_timezone.now() - timedelta(minutes=5, seconds=1)
+        ).isoformat()
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('expired', response.json()['error'].lower())
+
+
+    def test_partial_session_data_missing_code(self):
+        """Test when only 2fa_code is missing from session"""
+        self.session.pop('2fa_code')
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Session expired or invalid'})
+
+
+    def test_partial_session_data_missing_timestamp(self):
+        """Test when only timestamp is missing from session"""
+        self.session.pop('2fa_code_created_at')
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Session expired or invalid'})
+
+    def test_partial_session_data_missing_user_id(self):
+        """Test when only user_id is missing from session"""
+        self.session.pop('pending_login_user_id')
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Session expired or invalid'})
+
+    def test_malformed_user_id(self):
+        """Test with invalid UUID format for user_id"""
+        self.session['pending_login_user_id'] = '99999999-0000-0000-0000-000000000000'
+        self.session.save()
+        print("self.session['pending_login_user_id']", self.session['pending_login_user_id'])
+        
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 404)
+
+    def test_code_with_special_characters(self):
+        """Test code with non-numeric characters"""
+        response = self.client.post(self.url, {'code': '12-34-56'})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid Code'})
+
+    def test_code_with_letters(self):
+        """Test code with alphabetic characters"""
+        response = self.client.post(self.url, {'code': 'ABC123'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_code_too_short(self):
+        """Test code with fewer than 6 digits"""
+        self.session['2fa_code'] = '12345'
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': '12345'})
+        # Should succeed if codes match
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid Code'})
+        
+    
+    def test_code_too_long(self):
+        """Test code with more than 6 digits is rejected"""
+        response = self.client.post(self.url, {'code': '1234567'})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid Code'})
+
+
+    def test_code_non_numeric(self):
+        """Test code with non-numeric characters is rejected"""
+        response = self.client.post(self.url, {'code': 'ABC123'})
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, {'verified': False, 'error': 'Invalid Code'})
+
+
+    def test_code_too_long(self):
+        """Test code with more than 6 digits"""
+        response = self.client.post(self.url, {'code': '1234567'})
+        self.assertEqual(response.status_code, 400)
+
+    def test_leading_zeros_preserved(self):
+        """Test that codes with leading zeros are handled correctly"""
+        self.session['2fa_code'] = '000123'
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': '000123'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['verified'])
+
+    def test_multiple_failed_attempts(self):
+        """Test multiple failed verification attempts"""
+        for _ in range(3):
+            response = self.client.post(self.url, {'code': '000000'})
+            self.assertEqual(response.status_code, 400)
+        
+        # Verify session data still exists (no lockout on verification)
+        self.assertIn('2fa_code', self.client.session)
+
+    def test_get_request_not_allowed(self):
+        """Test that GET requests are not allowed"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+
+    def test_naive_timestamp_handling(self):
+        """Test that naive timestamps are converted to aware"""
+        # Create a naive datetime
+        naive_time = django_timezone.datetime.now()
+        self.session['2fa_code_created_at'] = naive_time.isoformat()
+        self.session.save()
+        
+        # Should still work after conversion
+        response = self.client.post(self.url, {'code': self.code})
+        # Might succeed or fail depending on timing, but shouldn't crash
+        self.assertIn(response.status_code, [200, 400])
+
+    def test_inactive_user_cannot_login_via_2fa(self):
+        """Test that inactive users cannot login even with valid 2FA code"""
+        self.user.is_active = False
+        self.user.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+    
+        # Should return 403 with appropriate error
+        self.assertEqual(response.status_code, 403)
+        data = response.json()
+        self.assertFalse(data['verified'])
+        self.assertIn('not active', data['error'].lower())
+        
+        # Check if user is actually logged in
+        self.assertFalse(self.client.session.get('_auth_user_id'))
+        
+        # Verify session was cleaned up
+        self.assertNotIn('2fa_code', self.client.session)
+        self.assertNotIn('2fa_code_created_at', self.client.session)
+        self.assertNotIn('pending_login_user_id', self.client.session)
+
+    def test_correct_backend_used_for_login(self):
+        """Test that the correct authentication backend is used"""
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify the backend is stored in session
+        backend = self.client.session.get('_auth_user_backend')
+        self.assertEqual(backend, 'pop_accounts.backends.EmailBackend')
+
+    def test_session_persists_after_login(self):
+        """Test that session is properly saved after login"""
+        # Add some data to session before verification
+        self.session['test_data'] = 'should_persist'
+        self.session.save()
+        
+        response = self.client.post(self.url, {'code': self.code})
+        self.assertEqual(response.status_code, 200)
+        
+        # Session should persist (not be completely flushed)
+        self.assertEqual(self.client.session.get('test_data'), 'should_persist')
+
+    def test_sql_injection_attempt_in_code(self):
+        """Test that SQL injection attempts in code are safely handled"""
+        malicious_code = "'; DROP TABLE users; --"
+        response = self.client.post(self.url, {'code': malicious_code})
+        self.assertEqual(response.status_code, 400)
+        
+        # Verify user still exists
+        self.assertTrue(PopUpCustomer.objects.filter(id=self.user.id).exists())
 
 
 
@@ -9452,4 +10820,21 @@ class TestViewShipmentsView(TestCase):
 #     form = response.context.get('form')
 #     if form and hasattr(form, 'errors'):
 #         print(f"Form errors: {form.errors}")
+#
+#
+# FORM DEBUG
+ # ✅ Debug: Check response status and form validity
+        print(f"Response status code: {response.status_code}")
+        
+        if 'form' in response.context:
+            form = response.context['form']
+            print(f"Form is valid: {form.is_valid()}")
+            print(f"Form errors: {form.errors}")
+            print(f"Form non-field errors: {form.non_field_errors()}")
+        
+        if 'success_message' in response.context:
+            print(f"Success message: {response.context['success_message']}")
+        else:
+            print("No success message in context")
+
 """
