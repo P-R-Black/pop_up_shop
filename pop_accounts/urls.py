@@ -9,7 +9,8 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     ShippingTrackingView, UserOrderPager, AdminDashboardView, SalesView, MostOnNotice, 
                     MostInterested, TotalOpenBidsView, TotalAccountsView, AccountSizesView, 
                     PendingOkayToShipView, PendingOrderShippingDetailView, UpdateShippingView, 
-                    GetOrderShippingDetail, UpdateShippingPostView, ViewShipmentsView, AddProductsGetView)
+                    GetOrderShippingDetail, UpdateShippingPostView, ViewShipmentsView, AddProductsGetView,
+                    Resend2FACodeView, SendPasswordResetLink)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -28,8 +29,8 @@ urlpatterns = [
     
     # Auth register / login
     path('auth/verify-code/', Verify2FACodeView.as_view(), name='verify_2fa'),
-    path('auth/send-reset-link/', views.send_password_reset_link, name='send_reset_link'),
-    path('resend-code/', views.resend_2fa_code, name='resend_2fa_code'),
+    path('auth/send-reset-link/', SendPasswordResetLink.as_view(), name='send_reset_link'),
+    path('resend-code/', Resend2FACodeView.as_view(), name='resend_2fa_code'),
     path('password-reset/<uidb64>/<token>/', UserPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('logout/',UserLogOutView.as_view(), name='logout'),
        

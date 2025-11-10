@@ -2860,42 +2860,53 @@ class Verify2FACodeView(View):
 
 
 
-@require_POST
-def resend_2fa_code(request):
-    """
-    Resends 6-digit code at users request
-    """
-    email = request.session.get('auth_email')
-    print(f'email: {email}')
-    
-    user_id = request.session.get('pending_login_user_id')
-    print(f'user_id: {user_id}')
+class Resend2FACodeView(View):
+    def post(self, request):
+        """
+        Resends 6-digit code at users request
+        """
+        email = request.session.get('auth_email')        
+        user_id = request.session.get('pending_login_user_id')
 
-    if not email or not user_id:
-        return JsonResponse({'success': False, 'error': 'Session expired'}, status = 400)
-    
-    code = generate_2fa_code()
-    request.session['2fa_code'] = code
-    request.session['2fa_code_timestamp'] = timezone.now().isoformat()
+        if not email or not user_id:
+            return JsonResponse({'success': False, 'error': 'Session expired'}, status = 400)
+        
+        # Verifiy user exisits
+        try:
+            user = PopUpCustomer.objects.get(id=user_id)
+            if not user.is_active:
+                return JsonResponse({'success': False, 'error': 'Account not active'}, status=403)
+        except PopUpCustomer.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+        
+        code = generate_2fa_code()
+        request.session['2fa_code'] = code
+        request.session['2fa_code_created_at'] = timezone.now().isoformat()
 
-    send_mail(
-        subject = "Your New Verification Code",
-        message=f"Your new code is {code}",
-        from_email= "no-reply@thepopup.com",
-        recipient_list = [email],
-        fail_silently = False
-    )
+        send_mail(
+            subject = "Your New Verification Code",
+            message=f"Your new code is {code}",
+            from_email= "no-reply@thepopup.com",
+            recipient_list = [email],
+            fail_silently = False
+        )
 
-    return JsonResponse({'success': True})
+        return JsonResponse({'success': True})
 
 
-@require_POST
-def send_password_reset_link(request):
-    """
-    Emails link to user's email address to reset password
-    """
-    email = request.POST.get('email')
-    return handle_password_reset_request(request, email)
+class SendPasswordResetLink(View):
+    def post(self, request):
+        email = request.POST.get('email')
+        return handle_password_reset_request(request, email)
+
+
+# @require_POST
+# def send_password_reset_link(request):
+#     """
+#     Emails link to user's email address to reset password
+#     """
+#     email = request.POST.get('email')
+#     return handle_password_reset_request(request, email)
     
     
 

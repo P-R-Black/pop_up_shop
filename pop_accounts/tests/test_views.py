@@ -15,8 +15,11 @@ from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashb
 from pop_up_auction.forms import (PopUpAddProductForm, PopUpProductImageForm)
 from unittest.mock import patch, Mock
 from pop_up_shipping.forms import ThePopUpShippingForm
-from pop_up_email.utils import (send_customer_shipping_details, send_interested_in_and_coming_soon_product_update_to_users)
+from pop_up_email.utils import (
+    send_customer_shipping_details, 
+    send_interested_in_and_coming_soon_product_update_to_users)
 
+import time
 from django.utils.timezone import now, make_aware
 from django.utils import timezone as django_timezone
 from datetime import timezone as dt_timezone, datetime
@@ -10132,6 +10135,299 @@ class TestVerify2FACodeView(TestCase):
         # Verify user still exists
         self.assertTrue(PopUpCustomer.objects.filter(id=self.user.id).exists())
 
+
+class TestResend2FACodeView(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:resend_2fa_code')
+        self.email = 'test@example.com'
+
+        # Create a regular user
+        self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '25', 'male', is_active=False)
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+        # set up session with required data
+        session = self.client.session
+        session['auth_email'] = self.email
+        session['pending_login_user_id'] = str(self.user.id)
+        session['2fa_code'] = '123456'
+        session['2fa_code_created_at'] = django_timezone.now().isoformat()
+        session.save()
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_successful_code_resend(self, mock_send_mail):
+        """Test that a new 2FA code is generated and sent"""
+        old_code = self.client.session['2fa_code']
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {'success': True})
+        
+        # Verify new code was generated
+        new_code = self.client.session['2fa_code']
+        self.assertNotEqual(old_code, new_code)
+        self.assertEqual(len(new_code), 6)
+        self.assertTrue(new_code.isdigit())
+        
+        # Verify email was sent
+        self.assertTrue(mock_send_mail.called)
+        mock_send_mail.assert_called_once_with(
+            subject="Your New Verification Code",
+            message=f"Your new code is {new_code}",
+            from_email="no-reply@thepopup.com",
+            recipient_list=[self.email],
+            fail_silently=False
+        )
+
+    
+    @patch('pop_accounts.views.send_mail')
+    def test_new_timestamp_is_set(self, mock_send_mail):
+        """Test that timestamp is updated when code is resent"""
+        response = self.client.post(self.url)
+    
+        self.assertEqual(response.status_code, 200)
+        new_timestamp = self.client.session['2fa_code_created_at']
+        
+        # Just verify it's a valid ISO format timestamp
+        timestamp = django_timezone.datetime.fromisoformat(new_timestamp)
+        self.assertIsNotNone(timestamp)
+        
+        # Verify it's recent (within last 5 seconds)
+        now = django_timezone.now()
+        self.assertTrue(now - timestamp < timedelta(seconds=5))
+
+
+    def test_missing_auth_email(self):
+        """Test failure when auth_email is missing from session"""
+        session = self.client.session
+        session.pop('auth_email')
+        session.save()
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(
+            response.content,
+            {'success': False, 'error': 'Session expired'}
+        )
+
+    def test_missing_user_id(self):
+        """Test failure when pending_login_user_id is missing from session"""
+        session = self.client.session
+        session.pop('pending_login_user_id')
+        session.save()
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(
+            response.content,
+            {'success': False, 'error': 'Session expired'}
+        )
+
+    def test_missing_both_session_values(self):
+        """Test failure when both required session values are missing"""
+        self.client.session.flush()
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(
+            response.content,
+            {'success': False, 'error': 'Session expired'}
+        )
+
+    def test_get_request_not_allowed(self):
+        """Test that GET requests are not allowed"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_code_format_is_valid(self, mock_send_mail):
+        """Test that generated code is always 6 digits with leading zeros preserved"""
+        response = self.client.post(self.url)
+        
+        new_code = self.client.session['2fa_code']
+        self.assertEqual(len(new_code), 6)
+        self.assertRegex(new_code, r'^\d{6}$')
+
+    @patch('pop_accounts.views.send_mail')
+    def test_old_code_is_replaced(self, mock_send_mail):
+        """Test that the old code in session is completely replaced"""
+        old_code = '999999'
+        session = self.client.session
+        session['2fa_code'] = old_code
+        session.save()
+        
+        response = self.client.post(self.url)
+        
+        new_code = self.client.session['2fa_code']
+        self.assertNotEqual(new_code, old_code)
+
+    @patch('pop_accounts.views.send_mail')
+    def test_multiple_resends(self, mock_send_mail):
+        """Test that multiple resend requests work correctly"""
+        codes = []
+        
+        for _ in range(3):
+            response = self.client.post(self.url)
+            self.assertEqual(response.status_code, 200)
+            codes.append(self.client.session['2fa_code'])
+        
+        # All codes should be different (statistically very likely)
+        self.assertEqual(len(set(codes)), 3)
+        
+        # Verify email was sent 3 times
+        self.assertEqual(mock_send_mail.call_count, 3)
+
+    @patch('pop_accounts.views.send_mail')
+    def test_email_sent_to_correct_address(self, mock_send_mail):
+        """Test that email is sent to the address in session"""
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        call_kwargs = mock_send_mail.call_args[1]
+        self.assertEqual(call_kwargs['recipient_list'], [self.email])
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_email_contains_new_code(self, mock_send_mail):
+        """Test that email message contains the newly generated code"""
+        response = self.client.post(self.url)
+        
+        new_code = self.client.session['2fa_code']
+        call_kwargs = mock_send_mail.call_args[1]
+        
+        self.assertIn(new_code, call_kwargs['message'])
+
+    @patch('pop_accounts.views.send_mail')
+    def test_mail_failure_raises_exception(self, mock_send_mail):
+        """Test that mail sending failure raises an exception"""
+        mock_send_mail.side_effect = Exception("SMTP Error")
+        
+        with self.assertRaises(Exception):
+            self.client.post(self.url)
+
+    @patch('pop_accounts.views.send_mail')
+    def test_session_preserves_other_data(self, mock_send_mail):
+        """Test that resending code doesn't clear other session data"""
+        session = self.client.session
+        session['other_data'] = 'should_persist'
+        session.save()
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session.get('other_data'), 'should_persist')
+        self.assertEqual(self.client.session.get('auth_email'), self.email)
+        self.assertEqual(
+            self.client.session.get('pending_login_user_id'),
+            str(self.user.id)
+        )
+
+    @patch('pop_accounts.views.send_mail')
+    def test_timestamp_is_recent(self, mock_send_mail):
+        """Test that the new timestamp is close to current time"""
+        response = self.client.post(self.url)
+    
+        timestamp_str = self.client.session['2fa_code_created_at']
+        
+        # Parse the timestamp
+        from datetime import datetime
+        timestamp = datetime.fromisoformat(timestamp_str)
+        
+        if django_timezone.is_naive(timestamp):
+            timestamp = django_timezone.make_aware(timestamp)
+        
+        # Verify it's recent (within last 5 seconds)
+        now = django_timezone.now()
+        time_diff = now - timestamp
+        self.assertTrue(time_diff.total_seconds() < 5)
+
+
+    def test_empty_email_in_session(self):
+        """Test failure when email is empty string"""
+        session = self.client.session
+        session['auth_email'] = ''
+        session.save()
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 400)
+
+    def test_empty_user_id_in_session(self):
+        """Test failure when user_id is empty string"""
+        session = self.client.session
+        session['pending_login_user_id'] = ''
+        session.save()
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 400)
+
+    @patch('pop_accounts.views.send_mail')
+    def test_case_sensitive_email_handling(self, mock_send_mail):
+        """Test that email case is preserved from session"""
+        mixed_case_email = 'TeSt@ExAmPlE.cOm'
+        session = self.client.session
+        session['auth_email'] = mixed_case_email
+        session.save()
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        call_kwargs = mock_send_mail.call_args[1]
+        self.assertEqual(call_kwargs['recipient_list'], [mixed_case_email])
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_resend_after_original_code_expired(self, mock_send_mail):
+        """Test that resending works even if original code has expired"""
+        # Set original code timestamp to 10 minutes ago (expired)
+        session = self.client.session
+        old_timestamp_str = (django_timezone.now() - timedelta(minutes=10)).isoformat()
+        session['2fa_code_created_at'] = old_timestamp_str
+        session.save()
+                
+        response = self.client.post(self.url)
+        
+        new_timestamp_str = self.client.session.get('2fa_code_created_at')
+        
+        # Should still succeed and generate new code with fresh timestamp
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify timestamp was updated
+        self.assertNotEqual(new_timestamp_str, old_timestamp_str)
+
+
+    @patch('pop_accounts.views.send_mail')
+    def test_json_response_format(self, mock_send_mail):
+        """Test that response is valid JSON with correct content type"""
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response['Content-Type'], 'application/json')
+        data = response.json()
+        self.assertIsInstance(data, dict)
+        self.assertIn('success', data)
+
+    @patch('pop_accounts.views.send_mail')
+    def test_resend_does_not_verify_user_exists(self, mock_send_mail):
+        """Test that resend doesn't validate if user_id corresponds to real user"""
+        # This tests current behavior - view doesn't check if user exists
+        # Consider if you want to add this validation
+        fake_user_id = '00000000-0000-0000-0000-000000000000'
+        session = self.client.session
+        session['pending_login_user_id'] = fake_user_id
+        session.save()
+        
+        response = self.client.post(self.url)
+        
+        # Currently succeeds - you might want to add user validation
+        self.assertEqual(response.status_code, 404)
 
 
 # class RegisterViewTests(TestCase):
