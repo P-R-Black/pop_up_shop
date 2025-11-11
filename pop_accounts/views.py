@@ -2582,16 +2582,52 @@ class EmailCheckView(View):
     def post(self, request):
         NewUser = False
         email = request.POST.get('email', '').strip().lower()
+        if not email:
+            return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
 
-        if email and validate_email_address(email):
-            user_exists = PopUpCustomer.objects.filter(email__iexact=email).exists()
-            if not user_exists:
-                NewUser = True
-                return JsonResponse({'status': NewUser})
+        user = PopUpCustomer.objects.filter(email__iexact=email).first()
+        if not user:
+            # New User
+            return JsonResponse({'status': True}) 
+        
+        if not user.is_active:
+            # Reuse registraiton email method
+            RegisterView().send_verification_email(request, user)
+            return JsonResponse({'status': 'inactive', 'message': 'Verification link re-sent. Please check your email'})
+        
+        # Active user -> login flow
+        request.session['auth_email'] = email
+        return JsonResponse({'status': False})
+    
+    # def post(self, request):
+    #     NewUser = False
+    #     email = request.POST.get('email', '').strip().lower()
+
+    #     if email and validate_email_address(email):
+    #         user_exists = PopUpCustomer.objects.filter(email__iexact=email).exists()
+    #         if not user_exists:
+    #             NewUser = True
+    #             return JsonResponse({'status': NewUser})
             
-            request.session['auth_email'] = email
-            return JsonResponse({'status': not user_exists})
-        return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
+    #         request.session['auth_email'] = email
+    #         return JsonResponse({'status': not user_exists})
+    #     return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
+    
+        # New code for inactive user but email on file
+        #     try:
+        #         user = PopUpCustomer.objects.get(email__iexact=email)
+        #         if not user.is_active:
+        #             # Email exists but account not verified
+        #             request.session['auth_email'] = email
+        #             request.session['pending_verification_user_id'] = str(user.id)
+        #             return JsonResponse({'status': 'inactive', 'message': 'Account not verified. Check your email or request a new verifiation link'})
+        #         # Active user - proceed to password entry
+        #         request.session['auth_email'] = email
+        #         return JsonResponse({'status': False})  # False = exisiting user, go to password
+        #     except PopUpCustomer.DoesNotExist:
+        #         # New User - proceed to registration
+        #         return JsonResponse({'status': True})
+        # return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
 
 
 
@@ -2599,8 +2635,32 @@ class EmailCheckView(View):
 class RegisterView(View):
 
     """
-    In login/ registration modal. This view is for the registration form for users registering with email
-    Email verification sent to user upon form submission
+    • Hashes the password securely before saving.
+        • Sets `is_active=False` until email verification is completed.
+        • Logs the user’s IP via `PopUpCustomerIP` for security tracking.
+        • Sends an email with a unique verification token and link.
+    - Returns JSON responses for both success and validation errors to support AJAX frontend logic.
+
+    Response:
+        - `{'registered': True, 'message': 'Check your email to confirm your account'}` on success.
+        - `{'success': False, 'errors': form.errors}` if validation fails.
+        - `{'success': False, 'errors': 'Missing required fields'}` if required data is absent.
+
+    Email Verification:
+        - Generates a secure token using Django’s `default_token_generator`.
+        - Encodes the user’s ID (`uidb64`) for inclusion in the verification URL.
+        - Sends the user an email with the link to confirm their account (`verify_email` route).
+
+    Access:
+        - Public endpoint, typically called by unauthenticated users via an AJAX request
+          from the registration popup modal.
+
+    Example Workflow:
+        1. User enters an email → verified via `EmailCheckView`.
+        2. If not registered, user proceeds to registration form.
+        3. User submits registration form → `RegisterView` validates and creates inactive account.
+        4. User receives verification email with activation link.
+        5. Upon verification, user account becomes active and usable.
     """
     def post(self, request):
         email = request.session.get('auth_email') or request.POST.get('email')

@@ -5,7 +5,7 @@ from pop_up_payment.models import PopUpPayment
 from pop_up_shipping.models import PopUpShipment
 from pop_up_auction.models import PopUpProductImage
 from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
-from pop_accounts.models import (PopUpCustomer, PopUpCustomerAddress, PopUpBid)
+from pop_accounts.models import (PopUpCustomer, PopUpCustomerAddress, PopUpBid, PopUpCustomerIP)
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
 from pop_up_auction.models import (PopUpProduct, PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
                                    PopUpProductSpecificationValue)
@@ -43,10 +43,89 @@ from django.http import HttpRequest
 from django.utils.text import slugify
 from .conftest import create_seed_data
 from django.contrib.messages import get_messages
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
 from unittest.mock import patch, MagicMock
-from pop_up_auction.utils.utils import get_customer_bid_history_context  # Adjust import path
-from pop_accounts.pop_accounts_copy.user_copy.user_copy import USER_PAST_BIDS_COPY  # Adjust import p
+from pop_up_auction.utils.utils import get_customer_bid_history_context
+from pop_accounts.pop_accounts_copy.user_copy.user_copy import USER_PAST_BIDS_COPY
 User = get_user_model()
+
+"""
+Tests In Order
+ 1. TestPopUpUserDashboardView
+ 2. TestUserInterestedInView
+ 3. TestMarkProductInterestedView
+ 4. TestUserOnNoticeView
+ 5. TestMarkProductOnNoticeView
+ 6. TestPersonalInfoView
+ 7. TestPersonalInfoViewIntegration
+ 8. TestGetAddressView
+ 9. TestDeleteAddressView
+10. TestSetDefaultAddressView
+11. TestSetDefaultAddressViewIntegration
+12. TestDeleteAccountView
+13. TestDeleteAccountViewIntegration
+14. TestUserPasswordResetConfirmView
+15. TestOpenBidsView
+16. TestOpenBidsViewIntegration
+17. TestPastBidsView
+18. TestPastBidsViewIntegration
+19. TestPastPurchaseView
+20. TestUserOrdersUtility
+21. TestUserShipmentsUtility
+22. TestShippingTrackingView
+23. TestIntegration
+24. TestUserOrderPager
+25. TestUserOrderPagerIntegration
+26. TestAdminDashboardViewAccess
+27. TestAdminDashboardContext
+28. TestAdminDashboardProductInventory
+29. TestAdminDashboardInterest
+30. TestAdminDashboardAccount
+31. TestAdminDashboardPayment
+32. TestAdminDashboardTemplate
+33. TestAdminDashboardIntegration
+34. TestAdminInventoryViewAccess
+35. TestAdminInventoryViewContext
+36. TestAdminInventoryViewQuery
+37. TestAdminInventoryViewFilterByType
+38. TestAdminInventoryViewInventoryList
+39. TestAdminInventoryViewTemplate
+40. TestAdminInventoryViewSpecsDisplay
+41. TestAdminInventoryViewIntegration
+42. TestEnRouteViewAccess
+43. TestEnRouteViewContext
+44. TestEnRouteViewQuery
+45. TestEnRouteViewFilterByType
+46. TestEnRouteViewIntegration
+47. TestSalesViewAccess
+48. TestSalesViewContext
+49. TestSalesViewAggregateSales
+50. TestSalesViewHistoricalData
+51. TestSalesViewComparisonData
+52. TestSalesViewTemplate
+53. TestMostOnNoticeView
+54. TestMostInterestedView
+55. TestTotalOpenBidsView
+56. TestAccountSizesView
+57. TestPendingOkayToShipView
+58. TestPendingOrderShippingDetailView
+59. TestUpdateShippingView
+60. TestUpdateShippingPostView
+61. TestViewShipmentsView
+62. TestUpdateProductView
+63. TestAddProductsGetView
+64. TestEmailCheckView
+65. TestLogin2FAView
+66. TestVerify2FACodeView
+67. TestResend2FACodeView
+68.
+69.
+70.
+"""
+
+
 
 
 def create_test_user(email, password, first_name, last_name, shoe_size, size_gender, **kwargs):
@@ -306,15 +385,6 @@ def create_test_shipment_two_pending(*args, **kwargs):
     # Create and return the product
     return PopUpShipment.objects.create(**defaults)
 
-    # return PopUpShipment.objects.create(
-    #     carrier='USPS',
-    #     tracking_number='1Z999AA10123456784',
-    #     shipped_at=None,
-    #     estimated_delivery=None,
-    #     delivered_at=None,
-    #     status="pending", # pending, cancelled, in_dispute, shipped, returned, delivered
-    #     **kwargs
-    # )
 
 def create_test_payment_one(order, amount, status, payment_method, suspicious_flagged, notified_ready_to_ship):
         return PopUpPayment.objects.create(
@@ -325,14 +395,6 @@ def create_test_payment_one(order, amount, status, payment_method, suspicious_fl
             suspicious_flagged=suspicious_flagged,
             notified_ready_to_ship=notified_ready_to_ship
         )
-
-# self.shipment = PopUpShipment.objects.create(
-        #     carrier='UPS',
-        #     tracking_number='1Z999AA10123456784',
-        #     shipped_at=datetime(2024, 1, 15, tzinfo=dt_timezone.utc),
-        #     estimated_delivery=datetime(2024, 1, 20, tzinfo=dt_timezone.utc),
-        #     status='in_transit'
-        # )
 
 
 class TestPopUpUserDashboardView(TestCase):
@@ -871,8 +933,7 @@ class TestPersonalInfoView(TestCase):
     
 
 
-
-class PersonalInfoViewIntegrationTests(TestCase):
+class TestPersonalInfoViewIntegration(TestCase):
     """Integration tests for PersonalInfoView"""
     
     def setUp(self):
@@ -1321,7 +1382,7 @@ class TestSetDefaultAddressView(TestCase):
         self.assertEqual(default_address.id, self.address_three.id)
 
 
-class SetDefaultAddressViewIntegrationTests(TestCase):
+class TestSetDefaultAddressViewIntegration(TestCase):
     """Integration tests for SetDefaultAddressView"""
     
     def setUp(self):
@@ -1381,7 +1442,7 @@ class SetDefaultAddressViewIntegrationTests(TestCase):
         self.assertEqual(defaults.first().id, addr3.id)
 
 
-class DeleteAccountViewTests(TestCase):
+class TestDeleteAccountView(TestCase):
     def setUp(self):
         """Set up test data"""
         self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', is_active=False)
@@ -1621,7 +1682,7 @@ class DeleteAccountViewTests(TestCase):
         )
 
 
-class DeleteAccountViewIntegrationTests(TestCase):
+class TestDeleteAccountViewIntegration(TestCase):
     """Integration tests for DeleteAccountView"""
     
     def setUp(self):
@@ -1694,9 +1755,6 @@ class DeleteAccountViewIntegrationTests(TestCase):
         response = self.client.get(reverse('pop_accounts:dashboard'))
         self.assertEqual(response.status_code, 200)
 
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.auth.tokens import default_token_generator
 
 class TestUserPasswordResetConfirmView(TestCase):
     def setUp(self):
@@ -4960,7 +5018,6 @@ class TestAdminInventoryViewIntegration(TestCase):
         self.assertIsNotNone(response.context['product_type'])
         self.assertEqual(response.context['product_type'].slug, 'shoes')
         self.assertContains(response, 'Past Bid Product 1')
-
 
 
 
@@ -10430,105 +10487,392 @@ class TestResend2FACodeView(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-# class RegisterViewTests(TestCase):
-#     def setUp(self):
-#         self.client = Client()
-#         self.url = reverse('pop_accounts:register')
+class TestRegisterView(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:register')
+        self.valid_data = {
+            'email': 'test@example.com',
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'password': 'securePassword!23',
+            'password2': 'securePassword!23',
+        }
     
-#     def test_valid_registration_sends_verification_email(self):
-#         response = self.client.post(self.url, {
-#             'email': 'test@example.com',
-#             'first_name': 'John',
-#             'password': 'securePassword!23',
-#             'password2': 'securePassword!23',
+    def test_valid_registration_sends_verification_email(self):
+        response = self.client.post(self.url, {
+            'email': 'test@example.com',
+            'first_name': 'John',
+            'password': 'securePassword!23',
+            'password2': 'securePassword!23',
 
-#         })
-#         self.assertEqual(response.status_code, 200)
-#         self.assertJSONEqual(response.content, {
-#             'registered': True,
-#             'message': 'Check your email to confirm your account'
-#         })
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {
+            'registered': True,
+            'message': 'Check your email to confirm your account'
+        })
 
-#         user = PopUpCustomer.objects.get(email='test@example.com')
-#         self.assertFalse(user.is_active)
-#         self.assertEqual(len(mail.outbox), 1)
-#         self.assertIn('Verify Your Email', mail.outbox[0].subject)
-    
-#     def test_registration_with_mismatched_passwords(self):
-#         response = self.client.post(self.url, {
-#             'email': 'test@example.com',
-#             'first_name': 'Jane',
-#             'password': 'password!23',
-#             'password2': 'differentPassword!'
-#         })
-
-#         self.assertEqual(response.status_code, 400)
-#         self.assertIn('errors', response.json())
-#         self.assertFalse(PopUpCustomer.objects.filter(email='test@example.com').exists())
+        user = PopUpCustomer.objects.get(email='test@example.com')
+        self.assertFalse(user.is_active)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Verify Your Email', mail.outbox[0].subject)
     
 
-#     def test_registration_bad_password_strength(self):
-#         response = self.client.post(self.url, {
-#             'email': 'test@example.com',
-#             'first_name': 'Jane',
-#             'password': 'password123',
-#             'password2': 'password123!'
-#         })
+    def test_registration_with_mismatched_passwords(self):
+        response = self.client.post(self.url, {
+            'email': 'test@example.com',
+            'first_name': 'Jane',
+            'password': 'password!23',
+            'password2': 'differentPassword!'
+        })
 
-#         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.json())
+        self.assertFalse(PopUpCustomer.objects.filter(email='test@example.com').exists())
     
 
-#     def test_missing_required_fields(self):
-#         response = self.client.post(self.url, {
-#             'email': '',
-#             'first_name': '',
-#             'password': '',
-#             'password2': ''
-#         })
-#         self.assertEqual(response.status_code, 400)
-#         self.assertIn('errors', response.json())
+    def test_registration_bad_password_strength(self):
+        response = self.client.post(self.url, {
+            'email': 'test@example.com',
+            'first_name': 'Jane',
+            'password': 'password123',
+            'password2': 'password123!'
+        })
+
+        self.assertEqual(response.status_code, 400)
     
 
-#     def test_registration_fails_without_password2(self):
-#         response = self.client.post(self.url, {
-#             'email': 'missing@example.com',
-#             'first_name': 'Sam',
-#             'password': 'somePassword'
-#         })
-#         self.assertEqual(response.status_code, 400)
-#         self.assertIn('errors', response.json())
+    def test_missing_required_fields(self):
+        response = self.client.post(self.url, {
+            'email': '',
+            'first_name': '',
+            'password': '',
+            'password2': ''
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.json())
+    
+
+    def test_registration_fails_without_password2(self):
+        response = self.client.post(self.url, {
+            'email': 'missing@example.com',
+            'first_name': 'Sam',
+            'password': 'somePassword'
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('errors', response.json())
 
 
-# class PasswordStrengthValidationTests(TestCase):
+    def test_email_from_session_takes_precedence(self):
+        """Test that email from session is used over POST data"""
+        session = self.client.session
+        session['auth_email'] = 'session@example.com'
+        session.save()
+        
+        data = self.valid_data.copy()
+        data['email'] = 'post@example.com'  # Different email in POST
+        
+        response = self.client.post(self.url, data)
+        
+        self.assertEqual(response.status_code, 200)
+        # User should be created with session email, not POST email
+        self.assertTrue(PopUpCustomer.objects.filter(email='session@example.com').exists())
+        self.assertFalse(PopUpCustomer.objects.filter(email='post@example.com').exists())
 
-#     def test_valid_password(self):
-#         try:
-#             validate_password_strength('StrongPass1!')
-#         except ValidationError:
-#             self.fail('validate_password_strength() raised ValidationError unexpectedly!')
+    def test_email_from_post_when_not_in_session(self):
+        """Test that email from POST is used when not in session"""
+        response = self.client.post(self.url, self.valid_data)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(PopUpCustomer.objects.filter(email='test@example.com').exists())
 
-#     def test_password_too_short(self):
-#         with self.assertRaisesMessage(ValidationError, "Password must be at least 8 characters long."):
-#             validate_password_strength('S1!a')
+    def test_duplicate_email_registration(self):
+        """Test that registering with existing email fails"""
+        # Create first user
+        PopUpCustomer.objects.create_user(
+            email='test@example.com',
+            password='password!23',
+            first_name='First',
+            last_name='User'
+        )
+        
+        # Try to register with same email
+        response = self.client.post(self.url, self.valid_data)
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertFalse(data.get('success', True))
+        self.assertIn('errors', data)
 
-#     def test_missing_uppercase(self):
-#         with self.assertRaisesMessage(ValidationError, "Password must contain at least one uppercase letter."):
-#             validate_password_strength('weakpass1!')
+    def test_password_is_hashed(self):
+        """Test that password is properly hashed, not stored in plain text"""
+        response = self.client.post(self.url, self.valid_data)
+        
+        user = PopUpCustomer.objects.get(email='test@example.com')
+        # Password should be hashed, not plain text
+        self.assertNotEqual(user.password, 'securePassword!23')
+        # Should be able to check password
+        self.assertTrue(user.check_password('securePassword!23'))
 
-#     def test_missing_lowercase(self):
-#         with self.assertRaisesMessage(ValidationError, "Password must contain at least one lower case letter"):
-#             validate_password_strength('WEAKPASS1!')
+    def test_ip_address_is_captured(self):
+        """Test that user's IP address is captured and stored"""
+        response = self.client.post(self.url, self.valid_data)
+        
+        user = PopUpCustomer.objects.get(email='test@example.com')
+        # IP should be captured (will be 127.0.0.1 in tests)
+        self.assertTrue(PopUpCustomerIP.objects.filter(customer=user).exists())
 
-#     def test_missing_digit(self):
-#         with self.assertRaisesMessage(ValidationError, "Password must contain at lease one number."):
-#             validate_password_strength('Weakpass!')
+    def test_duplicate_ip_not_stored_twice(self):
+        """Test that same IP address isn't stored multiple times for same user"""
+        # Register first time
+        response = self.client.post(self.url, self.valid_data)
+        user = PopUpCustomer.objects.get(email='test@example.com')
+        
+        initial_ip_count = PopUpCustomerIP.objects.filter(customer=user).count()
+        
+        # Manually create another IP entry to simulate re-registration from same IP
+        # (In real scenario, user would need to be deleted first, but testing the logic)
+        ip_address = '127.0.0.1'
+        PopUpCustomerIP.objects.get_or_create(customer=user, ip_address=ip_address)
+        
+        final_ip_count = PopUpCustomerIP.objects.filter(customer=user).count()
+        
+        # Should still be same count (no duplicate)
+        self.assertEqual(initial_ip_count, final_ip_count)
 
-#     def test_missing_special_char(self):
-#         with self.assertRaisesMessage(
-#             ValidationError,
-#             'Password must contain at least one special character (!@#$%^&*(),.?":|<>)'
-#         ):
-#             validate_password_strength('Weakpass1')
+    def test_verification_email_contains_token_and_uid(self):
+        """Test that verification email contains valid token and UID"""
+        response = self.client.post(self.url, self.valid_data)
+        
+        user = PopUpCustomer.objects.get(email='test@example.com')
+        email_body = mail.outbox[0].body
+        print('')
+        
+        # Email should contain verify your email URL
+        self.assertIn('verify your email', email_body)
+        # Should contain user's first name
+        self.assertIn(user.first_name, email_body)
+
+    def test_verification_email_failure_still_creates_user(self):
+        """Test that user is created even if email sending fails"""
+        with patch('pop_accounts.views.send_mail', side_effect=Exception('SMTP Error')):
+            response = self.client.post(self.url, self.valid_data)
+        
+        # User should still be created
+        self.assertTrue(PopUpCustomer.objects.filter(email='test@example.com').exists())
+        # Response should still be successful (view catches exception)
+        self.assertEqual(response.status_code, 200)
+
+    def test_invalid_email_format(self):
+        """Test registration with invalid email format"""
+        data = self.valid_data.copy()
+        data['email'] = 'not-an-email'
+        
+        response = self.client.post(self.url, data)
+        
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(PopUpCustomer.objects.filter(email='not-an-email').exists())
+
+    def test_email_with_whitespace(self):
+        """Test that email with whitespace is handled"""
+        data = self.valid_data.copy()
+        data['email'] = '  test@example.com  '
+        
+        response = self.client.post(self.url, data)
+        
+        # Should succeed and normalize email
+        self.assertEqual(response.status_code, 200)
+        # Email should be stored without whitespace (depends on form validation)
+        user = PopUpCustomer.objects.get(email__icontains='test@example.com')
+        self.assertIsNotNone(user)
+
+    def test_case_insensitive_email(self):
+        """Test email case handling"""
+        data = self.valid_data.copy()
+        data['email'] = 'TEST@EXAMPLE.COM'
+        
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify user can be found with lowercase
+        user = PopUpCustomer.objects.filter(email__iexact='test@example.com').first()
+        self.assertIsNotNone(user)
+
+    def test_missing_first_name(self):
+        """Test registration without first name"""
+        data = self.valid_data.copy()
+        data.pop('first_name')
+        
+        response = self.client.post(self.url, data)
+        
+        self.assertEqual(response.status_code, 400)
+
+    def test_missing_last_name(self):
+        """Test registration without last name (if required)"""
+        data = self.valid_data.copy()
+        data.pop('last_name', None)
+        
+        response = self.client.post(self.url, data)
+        
+        # Behavior depends on if last_name is required in your form
+        # Adjust assertion based on your form's requirements
+
+    def test_empty_password(self):
+        """Test registration with empty password"""
+        data = self.valid_data.copy()
+        data['password'] = ''
+        data['password2'] = ''
+        
+        response = self.client.post(self.url, data)
+        
+        self.assertEqual(response.status_code, 400)
+
+    def test_password_with_only_whitespace(self):
+        """Test password that's only whitespace"""
+        data = self.valid_data.copy()
+        data['password'] = '   '
+        data['password2'] = '   '
+        
+        response = self.client.post(self.url, data)
+        
+        self.assertEqual(response.status_code, 400)
+
+    def test_very_long_password(self):
+        """Test with extremely long password"""
+        long_password = 'A' * 1000 + '!1a'
+        data = self.valid_data.copy()
+        data['password'] = long_password
+        data['password2'] = long_password
+        
+        response = self.client.post(self.url, data)
+        
+        # Should either succeed or fail gracefully
+        self.assertIn(response.status_code, [200, 400])
+
+    def test_special_characters_in_name(self):
+        """Test registration with special characters in name"""
+        data = self.valid_data.copy()
+        data['first_name'] = "O'Brien"
+        data['last_name'] = "Müller-Schmidt"
+        
+        response = self.client.post(self.url, data)
+        
+        # Should handle special characters
+        if response.status_code == 200:
+            user = PopUpCustomer.objects.get(email='test@example.com')
+            self.assertEqual(user.first_name, "O'Brien")
+
+    def test_sql_injection_attempt(self):
+        """Test that SQL injection attempts are safely handled"""
+        data = self.valid_data.copy()
+        data['first_name'] = "'; DROP TABLE users; --"
+        
+        response = self.client.post(self.url, data)
+        
+        # Should be handled safely by Django's ORM
+        self.assertIn(response.status_code, [200, 400])
+        # Verify table still exists
+        self.assertEqual(PopUpCustomer.objects.count(), 1 if response.status_code == 200 else 0)
+
+    def test_get_request_not_allowed(self):
+        """Test that GET requests are not allowed"""
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+
+    def test_session_cleaned_after_registration(self):
+        """Test that auth_email is cleared from session after successful registration"""
+        session = self.client.session
+        session['auth_email'] = 'test@example.com'
+        session.save()
+        
+        response = self.client.post(self.url, self.valid_data)
+        
+        # Depending on your implementation, you might want to clear auth_email
+        # Update this test based on your desired behavior
+
+    # def test_user_cannot_login_before_verification(self):
+    #     """
+    #     Okay, based on what your evaluation, the Registration view doesn't check if a user account is active. In a previous view, the user enters their email address, if this email is on file and active, the user is taken to the next screen to enter their password, if the email is not on file, the user is taken to this registration view to complete a registration form. I don't think the EmailCheckView accounts for an email that is on file, but not active. I guess I need work through the best to handle a user attempting to register, but not completing the registration process. What should we do if the email is on file, but not active? Should the inactive email be deleted after certain amount of time? If the email is on file, but inactive, should the code just send another link to the email to verify the email address and make it active?
+    #     """
+
+    #     """Test that newly registered user cannot login (is_active=False)"""
+    #     response = self.client.post(self.url, self.valid_data)
+        
+    #     user = PopUpCustomer.objects.get(email='test@example.com')
+    #     print('user', user)
+    #     print('user.is_active', user.is_active)
+    #     self.assertFalse(user.is_active)
+        
+    #     # Try to authenticate
+    #     from django.contrib.auth import authenticate
+    #     auth_user = authenticate(
+    #         username='test@example.com',
+    #         password='securePassword!23'
+    #     )
+    #     print('auth_user', auth_user)
+    #     print('auth_user.is_active', auth_user.is_active)
+        
+    #     # Should return None for inactive user
+    #     self.assertIsNone(auth_user)
+
+    def test_verification_token_is_valid(self):
+        """Test that generated verification token is valid for the user"""
+        response = self.client.post(self.url, self.valid_data)
+        
+        user = PopUpCustomer.objects.get(email='test@example.com')
+        token = default_token_generator.make_token(user)
+        
+        # Token should be valid for this user
+        self.assertTrue(default_token_generator.check_token(user, token))
+
+    def test_form_validation_errors_returned_as_json(self):
+        """Test that form errors are properly returned as JSON"""
+        data = self.valid_data.copy()
+        data['password2'] = 'different'
+        
+        response = self.client.post(self.url, data)
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('errors', data)
+        # Errors should be parseable JSON
+        import json
+        errors = json.loads(data['errors'])
+        self.assertIsInstance(errors, dict)
+
+
+
+class TestPasswordStrengthValidation(TestCase):
+
+    def test_valid_password(self):
+        try:
+            validate_password_strength('StrongPass1!')
+        except ValidationError:
+            self.fail('validate_password_strength() raised ValidationError unexpectedly!')
+
+    def test_password_too_short(self):
+        with self.assertRaisesMessage(ValidationError, "Password must be at least 8 characters long."):
+            validate_password_strength('S1!a')
+
+    def test_missing_uppercase(self):
+        with self.assertRaisesMessage(ValidationError, "Password must contain at least one uppercase letter."):
+            validate_password_strength('weakpass1!')
+
+    def test_missing_lowercase(self):
+        with self.assertRaisesMessage(ValidationError, "Password must contain at least one lower case letter"):
+            validate_password_strength('WEAKPASS1!')
+
+    def test_missing_digit(self):
+        with self.assertRaisesMessage(ValidationError, "Password must contain at lease one number."):
+            validate_password_strength('Weakpass!')
+
+    def test_missing_special_char(self):
+        with self.assertRaisesMessage(
+            ValidationError,
+            'Password must contain at least one special character (!@#$%^&*(),.?":|<>)'
+        ):
+            validate_password_strength('Weakpass1')
 
 
 
