@@ -152,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
             })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('data is', data)
                     if (data.status === false) {
                         // move forward to password login container
                         moveForwardSignIn('shift_left', 'show_container', 'hide_email_login_container', 'show_email_login_container', emailVerificationContainer, emailLoginContainer)
@@ -169,6 +170,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (registrationEmailInput) {
                             registrationEmailInput.value = email;
                         }
+
+                    } else if (data.status == 'inactive') {
+                        // const moveForwardSignIn( addThisHideClass, removeThisShowClass,  | removeNextHideClass, addNextShowClass,  | containerToHide, containerToShow)
+                        moveForwardSignIn('shift_left', 'show_container', 'hide_register_by_email_complete_container', 'show_register_by_email_complete_container', emailVerificationContainer, emailRegistrationCompleteContainer)
                     } else {
                         console.error('Unexpected response:', data);
                     }

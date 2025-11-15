@@ -52,7 +52,7 @@ from django.utils.timezone import now
 from django.contrib.auth import logout
 from django.views import View
 from .utils.utils import (validate_email_address, get_client_ip, add_specs_to_products, 
-                          calculate_auction_progress, handle_password_reset_request)
+                          calculate_auction_progress, handle_password_reset_request, send_verification_email)
 from django.conf import settings
 import json
 from django.utils.safestring import mark_safe
@@ -1260,7 +1260,6 @@ class AdminDashboardView(UserPassesTestMixin, TemplateView):
         })
 
         return context
-
 
 
 class AdminInventoryView(UserPassesTestMixin, ListView):
@@ -2580,57 +2579,46 @@ class EmailCheckView(View):
 
     """
     def post(self, request):
-        NewUser = False
         email = request.POST.get('email', '').strip().lower()
-        if not email:
-            return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
-
-        user = PopUpCustomer.objects.filter(email__iexact=email).first()
-        if not user:
-            # New User
-            return JsonResponse({'status': True}) 
         
-        if not user.is_active:
-            # Reuse registraiton email method
-            RegisterView().send_verification_email(request, user)
-            return JsonResponse({'status': 'inactive', 'message': 'Verification link re-sent. Please check your email'})
+        # Validate email
+        if not email or not validate_email_address(email):
+            return JsonResponse(
+                {'status': False, 'error': 'Invalid or missing email'}, status=400)
         
-        # Active user -> login flow
-        request.session['auth_email'] = email
-        return JsonResponse({'status': False})
-    
-    # def post(self, request):
-    #     NewUser = False
-    #     email = request.POST.get('email', '').strip().lower()
 
-    #     if email and validate_email_address(email):
-    #         user_exists = PopUpCustomer.objects.filter(email__iexact=email).exists()
-    #         if not user_exists:
-    #             NewUser = True
-    #             return JsonResponse({'status': NewUser})
+        try:
+            # Try to get the user by email
+            user = PopUpCustomer.objects.get(email__iexact=email, deleted_at__isnull=True)
             
-    #         request.session['auth_email'] = email
-    #         return JsonResponse({'status': not user_exists})
-    #     return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
+            # Check if user has verified their email (is_active)
+            if not user.is_active:
+
+                # Email exists but account not verified
+                request.session['auth_email'] = email
+                request.session['pending_verification_user_id'] = str(user.id)
+
+                try:
+                    # Try to send email with rate limiting
+                    email_sent = send_verification_email(request, user)
+                    message = 'Account not verified. A new verification link has been sent to your email.'
+                except Exception as e:
+                    message = 'Account not verified. Please check your email for the verification link. (A new link was recenlty sent)'
+              
+                return JsonResponse({'status': 'inactive', 'message': message})
+            
+
+            # Email exists and account is active - proceed to password
+            request.session['auth_email'] = email
+            return JsonResponse({'status': False})  # Existing active user
+            
+        except PopUpCustomer.DoesNotExist:
+            # Email not found - new user, show registration form
+            return JsonResponse({'status': True})  # New user
     
-        # New code for inactive user but email on file
-        #     try:
-        #         user = PopUpCustomer.objects.get(email__iexact=email)
-        #         if not user.is_active:
-        #             # Email exists but account not verified
-        #             request.session['auth_email'] = email
-        #             request.session['pending_verification_user_id'] = str(user.id)
-        #             return JsonResponse({'status': 'inactive', 'message': 'Account not verified. Check your email or request a new verifiation link'})
-        #         # Active user - proceed to password entry
-        #         request.session['auth_email'] = email
-        #         return JsonResponse({'status': False})  # False = exisiting user, go to password
-        #     except PopUpCustomer.DoesNotExist:
-        #         # New User - proceed to registration
-        #         return JsonResponse({'status': True})
-        # return JsonResponse({'status': False, 'error': 'Invalid or missing email'}, status=400)
-
-
-
+        
+        
+        
 
 class RegisterView(View):
 
@@ -2686,7 +2674,7 @@ class RegisterView(View):
                 if not PopUpCustomerIP.objects.filter(customer=user, ip_address=ip_address).exists():
                     PopUpCustomerIP.objects.create(customer=user, ip_address=ip_address)
                 try:
-                    self.send_verification_email(request, user)
+                    send_verification_email(request, user)
                 except Exception as e:
                     print('Error sending verification email', e)
                 return JsonResponse({'registered': True, 'message': 'Check your email to confirm your account'})
@@ -2956,7 +2944,7 @@ class Resend2FACodeView(View):
 
 class SendPasswordResetLink(View):
     def post(self, request):
-        email = request.POST.get('email')
+        email = request.POST.get('email', '').strip().lower()
         return handle_password_reset_request(request, email)
 
 

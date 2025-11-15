@@ -17,12 +17,37 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from pop_accounts.models import PopUpCustomer, PopUpPasswordResetRequestLog
 
+
 logger = logging.getLogger(__name__)
 RESET_EMAIL_COOLDOWN = timedelta(minutes=5)
 RATE_LIMIT_SECONDS = 120 # 2 minutes
 
 
+def send_verification_email(request, user):
+    """
+    Send email verification link to user
+    
+    Args:
+        request: HTTP request object (for building absolute URL)
+        user: PopUpCustomer instance to send verification to
+    """
+    try:
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        verify_url = request.build_absolute_uri(reverse('pop_accounts:verify_email', kwargs={'uidb64': uid, 'token': token}))
+
+        subject = "Verify Your Email"
+        message = f"Hi {user.first_name}, \n\nPlease click the link below to verify your email:\n{verify_url}\n\nThanks!"
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+        return True
+    except Exception as e:
+        print(f'Error sending verification email: {e}')
+        return False
+
+
+
 def handle_password_reset_request(request, email: str):
+    print('DEBUG: called handle_password_reset_request')
     """Utility to handle sending a password reset link with rate limiting"""
 
     now_time = now()
@@ -40,6 +65,7 @@ def handle_password_reset_request(request, email: str):
         return JsonResponse({'success':False, 'error': 'Email not found.'}, status=404)
     
     ip = get_client_ip(request)
+    print('ip', ip)
 
     # Rate Limiting: IP + User
     recent_request = PopUpPasswordResetRequestLog.objects.filter(
@@ -77,14 +103,19 @@ def handle_password_reset_request(request, email: str):
     reset_link = request.build_absolute_uri(reverse('pop_accounts:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}))
 
     logger.info(f"Password reset requested: user={user.email}, ip={ip}, time={now_time}")
-
-    send_mail(
-        subject="Reset Your Password",
-        message=f"Click the link below to reset your password:\n\n{reset_link}",
-        from_email="no-reply@thepopup.com",
-        recipient_list=[email],
-        fail_silently=False
-    )
+    try:
+        send_mail(
+            subject="Reset Your Password",
+            message=f"Click the link below to reset your password:\n\n{reset_link}",
+            from_email="no-reply@thepopup.com",
+            recipient_list=[email],
+            fail_silently=False
+        )
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {email}: {str(e)}")
+        return JsonResponse({
+            'success': False, 'error': 'Unable to send email at this time. Please try again later.'
+        })
 
     user.last_password_reset = now_time
     user.save(update_fields=['last_password_reset'])
