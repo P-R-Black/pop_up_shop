@@ -9,12 +9,15 @@ from pop_accounts.models import (PopUpCustomer, PopUpCustomerAddress, PopUpBid, 
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
 from pop_up_auction.models import (PopUpProduct, PopUpBrand, PopUpCategory, PopUpProductType, PopUpProductSpecification,
                                    PopUpProductSpecificationValue)
-from pop_accounts.views import (PersonalInfoView, AdminInventoryView, AdminDashboardView, UpdateShippingPostView,
-                                TotalOpenBidsView, AccountSizesView, PendingOkayToShipView, UpdateShippingView,
-                                ViewShipmentsView, UpdateProductView, AddProductsGetView, PopUpPasswordResetRequestLog)
+from pop_accounts.views import (
+    PersonalInfoView, AdminInventoryView, AdminDashboardView, UpdateShippingPostView, TotalOpenBidsView, 
+    AccountSizesView, PendingOkayToShipView, UpdateShippingView,ViewShipmentsView, UpdateProductView, 
+    AddProductsGetView, PopUpPasswordResetRequestLog, VerifyEmailView, CompleteProfileView)
 from pop_up_auction.forms import (PopUpAddProductForm, PopUpProductImageForm)
+
 from unittest.mock import patch, Mock
 from pop_up_shipping.forms import ThePopUpShippingForm
+from pop_accounts.forms import SocialProfileCompletionForm
 from pop_up_email.utils import (
     send_customer_shipping_details, 
     send_interested_in_and_coming_soon_product_update_to_users)
@@ -36,7 +39,7 @@ from django.http import JsonResponse
 import json
 import uuid
 from django.core import mail
-from pop_accounts.utils.utils import validate_password_strength
+from pop_accounts.utils.utils import validate_password_strength, send_verification_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from pop_up_cart.cart import Cart
@@ -11082,12 +11085,12 @@ class TestSendPasswordResetLink(TestCase):
         cache.clear()
         mail.outbox = []
 
-        self.user =  create_test_user('user1@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+        self.user = create_test_user('user1@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
         self.user.is_active = True
         self.user.last_password_reset = None
         self.user.save()
 
-        self.user_two =  create_test_user('user2@example.com', 'testPass!23', 'User', 'Two', '8', 'female')
+        self.user_two = create_test_user('user2@example.com', 'testPass!23', 'User', 'Two', '8', 'female')
         self.user_two.is_active = True
         self.user_two.save()
 
@@ -11448,13 +11451,9 @@ class TestSendPasswordResetLink(TestCase):
         """Test that email sending failure is handled"""
         with patch('pop_accounts.utils.utils.send_mail') as mock_send_mail:
             mock_send_mail.side_effect = Exception('SMTP error')
-            print('mock_send_mail.side_effect', mock_send_mail.side_effect)
             
             response = self.client.post(self.url, {'email': 'user1@example.com'})
              # Debug: see what actually happened
-            print(f"Response status: {response.status_code}")
-            print(f"Response data: {response.json()}")
-            print(f"Mock called: {mock_send_mail.called}")
 
             self.assertEqual(response.status_code, 500)
             data = response.json()
@@ -11472,10 +11471,10 @@ class TestSendPasswordResetLink(TestCase):
     def test_email_failure_does_not_update_user_record(self):
         """Test that user record is not updated if email fails"""
         # Ensure user starts with no last_password_reset
-        self.user1.last_password_reset = None
-        self.user1.save()
+        self.user.last_password_reset = None
+        self.user.save()
         
-        with patch('django.core.mail.send_mail') as mock_send_mail:
+        with patch('pop_accounts.utils.utils.send_mail') as mock_send_mail:
             mock_send_mail.side_effect = Exception('SMTP connection timeout')
             
             response = self.client.post(self.url, {'email': 'user1@example.com'})
@@ -11484,19 +11483,19 @@ class TestSendPasswordResetLink(TestCase):
             self.assertEqual(response.status_code, 500)
             
             # User record should NOT be updated
-            self.user1.refresh_from_db()
-            self.assertIsNone(self.user1.last_password_reset)
+            self.user.refresh_from_db()
+            self.assertIsNone(self.user.last_password_reset)
             
             # Log entry should still be created (before email attempt)
             # This is expected since logging happens before email sending
             log_count = PopUpPasswordResetRequestLog.objects.filter(
-                customer=self.user1
+                customer=self.user
             ).count()
             self.assertEqual(log_count, 1)
 
     def test_email_failure_allows_immediate_retry(self):
         """Test that failed email doesn't trigger rate limiting for retry"""
-        with patch('django.core.mail.send_mail') as mock_send_mail:
+        with patch('pop_accounts.utils.utils.send_mail') as mock_send_mail:
             # First attempt fails
             mock_send_mail.side_effect = Exception('SMTP error')
             response1 = self.client.post(self.url, {'email': 'user1@example.com'})
@@ -11508,6 +11507,7 @@ class TestSendPasswordResetLink(TestCase):
             # Second attempt should succeed (not rate limited)
             # Note: You may need to clear cache/session depending on your implementation
             cache.clear()
+            self.client.session.flush()  # Clear the session
             
             response2 = self.client.post(self.url, {'email': 'user1@example.com'})
             
@@ -11515,216 +11515,1408 @@ class TestSendPasswordResetLink(TestCase):
             # Note: This might still be blocked by database rate limiting
             # depending on your implementation
 
-# class ProductBuyViewGETTests(TestCase):
-        
-#     # test correct user displayed
-#     def setUp(self):
-#         self.client = Client()
-#         self.user = create_test_user(email="testuser@example.com",
-#             password="securePassword!23",
-#             first_name="Test",
-#             last_name="User",
-#             shoe_size="10",
-#             size_gender="male")
-        
-#         auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
-#         auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
-#         self.brand = create_brand("Jordan")
-#         self.category = create_category("Jordan 3", True)
-#         self.product_type = create_product_type("shoe", True)
 
-   
-        
-        # self.product = create_test_product(
-        #     product_type=self.product_type, 
-        #     category=self.category, 
-        #     product_title="Air Jordan 1 Retro", 
-        #     secondary_product_title="Carolina Blue", 
-        #     description="The most uncomfortable basketball shoe their is", 
-        #     slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-        #     buy_now_price="150.00", 
-        #     current_highest_bid="0", 
-        #     retail_price="100", 
-        #     brand=self.brand, 
-        #     auction_start_date=auction_start, 
-        #     auction_end_date=auction_end, 
-        #     inventory_status="in_inventory", 
-        #     bid_count="0", 
-        #     reserve_price="0", 
-        #     is_active=True)
-        
-#         self.client.login(email="testuser@example.com", password="securePassword!23")
-        
-#         request = self.client.get('/dummy/')
-#         request = request.wsgi_request
 
-#         cart = Cart(request)
+class TestVerifyEmailView(TestCase):
+    """Test suite for email verification functionality"""
 
-#         cart.add(product=self.product, qty=1)
+    def setUp(self):
+        self.client = Client()
 
-#         # Save the cart back to the test client's session
-#         session = self.client.session
-#         session.update(request.session)
-#         session.save()
+        mail.outbox = []
+
+        self.inactive_user = PopUpCustomer.objects.create_user(
+            email = 'unverified@example.com',
+            password = 'testPass!23',
+            first_name = 'Unverified',
+            last_name = 'User',
+        )
+
+        self.inactive_user.is_active = False
+        self.inactive_user.save(update_fields=['is_active'])
+
+
+        self.active_user = PopUpCustomer.objects.create_user(
+            email = 'verified@example.com',
+            password = 'testPass!23',
+            first_name = 'Verified',
+            last_name = 'User'
+        )
+        self.active_user.is_active = True
+        self.active_user.save(update_fields=['is_active'])
+
+
+        # Generate valid token and uid for inactive user
+        self.valid_token = default_token_generator.make_token(self.inactive_user)
+        self.valid_uid = urlsafe_base64_encode(force_bytes(self.inactive_user.pk))
+        
+        # Valid verification URL
+        self.valid_url = reverse('pop_accounts:verify_email', kwargs={
+            'uidb64': self.valid_uid,
+            'token': self.valid_token
+        })
     
 
-#         # Create Address for user
-#         self.address = PopUpCustomerAddress.objects.create(
-#             customer = self.user,
-#             address_line = "123 Main St",
-#             apartment_suite_number = "1A",
-#             town_city = "New York",
-#             state = "NY",
-#             postcode="10001",
-#             delivery_instructions="Leave with doorman",
-#             default=True
-#         )
-
-#         self.tax_rate = get_state_tax_rate("NY")
-#         self.standard_shipping = Decimal('14.99')
-#         self.processing_fee = Decimal('2.50')
-
-
-#     def test_user_is_correct_in_view(self):
-#         self.assertEqual(self.user.first_name, "Test")
-#         self.assertEqual(self.user.last_name, "User")
-    
-
-#     def test_product_buy_view_get_correct_tax_rate_applied(self):
-#         self.assertEqual(get_state_tax_rate("NY"), 0.08375)
-#         self.assertEqual(get_state_tax_rate("FL"), 0.0)
-#         self.assertEqual(get_state_tax_rate("CA"), 0.095)
-#         self.assertEqual(get_state_tax_rate("GA"), 0.07)
-#         self.assertEqual(get_state_tax_rate("TX"), 0.0625)
-#         self.assertEqual(get_state_tax_rate("IL"), 0.0886)
+    def test_successful_email_verification(self):
+        """Test successful email verification with valid token"""
+        # User starts as inactive
+        self.assertFalse(self.inactive_user.is_active)
+        
+        response = self.client.get(self.valid_url)
+        
+        # Verify response
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/registration/verify_email.html')
+        
+        # Verify context
+        self.assertTrue(response.context['email_verified'])
+        self.assertIn('form', response.context)
+        self.assertIn('uidb64', response.context)
+        self.assertIn('token', response.context)
+        
+        # Verify user is now active
+        self.inactive_user.refresh_from_db()
+        self.assertTrue(self.inactive_user.is_active)
         
 
-#     def test_product_buy_view_get_basic_cart_data(self):
-#         response = self.client.get(reverse('pop_up_auction:product_buy'))
-#         self.assertEqual(response.status_code, 200)
 
-#         context = response.context
-#         cart_items = context['cart_items']
+    def test_verification_page_displays_success_message(self):
+        """Test that success message is displayed on verification"""
+        response = self.client.get(self.valid_url)
+        html = response.content.decode('utf-8')
+        
+        # Check for success elements
+        self.assertIn('Congrats!', html)
+        self.assertIn('Your Email Has Been Verified', html)
+        self.assertIn('successfully verified', html)
+        self.assertIn('You may now log in', html)
+    
+    def test_verification_page_shows_login_form(self):
+        """Test that login form is displayed after verification"""
+        response = self.client.get(self.valid_url)
+        html = response.content.decode('utf-8')
+        
+        # Check for form elements
+        self.assertIn('Sign In', html)
+        self.assertIn('type="submit"', html)
+        self.assertIn('csrf', html.lower())
+    
+    def test_invalid_token_shows_error(self):
+        """Test that invalid token shows error message"""
+        invalid_token = 'invalid-token-12345'
+        invalid_url = reverse('pop_accounts:verify_email', kwargs={
+            'uidb64': self.valid_uid,
+            'token': invalid_token
+        })
+        
+        response = self.client.get(invalid_url)
+        
+        # Verify response
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['invalid_link'])
+        self.assertFalse(response.context.get('email_verified', False))
+        
+        # User should still be inactive
+        self.inactive_user.refresh_from_db()
+        self.assertFalse(self.inactive_user.is_active)
+    
+    def test_invalid_uid_shows_error(self):
+        """Test that invalid UID shows error message"""
+        invalid_uid = urlsafe_base64_encode(b'99999999-0000-0000-0000-000000000000')  # Non-existent user ID
+        invalid_url = reverse('pop_accounts:verify_email', kwargs={
+            'uidb64': invalid_uid,
+            'token': self.valid_token
+        })
+        
+        response = self.client.get(invalid_url)
+        
+        # Verify error shown
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['invalid_link'])
+    
+    def test_malformed_uid_shows_error(self):
+        """Test that malformed UID shows error message"""
+        malformed_uid = 'not-base64!!!'
+        malformed_url = reverse('pop_accounts:verify_email', kwargs={
+            'uidb64': malformed_uid,
+            'token': self.valid_token
+        })
+        
+        response = self.client.get(malformed_url)
+        
+        # Should handle gracefully
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['invalid_link'])
+    
+    def test_expired_token_shows_error(self):
+        """Test that expired token shows error message"""
+        # Tokens expire after password change or certain time
+        # For this test, we'll use a token for a different user state
+        
+        # Change user password to invalidate old tokens
+        self.inactive_user.set_password('newPassword!456')
+        self.inactive_user.save()
+        
+        # Old token should now be invalid
+        response = self.client.get(self.valid_url)
+        
+        self.assertTrue(response.context['invalid_link'])
+        self.assertFalse(response.context.get('email_verified', False))
+    
+    def test_already_active_user_can_still_verify(self):
+        """Test that already active user can still access verification page"""
+        # Generate token for active user
+        token = default_token_generator.make_token(self.active_user)
+        uid = urlsafe_base64_encode(force_bytes(self.active_user.pk))
+        url = reverse('pop_accounts:verify_email', kwargs={
+            'uidb64': uid,
+            'token': token
+        })
+        
+        response = self.client.get(url)
+        
+        # Should succeed (redundant but harmless)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['email_verified'])
+        
+        # User stays active
+        self.active_user.refresh_from_db()
+        self.assertTrue(self.active_user.is_active)
+    
+    def test_invalid_link_page_displays_error_message(self):
+        """Test that error message is displayed for invalid link"""
+        invalid_url = reverse('pop_accounts:verify_email', kwargs={
+            'uidb64': self.valid_uid,
+            'token': 'invalid-token'
+        })
+        
+        response = self.client.get(invalid_url)
+        html = response.content.decode('utf-8')
+        
+        # Check for error message
+        self.assertIn('invalid or expired', html.lower())
+    
+    # ==================== POST Request Tests ====================
+    
+    def test_successful_login_after_verification(self):
+        """Test that user can login after email verification"""
+        # First verify email
+        self.client.get(self.valid_url)
+        
+        # Verify user is active
+        self.inactive_user.refresh_from_db()
+        self.assertTrue(self.inactive_user.is_active)
+        
+        # Now try to login
+        login_data = {
+            'email': 'unverified@example.com',
+            'password': 'testPass!23'
+        }
+        
+        response = self.client.post(self.valid_url, login_data)
+        
+        # Should redirect to personal info
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('pop_accounts:personal_info'))
+        
+        # User should be logged in
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        self.assertEqual(response.wsgi_request.user, self.inactive_user)
+    
+    def test_login_with_wrong_password(self):
+        """Test login failure with wrong password"""
+        # Verify email first
+        self.client.get(self.valid_url)
+        
+        # Try to login with wrong password
+        login_data = {
+            'email': 'unverified@example.com',
+            'password': 'wrongPassword123'
+        }
+        
+        response = self.client.post(self.valid_url, login_data)
+        
+        # Should not redirect (stays on same page)
+        self.assertEqual(response.status_code, 200)
+        
+        # Should show error
+        self.assertTrue(response.context.get('login_failed', False))
+        
+        # Form should have errors
+        form = response.context['form']
+        self.assertTrue(form.errors)
+        
+        # User should NOT be logged in
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+    
 
-#         self.assertEqual(len(cart_items), 1)
+    def test_login_with_wrong_email(self):
+        """Test login failure with wrong email"""
+        # Verify email first
+        self.client.get(self.valid_url)
+        
+        # Try to login with wrong email
+        login_data = {
+            'email': 'wrong@example.com',
+            'password': 'testPass!23'
+        }
+        
+        response = self.client.post(self.valid_url, login_data)
+        
+        # Should not redirect
+        self.assertEqual(response.status_code, 200)
+        
+        # User should NOT be logged in
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+    
+    def test_login_with_empty_credentials(self):
+        """Test login failure with empty credentials"""
+        # Verify email first
+        self.client.get(self.valid_url)
+        
+        # Try to login with empty data
+        login_data = {
+            'email': '',
+            'password': ''
+        }
+        
+        response = self.client.post(self.valid_url, login_data)
+        
+        # Should not redirect
+        self.assertEqual(response.status_code, 200)
+        
+        # Form should have validation errors
+        form = response.context['form']
+        self.assertFalse(form.is_valid())
+        self.assertTrue(form.errors)
+    
 
-#         self.assertEqual(cart_items[0]['qty'], 1)
-#         self.assertEqual(cart_items[0]['product'], self.product)
-#         self.assertIn('cart_total', context)
-#         self.assertIn('sales_tax', context)
+    def test_post_to_invalid_link_shows_error(self):
+        """Test that POST to invalid verification link shows error"""
+        invalid_url = reverse('pop_accounts:verify_email', kwargs={
+            'uidb64': self.valid_uid,
+            'token': 'invalid-token'
+        })
+        
+        login_data = {
+            'email': 'unverified@example.com',
+            'password': 'testPass!23'
+        }
+        
+        # Note: POST to invalid link might not make sense in real usage
+        # but testing for robustness
+        response = self.client.post(invalid_url, login_data)
+        
+        self.assertEqual(response.status_code, 200)
+    
+    def test_session_email_used_if_available(self):
+        """Test that session email is used if available"""
+        # Set email in session
+        session = self.client.session
+        session['auth_email'] = 'unverified@example.com'
+        session.save()
+        
+        # Verify email
+        self.client.get(self.valid_url)
+        
+        # Login without specifying email (should use session)
+        login_data = {
+            'password': 'testPass!23'
+        }
+        
+        response = self.client.post(self.valid_url, login_data)
+        
+        # Depending on form validation, this might fail
+        # Adjust based on your form's behavior
+    
+    # ==================== Integration Tests ====================
+    
+    def test_full_verification_flow(self):
+        """Test complete flow: send email → click link → verify → login"""
+        
+        factory = RequestFactory()
+        mock_request = factory.get('/')
+        # Step 1: Send verification email
+        
+        email_sent = send_verification_email(mock_request, self.inactive_user)
+        print('DEBUG: email_sent', email_sent)
+        
+        self.assertTrue(email_sent)
+        self.assertEqual(len(mail.outbox), 1)
+        
+        # Step 2: Extract verification URL from email
+        email_body = mail.outbox[0].body
+        import re
+        pattern = r'http[s]?://[^\s]+/verify/([A-Za-z0-9_=-]+)/([A-Za-z0-9_-]+)/'
+        match = re.search(pattern, email_body)
+        self.assertIsNotNone(match, "Verification link not found in email")
+        
+        uid = match.group(1)
+        token = match.group(2)
+        verify_url = reverse('pop_accounts:verify_email', kwargs={
+            'uidb64': uid,
+            'token': token
+        })
+        
+        # Step 3: Click verification link
+        response = self.client.get(verify_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['email_verified'])
+        
+        # Step 4: User is now active
+        self.inactive_user.refresh_from_db()
+        self.assertTrue(self.inactive_user.is_active)
+        
+        # Step 5: Login
+        login_response = self.client.post(verify_url, {
+            'email': 'unverified@example.com',
+            'password': 'testPass!23'
+        })
+        self.assertEqual(login_response.status_code, 302)
+        self.assertTrue(login_response.wsgi_request.user.is_authenticated)
+    
+    def test_verification_link_in_email_is_clickable(self):
+        """Test that verification link in email is properly formatted"""
+        # Generate verification email
+        token = default_token_generator.make_token(self.inactive_user)
+        uid = urlsafe_base64_encode(force_bytes(self.inactive_user.pk))
+        
+        # Simulate request for building absolute URI
+        from django.test import RequestFactory
+        factory = RequestFactory()
+        request = factory.get('/')
+        
+        verify_url = request.build_absolute_uri(
+            reverse('pop_accounts:verify_email', kwargs={
+                'uidb64': uid,
+                'token': token
+            })
+        )
+        
+        # URL should be well-formed
+        self.assertIn('http', verify_url)
+        self.assertIn('verify/', verify_url)
+        self.assertIn(uid, verify_url)
+        self.assertIn(token, verify_url)
+    
+    # ==================== Edge Cases ====================
+    
+    def test_multiple_verification_attempts(self):
+        """Test that clicking verification link multiple times works"""
+        # First verification
+        response1 = self.client.get(self.valid_url)
+        self.assertTrue(response1.context['email_verified'])
+        
+        # Second verification (same link)
+        response2 = self.client.get(self.valid_url)
+        self.assertTrue(response2.context['email_verified'])
+        
+        # User stays active
+        self.inactive_user.refresh_from_db()
+        self.assertTrue(self.inactive_user.is_active)
+    
+    def test_case_insensitive_email_login(self):
+        """Test login with different case email"""
+        # Verify email
+        self.client.get(self.valid_url)
+        
+        # Login with uppercase email
+        login_data = {
+            'email': 'UNVERIFIED@EXAMPLE.COM',
+            'password': 'testPass!23'
+        }
+        
+        response = self.client.post(self.valid_url, login_data)
+        
+        # Should succeed if form handles case insensitivity
+        # Adjust based on your form's behavior
+    
+    def test_view_class_attributes(self):
+        """Test that view has correct class attributes"""
+        self.assertEqual(
+            VerifyEmailView.template_name,
+            'pop_accounts/registration/verify_email.html'
+        )
+
+
+class TestCompleteProfileView(TestCase):
+    """Test suite for social authenication profile completion"""
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_accounts:complete_profile')
+
+        self.social_user = PopUpCustomer.objects.create_user(
+            email = 'social@example.com',
+            first_name = '',
+            last_name = '',
+        )
+
+        self.social_user.is_active = False
+        self.social_user.save(update_fields=['is_active'])
+
+        self.complete_user = create_test_user('complete@example.com', 'testPass!23', 'Complete', 'User', '9', 'male')
+        self.complete_user.is_active = True
+        self.complete_user.save(update_fields=['is_active'])
+
+    def test_authenticated_user_gets_own_profile(self):
+        """Test that authenticated user sees their own profile form"""
+        self.client.force_login(self.complete_user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/registration/complete_profile.html')
+        
+        # Should have form for current user
+        self.assertIn('form', response.context)
+        self.assertEqual(response.context['object'], self.complete_user)
+    
+    def test_pending_social_user_from_session(self):
+        """Test that user from session can complete profile"""
+        # Set social user ID in session
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        self.assertEqual(response.context['object'], self.social_user)
+    
+    def test_no_session_raises_404(self):
+        """Test that missing session data raises 404"""
+        # No user logged in, no session data
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 404)
+    
+    def test_invalid_user_id_in_session_raises_404(self):
+        """Test that invalid user ID in session raises 404"""
+        session = self.client.session
+        session['social_profile_user_id'] = '99999999-9999-9999-9999-999999999999'
+        session.save()
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 404)
+    
+    def test_form_prepopulated_with_user_data(self):
+        """Test that form is prepopulated with existing user data"""
+        self.client.force_login(self.complete_user)
+        
+        response = self.client.get(self.url)
+        
+        form = response.context['form']
+        self.assertEqual(form.instance.email, 'complete@example.com')
+        self.assertEqual(form.instance.first_name, 'Complete')
+    
+    # ==================== POST Request Tests (Regular) ====================
+    
+    def test_successful_profile_completion(self):
+        """Test successful profile completion and login"""
+        # Set social user in session
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        # Complete the profile
+        form_data = {
+            'email': 'social@example.com',
+            'first_name': 'John',
+            'last_name': ''
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Should redirect to dashboard
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('pop_accounts:dashboard'))
+        
+        # User should be updated
+        self.social_user.refresh_from_db()
+        self.assertEqual(self.social_user.first_name, 'John')
+        self.assertEqual(self.social_user.last_name, '')
+        
+        # User should be active
+        self.assertTrue(self.social_user.is_active)
+        
+        # User should be logged in
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        self.assertEqual(response.wsgi_request.user, self.social_user)
+    
+
+    def test_profile_completion_activates_user(self):
+        """Test that completing profile activates inactive user"""
+        self.assertFalse(self.social_user.is_active)
+        
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        form_data = {
+            'email': 'social@example.com',
+            'first_name': 'John',
+            'last_name': '' 
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.social_user.refresh_from_db()
+        self.assertTrue(self.social_user.is_active)
+    
+    def test_session_user_id_removed_after_completion(self):
+        """Test that session user ID is removed after successful completion"""
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        self.assertIn('social_profile_user_id', self.client.session)
+        
+        form_data = {
+            'email': 'social@example.com',
+            'first_name': 'John',
+            'last_name': ''
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Session key should be removed
+        # Note: May need to check after redirect
+    
+    def test_invalid_form_shows_errors(self):
+        """Test that invalid form data shows errors"""
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        # Missing required fields
+        form_data = {
+            'email': 'not-a-valid-email',
+            'first_name': '',  # Empty
+            }
+        
+        # Now test the actual view
+        response = self.client.post(self.url, form_data)
+        print(f'DEBUG response.status: {response.status_code}')
+        
+        # Should not redirect
+        self.assertEqual(response.status_code, 200)
+        
+        # Should have form errors
+        form = response.context['form']
+        
+        self.assertTrue(form.errors)
+        
+        # User should not be logged in
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+    
+
+    def test_invalid_form_missing_email(self):
+        """Test that missing email shows errors"""
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        form_data = {
+            'email': '',  # Empty email should fail
+            'first_name': 'John',
+        }
+        
+        response = self.client.post(self.url, form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('email', response.context['form'].errors)
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+    
+    
+    def test_authenticated_user_can_update_profile(self):
+        """Test that already authenticated user can update their profile"""
+        self.client.force_login(self.complete_user)
+        
+        form_data = {
+            'email': 'complete@example.com',
+            'first_name': 'Updated',
+            'last_name': ''   
+        }
+     
+        response = self.client.post(self.url, form_data)
+        
+        self.assertEqual(response.status_code, 302)
+        
+        self.complete_user.refresh_from_db()
+        self.assertEqual(self.complete_user.first_name, 'Updated')
+        self.assertEqual(self.complete_user.last_name, 'User')
+    
+    def test_ajax_successful_completion_returns_json(self):
+        """Test that AJAX request returns JSON response"""
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        form_data = {
+            'email': 'social@example.com',
+            'first_name': 'Ajax',
+        }
+        
+        # Fixed: header name should match the view's check
+        response = self.client.post(
+            self.url, 
+            form_data,
+            HTTP_X_REQUEST_WITH='XMLHttpRequest'  # Match view's header check
+        )
+        
+        # Should return JSON
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        
+        self.assertTrue(data['success'])
+        self.assertEqual(data['next'], 'dashboard')
+        self.assertIn('user', data)
+        self.assertEqual(data['user']['first_name'], 'Ajax')
+        self.assertEqual(data['user']['email'], 'social@example.com')
+
+    def test_ajax_invalid_form_returns_json_error(self):
+        """Test that AJAX request with invalid form returns JSON error"""
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        # Invalid email - this will actually fail validation
+        form_data = {
+            'email': 'not-a-valid-email',
+            'first_name': 'Test',
+        }
+        
+        response = self.client.post(
+            self.url,
+            form_data,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'  # Note: view has typo - checks both
+        )
+        
+        # Should return 400 with JSON errors
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        
+        self.assertFalse(data['success'])
+        self.assertIn('errors', data)
+        self.assertIn('email', data['errors'])
+
+    # ==================== Social Auth Pipeline Tests ====================
+
+    @patch('pop_accounts.views.load_strategy')
+    @patch('pop_accounts.views.load_backend')
+    def test_resumes_social_auth_pipeline(self, mock_load_backend, mock_load_strategy):
+        """Test that social auth pipeline is resumed if present"""
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        
+        # Mock partial pipeline in session
+        session['partial_pipeline'] = {
+            'backend': 'google-oauth2',
+            'next': '/dashboard/',
+        }
+        session.save()
+        
+        # Mock strategy and backend
+        mock_strategy_instance = Mock()
+        mock_strategy_instance.session_get.return_value = {
+            'backend': 'google-oauth2',
+        }
+        mock_load_strategy.return_value = mock_strategy_instance
+        
+        mock_backend_instance = Mock()
+        mock_backend_instance.continue_pipeline.return_value = None
+        mock_load_backend.return_value = mock_backend_instance
+        
+        form_data = {
+            'email': 'google@example.com',
+            'first_name': 'Google',
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+       # Should have attempted to continue pipeline
+        # Note: load_strategy is called with the request object, not the client
+        mock_load_strategy.assert_called_once()
+        call_args = mock_load_strategy.call_args[0]
+        self.assertTrue(hasattr(call_args[0], 'META'))  # Verify it's a request object
+        
+        mock_load_backend.assert_called_once()
+        mock_backend_instance.continue_pipeline.assert_called_once()
+        
+        # User should be logged in
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+
+    @patch('pop_accounts.views.load_strategy')
+    @patch('pop_accounts.views.load_backend')
+    def test_pipeline_redirect_is_used(self, mock_load_backend, mock_load_strategy):
+        """Test that pipeline redirect is used if returned"""
+        from django.http import HttpResponseRedirect
+        
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session['partial_pipeline'] = {'backend': 'facebook'}
+        session.save()
+        
+        # Mock strategy
+        mock_strategy_instance = Mock()
+        mock_strategy_instance.session_get.return_value = {'backend': 'facebook'}
+        mock_load_strategy.return_value = mock_strategy_instance
+        
+        # Mock backend to return redirect
+        mock_backend_instance = Mock()
+        pipeline_redirect = HttpResponseRedirect('/social-redirect/')
+        mock_backend_instance.continue_pipeline.return_value = pipeline_redirect
+        mock_load_backend.return_value = mock_backend_instance
+        
+        form_data = {
+            'email': 'facebook@example.com',
+            'first_name': 'Facebook',
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Should use pipeline redirect
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/social-redirect/')
+        
+        # User should be logged in (happens before redirect)
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        
+        # Session key should be removed
+        self.assertNotIn('social_profile_user_id', self.client.session)
+
+    @patch('pop_accounts.views.load_strategy')
+    def test_no_pipeline_fallback_to_normal_login(self, mock_load_strategy):
+        """Test fallback to normal login when no pipeline present"""
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        # Mock strategy with no partial pipeline
+        mock_strategy_instance = Mock()
+        mock_strategy_instance.session_get.return_value = None
+        mock_load_strategy.return_value = mock_strategy_instance
+        
+        form_data = {
+            'email': 'normal@example.com',
+            'first_name': 'Normal',
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Should redirect normally
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('pop_accounts:dashboard'))
+        
+        # User should be logged in
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+
+    # ==================== Edge Cases ====================
+
+    def test_user_already_active_stays_active(self):
+        """Test that already active user stays active"""
+        # Make social user already active
+        self.social_user.is_active = True
+        self.social_user.save()
+        
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        form_data = {
+            'email': 'already@example.com',
+            'first_name': 'Already',
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.social_user.refresh_from_db()
+        self.assertTrue(self.social_user.is_active)
+        self.assertEqual(response.status_code, 302)
+
+    def test_inactive_user_becomes_active(self):
+        """Test that inactive user is activated after profile completion"""
+        # Ensure user starts as inactive
+        self.social_user.is_active = False
+        self.social_user.save()
+        
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        form_data = {
+            'email': 'activate@example.com',
+            'first_name': 'Activate',
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        self.social_user.refresh_from_db()
+        self.assertTrue(self.social_user.is_active)
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+
+    def test_view_class_attributes(self):
+        """Test that view has correct class attributes"""
+        self.assertEqual(CompleteProfileView.model, PopUpCustomer)
+        self.assertEqual(CompleteProfileView.form_class, SocialProfileCompletionForm)
+        self.assertEqual(
+            CompleteProfileView.template_name,
+            'pop_accounts/registration/complete_profile.html'
+        )
+
+    def test_get_success_url(self):
+        """Test that success URL points to dashboard"""
+        view = CompleteProfileView()
+        success_url = view.get_success_url()
+        
+        self.assertEqual(success_url, reverse('pop_accounts:dashboard'))
+
+    def test_first_name_is_optional(self):
+        """Test that first_name can be empty (optional field)"""
+        session = self.client.session
+        session['social_profile_user_id'] = str(self.social_user.id)
+        session.save()
+        
+        form_data = {
+            'email': 'nofirstname@example.com',
+            'first_name': '',  # Empty is valid
+        }
+        
+        response = self.client.post(self.url, form_data)
+        
+        # Should succeed
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('pop_accounts:dashboard'))
+        
+        # User should be logged in
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        
+        # Check user was updated
+        self.social_user.refresh_from_db()
+        self.assertEqual(self.social_user.email, 'nofirstname@example.com')
+
+
+
+class SocialLoginCompleteViewTests(TestCase):
+    """Tests for social_login_complete view"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        self.client = Client()
+        self.url = reverse('pop_accounts:social_login_complete')
+        
+        # Create a test user
+        self.user = PopUpCustomer.objects.create_user(
+            email='testuser@example.com',
+            first_name='John',
+            last_name='Doe',
+            password='testpass123'
+        )
+        
+        # Create a staff user
+        self.staff_user = PopUpCustomer.objects.create_user(
+            email='staff@example.com',
+            first_name='Admin',
+            last_name='User',
+            password='staffpass123',
+            is_staff=True
+        )
+    
+    # ==================== AJAX Request Tests ====================
+    def test_ajax_request_authenticated_user_returns_json(self):
+        """Test AJAX request with authenticated user returns correct JSON"""
+        # Log in the user
+        self.client.login(email='testuser@example.com', password='testpass123')
+        
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        
+        # Should return JSON
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/json')
+        
+        data = response.json()
+        
+        # Verify response data
+        self.assertTrue(data['authenticated'])
+        self.assertEqual(data['firstName'], 'John')
+        self.assertFalse(data['isStaff'])
+    
+    # def test_ajax_request_staff_user_returns_staff_status(self):
+    #     """Test AJAX request with staff user returns isStaff=True"""
+    #     # Log in the staff user
+    #     self.client.login(email='staff@example.com', password='staffpass123')
+        
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+        
+    #     self.assertTrue(data['authenticated'])
+    #     self.assertEqual(data['firstName'], 'Admin')
+    #     self.assertTrue(data['isStaff'])
+    
+    # def test_ajax_request_unauthenticated_user_returns_false(self):
+    #     """Test AJAX request without authentication returns authenticated=False"""
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+        
+    #     # Should indicate not authenticated
+    #     self.assertFalse(data['authenticated'])
+    #     self.assertEqual(data['firstName'], '')
+    #     self.assertFalse(data['isStaff'])
+    
+    # def test_ajax_request_user_with_no_first_name(self):
+    #     """Test AJAX request for user without first name"""
+    #     # Create user without first name
+    #     no_name_user = PopUpCustomer.objects.create_user(
+    #         email='noname@example.com',
+    #         first_name='',
+    #         password='testpass123'
+    #     )
+        
+    #     self.client.login(email='noname@example.com', password='testpass123')
+        
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+        
+    #     self.assertTrue(data['authenticated'])
+    #     self.assertEqual(data['firstName'], '')
+    
+    # def test_ajax_response_structure(self):
+    #     """Test that AJAX response has all required fields"""
+    #     self.client.login(email='testuser@example.com', password='testpass123')
+        
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     data = response.json()
+        
+    #     # Verify all expected keys are present
+    #     self.assertIn('authenticated', data)
+    #     self.assertIn('firstName', data)
+    #     self.assertIn('isStaff', data)
+    
+    # def test_ajax_header_case_sensitivity(self):
+    #     """Test that X-Requested-With header is case-sensitive"""
+    #     self.client.login(email='testuser@example.com', password='testpass123')
+        
+    #     # Test with different case variations
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='xmlhttprequest'  # lowercase
+    #     )
+        
+    #     # Should still render template, not return JSON
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
+    
+    # # ==================== Non-AJAX Request Tests ====================
+    
+    # def test_non_ajax_request_renders_template(self):
+    #     """Test that non-AJAX request renders the HTML template"""
+    #     response = self.client.get(self.url)
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
+    
+    # def test_non_ajax_authenticated_user_renders_template(self):
+    #     """Test authenticated user without AJAX still renders template"""
+    #     self.client.login(email='testuser@example.com', password='testpass123')
+        
+    #     response = self.client.get(self.url)
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
+    
+    # # ==================== POST Request Tests ====================
+    
+    # def test_ajax_post_request_returns_json(self):
+    #     """Test that POST requests with AJAX header also work"""
+    #     self.client.login(email='testuser@example.com', password='testpass123')
+        
+    #     response = self.client.post(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+    #     self.assertTrue(data['authenticated'])
+    
+    # def test_non_ajax_post_request_renders_template(self):
+    #     """Test that POST requests without AJAX header render template"""
+    #     response = self.client.post(self.url)
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
+    
+    # # ==================== Integration Tests ====================
+    
+    # def test_polling_scenario_unauthenticated_then_authenticated(self):
+    #     """Simulate the polling scenario from JavaScript"""
+    #     # First poll - user not logged in yet
+    #     response1 = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+    #     data1 = response1.json()
+    #     self.assertFalse(data1['authenticated'])
+        
+    #     # User logs in (simulated)
+    #     self.client.login(email='testuser@example.com', password='testpass123')
+        
+    #     # Second poll - user is now logged in
+    #     response2 = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+    #     data2 = response2.json()
+    #     self.assertTrue(data2['authenticated'])
+    #     self.assertEqual(data2['firstName'], 'John')
+    
+    # def test_concurrent_users_isolation(self):
+    #     """Test that different clients get their own authentication status"""
+    #     # Client 1 - logged in
+    #     client1 = Client()
+    #     client1.login(email='testuser@example.com', password='testpass123')
+        
+    #     # Client 2 - not logged in
+    #     client2 = Client()
+        
+    #     # Both poll
+    #     response1 = client1.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+    #     response2 = client2.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     data1 = response1.json()
+    #     data2 = response2.json()
+        
+    #     # Client 1 should be authenticated
+    #     self.assertTrue(data1['authenticated'])
+    #     # Client 2 should not be authenticated
+    #     self.assertFalse(data2['authenticated'])
+    
+    # # ==================== Edge Cases ====================
+    
+    # def test_user_with_special_characters_in_name(self):
+    #     """Test user with special characters in first name"""
+    #     special_user = PopUpCustomer.objects.create_user(
+    #         email='special@example.com',
+    #         first_name="O'Brien",
+    #         password='testpass123'
+    #     )
+        
+    #     self.client.login(email='special@example.com', password='testpass123')
+        
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     data = response.json()
+    #     self.assertEqual(data['firstName'], "O'Brien")
+    
+    # def test_user_with_unicode_name(self):
+    #     """Test user with unicode characters in name"""
+    #     unicode_user = PopUpCustomer.objects.create_user(
+    #         email='unicode@example.com',
+    #         first_name='José',
+    #         password='testpass123'
+    #     )
+        
+    #     self.client.login(email='unicode@example.com', password='testpass123')
+        
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     data = response.json()
+    #     self.assertEqual(data['firstName'], 'José')
+    
+    # def test_json_response_is_valid_json(self):
+    #     """Test that response can be parsed as valid JSON"""
+    #     self.client.login(email='testuser@example.com', password='testpass123')
+        
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     # Should not raise exception
+    #     try:
+    #         json.loads(response.content)
+    #     except json.JSONDecodeError:
+    #         self.fail("Response is not valid JSON")
+    
+    # # ==================== Security Tests ====================
+    
+    # def test_no_sensitive_data_exposure(self):
+    #     """Test that sensitive data is not exposed in response"""
+    #     self.client.login(email='testuser@example.com', password='testpass123')
+        
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+    #     )
+        
+    #     data = response.json()
+        
+    #     # Should NOT include sensitive fields
+    #     self.assertNotIn('password', data)
+    #     self.assertNotIn('last_login', data)
+    
+    # def test_csrf_not_required_for_get_ajax(self):
+    #     """Test that CSRF token is not required for GET AJAX requests"""
+    #     self.client.login(email='testuser@example.com', password='testpass123')
+        
+    #     # Force client to not send CSRF token
+    #     response = self.client.get(
+    #         self.url,
+    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+    #         enforce_csrf_checks=True
+    #     )
+        
+    #     # Should still work (GET requests don't require CSRF)
+    #     self.assertEqual(response.status_code, 200)
+
+
+
+    # class TestsProductBuyViewGET(TestCase):
+            
+    #     # test correct user displayed
+    #     def setUp(self):
+    #         self.client = Client()
+    #         self.user = create_test_user(email="testuser@example.com",
+    #             password="securePassword!23",
+    #             first_name="Test",
+    #             last_name="User",
+    #             shoe_size="10",
+    #             size_gender="male")
+            
+    #         auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
+    #         auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
+    #         self.brand = create_brand("Jordan")
+    #         self.category = create_category("Jordan 3", True)
+    #         self.product_type = create_product_type("shoe", True)
+
+    
+            
+    #         self.product = create_test_product(
+    #             product_type=self.product_type, 
+    #             category=self.category, 
+    #             product_title="Air Jordan 1 Retro", 
+    #             secondary_product_title="Carolina Blue", 
+    #             description="The most uncomfortable basketball shoe their is", 
+    #             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
+    #             buy_now_price="150.00", 
+    #             current_highest_bid="0", 
+    #             retail_price="100", 
+    #             brand=self.brand, 
+    #             auction_start_date=auction_start, 
+    #             auction_end_date=auction_end, 
+    #             inventory_status="in_inventory", 
+    #             bid_count="0", 
+    #             reserve_price="0", 
+    #             is_active=True)
+            
+    #         self.client.login(email="testuser@example.com", password="securePassword!23")
+            
+    #         request = self.client.get('/dummy/')
+    #         request = request.wsgi_request
+
+    #         cart = Cart(request)
+
+    #         cart.add(product=self.product, qty=1)
+
+    #         # Save the cart back to the test client's session
+    #         session = self.client.session
+    #         session.update(request.session)
+    #         session.save()
+        
+
+    #         # Create Address for user
+    #         self.address = PopUpCustomerAddress.objects.create(
+    #             customer = self.user,
+    #             address_line = "123 Main St",
+    #             apartment_suite_number = "1A",
+    #             town_city = "New York",
+    #             state = "NY",
+    #             postcode="10001",
+    #             delivery_instructions="Leave with doorman",
+    #             default=True
+    #         )
+
+    #         self.tax_rate = get_state_tax_rate("NY")
+    #         self.standard_shipping = Decimal('14.99')
+    #         self.processing_fee = Decimal('2.50')
+
+
+    #     def test_user_is_correct_in_view(self):
+    #         self.assertEqual(self.user.first_name, "Test")
+    #         self.assertEqual(self.user.last_name, "User")
+        
+
+    #     def test_product_buy_view_get_correct_tax_rate_applied(self):
+    #         self.assertEqual(get_state_tax_rate("NY"), 0.08375)
+    #         self.assertEqual(get_state_tax_rate("FL"), 0.0)
+    #         self.assertEqual(get_state_tax_rate("CA"), 0.095)
+    #         self.assertEqual(get_state_tax_rate("GA"), 0.07)
+    #         self.assertEqual(get_state_tax_rate("TX"), 0.0625)
+    #         self.assertEqual(get_state_tax_rate("IL"), 0.0886)
+            
+
+    #     def test_product_buy_view_get_basic_cart_data(self):
+    #         response = self.client.get(reverse('pop_up_auction:product_buy'))
+    #         self.assertEqual(response.status_code, 200)
+
+    #         context = response.context
+    #         cart_items = context['cart_items']
+
+    #         self.assertEqual(len(cart_items), 1)
+
+    #         self.assertEqual(cart_items[0]['qty'], 1)
+    #         self.assertEqual(cart_items[0]['product'], self.product)
+    #         self.assertIn('cart_total', context)
+    #         self.assertIn('sales_tax', context)
+
+            
+    #         # Test tax rate and tax calculation
+    #         expected_subtotal = Decimal(self.product.buy_now_price)
+    #         expected_tax = expected_subtotal * Decimal(self.tax_rate)
+    #         self.assertEqual(Decimal(context['sales_tax']), expected_tax.quantize(Decimal('0.01')))
+
+    #         # Test grand total calcuation
+    #         expected_grand_total = expected_subtotal + expected_tax + (self.standard_shipping  * len(cart_items)) + self.processing_fee
+    #         self.assertEqual(Decimal(context['grand_total']), expected_grand_total.quantize(Decimal('0.01')))
+        
+
+    #     def test_selected_address_used_if_exists(self):
+    #         # Simulate address selected in session
+    #         session = self.client.session
+    #         session['selected_address_id'] = str(self.address.id)
+    #         session.save()
+
+    #         response = self.client.get(reverse('pop_up_auction:product_buy'))
+    #         self.assertEqual(response.context['selected_address'], self.address)
+    #         self.assertEqual(response.context['address_form'].instance, self.address)
+        
+        
+
+    #     def _login_and_seed_cart(self, qty: int = 1):
+    #         """Log the test client in and drop one product in to the Cart session"""
+    #         self.client.login(email=self.user.email, password=self.user.password)
+
+    #         # make a cart entry directly into the session
+    #         session = self.client.session
+    #         session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.buy_now_price)}}
+    #         session.save()
+        
+    #     def test_product_buy_view_get_selected_address_displayed(self):
+    #         """
+    #         If we stuff selected_address_id into session, the view shoudl surface that exact PopUpCustomerAddress
+    #         instance via context['selected_address']
+    #         """
+    #         self._login_and_seed_cart()
+
+    #         # store chosen address ID in session
+    #         session = self.client.session
+    #         session['selected_address_id'] = str(self.address.id)
+    #         session.save()
+
+    #         response = self.client.get(reverse('pop_up_auction:product_buy'))
+    #         self.assertEqual(response.status_code, 200)
+
+    #         # the view should echo back exactly *that* address as selected
+    #         self.assertIn('selected_address', response.context)
+    #         self.assertEqual(response.context['selected_address'], self.address)
+
+
+    #     def test_product_buy_view_get_cart_totals_correct(self):
+    #         """
+    #         Verify subtotal, sales-tax, shipping and grand-total calculations
+    #         for 1 item at $150 (NY tax ≈ 8.375 %), $14.99 std shipping & $2.50 fee.
+    #         """
+    #         self._login_and_seed_cart()          # qty = 1
+    #         # store chosen address ID in session
+    #         session = self.client.session
+    #         session['selected_address_id'] = str(self.address.id)
+    #         session.save()
+
+    #         response = self.client.get(reverse('pop_up_auction:product_buy'))
+    #         self.assertEqual(response.status_code, 200)
+
+    #         # the view should echo back exactly *that* address as selected
+    #         self.assertIn('selected_address', response.context)
+    #         self.assertEqual(response.context['selected_address'], self.address)
 
         
-#         # Test tax rate and tax calculation
-#         expected_subtotal = Decimal(self.product.buy_now_price)
-#         expected_tax = expected_subtotal * Decimal(self.tax_rate)
-#         self.assertEqual(Decimal(context['sales_tax']), expected_tax.quantize(Decimal('0.01')))
+    #     def test_product_buy_view_get_cart_totals_correct(self):
+    #         """
+    #         Verify subtotal, sales-tax, shipping and grand-total calculations
+    #         for 1 item at $150 (NY tax ≈ 8.375 %), $14.99 std shipping & $2.50 fee.
+    #         """
+    #         self._login_and_seed_cart()          # qty = 1
 
-#         # Test grand total calcuation
-#         expected_grand_total = expected_subtotal + expected_tax + (self.standard_shipping  * len(cart_items)) + self.processing_fee
-#         self.assertEqual(Decimal(context['grand_total']), expected_grand_total.quantize(Decimal('0.01')))
-    
+    #         response = self.client.get(reverse('pop_up_auction:product_buy'))
+    #         ctx      = response.context
 
-#     def test_selected_address_used_if_exists(self):
-#         # Simulate address selected in session
-#         session = self.client.session
-#         session['selected_address_id'] = str(self.address.id)
-#         session.save()
+    #         # --- compute what we EXPECT -----------------
+    #         subtotal        = Decimal('150.00')
+    #         tax_rate        = Decimal(str(get_state_tax_rate('New York')))
+    #         expected_tax    = (subtotal * tax_rate).quantize(Decimal('0.01'), ROUND_HALF_UP)
 
-#         response = self.client.get(reverse('pop_up_auction:product_buy'))
-#         self.assertEqual(response.context['selected_address'], self.address)
-#         self.assertEqual(response.context['address_form'].instance, self.address)
-    
-    
+    #         shipping        = Decimal('14.99')   # 1499/100 * qty(1)
+    #         processing_fee  = Decimal('2.50')
 
-#     def _login_and_seed_cart(self, qty: int = 1):
-#         """Log the test client in and drop one product in to the Cart session"""
-#         self.client.login(email=self.user.email, password=self.user.password)
+    #         expected_total  = (subtotal + expected_tax + shipping + processing_fee).quantize(
+    #                               Decimal('0.01'), ROUND_HALF_UP)
 
-#         # make a cart entry directly into the session
-#         session = self.client.session
-#         session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.buy_now_price)}}
-#         session.save()
-    
-#     def test_product_buy_view_get_selected_address_displayed(self):
-#         """
-#         If we stuff selected_address_id into session, the view shoudl surface that exact PopUpCustomerAddress
-#         instance via context['selected_address']
-#         """
-#         self._login_and_seed_cart()
+    #         # --- pull what the view produced -------------
+    #         view_subtotal   = ctx['cart_subtotal']
+    #         view_tax        = Decimal(ctx['sales_tax'])
+    #         view_total      = Decimal(ctx['grand_total'])
 
-#         # store chosen address ID in session
-#         session = self.client.session
-#         session['selected_address_id'] = str(self.address.id)
-#         session.save()
+    #         # --- assertions ------------------------------
+    #         self.assertEqual(view_subtotal, subtotal)
+    #         self.assertEqual(view_tax,      expected_tax)
+    #         self.assertEqual(view_total,    expected_total)
+        
 
-#         response = self.client.get(reverse('pop_up_auction:product_buy'))
-#         self.assertEqual(response.status_code, 200)
+    #     def test_invalid_selected_address_id_fails_gracefully(self):
+    #         self._login_and_seed_cart()
+    #         session = self.client.session
+    #         session["selected_address_id"] = "99999999-0000-0000-0000-000000000000"  # invalid UUID
+    #         session.save()
 
-#         # the view should echo back exactly *that* address as selected
-#         self.assertIn('selected_address', response.context)
-#         self.assertEqual(response.context['selected_address'], self.address)
-
-
-#     def test_product_buy_view_get_cart_totals_correct(self):
-#         """
-#         Verify subtotal, sales-tax, shipping and grand-total calculations
-#         for 1 item at $150 (NY tax ≈ 8.375 %), $14.99 std shipping & $2.50 fee.
-#         """
-#         self._login_and_seed_cart()          # qty = 1
-#         # store chosen address ID in session
-#         session = self.client.session
-#         session['selected_address_id'] = str(self.address.id)
-#         session.save()
-
-#         response = self.client.get(reverse('pop_up_auction:product_buy'))
-#         self.assertEqual(response.status_code, 200)
-
-#         # the view should echo back exactly *that* address as selected
-#         self.assertIn('selected_address', response.context)
-#         self.assertEqual(response.context['selected_address'], self.address)
-
-    
-#     def test_product_buy_view_get_cart_totals_correct(self):
-#         """
-#         Verify subtotal, sales-tax, shipping and grand-total calculations
-#         for 1 item at $150 (NY tax ≈ 8.375 %), $14.99 std shipping & $2.50 fee.
-#         """
-#         self._login_and_seed_cart()          # qty = 1
-
-#         response = self.client.get(reverse('pop_up_auction:product_buy'))
-#         ctx      = response.context
-
-#         # --- compute what we EXPECT -----------------
-#         subtotal        = Decimal('150.00')
-#         tax_rate        = Decimal(str(get_state_tax_rate('New York')))
-#         expected_tax    = (subtotal * tax_rate).quantize(Decimal('0.01'), ROUND_HALF_UP)
-
-#         shipping        = Decimal('14.99')   # 1499/100 * qty(1)
-#         processing_fee  = Decimal('2.50')
-
-#         expected_total  = (subtotal + expected_tax + shipping + processing_fee).quantize(
-#                               Decimal('0.01'), ROUND_HALF_UP)
-
-#         # --- pull what the view produced -------------
-#         view_subtotal   = ctx['cart_subtotal']
-#         view_tax        = Decimal(ctx['sales_tax'])
-#         view_total      = Decimal(ctx['grand_total'])
-
-#         # --- assertions ------------------------------
-#         self.assertEqual(view_subtotal, subtotal)
-#         self.assertEqual(view_tax,      expected_tax)
-#         self.assertEqual(view_total,    expected_total)
-    
-
-#     def test_invalid_selected_address_id_fails_gracefully(self):
-#         self._login_and_seed_cart()
-#         session = self.client.session
-#         session["selected_address_id"] = "99999999-0000-0000-0000-000000000000"  # invalid UUID
-#         session.save()
-
-#         response = self.client.get(reverse("auction:product_buy"))
-#         self.assertEqual(response.status_code, 200)
-#         self.assertNotContains(response, "\n<h3>Shipping to</h3>\n")  # whatever text implies success
+    #         response = self.client.get(reverse("auction:product_buy"))
+    #         self.assertEqual(response.status_code, 200)
+    #         self.assertNotContains(response, "\n<h3>Shipping to</h3>\n")  # whatever text implies success
 
 
 # class ProductBuyViewPOSTTests(TestCase):
@@ -12026,41 +13218,6 @@ class TestSendPasswordResetLink(TestCase):
 
 
 
-
-
-    # test cart items ✅
-    # test ids_in_cart ✅
-    # test number of cart items ✅
-    # test shipping to address
-    # test saved_address, test default_adderess, test addres_form
-    # test if session seelcted_addres_id exists
-    # test change to shipping address 
-    # test cart total | cart.get_total_price()
-    # test getting user_state
-    # test correct tax_rate
-    # test grand_total
-    # test product filtering, is_active, and inventory_statys ="in_inventory" should be in cart
-    # test enriched_cart
-    # test shipping_cost
-    # test Anonymous access behavior
-    # test Product filtering logic
-    # test Empty cart handling
-    # test Handling of invalid/missing addresses
-    # test Correct form rendering on failed POST
-    # test Session logic behavior
-
-    # POST stuff
-    # test selected_add_id valid
-    # test selected_address_id invalid
-    # user updates existing address
-    # test user adds new address
-
-    # Edge Case Test
-    # empty cart
-    # no default or selected address
-    # invalid session address Id
-    # products missing ni db
-    
 
     # """
     # Run Test

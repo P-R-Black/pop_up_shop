@@ -34,8 +34,11 @@ def send_verification_email(request, user):
     try:
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        verify_url = request.build_absolute_uri(reverse('pop_accounts:verify_email', kwargs={'uidb64': uid, 'token': token}))
 
+        verify_url = request.build_absolute_uri(reverse(
+            'pop_accounts:verify_email', kwargs={'uidb64': uid, 'token': token})
+            )
+      
         subject = "Verify Your Email"
         message = f"Hi {user.first_name}, \n\nPlease click the link below to verify your email:\n{verify_url}\n\nThanks!"
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
@@ -47,7 +50,6 @@ def send_verification_email(request, user):
 
 
 def handle_password_reset_request(request, email: str):
-    print('DEBUG: called handle_password_reset_request')
     """Utility to handle sending a password reset link with rate limiting"""
 
     now_time = now()
@@ -115,7 +117,7 @@ def handle_password_reset_request(request, email: str):
         logger.error(f"Failed to send password reset email to {email}: {str(e)}")
         return JsonResponse({
             'success': False, 'error': 'Unable to send email at this time. Please try again later.'
-        })
+        }, status=500)
 
     user.last_password_reset = now_time
     user.save(update_fields=['last_password_reset'])

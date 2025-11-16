@@ -39,14 +39,10 @@ from .forms import (PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm
                     )
 from pop_up_shipping.forms import ThePopUpShippingForm
 from django.core.mail import send_mail
-from django.views.decorators.http import require_POST
-from django.contrib.admin.views.decorators import staff_member_required
 import secrets
 from django.utils import timezone
 from datetime import datetime, timedelta, date
 from django.contrib.auth.tokens import default_token_generator
-from django.db import IntegrityError
-import time
 from django.core.cache import cache
 from django.utils.timezone import now
 from django.contrib.auth import logout
@@ -55,6 +51,7 @@ from .utils.utils import (validate_email_address, get_client_ip, add_specs_to_pr
                           calculate_auction_progress, handle_password_reset_request, send_verification_email)
 from django.conf import settings
 import json
+from typing import Any, Dict, Optional
 from django.utils.safestring import mark_safe
 import logging
 from django.db.models import OuterRef, Subquery, F
@@ -2248,23 +2245,85 @@ class UpdateProductView(UserPassesTestMixin, View):
     # ✅ Mobile / Tablet Media Query Completed
     # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    - shows all products added to database.
-    - shows all products that are comming soon.
-    - shows all products in inventory.
-    - Can update status from "coming soon" to "in inventory"
-    - Displays form for specific product
+    Administrative view for managing and updating product records in the system.
+
+    This view allows staff users to:
+        • View all products in the catalog
+        • View products currently marked as "in_transit"
+        • View products currently marked as "in_inventory"
+        • Select a specific product for editing
+        • Update product fields, images, and specification values
+        • Change product inventory status (e.g., from "in_transit" to "in_inventory")
+        • Trigger automated notifications when key dates change
+          (e.g., buy-now start or auction start)
+
+    Access Control:
+        - Restricted to staff users via `UserPassesTestMixin`.
+        - `test_func()` ensures only `is_staff=True` users can access the view.
+
+    GET Requests:
+        - Without a `product_id`:
+              Displays the admin product dashboard, showing:
+                  • All products
+                  • Products en route (`inventory_status="in_transit"`)
+                  • Products currently in inventory (`inventory_status="in_inventory"`)
+        - With a `product_id`:
+              Loads the selected product and returns:
+                  • A pre-filled product update form
+                  • A product image update form
+                  • Existing specification values
+                  • Data needed to dynamically render editable specs
+
+    POST Requests:
+        - Only valid when `product_id` is provided.
+        - Processes form submissions to update:
+              • Product core fields (`PopUpAddProductForm`)
+              • Product images (`PopUpProductImageForm`)
+              • Specification values (via `_handle_specifications`)
+        - Saves changes and reloads the dashboard with a success message.
+        - Validates image uploads and displays relevant errors on failure.
+
+    Side Effects:
+        - When `buy_now_start` or `auction_start_date` changes, the system
+          automatically notifies users who have expressed interest in the product.
+        - Image uploads replace or supplement the existing product image.
+
+    Template:
+        • pop_accounts/admin_accounts/dashboard_pages/update_product.html
+
+    Context Variables:
+        - product_copy: Static admin text content (for UI copy blocks)
+        - all_products: Complete product queryset
+        - products_coming_soon: Products with `inventory_status="in_transit"`
+        - products_in_inventory: Products with `inventory_status="in_inventory"`
+        - selected_product: (Optional) Product instance when editing
+        - form: Product form instance (create/edit)
+        - product_image_form: Product image upload form
+        - existing_spec_values: Mapping of specification → stored value
+        - existing_spec_values_json: JSON version for JavaScript rendering
+        - show_form: Boolean flag to display the editing form
+        - success_message / error_message: Admin feedback indicators
+
+    Notes:
+        - Specification fields arrive as keys prefixed with “spec_” in POST data.
+        - Invalid spec fields are ignored gracefully.
+        - If no product is selected, the page functions purely as a dashboard.
+
+    URL patterns typically include:
+        • /admin/products/update/
+        • /admin/products/update/<product_id>/
     """
     template_name = 'pop_accounts/admin_accounts/dashboard_pages/update_product.html'
     product_copy = ADMIN_PRODUCT_UPDATE
 
-    def test_func(self):
-        return self.request.user.is_staff
+    def test_func(self) -> bool:
+        return bool(self.request.user.is_staff and self.request.user)
     
-    def get(self, request, product_id=None):
+    def get(self, request, product_id: Optional[int] = None) -> HttpResponse:
         context = self.get_context_data(product_id)
         return render(request, self.template_name, context)
     
-    def post(self, request, product_id=None):
+    def post(self, request, product_id: Optional[int] = None) -> HttpResponse:
         if product_id:
             # Handle form submission for updating a product
             product = get_object_or_404(PopUpProduct, id=product_id)
@@ -2324,7 +2383,7 @@ class UpdateProductView(UserPassesTestMixin, View):
             return render(request, self.template_name, context)
         
     
-    def get_context_data(self, product_id=None):
+    def get_context_data(self, product_id: Optional[int] = None) -> Dict[str, Any]:
         all_products = PopUpProduct.objects.all()
         products_coming_soon = PopUpProduct.objects.filter(inventory_status="in_transit")
         products_in_inventory = PopUpProduct.objects.filter(inventory_status="in_inventory")
@@ -2621,7 +2680,8 @@ class EmailCheckView(View):
         
 
 class RegisterView(View):
-
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
     • Hashes the password securely before saving.
         • Sets `is_active=False` until email verification is completed.
@@ -2909,6 +2969,49 @@ class Verify2FACodeView(View):
 
 
 class Resend2FACodeView(View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Handles requests to resend a 2FA (two-factor authentication) code during login.
+
+    This view is triggered when a user, who is in the middle of the login flow,
+    requests a new 6-digit verification code. The request relies on session data
+    set earlier in the authentication process.
+
+    Expected Session Keys:
+        - 'auth_email': The email address the user is attempting to log in with.
+        - 'pending_login_user_id': The ID of the user awaiting 2FA verification.
+
+    Workflow:
+        1. Validates that required session data exists.
+        2. Confirms the user exists and is active.
+        3. Generates a new 6-digit 2FA code.
+        4. Stores the new code and timestamp in the session.
+        5. Sends the code to the user via email.
+        6. Returns a JSON response indicating success.
+
+    JSON Responses:
+        - {'success': True}
+            → A new verification code has been generated and emailed.
+
+        - {'success': False, 'error': 'Session expired'} (400)
+            → Session data is missing or expired.
+
+        - {'success': False, 'error': 'Account not active'} (403)
+            → User exists but their account is inactive.
+
+        - {'success': False, 'error': 'User not found'} (404)
+            → No user matches the stored session user ID.
+
+    Notes:
+        - This view does not verify the code—only resends it.
+        - Session keys used here must be set earlier in the login process (typically
+          after validating the user's password but before verifying 2FA).
+
+    Example Usage:
+        POST /resend-2fa/
+        Response: {'success': True}
+    """
     def post(self, request):
         """
         Resends 6-digit code at users request
@@ -2943,24 +3046,91 @@ class Resend2FACodeView(View):
 
 
 class SendPasswordResetLink(View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
+    """
+    Handles password reset link requests submitted via AJAX.
+
+    This view receives an email address from the client, validates it, and passes
+    the request to `handle_password_reset_request` to process the password reset
+    workflow. That function is responsible for checking whether the email exists,
+    generating a secure password reset token, and sending the reset link to the
+    user's email if appropriate.
+
+    Expected POST data:
+        - email (str): The email address of the user requesting a password reset.
+
+    Behavior:
+        - If the email is associated with an existing account:
+            → A password reset link is sent to the user's email.
+            → A JSON response confirming the action is returned.
+        - If the email does not exist:
+            → A JSON error response is returned (typically with status 400).
+        - If the email is missing or invalid:
+            → A JSON error response is returned (status 400).
+
+    Returns:
+        JsonResponse: A JSON response indicating success or failure of the
+        reset request, as generated by `handle_password_reset_request`.
+
+    Example Usage:
+        POST /password-reset-link/
+        Data: {'email': 'user@example.com'}
+        Response: {'success': True, 'message': 'Password reset link sent'}
+    """
     def post(self, request):
         email = request.POST.get('email', '').strip().lower()
         return handle_password_reset_request(request, email)
 
-
-# @require_POST
-# def send_password_reset_link(request):
-#     """
-#     Emails link to user's email address to reset password
-#     """
-#     email = request.POST.get('email')
-#     return handle_password_reset_request(request, email)
     
     
-
 class VerifyEmailView(View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    Verifiies Email for user's who are requesting a password reeset.
+    Handles verification of a user's email address after registration and optionally
+    logs the user in once verification is complete.
+
+    This view processes the verification link sent to a newly registered user's email.
+    The link includes both a base64-encoded user ID (`uidb64`) and a time-sensitive
+    token generated by Django’s `default_token_generator`.
+
+    --- GET Request ---
+    Validates the token and activates the user account:
+
+        1. Decodes the `uidb64` to retrieve the user.
+        2. Confirms the token is still valid.
+        3. If valid:
+               - Marks the user as `is_active=True`.
+               - Renders the verification success page that includes a login form.
+        4. If invalid:
+               - Renders an “invalid link” message.
+
+    --- POST Request ---
+    Handles login immediately after a successful email verification:
+
+        1. Re-validates the token to ensure the link has not expired.
+        2. Processes the submitted login form.
+        3. Authenticates and logs in the user if credentials are correct.
+        4. If authentication fails, the same template is rendered with form errors.
+
+    Template Context Flags:
+        - `email_verified=True` → Verification succeeded.
+        - `invalid_link=True`   → Verification link is invalid or expired.
+        - `login_failed=True`   → User submitted incorrect login credentials.
+
+    URL Parameters:
+        - uidb64 (str): Base64-encoded user ID from the verification email.
+        - token (str): Time-limited verification token.
+
+    Expected Behavior:
+        • After registering, the user receives an email with a verification link.
+        • The link activates their account.
+        • The user may then log in directly from the verification page.
+
+    Example:
+        GET /verify/<uidb64>/<token>/
+        POST /verify/<uidb64>/<token>/
     """
     template_name = 'pop_accounts/registration/verify_email.html'
 
@@ -2985,7 +3155,23 @@ class VerifyEmailView(View):
     def post(self, request, uidb64, token):
      
         form = PopUpUserLoginForm(request.POST)
+        # Validate token before allowing login
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user_from_token = PopUpCustomer.objects.get(pk=uid)
+
+        except (TypeError, ValueError, OverflowError, PopUpCustomer.DoesNotExist):
+            user_from_token = None
         
+        # Check if token valid
+        if not user_from_token or not default_token_generator.check_token(user_from_token, token):
+            # Invalid link - show error
+            return render(request, self.template_name, {
+                'invalid_link': True,
+                'form': form
+            })
+        
+        # Token is valid, proceed with login
         email = request.session.get('auth_email') or request.POST.get('email')
         password = request.POST.get('password')
 
@@ -3006,6 +3192,8 @@ class VerifyEmailView(View):
 
 
 class CompleteProfileView(UpdateView):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
     View for user to complete profile if they login using Facebook or Google.
     """
