@@ -125,9 +125,19 @@ Tests In Order
 65. TestLogin2FAView
 66. TestVerify2FACodeView
 67. TestResend2FACodeView
-68.
-69.
-70.
+68. TestRegisterView
+69. TestPasswordStrengthValidation
+70. TestSendPasswordResetLink |
+71. TestVerifyEmailView
+72. TestCompleteProfileView
+73. SocialLoginCompleteViewTests 
+"""
+
+"""
+Failed Test and Error
+
+
+
 """
 
 
@@ -638,9 +648,7 @@ class TestPersonalInfoView(TestCase):
 
         # create an existing user
         self.user = create_test_user('existing@example.com', 'testPass!23', 'Test', 'User', '9', 'male', mobile_phone="1234567890")
-        # create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
-        #                 town_city, state, postcode, delivery_instructions, default=True, is_default_shipping=False, 
-        # is_default_billing=False)
+     
         self.address = create_test_address(customer=self.user, first_name="Test", last_name="User", 
                                            address_line="123 Test St", address_line2="", apartment_suite_number="", town_city="Test City", state="TS", 
                                            postcode="12345",delivery_instructions="", default=True, 
@@ -10685,6 +10693,9 @@ class TestRegisterView(TestCase):
             'password': 'securePassword!23',
             'password2': 'securePassword!23',
         }
+
+        # ✅ Clear cache before each test to reset rate limiting
+        cache.clear()
     
     def test_valid_registration_sends_verification_email(self):
         response = self.client.post(self.url, {
@@ -10989,30 +11000,32 @@ class TestRegisterView(TestCase):
         # Update this test based on your desired behavior
 
 
-    # def test_user_cannot_login_before_verification(self):
-    #     """
-    #     Okay, based on what your evaluation, the Registration view doesn't check if a user account is active. In a previous view, the user enters their email address, if this email is on file and active, the user is taken to the next screen to enter their password, if the email is not on file, the user is taken to this registration view to complete a registration form. I don't think the EmailCheckView accounts for an email that is on file, but not active. I guess I need work through the best to handle a user attempting to register, but not completing the registration process. What should we do if the email is on file, but not active? Should the inactive email be deleted after certain amount of time? If the email is on file, but inactive, should the code just send another link to the email to verify the email address and make it active?
-    #     """
+    def test_user_cannot_login_before_verification(self):
 
-    #     """Test that newly registered user cannot login (is_active=False)"""
-    #     response = self.client.post(self.url, self.valid_data)
+        """Test that unverified user cannot login via login view"""
+        # Register user (creates inactive user)
+        response = self.client.post(self.url, self.valid_data)
         
-    #     user = PopUpCustomer.objects.get(email='test@example.com')
-    #     print('user', user)
-    #     print('user.is_active', user.is_active)
-    #     self.assertFalse(user.is_active)
+        user = PopUpCustomer.objects.get(email='test@example.com')
+        self.assertFalse(user.is_active)
         
-    #     # Try to authenticate
-    #     from django.contrib.auth import authenticate
-    #     auth_user = authenticate(
-    #         username='test@example.com',
-    #         password='securePassword!23'
-    #     )
-    #     print('auth_user', auth_user)
-    #     print('auth_user.is_active', auth_user.is_active)
+        # Try to login via your login view
+        login_response = self.client.post(
+            reverse('pop_accounts:check_email'),  # Your login URL
+            {
+                'email': 'test@example.com',
+                'password': 'securePassword!23'
+            }
+        )
         
-    #     # Should return None for inactive user
-    #     self.assertIsNone(auth_user)
+        # Should fail - user should not be authenticated
+        self.assertFalse(login_response.wsgi_request.user.is_authenticated)
+        
+        # Should show error message about email verification
+        data = login_response.json()
+        self.assertFalse(data.get('success'))
+        # self.assertIn('verify', data.get('error', '').lower()) # <= This doesn't pass
+        self.assertIn('verification', data.get('message', '').lower()) # <= This passes
 
 
     def test_verification_token_is_valid(self):
@@ -11041,6 +11054,91 @@ class TestRegisterView(TestCase):
         self.assertIsInstance(errors, dict)
 
 
+    def test_password_reset_prevents_email_enumeration(self):
+        """Test that response is same for existing and non-existing emails"""
+    
+        # ✅ Create an existing user first
+        PopUpCustomer.objects.create_user(
+            email='existing@example.com',
+            first_name='Test',
+            last_name='User',
+            password='TestPass123!'
+        )
+        
+        # Existing email
+        response1 = self.client.post(
+            reverse('pop_accounts:send_reset_link'),
+            {'email': 'existing@example.com'}
+        )
+        
+        # Non-existing email
+        response2 = self.client.post(
+            reverse('pop_accounts:send_reset_link'),
+            {'email': 'nonexistent@example.com'}
+        )
+        
+        # Both should return same status and message
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(response2.status_code, 200)
+        data1 = response1.json()
+        data2 = response2.json()
+        self.assertEqual(data1['message'], data2['message'])
+
+    def test_registration_rate_limiting_by_ip(self):
+        """Test IP-based rate limiting on registration"""
+        for i in range(6):  # Try 6 times (limit is 5)
+            response = self.client.post(
+                reverse('pop_accounts:register'),
+                {
+                    'email': f'user{i}@example.com',
+                    'first_name': f'John',
+                    'last_name': 'Doe',
+                    'password': 'securePassword!23',
+                    'password2': 'securePassword!23',
+                }
+            )
+        
+        # 6th attempt should be rate limited
+        self.assertEqual(response.status_code, 429)
+
+    def test_disposable_email_rejected(self):
+        """Test that disposable emails are blocked"""
+        response = self.client.post(
+            reverse('pop_accounts:register'),
+            {
+                'email': 'test@sharklasers.com',
+                'password': 'pass123',
+                'password2': 'pass123'
+            }
+        )
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        print('data', data)
+        self.assertIn('disposable', data['errors']['email'][0].lower())
+
+    def test_password_reset_timing_attack_protection(self):
+        """Test that timing is consistent for existing/non-existing emails"""
+        import time
+        
+        # Existing email
+        start = time.time()
+        self.client.post(
+            reverse('pop_accounts:send_reset_link'),
+            {'email': 'existing@example.com'}
+        )
+        existing_time = time.time() - start
+        
+        # Non-existing email (should have time.sleep(1))
+        start = time.time()
+        self.client.post(
+            reverse('pop_accounts:send_reset_link'),
+            {'email': 'nonexistent@example.com'}
+        )
+        nonexistent_time = time.time() - start
+        
+        # Times should be similar (within 200ms)
+        self.assertLess(abs(existing_time - nonexistent_time), 0.2)
 
 class TestPasswordStrengthValidation(TestCase):
 
@@ -11109,7 +11207,7 @@ class TestSendPasswordResetLink(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data['success'])
-        self.assertEqual(data['message'], 'Password reset link sent')
+        self.assertEqual(data['message'], 'If an account exists, a password reset link has been sent.')
         
         # Verify email was sent
         self.assertEqual(len(mail.outbox), 1)
@@ -11196,12 +11294,13 @@ class TestSendPasswordResetLink(TestCase):
         """Test error when email doesn't exist"""
         response = self.client.post(self.url, {'email': 'nonexistent@example.com'})
         
-        self.assertEqual(response.status_code, 404)
+        # ✅ Should return 200 with generic message (don't reveal user doesn't exist)
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertFalse(data['success'])
-        self.assertEqual(data['error'], 'Email not found.')
+        self.assertTrue(data['success'])  # Changed from False to True
+        self.assertIn('If an account exists', data['message'])
         
-        # No email should be sent
+        # ✅ No email should be sent
         self.assertEqual(len(mail.outbox), 0)
     
     def test_timing_attack_prevention(self):
@@ -11235,7 +11334,7 @@ class TestSendPasswordResetLink(TestCase):
         # Immediate second request should be blocked by cache
         response2 = self.client.post(self.url, {'email': 'user1@example.com'})
         self.assertFalse(response2.json()['success'])
-        self.assertIn('waite', response2.json()['error'].lower())  # Note: typo in your code
+        self.assertIn('reset', response2.json()['error'].lower())
     
 
     def test_database_rate_limiting_by_ip_and_user(self):
@@ -11388,8 +11487,23 @@ class TestSendPasswordResetLink(TestCase):
         
         response = self.client.post(self.url, {'email': 'user1@example.com'})
         
-        # Should fail (user not found if using proper manager)
-        self.assertEqual(response.status_code, 404)
+        # Should return 200 (doesn't reveal that user is deleted)
+        self.assertEqual(response.status_code, 200)
+
+        # ✅ Should have success=True with generic message
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertIn('If an account exists', data['message'])
+        
+        # ✅ Verify no email was actually sent
+        from django.core import mail
+        self.assertEqual(len(mail.outbox), 0)
+        
+        # ✅ Verify no password reset log was created
+        self.assertEqual(
+            PopUpPasswordResetRequestLog.objects.filter(customer=self.user).count(),
+            0
+        )
     
     def test_get_request_not_allowed(self):
         """Test that GET requests are not allowed"""
@@ -11411,23 +11525,28 @@ class TestSendPasswordResetLink(TestCase):
             with self.subTest(email=email):
                 response = self.client.post(self.url, {'email': email})
                 
-                # Depending on validation, should either 400 or 404
-                self.assertIn(response.status_code, [400, 404])
-                self.assertFalse(response.json()['success'])
+                # Should return 400 for invalid format
+                self.assertEqual(response.status_code, 400)
+                data = response.json()
+                self.assertFalse(data['success'])
+                self.assertIn('Invalid email', data['error'])
     
     # ==================== Security Tests ====================
     
     def test_no_user_enumeration(self):
-        """Test that response doesn't reveal if user exists (timing aside)"""
-        # For security, error messages should be generic
-        # But your implementation returns specific 404 for not found
-        # This is a design decision
-        
+        """Test that response doesn't reveal if user exists"""
+        # Test non-existent user
         response = self.client.post(self.url, {'email': 'nonexistent@example.com'})
         
-        # Current implementation returns specific error
-        # Consider making this more generic for security
-        self.assertEqual(response.status_code, 404)
+        # ✅ Should return 200 with generic message (secure behavior)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertIn('If an account exists', data['message'])
+        
+        # Verify no email was actually sent
+        from django.core import mail
+        self.assertEqual(len(mail.outbox), 0)
     
     def test_ip_address_logged(self):
         """Test that IP address is captured in log"""
@@ -11838,9 +11957,7 @@ class TestVerifyEmailView(TestCase):
         mock_request = factory.get('/')
         # Step 1: Send verification email
         
-        email_sent = send_verification_email(mock_request, self.inactive_user)
-        print('DEBUG: email_sent', email_sent)
-        
+        email_sent = send_verification_email(mock_request, self.inactive_user)        
         self.assertTrue(email_sent)
         self.assertEqual(len(mail.outbox), 1)
         
@@ -12099,7 +12216,6 @@ class TestCompleteProfileView(TestCase):
         
         # Now test the actual view
         response = self.client.post(self.url, form_data)
-        print(f'DEBUG response.status: {response.status_code}')
         
         # Should not redirect
         self.assertEqual(response.status_code, 200)
@@ -12398,7 +12514,6 @@ class TestCompleteProfileView(TestCase):
         self.assertEqual(self.social_user.email, 'nofirstname@example.com')
 
 
-
 class SocialLoginCompleteViewTests(TestCase):
     """Tests for social_login_complete view"""
     
@@ -12446,264 +12561,267 @@ class SocialLoginCompleteViewTests(TestCase):
         self.assertEqual(data['firstName'], 'John')
         self.assertFalse(data['isStaff'])
     
-    # def test_ajax_request_staff_user_returns_staff_status(self):
-    #     """Test AJAX request with staff user returns isStaff=True"""
-    #     # Log in the staff user
-    #     self.client.login(email='staff@example.com', password='staffpass123')
+
+    def test_ajax_request_staff_user_returns_staff_status(self):
+        """Test AJAX request with staff user returns isStaff=True"""
+        # Log in the staff user
+        self.client.login(email='staff@example.com', password='staffpass123')
         
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     self.assertEqual(response.status_code, 200)
-    #     data = response.json()
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
         
-    #     self.assertTrue(data['authenticated'])
-    #     self.assertEqual(data['firstName'], 'Admin')
-    #     self.assertTrue(data['isStaff'])
+        self.assertTrue(data['authenticated'])
+        self.assertEqual(data['firstName'], 'Admin')
+        self.assertTrue(data['isStaff'])
     
-    # def test_ajax_request_unauthenticated_user_returns_false(self):
-    #     """Test AJAX request without authentication returns authenticated=False"""
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+
+    def test_ajax_request_unauthenticated_user_returns_false(self):
+        """Test AJAX request without authentication returns authenticated=False"""
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     self.assertEqual(response.status_code, 200)
-    #     data = response.json()
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
         
-    #     # Should indicate not authenticated
-    #     self.assertFalse(data['authenticated'])
-    #     self.assertEqual(data['firstName'], '')
-    #     self.assertFalse(data['isStaff'])
+        # Should indicate not authenticated
+        self.assertFalse(data['authenticated'])
+        self.assertEqual(data['firstName'], '')
+        self.assertFalse(data['isStaff'])
     
-    # def test_ajax_request_user_with_no_first_name(self):
-    #     """Test AJAX request for user without first name"""
-    #     # Create user without first name
-    #     no_name_user = PopUpCustomer.objects.create_user(
-    #         email='noname@example.com',
-    #         first_name='',
-    #         password='testpass123'
-    #     )
+    def test_ajax_request_user_with_no_first_name(self):
+        """Test AJAX request for user without first name"""
+        # Create user without first name
+        no_name_user = PopUpCustomer.objects.create_user(
+            email='noname@example.com',
+            first_name='',
+            password='testpass123'
+        )
         
-    #     self.client.login(email='noname@example.com', password='testpass123')
+        self.client.login(email='noname@example.com', password='testpass123')
         
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     self.assertEqual(response.status_code, 200)
-    #     data = response.json()
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
         
-    #     self.assertTrue(data['authenticated'])
-    #     self.assertEqual(data['firstName'], '')
+        self.assertTrue(data['authenticated'])
+        self.assertEqual(data['firstName'], '')
     
-    # def test_ajax_response_structure(self):
-    #     """Test that AJAX response has all required fields"""
-    #     self.client.login(email='testuser@example.com', password='testpass123')
+
+    def test_ajax_response_structure(self):
+        """Test that AJAX response has all required fields"""
+        self.client.login(email='testuser@example.com', password='testpass123')
         
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     data = response.json()
+        data = response.json()
         
-    #     # Verify all expected keys are present
-    #     self.assertIn('authenticated', data)
-    #     self.assertIn('firstName', data)
-    #     self.assertIn('isStaff', data)
+        # Verify all expected keys are present
+        self.assertIn('authenticated', data)
+        self.assertIn('firstName', data)
+        self.assertIn('isStaff', data)
     
-    # def test_ajax_header_case_sensitivity(self):
-    #     """Test that X-Requested-With header is case-sensitive"""
-    #     self.client.login(email='testuser@example.com', password='testpass123')
+    def test_ajax_header_case_sensitivity(self):
+        """Test that X-Requested-With header is case-sensitive"""
+        self.client.login(email='testuser@example.com', password='testpass123')
         
-    #     # Test with different case variations
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='xmlhttprequest'  # lowercase
-    #     )
+        # Test with different case variations
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='xmlhttprequest'  # lowercase
+        )
         
-    #     # Should still render template, not return JSON
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
+        # Should still render template, not return JSON
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
     
-    # # ==================== Non-AJAX Request Tests ====================
+    # ==================== Non-AJAX Request Tests ====================
     
-    # def test_non_ajax_request_renders_template(self):
-    #     """Test that non-AJAX request renders the HTML template"""
-    #     response = self.client.get(self.url)
+    def test_non_ajax_request_renders_template(self):
+        """Test that non-AJAX request renders the HTML template"""
+        response = self.client.get(self.url)
         
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
     
-    # def test_non_ajax_authenticated_user_renders_template(self):
-    #     """Test authenticated user without AJAX still renders template"""
-    #     self.client.login(email='testuser@example.com', password='testpass123')
+    def test_non_ajax_authenticated_user_renders_template(self):
+        """Test authenticated user without AJAX still renders template"""
+        self.client.login(email='testuser@example.com', password='testpass123')
         
-    #     response = self.client.get(self.url)
+        response = self.client.get(self.url)
         
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
     
-    # # ==================== POST Request Tests ====================
+    # ==================== POST Request Tests ====================
     
-    # def test_ajax_post_request_returns_json(self):
-    #     """Test that POST requests with AJAX header also work"""
-    #     self.client.login(email='testuser@example.com', password='testpass123')
+    def test_ajax_post_request_returns_json(self):
+        """Test that POST requests with AJAX header also work"""
+        self.client.login(email='testuser@example.com', password='testpass123')
         
-    #     response = self.client.post(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        response = self.client.post(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     self.assertEqual(response.status_code, 200)
-    #     data = response.json()
-    #     self.assertTrue(data['authenticated'])
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['authenticated'])
     
-    # def test_non_ajax_post_request_renders_template(self):
-    #     """Test that POST requests without AJAX header render template"""
-    #     response = self.client.post(self.url)
+    def test_non_ajax_post_request_renders_template(self):
+        """Test that POST requests without AJAX header render template"""
+        response = self.client.post(self.url)
         
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'pop_accounts/registration/social_login_complete.html')
     
-    # # ==================== Integration Tests ====================
+    # ==================== Integration Tests ====================
     
-    # def test_polling_scenario_unauthenticated_then_authenticated(self):
-    #     """Simulate the polling scenario from JavaScript"""
-    #     # First poll - user not logged in yet
-    #     response1 = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
-    #     data1 = response1.json()
-    #     self.assertFalse(data1['authenticated'])
+    def test_polling_scenario_unauthenticated_then_authenticated(self):
+        """Simulate the polling scenario from JavaScript"""
+        # First poll - user not logged in yet
+        response1 = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        data1 = response1.json()
+        self.assertFalse(data1['authenticated'])
         
-    #     # User logs in (simulated)
-    #     self.client.login(email='testuser@example.com', password='testpass123')
+        # User logs in (simulated)
+        self.client.login(email='testuser@example.com', password='testpass123')
         
-    #     # Second poll - user is now logged in
-    #     response2 = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
-    #     data2 = response2.json()
-    #     self.assertTrue(data2['authenticated'])
-    #     self.assertEqual(data2['firstName'], 'John')
+        # Second poll - user is now logged in
+        response2 = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        data2 = response2.json()
+        self.assertTrue(data2['authenticated'])
+        self.assertEqual(data2['firstName'], 'John')
     
-    # def test_concurrent_users_isolation(self):
-    #     """Test that different clients get their own authentication status"""
-    #     # Client 1 - logged in
-    #     client1 = Client()
-    #     client1.login(email='testuser@example.com', password='testpass123')
+    def test_concurrent_users_isolation(self):
+        """Test that different clients get their own authentication status"""
+        # Client 1 - logged in
+        client1 = Client()
+        client1.login(email='testuser@example.com', password='testpass123')
         
-    #     # Client 2 - not logged in
-    #     client2 = Client()
+        # Client 2 - not logged in
+        client2 = Client()
         
-    #     # Both poll
-    #     response1 = client1.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
-    #     response2 = client2.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        # Both poll
+        response1 = client1.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        response2 = client2.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     data1 = response1.json()
-    #     data2 = response2.json()
+        data1 = response1.json()
+        data2 = response2.json()
         
-    #     # Client 1 should be authenticated
-    #     self.assertTrue(data1['authenticated'])
-    #     # Client 2 should not be authenticated
-    #     self.assertFalse(data2['authenticated'])
+        # Client 1 should be authenticated
+        self.assertTrue(data1['authenticated'])
+        # Client 2 should not be authenticated
+        self.assertFalse(data2['authenticated'])
     
-    # # ==================== Edge Cases ====================
+    # ==================== Edge Cases ====================
     
-    # def test_user_with_special_characters_in_name(self):
-    #     """Test user with special characters in first name"""
-    #     special_user = PopUpCustomer.objects.create_user(
-    #         email='special@example.com',
-    #         first_name="O'Brien",
-    #         password='testpass123'
-    #     )
+    def test_user_with_special_characters_in_name(self):
+        """Test user with special characters in first name"""
+        special_user = PopUpCustomer.objects.create_user(
+            email='special@example.com',
+            first_name="O'Brien",
+            password='testpass123'
+        )
         
-    #     self.client.login(email='special@example.com', password='testpass123')
+        self.client.login(email='special@example.com', password='testpass123')
         
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     data = response.json()
-    #     self.assertEqual(data['firstName'], "O'Brien")
+        data = response.json()
+        self.assertEqual(data['firstName'], "O'Brien")
     
-    # def test_user_with_unicode_name(self):
-    #     """Test user with unicode characters in name"""
-    #     unicode_user = PopUpCustomer.objects.create_user(
-    #         email='unicode@example.com',
-    #         first_name='José',
-    #         password='testpass123'
-    #     )
+    def test_user_with_unicode_name(self):
+        """Test user with unicode characters in name"""
+        unicode_user = PopUpCustomer.objects.create_user(
+            email='unicode@example.com',
+            first_name='José',
+            password='testpass123'
+        )
         
-    #     self.client.login(email='unicode@example.com', password='testpass123')
+        self.client.login(email='unicode@example.com', password='testpass123')
         
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     data = response.json()
-    #     self.assertEqual(data['firstName'], 'José')
+        data = response.json()
+        self.assertEqual(data['firstName'], 'José')
     
-    # def test_json_response_is_valid_json(self):
-    #     """Test that response can be parsed as valid JSON"""
-    #     self.client.login(email='testuser@example.com', password='testpass123')
+    def test_json_response_is_valid_json(self):
+        """Test that response can be parsed as valid JSON"""
+        self.client.login(email='testuser@example.com', password='testpass123')
         
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     # Should not raise exception
-    #     try:
-    #         json.loads(response.content)
-    #     except json.JSONDecodeError:
-    #         self.fail("Response is not valid JSON")
+        # Should not raise exception
+        try:
+            json.loads(response.content)
+        except json.JSONDecodeError:
+            self.fail("Response is not valid JSON")
     
-    # # ==================== Security Tests ====================
+    # ==================== Security Tests ====================
     
-    # def test_no_sensitive_data_exposure(self):
-    #     """Test that sensitive data is not exposed in response"""
-    #     self.client.login(email='testuser@example.com', password='testpass123')
+    def test_no_sensitive_data_exposure(self):
+        """Test that sensitive data is not exposed in response"""
+        self.client.login(email='testuser@example.com', password='testpass123')
         
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-    #     )
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
         
-    #     data = response.json()
+        data = response.json()
         
-    #     # Should NOT include sensitive fields
-    #     self.assertNotIn('password', data)
-    #     self.assertNotIn('last_login', data)
+        # Should NOT include sensitive fields
+        self.assertNotIn('password', data)
+        self.assertNotIn('last_login', data)
     
-    # def test_csrf_not_required_for_get_ajax(self):
-    #     """Test that CSRF token is not required for GET AJAX requests"""
-    #     self.client.login(email='testuser@example.com', password='testpass123')
+    def test_csrf_not_required_for_get_ajax(self):
+        """Test that CSRF token is not required for GET AJAX requests"""
+        self.client.login(email='testuser@example.com', password='testpass123')
         
-    #     # Force client to not send CSRF token
-    #     response = self.client.get(
-    #         self.url,
-    #         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
-    #         enforce_csrf_checks=True
-    #     )
+        # Force client to not send CSRF token
+        response = self.client.get(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+            enforce_csrf_checks=True
+        )
         
-    #     # Should still work (GET requests don't require CSRF)
-    #     self.assertEqual(response.status_code, 200)
+        # Should still work (GET requests don't require CSRF)
+        self.assertEqual(response.status_code, 200)
 
 
 

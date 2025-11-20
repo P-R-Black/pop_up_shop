@@ -1,7 +1,7 @@
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 import re
-from pop_accounts.models import PopUpCustomer
+from pop_accounts.models import PopUpCustomer, PopUpCustomerIP
 from django.conf import settings
 import stripe
 from datetime import timedelta
@@ -16,7 +16,9 @@ from django.core.mail import send_mail
 from django.core.cache import cache
 from django.http import JsonResponse
 from pop_accounts.models import PopUpCustomer, PopUpPasswordResetRequestLog
-
+from ipware import get_client_ip as ipware_get_client_ip
+import geoip2.database
+import os
 
 logger = logging.getLogger(__name__)
 RESET_EMAIL_COOLDOWN = timedelta(minutes=5)
@@ -56,55 +58,61 @@ def handle_password_reset_request(request, email: str):
     if not email:
         return JsonResponse({'success': False, 'error': 'An email address is required'}, status=400)
     
+
+    if not validate_email_address(email):
+        return JsonResponse({'success': False, 'error': 'Invalid email format'}, status=400)
+
+
+    ip = get_client_ip(request)
+    is_allowed, remaining = check_rate_limit(ip, 'password_reset', max_attempts=3)
+    if not is_allowed:
+        return JsonResponse({
+            'success': False, 
+            'error': 'Too many password reset attempts. Please try again later.'
+        }, status=429)
+
     cache_key = f"password_reset_requested: {email}"
     if cache.get(cache_key):
-        return JsonResponse({'success': False, 'error': 'Please waite before requesting another reset email'})
+        return JsonResponse({'success': False, 'error': 'Please wait before requesting another reset email'})
 
     try:
         user = PopUpCustomer.objects.get(email=email)
+        user_exists = True
     except PopUpCustomer.DoesNotExist:
+        user_exists = False
         time.sleep(1) # prevent timing attack
-        return JsonResponse({'success':False, 'error': 'Email not found.'}, status=404)
-    
-    ip = get_client_ip(request)
-    print('ip', ip)
+        # return JsonResponse({'success':True, 'error': 'If an account exists, a password reset link has been sent.'}, status=404)
+    # After sending email, return same message
 
-    # Rate Limiting: IP + User
-    recent_request = PopUpPasswordResetRequestLog.objects.filter(
-        customer=user,
-        ip_address=ip,
-        requested_at__gte=now_time - RESET_EMAIL_COOLDOWN
-    ).exists()
+    # ✅ Always return same message regardless of whether user exists
+    if not user_exists:
+        return JsonResponse({
+            'success': True,  # ✅ Changed to True
+            'message': 'If an account exists, a password reset link has been sent.' })
 
-    if recent_request:
-        return JsonResponse({'success': False, 'error': 'Reset already requested recently'}, status=429)
     
-    # Session rate limiting
-    rate_limit_key = f"password_reset_cooldown_{ip}"
-    last_request_time = request.session.get(rate_limit_key)
-
-    if last_request_time:
-        try:
-            from django.utils import timezone
-            last_time = timezone.datetime.fromisoformat(last_request_time)
-            if (now_time - last_time) < RESET_EMAIL_COOLDOWN:
-                return JsonResponse({'success': False, 'error': 'Reset already requested recently'}, status=429)
-        except ValueError:
-            pass
-    
+    # Check user-specific rate limiting
     if user.last_password_reset and now_time - user.last_password_reset < RESET_EMAIL_COOLDOWN:
-        return JsonResponse({'success': False, 'error': 'Reset already request recent'}, status=429)
+        return JsonResponse({
+            'success': False, 
+            'error': 'Reset already requested recently'
+        }, status=429)
     
-    # Save to session and log
-    request.session[rate_limit_key] = now_time.isoformat()
-    cache.set(cache_key, True, timeout=RATE_LIMIT_SECONDS)
+    # Increment rate limit
+    increment_rate_limit(ip, 'password_reset')
+    
+    # Log the request
     PopUpPasswordResetRequestLog.objects.create(customer=user, ip_address=ip)
 
+    # Generate reset link
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
-    reset_link = request.build_absolute_uri(reverse('pop_accounts:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}))
+    reset_link = request.build_absolute_uri(
+        reverse('pop_accounts:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+    )
 
     logger.info(f"Password reset requested: user={user.email}, ip={ip}, time={now_time}")
+
     try:
         send_mail(
             subject="Reset Your Password",
@@ -116,13 +124,76 @@ def handle_password_reset_request(request, email: str):
     except Exception as e:
         logger.error(f"Failed to send password reset email to {email}: {str(e)}")
         return JsonResponse({
-            'success': False, 'error': 'Unable to send email at this time. Please try again later.'
+            'success': False, 
+            'error': 'Unable to send email at this time. Please try again later.'
         }, status=500)
 
     user.last_password_reset = now_time
     user.save(update_fields=['last_password_reset'])
 
-    return JsonResponse({'success': True, 'message': 'Password reset link sent'})
+    # ✅ Return same message as non-existent user case
+    return JsonResponse({
+        'success': True, 
+        'message': 'If an account exists, a password reset link has been sent.'
+    })
+    # # Rate Limiting: IP + User
+    # recent_request = PopUpPasswordResetRequestLog.objects.filter(
+    #     customer=user,
+    #     ip_address=ip,
+    #     requested_at__gte=now_time - RESET_EMAIL_COOLDOWN
+    # ).exists()
+
+    # if recent_request:
+    #     return JsonResponse({'success': False, 'error': 'Reset already requested recently'}, status=429)
+    
+    # Session rate limiting
+    # rate_limit_key = f"password_reset_cooldown_{ip}"
+    # last_request_time = request.session.get(rate_limit_key)
+
+    # if last_request_time:
+    #     try:
+    #         from django.utils import timezone
+    #         last_time = timezone.datetime.fromisoformat(last_request_time)
+    #         if (now_time - last_time) < RESET_EMAIL_COOLDOWN:
+    #             return JsonResponse({'success': False, 'error': 'Reset already requested recently'}, status=429)
+    #     except ValueError:
+    #         pass
+    
+    # if user.last_password_reset and now_time - user.last_password_reset < RESET_EMAIL_COOLDOWN:
+    #     return JsonResponse({'success': False, 'error': 'Reset already request recent'}, status=429)
+    
+    # # Save to session and log
+    # request.session[rate_limit_key] = now_time.isoformat()
+    # cache.set(cache_key, True, timeout=RATE_LIMIT_SECONDS)
+    # PopUpPasswordResetRequestLog.objects.create(customer=user, ip_address=ip)
+
+    # uid = urlsafe_base64_encode(force_bytes(user.pk))
+    # token = default_token_generator.make_token(user)
+    # reset_link = request.build_absolute_uri(reverse('pop_accounts:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}))
+
+    # logger.info(f"Password reset requested: user={user.email}, ip={ip}, time={now_time}")
+    # try:
+    #     send_mail(
+    #         subject="Reset Your Password",
+    #         message=f"Click the link below to reset your password:\n\n{reset_link}",
+    #         from_email="no-reply@thepopup.com",
+    #         recipient_list=[email],
+    #         fail_silently=False
+    #     )
+    # except Exception as e:
+    #     logger.error(f"Failed to send password reset email to {email}: {str(e)}")
+    #     return JsonResponse({
+    #         'success': False, 'error': 'Unable to send email at this time. Please try again later.'
+    #     }, status=500)
+
+    # user.last_password_reset = now_time
+    # user.save(update_fields=['last_password_reset'])
+    # # After sending email, return same message
+    # return JsonResponse({
+    #     'success': True, 
+    #     'message': 'If an account exists, a password reset link has been sent.'
+    # })
+    # return JsonResponse({'success': True, 'message': 'Password reset link sent'})
     
 
 def validate_email_address(email):
@@ -154,14 +225,19 @@ def validate_password_strength(password):
 
 def get_client_ip(request):
     """
-    Retrieve client IP address from request headers, accounting for proxies
+    Retrieve client IP address from request headers, accounting for proxies.
+    
+    IMPORTANT: Only trust X-Forwarded-For if behind a trusted proxy/load balancer.
+    In production behind nginx/AWS ALB/Cloudflare, this is safe.
+    In development or direct-to-Django, only use REMOTE_ADDR.
     """
-    x_forward_for = request.META.get('HTTP_X_FORWWARED_FOR')
-    if x_forward_for:
-        ip = x_forward_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+    client_ip, is_routable = ipware_get_client_ip(request)
+    
+    if client_ip is None:
+        # Unable to get IP
+        return '0.0.0.0'
+    
+    return client_ip
 
 
 
@@ -222,3 +298,96 @@ def get_stripe_payment_reference(user):
         print('stripe error: {e}')
         
     return payment_methods
+
+
+def is_disposable_email(email):
+    """
+    Check if email is from a disposable/temporary email service.
+    
+    Args:
+        email (str): Email address to check
+        
+    Returns:
+        bool: True if disposable, False otherwise
+    """
+    with open('pop_accounts/utils/disposable_email_blocklist.conf') as blocklist:
+        blocklist_content = {line.rstrip() for line in blocklist.readlines()}
+        domain_parts = email.partition('@')[2].split(".")
+        for i in range(len(domain_parts) - 1):
+            if ".".join(domain_parts[i:]) in blocklist_content:
+                return True
+        return False
+    
+    
+
+def check_rate_limit(ip_address, action_type, max_attempts=4, window_seconds=3600):
+    """
+    Check if IP has exceeded rate limit for a specific action.
+    
+    Args:
+        ip_address (str): IP address to check
+        action_type (str): Type of action (e.g., 'registration', 'password_reset')
+        max_attempts (int): Maximum attempts allowed
+        window_seconds (int): Time window in seconds
+        
+    Returns:
+        tuple: (is_allowed: bool, attempts_remaining: int)
+    """
+    cache_key = f"{action_type}_attempt_{ip_address}"
+    attempts = cache.get(cache_key, 0)
+    if attempts >= max_attempts:
+        return False, 0
+    
+    return True, max_attempts - attempts
+
+
+def increment_rate_limit(ip_address, action_type, window_seconds=3600):
+    """
+    Increment rate limit counter for an IP and action.
+    
+    Args:
+        ip_address (str): IP address
+        action_type (str): Type of action
+        window_seconds (int): Time window in seconds
+    """
+    print('increment_rate_limit called')
+    cache_key = f"{action_type}_attempt_{ip_address}"
+    print('cache_key', cache_key)
+    attempts = cache.get(cache_key, 0)
+    print('attempts', attempts)
+    cache.set(cache_key, attempts + 1, window_seconds)
+
+
+def log_registration_with_geo(request, user):
+    """Log registratino with geogrpahic data"""
+    ip = get_client_ip(request)
+    try:
+        # Use Django settings for the path
+        # db_path = os.path.join(settings.GEOIP_PATH, GEOIP_CITY)
+        db_path = "/Users/paulblack/VS Code/pop_up_shop/geoip/GeoLite2-City.mmdb"        
+        reader = geoip2.database.Reader(db_path)
+        response = reader.city(ip)
+      
+        country = response.country.iso_code
+        city = response.city.name if response.city.name else "Unknown"
+
+
+        # Update your IP Tracking Record
+        PopUpCustomerIP.objects.filter(customer=user, ip_address=ip).update(country=country,city=city)
+
+        # Alert if high-risk country
+        if country in ['RU', 'CN', 'UA', 'KP']:
+            logger.warning(
+                f"Registration from high-risk country: "
+                f"email={user.email}, ip={ip}, country={country}, city={city}"
+            )
+        reader.close()
+    except FileNotFoundError:
+        logger.error('GEOIP database not found. Please download GeoLite2-City.mmdb')
+    except Exception as e:
+        logger.error(f'GeoIp lookup failed: {e}')
+
+
+def get_email_provider(email):
+    """Extract email provider domain"""
+    return email.split('@')[1].lower()

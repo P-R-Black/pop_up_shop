@@ -1,11 +1,11 @@
 from unittest import skip
 
-from auction.models import PopUpProduct, PopUpCategory, PopUpBrand, PopUpProductType
+from pop_up_auction.models import PopUpProduct, PopUpCategory, PopUpBrand, PopUpProductType
 from django.test import Client, TestCase, RequestFactory
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.http import HttpRequest
-from auction.views import AllAuctionView
+from pop_up_auction.views import AllAuctionView
 from pop_accounts.models import PopUpCustomer
 from django.utils.timezone import now, make_aware
 from datetime import timedelta, datetime

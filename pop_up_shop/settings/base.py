@@ -22,6 +22,14 @@ from celery.schedules import crontab
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
+
+
+# GEOIP2 Database paths
+GEOIP_CITY = 'GeoLite2-City.mmdb'
+GEOIP_COUNTRY = 'GeoLite2-Country.mmdb'
+
+# /Users/paulblack/VS Code/pop_up_shop/geoip/GeoLite2-City.mmdb
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/

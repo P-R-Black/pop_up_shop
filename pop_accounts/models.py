@@ -66,7 +66,7 @@ class SoftDeleteUserManager(models.Manager):
 class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     BRAND_CHOICES = (
         ('adidas', 'Adidas'),
-        {'asics', 'Asics'},
+        ('asics', 'Asics'),
         ('balenciaga', 'Balenciaga'),
         ('brooks', 'Brooks'),
         ('fear_of_god ', 'Fear of God'),
@@ -268,7 +268,6 @@ class PopUpBid(models.Model):
     """
     Model for tracking Bids
     """
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="bids")
     product = models.ForeignKey('pop_up_auction.PopUpProduct', on_delete=models.CASCADE, related_name="bids")
@@ -328,7 +327,15 @@ class PopUpBid(models.Model):
     def process_auto_bid(self, round=0, max_rounds=5):
         """
         Handles auto-bidding with protection against infinite loops.
+        
+        NOTE: Auto-bidding feature is not yet fully implemented.
+        This method is called during save() but currently returns early.
+        TODO: Complete implementation in future sprint.
         """
+        # Early return - feature not yet implemented
+        return
+    
+
         if round >= max_rounds:
             print(f"[Auto-bid] Max rounds ({max_rounds}) reached. Stopping auto-bids.")
             return
@@ -411,6 +418,8 @@ class PopUpCustomerIP(models.Model):
     """
     customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="ip_addresses")
     ip_address = models.GenericIPAddressField()
+    country = models.CharField(max_length=2, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

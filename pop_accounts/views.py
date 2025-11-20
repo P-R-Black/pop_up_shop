@@ -47,8 +47,9 @@ from django.core.cache import cache
 from django.utils.timezone import now
 from django.contrib.auth import logout
 from django.views import View
-from .utils.utils import (validate_email_address, get_client_ip, add_specs_to_products, 
-                          calculate_auction_progress, handle_password_reset_request, send_verification_email)
+from .utils.utils import (validate_email_address, get_client_ip, add_specs_to_products, is_disposable_email,
+                          increment_rate_limit, calculate_auction_progress, handle_password_reset_request, 
+                          send_verification_email, check_rate_limit, get_email_provider, log_registration_with_geo)
 from django.conf import settings
 import json
 from typing import Any, Dict, Optional
@@ -2715,46 +2716,76 @@ class RegisterView(View):
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
 
-        if email and password and password2:
+        # Step 1: Validate required fields First
+        if not (email and password and password2):
+            return JsonResponse({'success': False, 'errors': 'Missing required fields'}, status=400)
+
+        if not password2: 
+            return JsonResponse({'success': False, 'errors': 'Please confirm password'}, 400)
+
+        # Step 2: Check rate limiting using utility function
+        ip = get_client_ip(request)
+        is_allowed, remaining = check_rate_limit(ip, 'registration', max_attempts=4)
+
+        if not is_allowed:
+            return JsonResponse({
+                'success': False,
+                'errors': 'Too many registration attempts. Please try again later'
+            }, status=429)
+
+        # Step 3: Check for disposable email
+        if is_disposable_email(email):
+            print('is_disposable_email being checked')
+            return JsonResponse({
+                'success': False,
+                'errors': {'email': ['Disposable email addresses are not allowed.']}
+            }, status=400)
+
+        # Form validation and processing
+        data = request.POST.copy()
+        data['email'] = email
+
+        # if email and password and password2:
             # email = request.session.get('auth_email') or request.POST.get('email')
-            data = request.POST.copy()
-            data['email'] = email
-            try:
-                form = PopUpRegistrationForm(data)
-            except Exception as e:
-                return JsonResponse({'error': 'Form init failed', 'details': str(e)}, status=500)
 
-            if form.is_valid():
-                user = form.save(commit=False)
-                user.set_password(form.cleaned_data['password'])
-                user.is_active = False  # Disable account until email is confirmed
-                user.save()
-                # capture and store the IP address
-                ip_address = get_client_ip(request)
-                if not PopUpCustomerIP.objects.filter(customer=user, ip_address=ip_address).exists():
-                    PopUpCustomerIP.objects.create(customer=user, ip_address=ip_address)
-                try:
-                    send_verification_email(request, user)
-                except Exception as e:
-                    print('Error sending verification email', e)
-                return JsonResponse({'registered': True, 'message': 'Check your email to confirm your account'})
-            else:
-                return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+        try:
+            form = PopUpRegistrationForm(data)
+        except Exception as e:
+            return JsonResponse({'error': 'Form init failed', 'details': str(e)}, status=500)
+
+        if form.is_valid():
+            increment_rate_limit(ip, 'registration')
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.is_active = False  # Disable account until email is confirmed
+            user.save()
+
+            # capture and store the IP address
+            ip_address = get_client_ip(request)
+            if not PopUpCustomerIP.objects.filter(customer=user, ip_address=ip_address).exists():
+                PopUpCustomerIP.objects.create(customer=user, ip_address=ip_address)
             
-        elif email and password:
-            return JsonResponse({'success': False, 'errors': 'Please confirm password'}, status=400)
+            # Add geographic data and check for high-risk countries
+            log_registration_with_geo(request, user)
+            # Capture email domain
+            provider = get_email_provider(user.email)
+            logger.info(f"Registration: provider={provider}, ip_address={ip_address}")
 
-        return JsonResponse({'success': False, 'errors': 'Missing required fields'}, status=400)
-    
-    def send_verification_email(self, request, user):
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        verify_url = request.build_absolute_uri(reverse('pop_accounts:verify_email', kwargs={'uidb64': uid, 'token': token}))
 
-        subject = "Verify Your Email"
-        message = f"Hi {user.first_name}, \n\nPlease click the link below to verify your email:\n{verify_url}\n\nThanks!"
-        send_mail(
-            subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+            try:
+                send_verification_email(request, user)
+            except Exception as e:
+                print('Error sending verification email', e)
+            return JsonResponse({'registered': True, 'message': 'Check your email to confirm your account'})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+            
+        # elif email and password:
+        #     return JsonResponse({'success': False, 'errors': 'Please confirm password'}, status=400)
+
+        
+        # return JsonResponse({'success': False, 'errors': 'Missing required fields'}, status=400)
+
 
 
 class Login2FAView(View):
@@ -3195,7 +3226,66 @@ class CompleteProfileView(UpdateView):
     # 🟢 View Test Completed
     # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    View for user to complete profile if they login using Facebook or Google.
+    Finalizes registration for users who sign in using Google or Facebook.
+
+    This view is triggered when a user authenticates through a social provider
+    (Google/Facebook) but their profile lacks required fields such as first name
+    or email. The social-auth pipeline pauses and redirects here so the user can
+    manually supply the missing information.
+
+    Workflow Overview:
+    ------------------
+    1. **User Identification**
+       - If an authenticated user accesses the page, their existing profile is
+         used as the update target.
+       - Otherwise, the view retrieves a temporary social-auth user record from
+         the session via `social_profile_user_id`.
+       - If no pending profile exists, a 404 is raised.
+
+    2. **Form Handling**
+       - Uses `SocialProfileCompletionForm` to collect missing information such
+         as `email` and `first_name`.
+       - On valid submission:
+            - The user's data is saved.
+            - The account is activated if not already active.
+            - The social-auth pipeline is resumed (if paused) using the stored
+              `partial_pipeline` token.
+            - The user is logged in using Django’s authentication backend.
+
+    3. **Pipeline Continuation**
+       - If the pipeline continuation returns a redirect response, it is honored.
+       - The temporary session key `social_profile_user_id` is removed to avoid
+         re-triggering the pipeline.
+
+    4. **AJAX Support**
+       - If the request comes from the sign-in modal (via AJAX), the view returns
+         a JSON response containing:
+            - success status
+            - the next page to load
+            - minimal user information
+
+    5. **Fallback**
+       - If no pipeline continuation occurs, the user is logged in normally and
+         redirected to their account dashboard (via `get_success_url()`).
+
+    When This View Is Used:
+    ------------------------
+    - Google/Facebook login succeeded, but the provider did not return all
+      required fields.
+    - User needs to finish profile setup before accessing the dashboard.
+    - Example: Google returns an email but no first name, or Facebook returns a
+      name but email is private.
+
+    Returns:
+    --------
+    - **HTML page** prompting user to complete their profile.
+    - **Redirect** if the social-auth pipeline continues.
+    - **JSON** if the request is AJAX-based.
+
+    Raises:
+    -------
+    - Http404: If the user is neither authenticated nor found in the
+      `social_profile_user_id` session key.
     """
     model = PopUpCustomer
     form_class = SocialProfileCompletionForm
@@ -3216,7 +3306,7 @@ class CompleteProfileView(UpdateView):
             raise Http404("Pending social user not found.")
 
     def form_valid(self, form):
-        # 1️Save form updates
+        # Save form updates
         user = form.save()
 
         # Log in user immediately so they appear authenticated
@@ -3224,7 +3314,7 @@ class CompleteProfileView(UpdateView):
             user.is_active = True  # mark as active
             user.save(update_fields=['is_active'])
 
-        # 2️⃣ Try to resume the social-auth pipeline (if any)
+        # Try to resume the social-auth pipeline (if any)
         strategy = load_strategy(self.request)
         partial = strategy.session_get('partial_pipeline')
         if partial:
@@ -3243,7 +3333,7 @@ class CompleteProfileView(UpdateView):
                     login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
                     return result
 
-        # 3️⃣ Fallback: if pipeline wasn’t present or didn’t redirect
+        # Fallback: if pipeline wasn’t present or didn’t redirect
         login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
 
         # Get response to incorporate into sign-in registration modal
@@ -3270,31 +3360,42 @@ class CompleteProfileView(UpdateView):
         return reverse("pop_accounts:dashboard")
 
 
-def social_login_complete(request):
+
+class SocialLoginCompleteView(TemplateView):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
     Final step for popup logins — closes the popup and refreshes parent.
     """
+    template_name = "pop_accounts/registration/social_login_complete.html"
 
-    # Check if this is an AJAX request for user info
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        
-        response_data = {
-            'authenticated': request.user.is_authenticated,
-            'firstName': request.user.first_name if request.user.is_authenticated else '',
-            'lastName': request.user.last_name if request.user.is_authenticated else '',
-            'email': request.user.email if request.user.is_authenticated else '',
-            'isStaff': request.user.is_staff if request.user.is_authenticated else False,
-            'userId': request.user.id if request.user.is_authenticated else None,
-        }
-        
+    def get(self, request, *args, **kwargs):
+        """Handle GET Requests - return JSON for AJAX, template otherwise"""
+        if self.is_ajax_request():
+            return self.get_ajax_response()
+        return super().get(request, *args, **kwargs)
+    
 
+    def post(self, request, *args, **kwargs):
+        if self.is_ajax_request():
+            return self.get_ajax_response()
+        return super().get(request, *args, **kwargs)
+    
+    def is_ajax_request(self):
+        return self.request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    def get_ajax_response(self):
+        """Return JSON response with user auth status"""
+        user = self.request.user
         return JsonResponse({
-            'authenticated': request.user.is_authenticated,
-            'firstName': request.user.first_name if request.user.is_authenticated else '',
-            'isStaff': request.user.is_staff if request.user.is_authenticated else False
+            'authenticated': user.is_authenticated,
+            'firstName': user.first_name if user.is_authenticated else '',
+            'lastName': user.last_name if user.is_authenticated else '',
+            'email': user.email if user.is_authenticated else '',
+            'isStaff': user.is_staff if user.is_authenticated else False,
+            'userId': user.id if user.is_authenticated else None,
         })
-  
-    return render(request, "pop_accounts/registration/social_login_complete.html")
+
 
 
 def get_user_info(request):

@@ -10,7 +10,7 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     MostInterested, TotalOpenBidsView, TotalAccountsView, AccountSizesView, 
                     PendingOkayToShipView, PendingOrderShippingDetailView, UpdateShippingView, 
                     GetOrderShippingDetail, UpdateShippingPostView, ViewShipmentsView, AddProductsGetView,
-                    Resend2FACodeView, SendPasswordResetLink)
+                    Resend2FACodeView, SendPasswordResetLink, SocialLoginCompleteView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -23,7 +23,7 @@ urlpatterns = [
 
     # Social Auth / Social Login
     path('auth/complete-profile/', CompleteProfileView.as_view(), name='complete_profile'),
-    path('social-login-complete/', views.social_login_complete, name='social_login_complete'),
+    path('social-login-complete/', SocialLoginCompleteView.as_view(), name='social_login_complete'),
     path('get-user-info/', views.get_user_info, name="get_user_info"),
 
     

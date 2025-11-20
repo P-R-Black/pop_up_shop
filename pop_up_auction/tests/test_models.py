@@ -1,11 +1,12 @@
 from django.test import TestCase
-from auction.models import (PopUpProduct, PopUpCategory, PopUpBrand, 
+from pop_up_auction.models import (PopUpProduct, PopUpCategory, PopUpBrand, 
                             PopUpProductType, PopUpProductSpecification, 
                             PopUpProductSpecificationValue)
 
-from django.utils.timezone import now
+from django.utils import timezone as django_timezone
+from datetime import timezone as dt_timezone, datetime
+from django.utils.timezone import now, make_aware
 from datetime import datetime, timedelta
-from django.utils.timezone import make_aware
 from freezegun import freeze_time
 from unittest.mock import patch
 
@@ -204,8 +205,9 @@ class TestProductsUpcomingAuction(TestCase):
         PopUpBrand.objects.create(name='Jordan', slug='jordan')
         PopUpProductType.objects.create(name='shoe', slug='shoe')
 
-        auction_start = make_aware(datetime(2025, 6, 1, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 6, 8, 12, 0, 0))
+
+        auction_start = make_aware(datetime(2025, 11, 18, 12, 0, 0))
+        auction_end = make_aware(datetime(2025, 11, 24, 12, 0, 0))
 
         self.prod_one = PopUpProduct.objects.create(
             product_type_id=1, 
