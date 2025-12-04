@@ -1,6 +1,9 @@
 from django.core.management.base import BaseCommand
-from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
+from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerAddress
 from pop_accounts.dummy_user_data import test_account_data
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 """
@@ -42,30 +45,35 @@ favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default
 """
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
-        print('test')
+        print('Running dummy user populate...')
 
         for tad in test_account_data:
             # print('tad', tad, '\n')
-            if PopUpCustomer.objects.filter(email=tad['email']).exists():
+            if User.objects.filter(email=tad['email']).exists():
                 self.stdout.write(self.style.WARNING(f"User with email {tad['email']} already exists, skipping name..."))
                 continue
-            user = PopUpCustomer(
+
+            # create the user
+            new_user = User(
                 email = tad['email'],
                 first_name = tad['first_name'],
                 middle_name = tad['middle_name'],
                 last_name = tad['last_name'],
                 mobile_phone = tad['mobile_phone'],
                 mobile_notification = True,
-                shoe_size = tad['shoe_size'],
-                size_gender = tad['size_gender'] ,
-                favorite_brand = tad['favorite_brand'],
-
             )
-            user.set_password(tad['password'])
-            user.save()
+            new_user.set_password(tad['password'])
+            new_user.save()
+
+            # Update the auto-created PopUpCustomerProfile because it is already created by the signal
+            profile = new_user.popupcustomerprofile
+            profile.shoe_size = tad['shoe_size']
+            profile.size_gender = tad['size_gender']
+            profile.favorite_brand = tad['favorite_brand']
+            profile.save()
 
             user_address = PopUpCustomerAddress(
-                customer=user,
+                customer=new_user,
                 postcode = tad["postcode"],
                 address_line = tad["address_line"],
                 address_line2 = tad["address_line2"],

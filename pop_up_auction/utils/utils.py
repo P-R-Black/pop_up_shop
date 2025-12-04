@@ -1,5 +1,5 @@
 from pop_up_auction.models import PopUpProduct
-from pop_accounts.models import PopUpCustomer, PopUpPurchase, PopUpBid
+from pop_accounts.models import PopUpCustomerProfile,  PopUpBid, PopUpPurchase
 from django.core.mail import send_mail
 from django.db.models import Max
 from django.utils import timezone
@@ -14,35 +14,39 @@ def get_customer_bid_history_context(customer_id):
     - bid_history: List of formatted bid data
     - statistics: Summary stats for dashboard use
     """
+    # Needed For SQL Version
     # Get the latest bid for each product by this customer
-    latest_bids_data = (
-        PopUpBid.objects
-        .filter(customer_id=customer_id, is_active=False)
-        .values('product_id')
-        .annotate(last_bid_time=Max('timestamp'))
-    )
-    
-    # Get the actual bid records
-    product_ids = [bid['product_id'] for bid in latest_bids_data]
-    # PostgreSQL Version
-    # latest_bids = (
+    # latest_bids_data = (
     #     PopUpBid.objects
-    #     .filter(customer_id=customer_id, is_active=True, product_id__in=product_ids)
-    #     .select_related('product')
-    #     .order_by('product_id', '-timestamp')
-    #     .distinct('product_id')  # PostgreSQL - for other DBs, use the alternative below
+    #     .filter(customer_id=customer_id, is_active=False)
+    #     .values('product_id')
+    #     .annotate(last_bid_time=Max('timestamp'))
     # )
     
-    # Alternative for non-PostgreSQL databases:
-    latest_bids = []
-    for product_id in product_ids:
-        last_bid = PopUpBid.objects.filter(
-            customer_id=customer_id, 
-            product_id=product_id, 
-            is_active=False
-        ).select_related('product').order_by('-timestamp').first()
-        if last_bid:
-            latest_bids.append(last_bid)
+    # Needed For SQL Version 
+    # latest_bids = []
+    # for product_id in product_ids:
+    #     last_bid = PopUpBid.objects.filter(
+    #         customer_id=customer_id, 
+    #         product_id=product_id, 
+    #         is_active=False
+    #     ).select_related('product').order_by('-timestamp').first()
+    #     if last_bid:
+    #         latest_bids.append(last_bid)
+
+    # Get the actual bid records
+    # product_ids = [bid['product_id'] for bid in latest_bids_data]
+
+    # PostgreSQL Version
+    latest_bids_qs = (
+        PopUpBid.objects
+        .filter(customer_id=customer_id)
+        .order_by('product_id', '-timestamp')
+        .distinct('product_id')  # PostgreSQL - for other DBs, use the alternative below
+        .select_related('product')
+    )
+
+    latest_bids = list(latest_bids_qs)
     
     # Format the data for template use
     bid_history = []
@@ -52,14 +56,16 @@ def get_customer_bid_history_context(customer_id):
     
     for bid in latest_bids:
         # Check if product auction is still active using your auction methods
-        is_auction_active = bid.product.is_auction_phase()
+        # is_auction_active = bid.product.is_auction_phase()
 
         # Build MPTT specifications dictionary (similar to your add_specs_to_products function)
         mptt_specs = {
             spec.specification.name: spec.value
             for spec in bid.product.popupproductspecificationvalue_set.all()
         }
-        
+        is_winning = bid.is_winning_bid
+        status = "Winning" if is_winning else "Outbid"
+
         bid_data = {
             'id': bid.id,
             'product': bid.product,
@@ -73,7 +79,7 @@ def get_customer_bid_history_context(customer_id):
             'has_auto_bid': bid.max_auto_bid is not None,
             'max_auto_bid': bid.max_auto_bid,
             'bid_increment': bid.bid_increment,
-            'is_auction_active': is_auction_active,
+            'is_auction_active': bid.product.is_auction_phase(),
             'auction_status': bid.product.auction_status,
             'sale_outcome': bid.product.sale_outcome,
             'is_finalized': bid.product.auction_finalized,

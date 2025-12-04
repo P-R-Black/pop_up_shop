@@ -1,5 +1,6 @@
 from django.db import models
-from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
+# from accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpCustomerProfile
+from pop_accounts.models import PopUpCustomerAddress, PopUpCustomerProfile
 from pop_up_auction.models import PopUpProduct
 from pop_up_coupon.models import PopUpCoupon
 import uuid
@@ -13,7 +14,7 @@ from django.conf import settings
 class PopUpCustomerOrder(models.Model):
  
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey("pop_accounts.PopUpCustomer", on_delete=models.CASCADE, related_name='order_user')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='order_user')
     full_name = models.CharField(max_length=50)
     email = models.EmailField(_('email'))
     address1 = models.CharField(_('address'), max_length=250)

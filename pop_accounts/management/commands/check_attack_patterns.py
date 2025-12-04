@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils.timezone import now
 from datetime import timedelta
 from collections import Counter
-from pop_accounts.models import PopUpCustomer, PopUpCustomerIP, PopUpPasswordResetRequestLog
+from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerIP, PopUpPasswordResetRequestLog
 
 
 class Command(BaseCommand):
@@ -50,7 +50,7 @@ class Command(BaseCommand):
                 )
         
         # Check inactive users (like the nonprofit's Russian signup)
-        inactive_old = PopUpCustomer.objects.filter(
+        inactive_old = PopUpCustomerProfile.objects.filter(
             is_active=False,
             created__lt=now() - timedelta(days=7)
         ).count()

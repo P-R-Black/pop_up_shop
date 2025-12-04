@@ -3,7 +3,7 @@ from django.conf import settings
 from importlib import import_module
 from django.test import TestCase, Client, RequestFactory
 from django.contrib.auth.models import User
-from pop_accounts.models import PopUpCustomer
+from accounts.models import PopUpCustomer
 from django.http import HttpRequest
 from pop_up_home.views import home_page
 

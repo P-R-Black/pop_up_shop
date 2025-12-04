@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http.response import JsonResponse
 from pop_up_cart.cart import Cart
 from .models import PopUpCustomerOrder, PopUpOrderItem
-from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
+from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerAddress
 from pop_up_auction.models import PopUpProduct, WinnerReservation
 from pop_up_shipping.models import PopUpShipment
 from pop_accounts.utils.utils import add_specs_to_products

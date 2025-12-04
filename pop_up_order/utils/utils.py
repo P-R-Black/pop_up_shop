@@ -1,5 +1,5 @@
 from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
-from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
+from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerAddress
 from pop_up_auction.models import PopUpProduct, WinnerReservation
 from pop_up_shipping.models import PopUpShipment
 from pop_accounts.utils.utils import add_specs_to_products

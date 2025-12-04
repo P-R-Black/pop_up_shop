@@ -4,7 +4,7 @@ test_account_data = [
     {
         "id": "0123232445",
         "email": "peterparker@avengers.com",
-        "password": 'parkerPeter321',
+        "password": 'parkerPeter321!',
         "first_name":"Peter",
         "middle_name":"",
         "last_name":"Parker",

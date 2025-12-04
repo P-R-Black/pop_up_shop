@@ -1,7 +1,6 @@
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 import re
-from pop_accounts.models import PopUpCustomer, PopUpCustomerIP
 from django.conf import settings
 import stripe
 from datetime import timedelta
@@ -15,10 +14,15 @@ from django.urls import reverse
 from django.core.mail import send_mail
 from django.core.cache import cache
 from django.http import JsonResponse
-from pop_accounts.models import PopUpCustomer, PopUpPasswordResetRequestLog
+from pop_accounts.models import PopUpPasswordResetRequestLog, PopUpCustomerIP
 from ipware import get_client_ip as ipware_get_client_ip
 import geoip2.database
 import os
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
 
 logger = logging.getLogger(__name__)
 RESET_EMAIL_COOLDOWN = timedelta(minutes=5)
@@ -31,7 +35,7 @@ def send_verification_email(request, user):
     
     Args:
         request: HTTP request object (for building absolute URL)
-        user: PopUpCustomer instance to send verification to
+        user: User instance to send verification to
     """
     try:
         token = default_token_generator.make_token(user)
@@ -76,9 +80,9 @@ def handle_password_reset_request(request, email: str):
         return JsonResponse({'success': False, 'error': 'Please wait before requesting another reset email'})
 
     try:
-        user = PopUpCustomer.objects.get(email=email)
+        user = User.objects.get(email=email)
         user_exists = True
-    except PopUpCustomer.DoesNotExist:
+    except User.DoesNotExist:
         user_exists = False
         time.sleep(1) # prevent timing attack
         # return JsonResponse({'success':True, 'error': 'If an account exists, a password reset link has been sent.'}, status=404)

@@ -1,13 +1,18 @@
 from django.contrib.auth.backends import BaseBackend
-from pop_accounts.models import PopUpCustomer
+from pop_accounts.models import PopUpCustomerProfile
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+
 
 class EmailBackend(BaseBackend):
+    
     def authenticate(self, request, email=None, password=None, **kwargs):
         if email is None:
             email = kwargs.get('username')  # fallback to username param
         try:
-            user = PopUpCustomer.objects.get(email=email)
-        except PopUpCustomer.DoesNotExist:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
             return None
 
         if user.check_password(password):
@@ -16,6 +21,6 @@ class EmailBackend(BaseBackend):
 
     def get_user(self, user_id):
         try:
-            return PopUpCustomer.objects.get(pk=user_id)
-        except PopUpCustomer.DoesNotExist:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
             return None

@@ -1,9 +1,12 @@
 from django import forms
-from .models import PopUpCustomer, PopUpCustomerAddress
+from .models import PopUpCustomerProfile, PopUpCustomerAddress
 from django.contrib.auth.forms import (AuthenticationForm, PasswordResetForm, SetPasswordForm)
 import re
 from django.core.exceptions import ValidationError
 from .utils.utils import validate_password_strength
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # from django_countries.data import COUNTRIES
 
@@ -298,7 +301,7 @@ class PopUpEmailOnlyForm(forms.ModelForm):
     
 
     class Meta:
-        model = PopUpCustomer
+        model = PopUpCustomerProfile
         fields = ('email',)
 
 
@@ -326,7 +329,7 @@ class PopUpPasswordOnlyForm(forms.ModelForm):
     ))
 
     class Meta:
-        model = PopUpCustomer
+        model = PopUpCustomerProfile
         fields = ('password',)
 
 
@@ -359,7 +362,7 @@ class PopUpRegistrationForm(forms.ModelForm):
         widget=forms.PasswordInput)
 
     class Meta:
-        model = PopUpCustomer
+        model = User
         fields = ('email', 'first_name', 'password')
 
 
@@ -444,7 +447,7 @@ class PopUpEmailPasswordResetForm(forms.ModelForm):
     ))
 
     class Meta:
-        model = PopUpCustomer
+        model = PopUpCustomerProfile
         fields = ('email',)
 
 
@@ -513,7 +516,7 @@ class PopUpPasswordResetForm(forms.ModelForm):
         return cd['password2']
 
     class Meta:
-        model = PopUpCustomer
+        model = PopUpCustomerProfile
         fields = ('password',)
 
 
@@ -611,9 +614,9 @@ class PopUpUserEditForm(forms.Form):
         })  
     )
 
-    class Meta:
-        model = PopUpCustomer
-        fields = ('first_name', 'last_name', 'middle_mane', 'shoe_size', 'size_gender', 'favorite_brand', 'mobile_notification')
+    # class Meta:
+    #     model = PopUpCustomerProfile
+    #     fields = ('first_name', 'last_name', 'middle_mane', 'shoe_size', 'size_gender', 'favorite_brand', 'mobile_notification')
     
 
 
@@ -790,15 +793,20 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
 
 class SocialProfileCompletionForm(forms.ModelForm):
     class Meta:
-        model = PopUpCustomer
-        fields = ('email', 'first_name')
+        model = PopUpCustomerProfile
+        fields = ('user',)
+        # fields = ('email', 'first_name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email'].widget.attrs.update(
-            {'placeholder': 'Email'}
+        self.fields['user'].widget.attrs.update(
+            {'placeholder': 'user'}
         )
-        self.fields['first_name'].widget.attrs.update(
-            {'placeholder': 'First Name'}
-        )
+
+        # self.fields['email'].widget.attrs.update(
+        #     {'placeholder': 'Email'}
+        # )
+        # self.fields['first_name'].widget.attrs.update(
+        #     {'placeholder': 'First Name'}
+        # )
     

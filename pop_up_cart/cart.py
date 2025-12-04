@@ -20,7 +20,6 @@ class Cart:
         self.session = request.session
         self.session_cart = self.session.get('cart', {})
        
-
         # self.user = request.user # <= negativly impacting sign in 
         # self.is_authenticated = request.user.is_authenticated
 

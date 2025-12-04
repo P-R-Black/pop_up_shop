@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.conf import settings
-from pop_accounts.models import PopUpCustomer
+from pop_accounts.models import PopUpCustomerProfile
 from pop_up_auction.models import PopUpProduct
 from django.db.models import Q
 
@@ -201,7 +201,7 @@ def interested_in_products_update_and_notify_me_products_update(product_id):
         return []
 
     # Fetch all users who are either interested OR notified, without duplicates
-    users = PopUpCustomer.objects.filter(Q(prods_interested_in=product) | Q(prods_on_notice_for=product)
+    users = PopUpCustomerProfile.objects.filter(Q(prods_interested_in=product) | Q(prods_on_notice_for=product)
     ).distinct()
 
     # Return their emails
@@ -218,7 +218,7 @@ def send_interested_in_and_coming_soon_product_update_to_users(
     Emails Users who have marked a product "interested in" of udpate with product
     """
     
-    users = PopUpCustomer.objects.filter(
+    users = PopUpCustomerProfile.objects.filter(
         Q(prods_interested_in=product) | Q(prods_on_notice_for=product)
         ).distinct()
     

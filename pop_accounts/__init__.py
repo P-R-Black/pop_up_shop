@@ -1,0 +1,1 @@
+default_app_config = 'pop_accounts.apps.PopAccountsConfig'

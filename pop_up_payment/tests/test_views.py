@@ -3,7 +3,7 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from unittest.mock import patch
-from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
+from accounts.models import PopUpCustomer, PopUpCustomerAddress
 
 
 def create_test_user(email, password, first_name, last_name, shoe_size, size_gender):
@@ -117,5 +117,5 @@ class AddressViewTests(TestCase):
 
 # """
 # Run Test
-# python3 manage.py test pop_accounts/tests
+# python3 manage.py test accounts/tests
 # """

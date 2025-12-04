@@ -1,8 +1,8 @@
 from django.urls import path
-from pop_up_payment.views import stripe_webhook_view
+# from pop_up_payment.views import stripe_webhook_view
 from . import views
 from .views import (ProductBuyView, ShippingAddressView, BillingAddressView, 
-                    CreatePaymentIntentView,ProcessVenmoPaymentView)
+                    CreatePaymentIntentView,ProcessVenmoPaymentView, stripe_webhook_view)
 
 app_name ='pop_up_payment'
 

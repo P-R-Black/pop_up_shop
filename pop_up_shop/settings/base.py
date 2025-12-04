@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 # from dotenv import load_dotenv
 import os
+import sys
 import environ
 
 env = environ.Env()
@@ -21,15 +22,23 @@ from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+ROOT_DIR = BASE_DIR.parent
+
+sys.path.insert(0, str(ROOT_DIR))
+
+
+SHARED_APPS_DIR = '/Users/paulblack/PycharmProjects/Projects/shared_apps'
+sys.path.insert(0, SHARED_APPS_DIR)
+
 
 GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
 
+# /Users/paulblack/PycharmProjects/Projects/shared_app
 
 # GEOIP2 Database paths
 GEOIP_CITY = 'GeoLite2-City.mmdb'
 GEOIP_COUNTRY = 'GeoLite2-Country.mmdb'
 
-# /Users/paulblack/VS Code/pop_up_shop/geoip/GeoLite2-City.mmdb
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -37,13 +46,11 @@ GEOIP_COUNTRY = 'GeoLite2-Country.mmdb'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY=os.environ.get('SECRET_KEY')
 
-# print('SEC_TEST', SEC_TEST)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG=True 
 
-# print('DEBUG TEST', DEBUG)
-#os.environ.get('DEBUG')
+
 
 ALLOWED_HOSTS = [
     "*", 
@@ -88,7 +95,7 @@ INSTALLED_APPS = [
     'social_django',
     'django_extensions',
     'django_recaptcha',
-   
+    'accounts'
 ]
 
 MIDDLEWARE = [
@@ -103,6 +110,7 @@ MIDDLEWARE = [
 
 AUTHENTICATION_BACKENDS = [
     'pop_accounts.backends.EmailBackend',
+    # 'accounts.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
     'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.google.GoogleOAuth2',
@@ -123,11 +131,14 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_user',
     'social_core.pipeline.user.get_username',
     'social_core.pipeline.user.create_user',
-    'pop_accounts.pipeline.save_social_profile',  
+    'pop_accounts.pipeline.save_social_profile', 
+    # 'accounts.pipeline.save_social_profile',  
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',
-    'pop_accounts.pipeline.ensure_user_login',  # Added this to get data from Google sign-in!
+    # 'accounts.pipeline.ensure_user_login',  # Added this to get data from Google sign-in!
+    # 'accounts.pipeline.require_profile_completion',
+    'pop_accounts.pipeline.ensure_user_login', 
     'pop_accounts.pipeline.require_profile_completion',
 )
 
@@ -165,6 +176,8 @@ TEMPLATES = [
                 'pop_up_auction.context_processors.categories',
                 'pop_accounts.context_processors.auth_forms',
                 'pop_accounts.context_processors.admin_status',
+                # 'accounts.context_processors.auth_forms',
+                # 'accounts.context_processors.admin_status',
                 'pop_up_cart.context_processors.cart',
                 'pop_up_home.context_processors.footer_links',
             ],
@@ -178,12 +191,26 @@ WSGI_APPLICATION = 'pop_up_shop.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+
+# Add PostgreSQL config
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'shared_auth_db',  # Same database as accounts_master
+        'USER': 'paulblack',
+        'PASSWORD': '',  # Blank since using trust auth
+        # 'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
+
 
 
 # Password validation
@@ -270,7 +297,9 @@ STATICFILES_DIRS = [(os.path.join(BASE_DIR, '../static/'))]
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-AUTH_USER_MODEL = 'pop_accounts.PopUpCustomer'
+# AUTH_USER_MODEL = 'pop_accounts.PopUpCustomer'
+AUTH_USER_MODEL = 'accounts.User'
+
 
 
 

@@ -15,8 +15,9 @@ from pop_up_order.utils.utils import user_orders, user_shipments
 from pop_up_order.models import PopUpOrderItem, PopUpCustomerOrder
 from django.db.models import Prefetch
 from django.http import JsonResponse, HttpResponse
-from .models import PopUpCustomer, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpBid, PopUpCustomerIP
-from pop_up_auction.models import PopUpProduct, PopUpProductSpecification, PopUpProductSpecificationValue, PopUpProductType
+from .models import PopUpCustomerProfile, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpCustomerIP, PopUpBid
+from pop_up_auction.models import (PopUpProduct, PopUpProductSpecification, PopUpProductSpecificationValue, 
+                                   PopUpProductType)
 from pop_up_auction.utils.utils import get_customer_bid_history_context
 from django.views.decorators.http import require_http_methods
 from pop_up_payment.models import PopUpPayment
@@ -71,6 +72,8 @@ from django.http import Http404
 from social_django.utils import load_strategy, load_backend
 from social_django.views import _do_login
 from pop_accounts.utils.utils import get_stripe_payment_reference 
+
+User = get_user_model()
 
 
 logger  = logging.getLogger('security')
@@ -132,8 +135,8 @@ class UserPasswordResetConfirmView(View):
         """
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
-            return PopUpCustomer.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, PopUpCustomer.DoesNotExist) as e:
+            return User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
             return None
     
     def get(self, request, uidb64, token, *args, **kwargs):
@@ -226,19 +229,23 @@ class UserDashboardView(LoginRequiredMixin, View):
             HttpResponse: Rendered HTML response with user interest data and product specs.
         """
         user = request.user
+        profile = request.user.popupcustomerprofile
+        # profile, created = PopUpCustomerProfile.objects.get_or_create(user=request.user)
+        
         addresses = user.address.filter(default=True)
-        prod_interested_in = user.prods_interested_in.all()[:3]
-        prods_on_notice_for = user.prods_on_notice_for.all()[:3]
+        prod_interested_in = profile.prods_interested_in.all()[:3]
+        prods_on_notice_for = profile.prods_on_notice_for.all()[:3]
+
 
         subquery = PopUpBid.objects.filter(
-            customer_id=user.id,
+            customer_id=profile,
             product=OuterRef('product'),
             is_active=True
         ).order_by('-amount').values('amount')[:1]
        
         # This queryset contains a reference to an outer query and may only be used in a subquery.
         highest_bid_objects = PopUpBid.objects.filter(
-            customer_id=user.id,
+            customer_id=profile,
             is_active=True,
             amount=Subquery(subquery)
         ).select_related('product')  # This will fetch the related product data
@@ -344,14 +351,16 @@ class UserInterestedInView(LoginRequiredMixin, View):
             HttpResponse: Rendered HTML response with user interest data and product specs.
         """
         user = request.user
-        prod_interested_in = user.prods_interested_in.all()
+        profile = request.user.popupcustomerprofile
+
+        prod_interested_in = profile.prods_interested_in.all()
 
         for p in self.product:
             self.product_specifications = { 
                 spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
         
         context = {
-            'user': user, 'prod_interested_in': prod_interested_in, 
+            'user': user, 'profile': profile, 'prod_interested_in': prod_interested_in, 
             'product_specifications': self.product_specifications, 
             'user_intested_in_copy': self.user_intested_in_copy}
         return render(request, self.template_name, context)
@@ -405,7 +414,7 @@ class MarkProductInterestedView(LoginRequiredMixin, View):
 
     Models involved:
         - PopUpProduct: The product being marked as interested or not interested.
-        - PopUpCustomer (request.user): The authenticated user whose list is updated.
+        - PopUpCustomerProfile (request.user): The authenticated user whose list is updated.
         - M2M relationship: user.prods_interested_in
 
     Example usage:
@@ -425,11 +434,13 @@ class MarkProductInterestedView(LoginRequiredMixin, View):
         try:
             product = PopUpProduct.objects.get(id=product_id)
             user = request.user
-            if product in user.prods_interested_in.all():
-                user.prods_interested_in.remove(product)
+            profile = request.user.popupcustomerprofile
+
+            if product in profile.prods_interested_in.all():
+                profile.prods_interested_in.remove(product)
                 return JsonResponse({'status': 'removed', 'message': 'Product removed from interested list.'})
             else:
-                user.prods_interested_in.add(product)
+                profile.prods_interested_in.add(product)
                 return JsonResponse({'status': 'added', 'message': 'Product added to interested list.'})
             
         except PopUpProduct.DoesNotExist:
@@ -468,7 +479,8 @@ class UserOnNoticeView(LoginRequiredMixin, View):
 
     def get(self, request):
         user = request.user
-        prods_on_notice_for = user.prods_on_notice_for.all()
+        profile = request.user.popupcustomerprofile
+        prods_on_notice_for = profile.prods_on_notice_for.all()
 
         for p in self.product:
             self.product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=p)}
@@ -517,7 +529,7 @@ class MarkProductOnNoticeView(LoginRequiredMixin, View):
 
     Models involved:
         - PopUpProduct: The product being marked as notify-me or not notify-me.
-        - PopUpCustomer (request.user): The authenticated user whose list is updated.
+        - PopUpCustomerProfile (request.user): The authenticated user whose list is updated.
         - M2M relationship: user.prods_interested_in
 
     Example usage:
@@ -537,11 +549,12 @@ class MarkProductOnNoticeView(LoginRequiredMixin, View):
         try:
             product = PopUpProduct.objects.get(id=product_id)
             user = request.user
-            if product in user.prods_on_notice_for.all():
-                user.prods_on_notice_for.remove(product)
+            profile = request.user.popupcustomerprofile
+            if product in profile.prods_on_notice_for.all():
+                profile.prods_on_notice_for.remove(product)
                 return JsonResponse({'status': 'removed', 'message': 'Product removed from notify me list.'})
             else:
-                user.prods_on_notice_for.add(product)
+                profile.prods_on_notice_for.add(product)
                 return JsonResponse({'status': 'added', 'message': 'Product added to notify me list.'})
         except PopUpProduct.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
@@ -596,6 +609,7 @@ class PersonalInfoView(LoginRequiredMixin, View):
     def get_context_data(self):
         """Get common context data for both GET and POST"""
         user = self.request.user
+        profile = self.request.user.popupcustomerprofile
         addressess = PopUpCustomerAddress.objects.filter(customer=user)
         # payment_methods = get_stripe_payment_reference(user)
 
@@ -603,9 +617,9 @@ class PersonalInfoView(LoginRequiredMixin, View):
             'first_name': user.first_name,
             'middle_name': user.middle_name,
             'last_name': user.last_name,
-            'shoe_size': user.shoe_size,
-            'size_gender': user.size_gender,
-            'favorite_brand': user.favorite_brand,
+            'shoe_size': profile.shoe_size,
+            'size_gender': profile.size_gender,
+            'favorite_brand': profile.favorite_brand,
             'mobile_phone': user.mobile_phone,
             'mobile_notification': user.mobile_notification
         })
@@ -623,10 +637,11 @@ class PersonalInfoView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         """Handle POST requests"""
         user = request.user
+        profile = request.user.popupcustomerprofile
 
         # Determine which form was submitted
         if self._is_personal_form_submission():
-            return self._handle_personal_form(user)
+            return self._handle_personal_form(profile)
         elif self._is_address_form_submission():
             return self._handle_address_form(user)
         
@@ -644,6 +659,7 @@ class PersonalInfoView(LoginRequiredMixin, View):
     
     def _handle_personal_form(self, user):
         """Handle personal information form submission"""
+        profile = self.request.user.popupcustomerprofile 
         personal_form = PopUpUserEditForm(self.request.POST)
         if personal_form.is_valid():
                 # Manually update user fields
@@ -651,9 +667,9 @@ class PersonalInfoView(LoginRequiredMixin, View):
                 user.first_name = data.get('first_name', '')
                 user.middle_name = data.get('middle_name', '')
                 user.last_name = data.get('last_name', '')
-                user.shoe_size = data.get('shoe_size', '')
-                user.size_gender = data.get('size_gender', '')
-                user.favorite_brand = data.get('favorite_brand', '')
+                profile.shoe_size = data.get('shoe_size', '')
+                profile.size_gender = data.get('size_gender', '')
+                profile.favorite_brand = data.get('favorite_brand', '')
                 user.mobile_phone = data.get('mobile_phone', '')
                 user.mobile_notification = data.get('mobile_notification', '')
                 user.save()
@@ -866,9 +882,11 @@ class OpenBidsView(LoginRequiredMixin, View):
     user_open_bids_copy = USER_OPEN_BIDS_COPY
     def get(self, request):
         user = request.user
+        profile = self.request.user.popupcustomerprofile 
+
         addresses = user.address.filter(default=True)
-        prod_interested_in = user.prods_interested_in.all()
-        prods_on_notice_for = user.prods_on_notice_for.all()
+        prod_interested_in = profile.prods_interested_in.all()
+        prods_on_notice_for = profile.prods_on_notice_for.all()
 
         subquery = PopUpBid.objects.filter(
             customer_id=user.id,
@@ -1217,14 +1235,23 @@ class AdminDashboardView(UserPassesTestMixin, TemplateView):
     def get_size_distribution(self):
         """Get top 3 most common shoe sizes amoung customers"""
         # Query to get counts grouped by shoe_size and size_gender
-        return PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
-            count=Count('id')
-        ).order_by('-count')[:3]
+        # Postgres Query
+        return PopUpCustomerProfile.objects.exclude(
+            shoe_size__isnull=True
+            ).exclude(size_gender__isnull=True
+                      ).values("shoe_size", "size_gender"
+                               ).annotate(count=Count("user_id")
+                                          ).order_by("-count", "shoe_size", "size_gender")[:3]
+    
+        # SQL Query
+        # return PopUpCustomerProfile.objects.values('shoe_size', 'size_gender').annotate(
+        #     count=Count('user_id')
+        # ).order_by('-count')[:3]
         
 
     def get_active_accounts_count(self):
         """Get total number of active customer accounts"""
-        return PopUpCustomer.objects.filter(is_active=True).count()
+        return User.objects.filter(is_active=True).count()
 
 
     def get_pending_shipments(self):
@@ -1287,6 +1314,7 @@ class AdminInventoryView(UserPassesTestMixin, ListView):
 
     
         slug = self.kwargs.get('slug')
+      
         if slug:
             product_type = get_object_or_404(PopUpProductType, slug=slug)
             base_queryset = base_queryset.filter(product_type=product_type)
@@ -1767,12 +1795,12 @@ class TotalAccountsView(UserPassesTestMixin, TemplateView):
         today_end = timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.max.time()))
 
         # Total active accounts
-        context['total_active_accounts'] = PopUpCustomer.objects.filter(
+        context['total_active_accounts'] = PopUpCustomerProfile.objects.filter(
             is_active=True
         ).count()
         
         # New accounts created today
-        context['new_accounts_today'] = PopUpCustomer.objects.filter(
+        context['new_accounts_today'] = PopUpCustomerProfile.objects.filter(
             created__gte=today_start,
             created__lte=today_end
         ).count()
@@ -1786,7 +1814,7 @@ class TotalAccountsView(UserPassesTestMixin, TemplateView):
         # ).values('user').distinct().count()
         
         # Option 2: If you track via User.last_login
-        context['site_visitors_today'] = PopUpCustomer.objects.filter(
+        context['site_visitors_today'] = PopUpCustomerProfile.objects.filter(
             last_login__gte=today_start,
             last_login__lte=today_end
         ).count()
@@ -1833,7 +1861,7 @@ class AccountSizesView(UserPassesTestMixin, TemplateView):
         context = super().get_context_data(**kwargs)
 
         # Query to get counts grouped by shoe_size and size_gender
-        context['size_counts'] = PopUpCustomer.objects.values('shoe_size', 'size_gender').annotate(
+        context['size_counts'] = PopUpCustomerProfile.objects.values('shoe_size', 'size_gender').annotate(
                 count=Count('id')).order_by('-count')
         context['admin_account_size_copy'] = ADMIN_ACCOUNT_SIZE_COPY
 
@@ -2649,7 +2677,7 @@ class EmailCheckView(View):
 
         try:
             # Try to get the user by email
-            user = PopUpCustomer.objects.get(email__iexact=email, deleted_at__isnull=True)
+            user = User.objects.get(email__iexact=email, deleted_at__isnull=True)
             
             # Check if user has verified their email (is_active)
             if not user.is_active:
@@ -2672,7 +2700,7 @@ class EmailCheckView(View):
             request.session['auth_email'] = email
             return JsonResponse({'status': False})  # Existing active user
             
-        except PopUpCustomer.DoesNotExist:
+        except User.DoesNotExist:
             # Email not found - new user, show registration form
             return JsonResponse({'status': True})  # New user
     
@@ -2977,7 +3005,7 @@ class Verify2FACodeView(View):
         # Login if code matches and user is verified
         if str(code_entered).strip() == str(session_code).strip():
             try:
-                user = PopUpCustomer.objects.get(id=user_id)
+                user = User.objects.get(id=user_id)
 
                 # Check if user is active before login
                 if not user.is_active:
@@ -2986,13 +3014,14 @@ class Verify2FACodeView(View):
                         request.session.pop(key, None)
                     return JsonResponse({'verified': False, 'error': 'Account is not active'}, status=403)
                 login(request, user, backend='pop_accounts.backends.EmailBackend')
+                # login(request, user, backend='pop_accounts.backends.EmailBackend')
                 request.session.save()
 
                 for key in ['2fa_code', '2fa_code_created_at', 'pending_login_user_id']:
                     request.session.pop(key, None)
 
                 return JsonResponse({'verified': True, 'user_name': user.first_name})
-            except PopUpCustomer.DoesNotExist:
+            except PopUpCustomerProfile.DoesNotExist:
                 return JsonResponse({'verified': False, 'error': 'User not found'}, status=404)
         else:
             return JsonResponse({'verified': False, 'error': 'Invalid Code'}, status=400)
@@ -3055,10 +3084,10 @@ class Resend2FACodeView(View):
         
         # Verifiy user exisits
         try:
-            user = PopUpCustomer.objects.get(id=user_id)
+            user = PopUpCustomerProfile.objects.get(id=user_id)
             if not user.is_active:
                 return JsonResponse({'success': False, 'error': 'Account not active'}, status=403)
-        except PopUpCustomer.DoesNotExist:
+        except PopUpCustomerProfile.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
         
         code = generate_2fa_code()
@@ -3111,6 +3140,7 @@ class SendPasswordResetLink(View):
     """
     def post(self, request):
         email = request.POST.get('email', '').strip().lower()
+        print('email from SendPasswordResetLink', email) 
         return handle_password_reset_request(request, email)
 
     
@@ -3170,9 +3200,9 @@ class VerifyEmailView(View):
 
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
-            user = PopUpCustomer.objects.get(pk=uid)
+            user = PopUpCustomerProfile.objects.get(pk=uid)
 
-        except (TypeError, ValueError, OverflowError, PopUpCustomer.DoesNotExist):
+        except (TypeError, ValueError, OverflowError, PopUpCustomerProfile.DoesNotExist):
             user = None
 
         
@@ -3189,9 +3219,9 @@ class VerifyEmailView(View):
         # Validate token before allowing login
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
-            user_from_token = PopUpCustomer.objects.get(pk=uid)
+            user_from_token = User.objects.get(pk=uid)
 
-        except (TypeError, ValueError, OverflowError, PopUpCustomer.DoesNotExist):
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user_from_token = None
         
         # Check if token valid
@@ -3287,7 +3317,7 @@ class CompleteProfileView(UpdateView):
     - Http404: If the user is neither authenticated nor found in the
       `social_profile_user_id` session key.
     """
-    model = PopUpCustomer
+    model = User
     form_class = SocialProfileCompletionForm
     template_name = 'pop_accounts/registration/complete_profile.html'
 
@@ -3301,8 +3331,8 @@ class CompleteProfileView(UpdateView):
         if not user_id:
             raise Http404("No social profile pending completion.")
         try:
-            return PopUpCustomer.objects.get(pk=user_id)
-        except PopUpCustomer.DoesNotExist:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
             raise Http404("Pending social user not found.")
 
     def form_valid(self, form):

@@ -1,10 +1,12 @@
 from django.db import models
-from pop_accounts.models import PopUpCustomer
+# from accounts.models import PopUpCustomer
+from pop_accounts.models import PopUpCustomerProfile
 from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
 
 
 # Create your models here.
@@ -18,7 +20,7 @@ class CryptoPayment(models.Model):
         ('expired', 'Expired'),
     ]
     
-    user = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     payment_id = models.CharField(max_length=100, unique=True)
     order_id = models.CharField(max_length=100)
     amount_usd = models.DecimalField(max_digits=10, decimal_places=2)

@@ -4,7 +4,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
-from pop_accounts.models import PopUpBid, PopUpCustomerAddress
+from pop_accounts.models import  PopUpCustomerAddress, PopUpCustomerProfile, PopUpBid
+# from pop_up_auction.models import PopUpBid
 from django.utils.text import slugify
 import json
 from django.contrib.auth.mixins import LoginRequiredMixin, AccessMixin
@@ -19,6 +20,22 @@ from pop_up_order.models import PopUpOrderItem
 from django.http import Http404
 
 # Create your views here.
+class AjaxLoginRequiredMixin(AccessMixin):
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user is authenticated AND active
+        if not request.user.is_authenticated or not request.user.is_active:
+            if request.headers.get('X-requested-with') == 'XMLHttpRequest':
+                # Provide error message
+                if not request.user.is_authenticated:
+                    message = "You must be logged in to place a bid"
+                else:
+                    message = "Your account is inactive. Please verify your email"
+                return JsonResponse({'status': 'error', 'message': message}, status=403)
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+
 class AllAuctionView(View):
     template_name = 'auction/auction.html'
 
@@ -50,13 +67,6 @@ class AllAuctionView(View):
     
 
 
-class AjaxLoginRequiredMixin(AccessMixin):
-    def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            if request.headers.get('X-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'error', 'message': 'You must be logged in to place a bid'}, status=403)
-            return self.handle_no_permission()
-        return super().dispatch(request, *args, **kwargs)
 
 
 class PlaceBidView(AjaxLoginRequiredMixin, View):

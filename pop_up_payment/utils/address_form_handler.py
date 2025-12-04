@@ -1,5 +1,5 @@
 from django.contrib import messages
-from pop_accounts.models import PopUpCustomer, PopUpCustomerAddress
+from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerAddress
 
 def handle_selected_address(request, user, selected_address_id, session_key, success_msg):
     try:

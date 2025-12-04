@@ -2,9 +2,13 @@ from .forms import (PopUpEmailOnlyForm, PopUpPasswordOnlyForm, PopUpRegistration
                     PopUpEmailPasswordResetForm, PopUpPasswordResetForm)
 
 from django.db.models import Sum, Count
-from .models import PopUpProduct, PopUpCustomer
-from pop_accounts.models import PopUpBid
+from .models import PopUpProduct, PopUpCustomerProfile, PopUpBid
 from django.utils import timezone
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 def auth_forms(request):
     email_form = PopUpEmailOnlyForm()
@@ -49,14 +53,17 @@ def admin_status(request):
 
         
         # Total active accounts
-        total_active_accounts = PopUpCustomer.objects.filter(is_active=True).count()
+        total_active_accounts = User.objects.filter(is_active=True, popupcustomerprofile__isnull=False).count()
         
         # Most common shoe size among active accounts
-        most_common_size = PopUpCustomer.objects.filter(
-            is_active=True
-        ).values('shoe_size').annotate(
-            count=Count('shoe_size')
-        ).order_by('-count').first()
+        most_common_size = (
+            PopUpCustomerProfile.objects
+                .filter(user__is_active=True)  # filter by user’s active status
+                .values('shoe_size')
+                .annotate(count=Count('shoe_size'))
+                .order_by('-count')
+                .first()
+        )
         
         return {
             'admin_stats': {

@@ -5,11 +5,11 @@ from django.views.decorators.http import require_POST
 from pop_up_cart.cart import Cart
 from django.http import JsonResponse
 from pop_up_auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
-from pop_accounts.models import PopUpBid, PopUpCustomerAddress
+from pop_accounts.models import  PopUpCustomerAddress, PopUpBid
+from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
 from pop_up_cart.models import PopUpCartItem
 from pop_up_payment.models import PopUpPayment
 from pop_up_order.models import PopUpCustomerOrder
-from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
 import stripe
 from django.conf import settings
 from django.views.decorators.http import require_http_methods

@@ -10,51 +10,11 @@ from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin, Base
 import uuid
 from pop_up_auction.models import PopUpProduct
 from django.contrib.auth.models import UserManager
+from django.conf import settings
 # from .managers import CustomPopUpAccountManager  # Assuming you have a custom user manager
 
 
 # Create your models here.
-class ActiveUserManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(deleted_at__isnull=True)
-
-class AllUserManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset()
-    
-class CustomPopUpAccountManager(ActiveUserManager, BaseUserManager):
-
-    def get_queryset(self):
-        return super().get_queryset().filter(deleted_at__isnull=True)
-    
-    def get_by_natural_key(self, email):
-        return self.get(email=email)
-    
-    def create_superuser(self, email, first_name, last_name, password, **other_fields):
-
-        other_fields.setdefault('is_staff', True)
-        other_fields.setdefault('is_superuser', True)
-        other_fields.setdefault('is_active', True)
-
-        if other_fields.get('is_staff') is not True:
-            raise ValueError(_('Superuser must be assinged to is staff=True.'))
-
-        if other_fields.get('is_superuser') is not True:
-            raise ValueError(_('Superuser must be assigned to is_superuser=True.'))
-
-
-        return self.create_user(email, first_name, last_name, password, **other_fields)
-
-    def create_user(self, email, first_name=None, last_name=None, password=None, **other_fields):
-        if not email:
-            raise ValueError(_('An email address is required.'))
-
-        email = self.normalize_email(email)
-        user = self.model(email=email, first_name=first_name, last_name=last_name, **other_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
 
 """THE POP UP SHOP"""
 class SoftDeleteUserManager(models.Manager):
@@ -62,8 +22,7 @@ class SoftDeleteUserManager(models.Manager):
         return super().get_queryset().filter(deleted_at__isnull=True)
 
 
-
-class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
+class PopUpCustomerProfile(models.Model):
     BRAND_CHOICES = (
         ('adidas', 'Adidas'),
         ('asics', 'Asics'),
@@ -85,43 +44,22 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
         ('male', 'Male'),
         ('female', 'Female')
     )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, primary_key=True, on_delete=models.CASCADE)
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(_('email address'), unique=True, db_index=True)
-    first_name = models.CharField(max_length=50, blank=True, null=True)
-    middle_name = models.CharField(max_length=50, blank=True, null=True)
-    last_name = models.CharField(max_length=50, blank=True, null=True)
-    mobile_phone = models.CharField(max_length=20, blank=True, null=True)
-    mobile_notification = models.BooleanField(default=True)
     stripe_customer_id = models.CharField(max_length=200, blank=True, null=True)
     shoe_size = models.CharField(max_length=10, blank=True, null=True)
     size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200, null=True)
     favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default='nike')
-    deleted_at = models.DateTimeField(null=True, blank=True)  
 
-    # Relationships
+    # Relationships | These will be deleted and moved into PopUpCustomerProductInterest
     prods_interested_in = models.ManyToManyField(PopUpProduct, related_name="interested_users", blank=True)
     prods_on_notice_for = models.ManyToManyField(PopUpProduct, related_name="notified_users", blank=True)
-
-
-    # User Status
-    is_active = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    last_password_reset = models.DateTimeField(null=True, blank=True)
-
-    objects = CustomPopUpAccountManager() # only active users (soft-delete-aware)
-    all_objects = AllUserManager() # includes deleted
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    
 
 
     class Meta:
-        verbose_name = 'PopUpCustomer'
-        verbose_name_plural = 'PopUpCustomers'
+        verbose_name = 'PopUpCustomerProfile'
+        verbose_name_plural = 'PopUpCustomerProfiles'
     
     @property
     def open_bids(self):
@@ -130,52 +68,15 @@ class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
     @property
     def past_bids(self):
         return self.bids.filter(is_active=False)
-    
-
-    def soft_delete(self):
-        """ 
-        Mark the user account as inactive instead of deleting it.
-        """
-        self.is_active = False  # Prevents login
-        self.deleted_at = now()
-        self.save(update_fields=["is_active", "deleted_at"])
-
-    def restore(self):
-        """Restore a previously deactivated account."""
-        self.is_active = True
-        self.deleted_at = None
-        self.save(update_fields=["is_active", "deleted_at"])
-
-
-    @property
-    def is_deleted(self):
-        return self.deleted_at is not None
-
-    def delete(self, *args, **kwargs):
-        """Override delete method to soft delete the user instead."""
-        self.soft_delete()
-
-    def hard_delete(self):
-        """Permanently delete the account (only for admin use)."""
-        super().delete()
-    
-
-    def email_user(self, subject, message):
-        send_mail(
-            subject,
-            message,
-            'l@1.com',
-            [self.email],
-            fail_silently=False,
-        )
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.user.email}"
 
 
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(deleted_at__isnull=True)
+
 
 
 class PopUpCustomerAddress(models.Model):
@@ -203,7 +104,7 @@ class PopUpCustomerAddress(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    customer = models.ForeignKey(PopUpCustomer, verbose_name=_("Customer"), on_delete=models.CASCADE, related_name='address')
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_("Customer"), on_delete=models.CASCADE, related_name='address')
     
     # New data, this allows for a name and phone# to be assigned to address
     prefix = models.CharField(max_length=10, choices=PREFIX_CHOICES, default="", blank=True, null=True)
@@ -269,7 +170,7 @@ class PopUpBid(models.Model):
     Model for tracking Bids
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="bids")
+    customer = models.ForeignKey(PopUpCustomerProfile, on_delete=models.CASCADE, related_name="customer_bids")
     product = models.ForeignKey('pop_up_auction.PopUpProduct', on_delete=models.CASCADE, related_name="bids")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -289,7 +190,7 @@ class PopUpBid(models.Model):
         ordering = ["-timestamp"]
     
     def __str__(self):
-        return f"{self.customer} - {self.product} - ${self.amount}"
+        return f"{self.customer.user.email} - {self.product} - ${self.amount}"
 
     def save(self, *args, **kwargs):
         """
@@ -392,7 +293,7 @@ class PopUpPurchase(models.Model):
     Model for tracking purchases
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    customer = models.ForeignKey(PopUpCustomer, on_delete=models.PROTECT, related_name="purchases")
+    customer = models.ForeignKey(PopUpCustomerProfile, on_delete=models.PROTECT, related_name="purchases")
     product = models.ForeignKey(PopUpProduct, on_delete=models.PROTECT, related_name="purchases")
     bid = models.ForeignKey(PopUpBid, on_delete=models.PROTECT)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -416,7 +317,7 @@ class PopUpCustomerIP(models.Model):
     """
     Model for tracking customer IP Address
     """
-    customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name="ip_addresses")
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ip_addresses")
     ip_address = models.GenericIPAddressField()
     country = models.CharField(max_length=2, blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
@@ -432,17 +333,18 @@ class PopUpCustomerIP(models.Model):
 
 class PopUpCustomerPayment(models.Model):
     """
-    Model for tracking customer payment preference
+    Model for tracking customer payment preference | Not implemented at this time
     """
-    customer = models.OneToOneField(PopUpCustomer, on_delete=models.CASCADE, related_name="payment_info")
+    customer = models.OneToOneField(PopUpCustomerProfile, on_delete=models.CASCADE, related_name="payment_info")
     stripe_customer_id = models.CharField(max_length=100, blank=True, null=True)
     paypal_billing_agreement_id = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-# To track every password reset link sent
+
 class PopUpPasswordResetRequestLog(models.Model):
-    customer = models.ForeignKey(PopUpCustomer, on_delete=models.CASCADE, related_name='password_reset_logs')
+    """To track every password reset link sent"""
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='password_reset_logs')
     ip_address = models.GenericIPAddressField()
     requested_at = models.DateTimeField(auto_now_add=True)
 
@@ -461,3 +363,183 @@ python3 manage.py makemigrations quotes_api
 python3 manage.py migrate
 
 """
+
+# class ActiveUserManager(models.Manager):
+#     def get_queryset(self):
+#         return super().get_queryset().filter(deleted_at__isnull=True)
+
+# class AllUserManager(models.Manager):
+#     def get_queryset(self):
+#         return super().get_queryset()
+    
+# class CustomPopUpAccountManager(ActiveUserManager, BaseUserManager):
+
+#     def get_queryset(self):
+#         return super().get_queryset().filter(deleted_at__isnull=True)
+    
+#     def get_by_natural_key(self, email):
+#         return self.get(email=email)
+    
+#     def create_superuser(self, email, first_name, last_name, password, **other_fields):
+
+#         other_fields.setdefault('is_staff', True)
+#         other_fields.setdefault('is_superuser', True)
+#         other_fields.setdefault('is_active', True)
+
+#         if other_fields.get('is_staff') is not True:
+#             raise ValueError(_('Superuser must be assinged to is staff=True.'))
+
+#         if other_fields.get('is_superuser') is not True:
+#             raise ValueError(_('Superuser must be assigned to is_superuser=True.'))
+
+
+#         return self.create_user(email, first_name, last_name, password, **other_fields)
+
+#     def create_user(self, email, first_name=None, last_name=None, password=None, **other_fields):
+#         if not email:
+#             raise ValueError(_('An email address is required.'))
+
+#         email = self.normalize_email(email)
+#         user = self.model(email=email, first_name=first_name, last_name=last_name, **other_fields)
+#         user.set_password(password)
+#         user.save(using=self._db)
+#         return user
+
+
+# class PopUpCustomer(AbstractBaseUser, PermissionsMixin):
+#     BRAND_CHOICES = (
+#         ('adidas', 'Adidas'),
+#         ('asics', 'Asics'),
+#         ('balenciaga', 'Balenciaga'),
+#         ('brooks', 'Brooks'),
+#         ('fear_of_god ', 'Fear of God'),
+#         ('gucci', 'Gucci'),
+#         ('jordan', 'Jordan'),
+#         ('new_balance', 'New Balance'),
+#         ('nike', 'Nike'),
+#         ('prada', 'Prada'),
+#         ('puma', 'Puma'),
+#         ('reebok', 'Reebok'),
+#         ('saucony', 'Saucony'),
+#         ('yeezy', 'Yeezy')
+#     )
+
+#     SIZE_BY_GENDER = (
+#         ('male', 'Male'),
+#         ('female', 'Female')
+#     )
+
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     email = models.EmailField(_('email address'), unique=True, db_index=True)
+#     first_name = models.CharField(max_length=50, blank=True, null=True)
+#     middle_name = models.CharField(max_length=50, blank=True, null=True)
+#     last_name = models.CharField(max_length=50, blank=True, null=True)
+#     mobile_phone = models.CharField(max_length=20, blank=True, null=True)
+#     mobile_notification = models.BooleanField(default=True)
+    # stripe_customer_id = models.CharField(max_length=200, blank=True, null=True)
+    # shoe_size = models.CharField(max_length=10, blank=True, null=True)
+    # size_gender = models.CharField(choices=SIZE_BY_GENDER, default='male', max_length=200, null=True)
+    # favorite_brand = models.CharField(max_length=100, choices=BRAND_CHOICES, default='nike')
+#     deleted_at = models.DateTimeField(null=True, blank=True)  
+
+#     # Relationships | These will be deleted and moved into PopUpCustomerProductInterest
+#     # prods_interested_in = models.ManyToManyField(PopUpProduct, related_name="interested_users", blank=True)
+#     # prods_on_notice_for = models.ManyToManyField(PopUpProduct, related_name="notified_users", blank=True)
+
+
+#     # User Status
+#     is_active = models.BooleanField(default=False)
+#     is_staff = models.BooleanField(default=False)
+#     created = models.DateTimeField(auto_now_add=True)
+#     updated = models.DateTimeField(auto_now=True)
+
+#     last_password_reset = models.DateTimeField(null=True, blank=True)
+
+#     objects = CustomPopUpAccountManager() # only active users (soft-delete-aware)
+#     all_objects = AllUserManager() # includes deleted
+
+#     USERNAME_FIELD = 'email'
+#     REQUIRED_FIELDS = []
+
+
+    # class Meta:
+    #     db_table = 'pop_account_popupcustomer'
+    #     managed = False
+    #     verbose_name = 'PopUpCustomer'
+    #     verbose_name_plural = 'PopUpCustomers'
+    
+    # @property
+    # def open_bids(self):
+    #     return self.bids.filter(is_active=True)
+
+    # @property
+    # def past_bids(self):
+    #     return self.bids.filter(is_active=False)
+    
+
+    # def soft_delete(self):
+    #     """ 
+    #     Mark the user account as inactive instead of deleting it.
+    #     """
+    #     self.is_active = False  # Prevents login
+    #     self.deleted_at = now()
+    #     self.save(update_fields=["is_active", "deleted_at"])
+
+    # def restore(self):
+    #     """Restore a previously deactivated account."""
+    #     self.is_active = True
+    #     self.deleted_at = None
+    #     self.save(update_fields=["is_active", "deleted_at"])
+
+
+    # @property
+    # def is_deleted(self):
+    #     return self.deleted_at is not None
+
+    # def delete(self, *args, **kwargs):
+    #     """Override delete method to soft delete the user instead."""
+    #     self.soft_delete()
+
+    # def hard_delete(self):
+    #     """Permanently delete the account (only for admin use)."""
+    #     super().delete()
+    
+
+    # def email_user(self, subject, message):
+    #     send_mail(
+    #         subject,
+    #         message,
+    #         'l@1.com',
+    #         [self.email],
+    #         fail_silently=False,
+    #     )
+
+    # def __str__(self):
+    #     return f"{self.first_name} {self.last_name}"
+
+
+# class PopUpCustomerProductInterest(models.Model):
+#     """
+#     ✅ Replaces the ManyToMany fields on PopUpCustomer
+#     Lives ONLY in pop_up_shop
+#     """
+#     customer = models.ForeignKey(
+#         settings.AUTH_USER_MODEL,
+#         on_delete=models.CASCADE,
+#         related_name='product_interests'
+#     )
+#     product = models.ForeignKey(
+#         'PopUpProduct',
+#         on_delete=models.CASCADE,
+#         related_name='interested_customers'
+#     )
+#     prods_interested_in = models.BooleanField(default=False)
+#     prods_on_notice_for = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         unique_together = ['customer', 'product']
+#         db_table = 'pop_up_auction_customerproductinterest'
+
+
+

@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib import admin
 from django.utils.html import format_html_join
-from .models import (PopUpCustomer, PopUpCustomerAddress,PopUpPasswordResetRequestLog, PopUpBid, PopUpPurchase)
+from .models import (
+    PopUpCustomerProfile, PopUpCustomerAddress,PopUpPasswordResetRequestLog, PopUpBid, PopUpPurchase
+    )
 
 
 # Register your models here.
@@ -37,7 +39,7 @@ class PurchaseInLine(admin.TabularInline):
 
 class ActiveBidInline(admin.TabularInline):
     model = PopUpBid
-    fk_name = "customer"          # FK on PopUpBid → PopUpCustomer
+    fk_name = "customer" # FK on PopUpBid → PopUpCustomer
     extra = 0
     can_delete = False
     verbose_name_plural = "Open bids"
@@ -63,59 +65,107 @@ class PastBidInline(admin.TabularInline):
         return qs.filter(is_active=False)
 
 
-
-@admin.register(PopUpCustomer)
-class PopUpCustomerAdmin(admin.ModelAdmin):
-    list_display = ("email", "first_name", "middle_name", "last_name", "is_active", 'is_deleted' )
-    readonly_fields = ("email",) 
-    list_filter = ('is_active', 'deleted_at',)
-    search_fields = ('email','first_name', 'last_name')
-    actions = ['restore_customers, hard_delete_customers']
+@admin.register(PopUpCustomerProfile)
+class PopUpCustomerProfileAdmin(admin.ModelAdmin):
+    # Display fields from the related User model
+    list_display = (
+        'get_email', 
+        'get_first_name', 
+        'get_last_name', 
+        # 'is_active', 
+        # 'is_deleted'
+    )
+    
+    readonly_fields = ('get_email',)
+    list_filter = ('user__is_active',)  # filters use related field lookups
+    search_fields = ('user__email', 'user__first_name', 'user__last_name')
 
     inlines = [ActiveBidInline, PastBidInline, PurchaseInLine]
 
+    def get_email(self, obj):
+        return obj.user.email
+    get_email.admin_order_field = 'user__email'
+    get_email.short_description = 'Email'
 
-    def get_queryset(self, request):
-        return PopUpCustomer.all_objects.all()
-    
+    def get_first_name(self, obj):
+        return obj.user.first_name
+    get_first_name.admin_order_field = 'user__first_name'
+    get_first_name.short_description = 'First Name'
 
-    def restore_users(self, request, queryset):
-        restored_count = 0
-        for user in queryset:
-            if user.is_deleted:
-                user.restore()
-                restored_count += 1
-        self.message_user(request, f"{restored_count} user(s) restored.")
+    def get_last_name(self, obj):
+        return obj.user.last_name
+    get_last_name.admin_order_field = 'user__last_name'
+    get_last_name.short_description = 'Last Name'
 
-
-    def hard_delete_users(self, request, queryset):
-        deleted_count = 0
-        for user in queryset:
-            if user.is_deleted:
-                user.hard_delete()
-                deleted_count += 1
-        self.message_user(request, f"{deleted_count} user(s) permanently deleted.")
-
-    restore_users.short_description = "Restore selected soft-deleted users"
-    hard_delete_users.short_description = "Permanently delete selected soft-deleted users"
-
-
-    def is_deleted_status(self, obj):
-        return obj.is_deleted
-    
-    is_deleted_status.boolean = True  # Show checkmark
-    is_deleted_status.short_description = 'Deleted?'
-
+    # Soft delete helpers
+    def is_deleted(self, obj):
+        return obj.user.deleted_at is not None
+    is_deleted.boolean = True
+    is_deleted.short_description = 'Deleted?'
 
     @admin.action(description="Restore selected customers")
     def restore_customers(self, request, queryset):
-        for customer in queryset:
-            customer.restore()
+        for profile in queryset:
+            profile.user.restore()
 
-    @admin.action(description="Permanently delete selected customer")
-    def hard_delete_customers(modeladmin, request, queryset):
-        for customer in queryset:
-            customer.hard_delete()
+    @admin.action(description="Permanently delete selected customers")
+    def hard_delete_customers(self, request, queryset):
+        for profile in queryset:
+            profile.user.hard_delete()
+
+
+# @admin.register(PopUpCustomerProfile)
+# class PopUpCustomerProfileAdmin(admin.ModelAdmin):
+#     list_display = ("email", "first_name", "middle_name", "last_name", "is_active", 'is_deleted' )
+#     readonly_fields = ("email",) 
+#     list_filter = ('is_active', 'deleted_at',)
+#     search_fields = ('email','first_name', 'last_name')
+#     actions = ['restore_customers, hard_delete_customers']
+
+#     inlines = [ActiveBidInline, PastBidInline, PurchaseInLine]
+
+
+#     def get_queryset(self, request):
+#         return PopUpCustomerProfile.all_objects.all()
+    
+
+#     def restore_users(self, request, queryset):
+#         restored_count = 0
+#         for user in queryset:
+#             if user.is_deleted:
+#                 user.restore()
+#                 restored_count += 1
+#         self.message_user(request, f"{restored_count} user(s) restored.")
+
+
+#     def hard_delete_users(self, request, queryset):
+#         deleted_count = 0
+#         for user in queryset:
+#             if user.is_deleted:
+#                 user.hard_delete()
+#                 deleted_count += 1
+#         self.message_user(request, f"{deleted_count} user(s) permanently deleted.")
+
+#     restore_users.short_description = "Restore selected soft-deleted users"
+#     hard_delete_users.short_description = "Permanently delete selected soft-deleted users"
+
+
+#     def is_deleted_status(self, obj):
+#         return obj.is_deleted
+    
+#     is_deleted_status.boolean = True  # Show checkmark
+#     is_deleted_status.short_description = 'Deleted?'
+
+
+#     @admin.action(description="Restore selected customers")
+#     def restore_customers(self, request, queryset):
+#         for customer in queryset:
+#             customer.restore()
+
+#     @admin.action(description="Permanently delete selected customer")
+#     def hard_delete_customers(modeladmin, request, queryset):
+#         for customer in queryset:
+#             customer.hard_delete()
 
     
     

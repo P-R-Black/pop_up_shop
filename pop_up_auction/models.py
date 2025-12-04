@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from datetime import timedelta
 
+
 # from .managers import CustomPopUpAccountManager  # Assuming you have a custom user manager
 
 # Create your models here.
@@ -36,8 +37,8 @@ class PopUpBrand(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
 
-    # def get_absolute_url(self):
-    #     return reverse("pop_up_auction:brand_list", args=[self.slug])
+    def get_absolute_url(self):
+        return reverse("pop_up_auction:brand_list", args=[self.slug])
 
     def __str__(self):
         return self.name  
@@ -448,6 +449,31 @@ class PopUpProductImage(models.Model):
         return self.image.url if self.image and hasattr(self.image, 'url') else self.image_url or "No image"
 
 
+
+# class PopUpCustomerProductInterest(models.Model):
+#     """
+#     ✅ Replaces the ManyToMany fields on PopUpCustomer
+#     Lives ONLY in pop_up_shop
+#     """
+#     customer = models.ForeignKey(
+#         settings.AUTH_USER_MODEL,
+#         on_delete=models.CASCADE,
+#         related_name='product_interests'
+#     )
+#     product = models.ForeignKey(
+#         'PopUpProduct',
+#         on_delete=models.CASCADE,
+#         related_name='interested_customers'
+#     )
+#     prods_interested_in = models.BooleanField(default=False)
+#     prods_on_notice_for = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         unique_together = ['customer', 'product']
+#         db_table = 'pop_up_auction_customerproductinterest'
+
+        
 class WinnerReservation(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE)
@@ -467,3 +493,162 @@ class WinnerReservation(models.Model):
     class Meta:
         unique_together = ("product", "user",)  # Prevents duplicates
 
+
+
+
+# class PopUpBid(models.Model):
+#     """
+#     Model for tracking Bids
+#     Moved from pop_acconts since this is business logic
+#     """
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bids")
+#     product = models.ForeignKey('PopUpProduct', on_delete=models.CASCADE, related_name="bids")
+#     amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     timestamp = models.DateTimeField(auto_now_add=True)
+#     is_active = models.BooleanField(default=True)
+#     is_winning_bid = models.BooleanField(default=False)
+
+#     # Auto-bidding fields
+#     max_auto_bid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Maximum bid limit for automatic bidding.")
+#     bid_increment = models.DecimalField(max_digits=10, decimal_places=2, default=5.00, help_text="Minimum amount by which the next bid must increase.")
+
+#     # Expiration Field
+#     expires_at = models.DateTimeField(null=True, blank=True, help_text="Bid expiration time.")
+
+#     class Meta:
+#         db_table = 'pop_up_auction_popupbid'
+#         verbose_name = 'PopUpBid'
+#         verbose_name_plural = 'PopUpBids'
+#         ordering = ["-timestamp"]
+    
+#     def __str__(self):
+#         return f"{self.customer} - {self.product} - ${self.amount}"
+
+#     def save(self, *args, **kwargs):
+#         """
+#         Ensure bid amount is valid before saving
+#         """
+#         # latest_bid = PopUpBid.objects.filter(product=self.product, is_active=True).order_by('-amount').first()
+#         latest_bid = PopUpBid.objects.filter(product=self.product, is_active=True).exclude(pk=self.pk).order_by('-amount').first()
+
+#         if latest_bid:
+#             if self.amount <= latest_bid.amount:
+#                 raise ValueError('Bid amount must be higher than the current highest bid.')
+#         if self.expires_at and self.expires_at < timezone.now():
+#             self.is_active = False
+
+#         super().save(*args, **kwargs)
+
+
+#         highest = PopUpBid.get_highest_bid(self.product)
+#         product = self.product
+#         product.current_highest_bid = highest.amount if highest else None
+#         product.bid_count += 1
+#         product.save(update_fields=['current_highest_bid', 'bid_count'])
+
+#         # Reset all other bids to is_winning_bid=False
+#         PopUpBid.objects.filter(product=self.product).update(is_winning_bid=False)
+
+#         # ✅ Set current highest bid to is_winning_bid=True
+#         if highest:
+#             PopUpBid.objects.filter(pk=highest.pk).update(is_winning_bid=True)
+
+#         # Handle aut-bidding after saving
+#         self.process_auto_bid()
+    
+
+#     def process_auto_bid(self, round=0, max_rounds=5):
+#         """
+#         Handles auto-bidding with protection against infinite loops.
+        
+#         NOTE: Auto-bidding feature is not yet fully implemented.
+#         This method is called during save() but currently returns early.
+#         TODO: Complete implementation in future sprint.
+#         """
+#         # Early return - feature not yet implemented
+#         return
+    
+
+#         if round >= max_rounds:
+#             print(f"[Auto-bid] Max rounds ({max_rounds}) reached. Stopping auto-bids.")
+#             return
+
+#         current_highest = PopUpBid.objects.filter(product=self.product, is_active=True).order_by('-amount', '-timestamp').first()
+#         print(f'current_highest: {current_highest}' )
+
+#         # Check if auto-bidding applies
+#         if not current_highest or not current_highest.max_auto_bid:
+#             return
+        
+#         # Check if there's another user's auto-bid that needs to be triggered
+#         competing_bids = PopUpBid.objects.filter(
+#             product=self.product,
+#             is_active=True,
+#             max_auto_bid__isnull=False
+#         ).exclude(customer=self.customer) #.order_by('-amount','-timestamp')
+
+#         print(f'competing_bids: {competing_bids}')
+
+#         for competitor in competing_bids:
+#             proposed_amount = current_highest.amount + competitor.bid_increment    
+#             if proposed_amount <= competitor.max_auto_bid:
+#                 try:
+#                     new_bid = PopUpBid.objects.create(
+#                         customer=competitor.customer,
+#                         product=competitor.product,
+#                         amount=proposed_amount,
+#                         is_active=True,
+#                         max_auto_bid=competitor.max_auto_bid,
+#                         bid_increment=competitor.bid_increment
+#                     )
+#                     new_bid.save()
+#                     print(f"[Auto-bid] New auto-bid placed: {new_bid}")
+
+#                     # Recursively check for another auto-bid with incremented round
+#                     new_bid.process_auto_bid(round=round + 1, max_rounds=max_rounds)
+#                 except ValueError as e:
+#                     print(f"[Auto-bid] skipped at: {proposed_amount}")
+            
+#                 break # Stop after first successful auto-bid to prevent mass bid pileups
+
+    
+#     class Meta:
+#         db_table = 'pop_up_auction_popupbid'  # New table name
+#         verbose_name = 'PopUpBid'
+#         verbose_name_plural = 'PopUpBids'
+#         ordering = ["-timestamp"]
+
+        
+#     @classmethod
+#     def get_highest_bid(cls, product):
+#         """
+#         Get the highest bid for a given a product
+#         """
+#         return cls.objects.filter(product=product).order_by('-amount').first()
+
+
+# class PopUpPurchase(models.Model):
+#     """
+#     Model for tracking purchases
+#     """
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="purchases")
+#     product = models.ForeignKey('PopUpProduct', on_delete=models.PROTECT, related_name="purchases")
+#     bid = models.ForeignKey(PopUpBid, on_delete=models.PROTECT)
+#     price = models.DecimalField(max_digits=10, decimal_places=2)
+#     paid = models.BooleanField(default=False)
+#     purchased_at = models.DateTimeField(auto_now_add=True)
+#     address = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+#     stripe_api = models.CharField(max_length=40, blank=True, null=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+
+#     class Meta:
+#         db_table = 'pop_up_auction_popuppurchase'
+#         ordering = ["-purchased_at"]
+#         verbose_name = _("PopUp Customer Purchase")
+#         verbose_name_plural = _("PopUp Customer PopUp Purchases")
+    
+#     def __str__(self):
+#         return f"{self.customer} - {self.product} - ${self.price}"
