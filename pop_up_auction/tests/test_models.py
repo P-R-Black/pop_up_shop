@@ -1,6 +1,6 @@
 from django.test import TestCase
 from pop_up_auction.models import (PopUpProduct, PopUpCategory, PopUpBrand, 
-                            PopUpProductType, PopUpProductSpecification, 
+                            PopUpProductType, PopUpProductSpecification, WinnerReservation,
                             PopUpProductSpecificationValue, PopUpProductImage)
 
 from django.utils import timezone as django_timezone
@@ -11,7 +11,9 @@ from freezegun import freeze_time
 from unittest.mock import patch
 from decimal import Decimal
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
+User = get_user_model
 
 """
 Tests In Order
@@ -24,6 +26,9 @@ Tests In Order
  7. TestProductsFinishedAuction
  8. TestPopUpProductSpecificationModel
  9. TestPopUpProductSpecificationValueModel
+ 10. 
+ 11. 
+ 12. 
 
 """
 
@@ -732,11 +737,480 @@ class TestPopUpProductImageModel(TestCase):
         self.assertEqual(img1.image_url, img2.image_url)
         self.assertNotEqual(img1.product, img2.product)
 
-"""
-THINGS TO TEST
-1. Number of days left in auction.
-2. Auction completed
-"""
+
+
+class WinnerReservationModelTest(TestCase):
+    """Test suite for WinnerReservation model"""
+
+    def setUp(self):
+        """Create test data"""
+        # Create user
+        self.user = User.objects.create_user(
+            email="winner@example.com",
+            password="testpass123",
+            first_name="Winner",
+            last_name="User"
+        )
+        self.user.is_active = True
+        self.user.save()
+        
+        # Create another user for duplicate tests
+        self.user2 = User.objects.create_user(
+            email="user2@example.com",
+            password="testpass123"
+        )
+        self.user2.is_active = True
+        self.user2.save()
+        
+        # Create required foreign key objects
+        self.product_type = PopUpProductType.objects.create(name="Sneakers")
+        self.category = PopUpCategory.objects.create(name="Athletic", slug="athletic")
+        self.brand = PopUpBrand.objects.create(name="Nike")
+        
+        # Create product
+        self.product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Test Sneakers",
+            slug="test-sneakers",
+            retail_price=Decimal("200.00"),
+            reserve_price=Decimal("150.00"),
+            is_active=True
+        )
+        
+        # Create another product for testing
+        self.product2 = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Another Sneaker",
+            slug="another-sneaker",
+            retail_price=Decimal("180.00")
+        )
+
+    def test_create_winner_reservation(self):
+        """Test creating a winner reservation"""
+        expires_at = timezone.now() + timedelta(hours=48)
+        
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=expires_at
+        )
+        
+        self.assertEqual(reservation.user, self.user)
+        self.assertEqual(reservation.product, self.product)
+        self.assertEqual(reservation.expires_at, expires_at)
+        self.assertFalse(reservation.is_paid)
+        self.assertFalse(reservation.is_expired)
+        self.assertFalse(reservation.notification_sent)
+
+#     def test_reserved_at_auto_populated(self):
+#         """Test that reserved_at is automatically set"""
+#         before = timezone.now()
+        
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         after = timezone.now()
+        
+#         self.assertIsNotNone(reservation.reserved_at)
+#         self.assertGreaterEqual(reservation.reserved_at, before)
+#         self.assertLessEqual(reservation.reserved_at, after)
+
+#     def test_expires_at_48_hours_from_now(self):
+#         """Test setting expiration to 48 hours from now"""
+#         now = timezone.now()
+#         expires_at = now + timedelta(hours=48)
+        
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=expires_at
+#         )
+        
+#         # Check that expires_at is approximately 48 hours from now
+#         time_diff = reservation.expires_at - now
+#         self.assertAlmostEqual(
+#             time_diff.total_seconds(),
+#             48 * 3600,
+#             delta=5  # Allow 5 seconds tolerance
+#         )
+
+#     def test_is_paid_default_false(self):
+#         """Test that is_paid defaults to False"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         self.assertFalse(reservation.is_paid)
+#         self.assertIsNone(reservation.paid_at)
+
+#     def test_mark_as_paid(self):
+#         """Test marking reservation as paid"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         paid_time = timezone.now()
+#         reservation.is_paid = True
+#         reservation.paid_at = paid_time
+#         reservation.save()
+        
+#         reservation.refresh_from_db()
+#         self.assertTrue(reservation.is_paid)
+#         self.assertEqual(reservation.paid_at, paid_time)
+
+#     def test_is_expired_default_false(self):
+#         """Test that is_expired defaults to False"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         self.assertFalse(reservation.is_expired)
+
+#     def test_mark_as_expired(self):
+#         """Test marking reservation as expired (simulating background task)"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() - timedelta(hours=1)  # Already expired
+#         )
+        
+#         # Simulate background task marking as expired
+#         reservation.is_expired = True
+#         reservation.save()
+        
+#         reservation.refresh_from_db()
+#         self.assertTrue(reservation.is_expired)
+
+#     def test_notification_sent_default_false(self):
+#         """Test that notification_sent defaults to False"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         self.assertFalse(reservation.notification_sent)
+
+#     def test_mark_notification_as_sent(self):
+#         """Test marking notification as sent"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         reservation.notification_sent = True
+#         reservation.save()
+        
+#         reservation.refresh_from_db()
+#         self.assertTrue(reservation.notification_sent)
+
+#     def test_reminder_flags_default_false(self):
+#         """Test that reminder flags default to False"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         self.assertFalse(reservation.reminder_24hr_sent)
+#         self.assertFalse(reservation.reminder_1hr_sent)
+
+#     def test_mark_24hr_reminder_sent(self):
+#         """Test marking 24-hour reminder as sent"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         reservation.reminder_24hr_sent = True
+#         reservation.save()
+        
+#         reservation.refresh_from_db()
+#         self.assertTrue(reservation.reminder_24hr_sent)
+#         self.assertFalse(reservation.reminder_1hr_sent)
+
+#     def test_mark_1hr_reminder_sent(self):
+#         """Test marking 1-hour reminder as sent"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         reservation.reminder_1hr_sent = True
+#         reservation.save()
+        
+#         reservation.refresh_from_db()
+#         self.assertTrue(reservation.reminder_1hr_sent)
+#         self.assertFalse(reservation.reminder_24hr_sent)
+
+#     def test_unique_together_constraint(self):
+#         """Test that same product and user can't have duplicate reservations"""
+#         WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         # Try to create duplicate
+#         with self.assertRaises(Exception):  # IntegrityError
+#             WinnerReservation.objects.create(
+#                 user=self.user,
+#                 product=self.product,
+#                 expires_at=timezone.now() + timedelta(hours=48)
+#             )
+
+#     def test_same_user_different_products(self):
+#         """Test that same user can have reservations for different products"""
+#         reservation1 = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         reservation2 = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product2,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         self.assertEqual(WinnerReservation.objects.filter(user=self.user).count(), 2)
+#         self.assertNotEqual(reservation1.product, reservation2.product)
+
+#     def test_same_product_different_users(self):
+#         """Test that different users can have reservations for same product (sequential wins)"""
+#         # First user wins, pays, reservation can be deleted
+#         reservation1 = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+#         reservation1.is_paid = True
+#         reservation1.save()
+        
+#         # After first user's reservation is handled, second user can win
+#         reservation1.delete()  # Simulating cleanup after payment
+        
+#         reservation2 = WinnerReservation.objects.create(
+#             user=self.user2,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         self.assertNotEqual(reservation2.user, self.user)
+
+#     def test_cascade_delete_user(self):
+#         """Test that deleting user deletes reservation"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         reservation_id = reservation.id
+#         self.user.hard_delete()
+        
+#         self.assertFalse(
+#             WinnerReservation.objects.filter(id=reservation_id).exists()
+#         )
+
+#     def test_cascade_delete_product(self):
+#         """Test that deleting product deletes reservation"""
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         reservation_id = reservation.id
+#         self.product.delete()
+        
+#         self.assertFalse(
+#             WinnerReservation.objects.filter(id=reservation_id).exists()
+#         )
+
+#     def test_filter_unpaid_reservations(self):
+#         """Test filtering unpaid reservations"""
+#         WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48),
+#             is_paid=False
+#         )
+        
+#         WinnerReservation.objects.create(
+#             user=self.user2,
+#             product=self.product2,
+#             expires_at=timezone.now() + timedelta(hours=48),
+#             is_paid=True
+#         )
+        
+#         unpaid = WinnerReservation.objects.filter(is_paid=False)
+#         self.assertEqual(unpaid.count(), 1)
+
+#     def test_filter_expired_reservations(self):
+#         """Test filtering expired reservations"""
+#         # Create expired reservation
+#         WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() - timedelta(hours=1),
+#             is_expired=True
+#         )
+        
+#         # Create active reservation
+#         WinnerReservation.objects.create(
+#             user=self.user2,
+#             product=self.product2,
+#             expires_at=timezone.now() + timedelta(hours=48),
+#             is_expired=False
+#         )
+        
+#         expired = WinnerReservation.objects.filter(is_expired=True)
+#         self.assertEqual(expired.count(), 1)
+
+#     def test_filter_reservations_needing_24hr_reminder(self):
+#         """Test finding reservations that need 24-hour reminder"""
+#         # Expires in ~24 hours, reminder not sent
+#         WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=24),
+#             reminder_24hr_sent=False
+#         )
+        
+#         # Expires in ~24 hours, reminder already sent
+#         WinnerReservation.objects.create(
+#             user=self.user2,
+#             product=self.product2,
+#             expires_at=timezone.now() + timedelta(hours=24),
+#             reminder_24hr_sent=True
+#         )
+        
+#         needs_reminder = WinnerReservation.objects.filter(
+#             reminder_24hr_sent=False,
+#             expires_at__lte=timezone.now() + timedelta(hours=25),
+#             expires_at__gte=timezone.now() + timedelta(hours=23)
+#         )
+        
+#         self.assertEqual(needs_reminder.count(), 1)
+
+#     def test_filter_reservations_needing_1hr_reminder(self):
+#         """Test finding reservations that need 1-hour reminder"""
+#         # Expires in ~1 hour, reminder not sent
+#         WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=1),
+#             reminder_1hr_sent=False
+#         )
+        
+#         # Expires in ~1 hour, reminder already sent
+#         WinnerReservation.objects.create(
+#             user=self.user2,
+#             product=self.product2,
+#             expires_at=timezone.now() + timedelta(hours=1),
+#             reminder_1hr_sent=True
+#         )
+        
+#         needs_reminder = WinnerReservation.objects.filter(
+#             reminder_1hr_sent=False,
+#             expires_at__lte=timezone.now() + timedelta(hours=2),
+#             expires_at__gte=timezone.now()
+#         )
+        
+#         self.assertEqual(needs_reminder.count(), 1)
+
+#     def test_payment_workflow(self):
+#         """Test complete payment workflow"""
+#         # Create reservation
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48)
+#         )
+        
+#         # Initial state
+#         self.assertFalse(reservation.is_paid)
+#         self.assertIsNone(reservation.paid_at)
+        
+#         # User pays
+#         payment_time = timezone.now()
+#         reservation.is_paid = True
+#         reservation.paid_at = payment_time
+#         reservation.save()
+        
+#         # Verify payment recorded
+#         reservation.refresh_from_db()
+#         self.assertTrue(reservation.is_paid)
+#         self.assertEqual(reservation.paid_at, payment_time)
+#         self.assertFalse(reservation.is_expired)
+
+#     def test_expiration_workflow(self):
+#         """Test complete expiration workflow"""
+#         # Create reservation that expires soon
+#         reservation = WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(minutes=1)
+#         )
+        
+#         # Initial state
+#         self.assertFalse(reservation.is_expired)
+        
+#         # Simulate background task checking expiration
+#         if timezone.now() > reservation.expires_at:
+#             reservation.is_expired = True
+#             reservation.save()
+        
+#         # For this test, manually mark as expired
+#         reservation.is_expired = True
+#         reservation.save()
+        
+#         reservation.refresh_from_db()
+#         self.assertTrue(reservation.is_expired)
+
+#     def test_get_user_active_reservations(self):
+#         """Test getting all active reservations for a user"""
+#         WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product,
+#             expires_at=timezone.now() + timedelta(hours=48),
+#             is_expired=False,
+#             is_paid=False
+#         )
+        
+#         WinnerReservation.objects.create(
+#             user=self.user,
+#             product=self.product2,
+#             expires_at=timezone.now() + timedelta(hours=48),
+#             is_expired=True,  # Expired
+#             is_paid=False
+#         )
+        
+#         active_reservations = WinnerReservation.objects.filter(
+#             user=self.user,
+#             is_expired=False,
+#             is_paid=False
+#         )
+        
+#         self.assertEqual(active_reservations.count(), 1)
+
 
 # coverage report | gets coverage report
 # coverage html | gets coverage report in html. open index.html file in htmlcov directory
