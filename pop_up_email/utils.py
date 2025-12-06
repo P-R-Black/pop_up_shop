@@ -134,9 +134,13 @@ def send_customer_shipping_details(user, order, carrier, tracking_no, shipped_at
             "FedEx": "https://www.fedex.com/en-us/tracking.html"
 
     }
-    print('carrier', carrier)
-    print('links test', links_to_track_shipment[carrier])
-    print('order.id is', order.id)
+    # print('DEBUG carrier', carrier)
+    # print('DEBUG links test', links_to_track_shipment[carrier])
+    # print('DEBUG order.id is', order.id)
+    # print('DEBUG tracking_no', tracking_no)
+    # print('DEBUG shipped_at', shipped_at)
+    # print('DEBUG estimated_deliv', estimated_deliv)
+    # print('DEBUG status', status)
 
     subject = f"Your order has shipped Order #{order.id}."
     html_message = render_to_string('pop_up_email/send_customer_shipping_details.html', {

@@ -793,20 +793,20 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
 
 class SocialProfileCompletionForm(forms.ModelForm):
     class Meta:
-        model = PopUpCustomerProfile
-        fields = ('user',)
-        # fields = ('email', 'first_name')
+        model = User
+        # fields = ('user',)
+        fields = ('email', 'first_name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['user'].widget.attrs.update(
-            {'placeholder': 'user'}
-        )
+        # self.fields['user'].widget.attrs.update(
+        #     {'placeholder': 'user'}
+        # )
 
-        # self.fields['email'].widget.attrs.update(
-        #     {'placeholder': 'Email'}
-        # )
-        # self.fields['first_name'].widget.attrs.update(
-        #     {'placeholder': 'First Name'}
-        # )
+        self.fields['email'].widget.attrs.update(
+            {'placeholder': 'Email'}
+        )
+        self.fields['first_name'].widget.attrs.update(
+            {'placeholder': 'First Name'}
+        )
     

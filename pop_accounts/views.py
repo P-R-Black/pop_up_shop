@@ -1393,11 +1393,12 @@ class EnRouteView(UserPassesTestMixin, ListView):
         'popupproductspecificationvalue_set'
         ).filter(is_active=False, inventory_status="in_transit")
     
-    
         slug = self.kwargs.get('slug')
         if slug:
             product_type = get_object_or_404(PopUpProductType, slug=slug)
+
             base_queryset = base_queryset.filter(product_type=product_type)
+            
     
         # Convert to list to force evaluation and add specs
         products = list(base_queryset)
@@ -1406,7 +1407,6 @@ class EnRouteView(UserPassesTestMixin, ListView):
                 spec.specification.name: spec.value
                 for spec in product.popupproductspecificationvalue_set.all()
             }
-        
         return products
 
     def get_context_data(self, **kwargs):
@@ -1862,7 +1862,7 @@ class AccountSizesView(UserPassesTestMixin, TemplateView):
 
         # Query to get counts grouped by shoe_size and size_gender
         context['size_counts'] = PopUpCustomerProfile.objects.values('shoe_size', 'size_gender').annotate(
-                count=Count('id')).order_by('-count')
+                count=Count('user_id')).order_by('-count')
         context['admin_account_size_copy'] = ADMIN_ACCOUNT_SIZE_COPY
 
         return context
@@ -2175,7 +2175,6 @@ class UpdateShippingPostView(UserPassesTestMixin, UpdateView):
         
         # Send shipping email if shipment was recently marked as shipped
         if was_unshipped and updated_shipment.status == "shipped":
-       
             send_customer_shipping_details(
                 user=shipment.order.user,
                 order=shipment.order,
@@ -2197,6 +2196,7 @@ class UpdateShippingPostView(UserPassesTestMixin, UpdateView):
     
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        print('DEBUG self.object', self.object)
         return super().post(request, *args, **kwargs)
 
 
@@ -2362,6 +2362,7 @@ class UpdateProductView(UserPassesTestMixin, View):
             old_buy_now_start = product.buy_now_start                
             old_auction_start = product.auction_start_date
             
+          
             if form.is_valid():
                 form.save()
 
@@ -3005,6 +3006,7 @@ class Verify2FACodeView(View):
         # Login if code matches and user is verified
         if str(code_entered).strip() == str(session_code).strip():
             try:
+                print('user_id', user_id)
                 user = User.objects.get(id=user_id)
 
                 # Check if user is active before login
@@ -3021,7 +3023,7 @@ class Verify2FACodeView(View):
                     request.session.pop(key, None)
 
                 return JsonResponse({'verified': True, 'user_name': user.first_name})
-            except PopUpCustomerProfile.DoesNotExist:
+            except User.DoesNotExist:
                 return JsonResponse({'verified': False, 'error': 'User not found'}, status=404)
         else:
             return JsonResponse({'verified': False, 'error': 'Invalid Code'}, status=400)
@@ -3084,10 +3086,10 @@ class Resend2FACodeView(View):
         
         # Verifiy user exisits
         try:
-            user = PopUpCustomerProfile.objects.get(id=user_id)
+            user = User.objects.get(id=user_id)
             if not user.is_active:
                 return JsonResponse({'success': False, 'error': 'Account not active'}, status=403)
-        except PopUpCustomerProfile.DoesNotExist:
+        except User.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
         
         code = generate_2fa_code()
@@ -3200,9 +3202,9 @@ class VerifyEmailView(View):
 
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
-            user = PopUpCustomerProfile.objects.get(pk=uid)
+            user = User.objects.get(pk=uid)
 
-        except (TypeError, ValueError, OverflowError, PopUpCustomerProfile.DoesNotExist):
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
 
         
@@ -3337,6 +3339,7 @@ class CompleteProfileView(UpdateView):
 
     def form_valid(self, form):
         # Save form updates
+        
         user = form.save()
 
         # Log in user immediately so they appear authenticated

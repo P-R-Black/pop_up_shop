@@ -1,7 +1,7 @@
 from django.test import TestCase
 from pop_up_auction.models import (PopUpProduct, PopUpCategory, PopUpBrand, 
                             PopUpProductType, PopUpProductSpecification, 
-                            PopUpProductSpecificationValue)
+                            PopUpProductSpecificationValue, PopUpProductImage)
 
 from django.utils import timezone as django_timezone
 from datetime import timezone as dt_timezone, datetime
@@ -9,6 +9,23 @@ from django.utils.timezone import now, make_aware
 from datetime import datetime, timedelta
 from freezegun import freeze_time
 from unittest.mock import patch
+from decimal import Decimal
+from django.conf import settings
+
+
+"""
+Tests In Order
+ 1. TestPopUpBrandModel
+ 2. TestPopUpCategoryModel
+ 3. TestPopUpTypesModel
+ 4. TestProducts
+ 5. TestProductsActiveAuction
+ 6. TestProductsUpcomingAuction
+ 7. TestProductsFinishedAuction
+ 8. TestPopUpProductSpecificationModel
+ 9. TestPopUpProductSpecificationValueModel
+
+"""
 
 class TestPopUpBrandModel(TestCase):
     def setUp(self):
@@ -145,7 +162,6 @@ class TestProducts(TestCase):
         self.assertEqual(prod_one.is_active, True)
         
         self.assertTrue(isinstance(prod_one, PopUpProduct))
-
 
 
 
@@ -344,6 +360,377 @@ class TestPopUpProductSpecificationValueModel(TestCase):
         self.assertEqual(value.product.product_title, "Nike Air Max")
         self.assertEqual(value.specification.name, "Color")
         self.assertEqual(str(value), "Red")
+
+
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+class TestPopUpProductImageModel(TestCase):
+    """Test suite for PopUpProductImage model"""
+
+    def setUp(self):
+        """Create test data"""
+        # Create required foreign key objects
+        self.product_type = PopUpProductType.objects.create(
+            name="Sneakers"
+        )
+        self.category = PopUpCategory.objects.create(
+            name="Athletic Shoes",
+            slug="athletic-shoes"
+        )
+        self.brand = PopUpBrand.objects.create(
+            name="Nike"
+        )
+        
+        # Create product
+        self.product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Test Sneakers",
+            slug="test-sneakers",
+            retail_price=Decimal("200.00"),
+            is_active=True
+        )
+
+    
+
+    def test_create_product_image_with_uploaded_file(self):
+        """Test creating a product image with uploaded file"""
+        # Create a simple test image file
+        image = SimpleUploadedFile(
+            name='test_image.jpg',
+            content=b'fake image content',
+            content_type='image/jpeg'
+        )
+        
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image=image,
+            alt_text="Test image"
+        )
+        
+        self.assertEqual(product_image.product, self.product)
+        self.assertIsNotNone(product_image.image)
+        self.assertEqual(product_image.alt_text, "Test image")
+
+    def test_create_product_image_with_url(self):
+        """Test creating a product image with external URL"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg",
+            alt_text="External image"
+        )
+        
+        self.assertEqual(product_image.image_url, "https://example.com/image.jpg")
+        self.assertEqual(product_image.alt_text, "External image")
+
+    def test_is_feature_default_false(self):
+        """Test that is_feature defaults to False"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg"
+        )
+        
+        self.assertFalse(product_image.is_feature)
+
+    def test_set_feature_image(self):
+        """Test setting an image as featured"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg",
+            is_feature=True
+        )
+        
+        self.assertTrue(product_image.is_feature)
+
+    def test_multiple_images_per_product(self):
+        """Test that a product can have multiple images"""
+        img1 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image1.jpg",
+            is_feature=True
+        )
+        img2 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image2.jpg"
+        )
+        img3 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image3.jpg"
+        )
+        
+        self.assertEqual(self.product.product_image.count(), 3)
+        self.assertIn(img1, self.product.product_image.all())
+        self.assertIn(img2, self.product.product_image.all())
+        self.assertIn(img3, self.product.product_image.all())
+
+    def test_cascade_delete_product_deletes_images(self):
+        """Test that deleting product deletes its images"""
+        img1 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image1.jpg"
+        )
+        img2 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image2.jpg"
+        )
+        
+        product_id = self.product.id
+        self.product.delete()
+        
+        # Images should be deleted
+        self.assertEqual(PopUpProductImage.objects.filter(product_id=product_id).count(), 0)
+
+    def test_get_image_url_with_uploaded_file(self):
+        """Test get_image_url returns uploaded file"""
+        image = SimpleUploadedFile(
+            name='test_image.jpg',
+            content=b'fake image content',
+            content_type='image/jpeg'
+        )
+        
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image=image
+        )
+        
+        # Should return the actual URL of the uploaded file
+        self.assertEqual(product_image.get_image_url(), product_image.image.url)
+
+
+    def test_get_image_url_with_external_url(self):
+        """Test get_image_url returns external URL when no uploaded file"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image= '',
+            image_url="https://example.com/image.jpg"
+        )
+        
+        self.assertEqual(
+            product_image.get_image_url(), 
+            "https://example.com/image.jpg"
+        )
+
+    def test_get_image_url_fallback_to_default(self):
+        """Test get_image_url returns default when no image or URL"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image= '',
+        )
+        
+        expected_default = settings.STATIC_URL + 'images/default.png'
+        self.assertEqual(product_image.get_image_url(), expected_default)
+
+
+    def test_resolved_image_url_property(self):
+        """Test resolved_image_url property"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg"
+        )
+        
+        self.assertEqual(
+            product_image.resolved_image_url,
+            product_image.get_image_url()
+        )
+
+    def test_str_representation_with_uploaded_image(self):
+        """Test __str__ with uploaded image"""
+        image = SimpleUploadedFile(
+            name='test_image.jpg',
+            content=b'fake image content',
+            content_type='image/jpeg'
+        )
+        
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image=image
+        )
+        
+        # Should return the image URL
+        str_repr = str(product_image)
+        self.assertIn('test_image', str_repr)
+
+    def test_str_representation_with_external_url(self):
+        """Test __str__ with external URL"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg"
+        )
+        
+        self.assertEqual(str(product_image), "https://example.com/image.jpg")
+
+    def test_str_representation_with_no_image(self):
+        """Test __str__ when no image or URL"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product
+        )
+        
+        self.assertEqual(str(product_image), "No image")
+
+    def test_alt_text_optional(self):
+        """Test that alt_text is optional"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg"
+        )
+        
+        self.assertIsNone(product_image.alt_text)
+
+    def test_alt_text_max_length(self):
+        """Test alt_text respects max_length"""
+        long_alt_text = "A" * 255
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg",
+            alt_text=long_alt_text
+        )
+        
+        self.assertEqual(len(product_image.alt_text), 255)
+
+    def test_timestamps_auto_populate(self):
+        """Test that created_at and updated_at auto-populate"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg"
+        )
+        
+        self.assertIsNotNone(product_image.created_at)
+        self.assertIsNotNone(product_image.updated_at)
+
+    def test_updated_at_changes_on_save(self):
+        """Test that updated_at changes when model is saved"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg"
+        )
+        
+        original_updated_at = product_image.updated_at
+        
+        # Update the image
+        product_image.alt_text = "Updated alt text"
+        product_image.save()
+        
+        self.assertNotEqual(product_image.updated_at, original_updated_at)
+        self.assertGreater(product_image.updated_at, original_updated_at)
+
+    def test_filter_featured_images(self):
+        """Test filtering for featured images"""
+        img1 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image1.jpg",
+            is_feature=True
+        )
+        img2 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image2.jpg",
+            is_feature=False
+        )
+        img3 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image3.jpg",
+            is_feature=True
+        )
+        
+        featured_images = self.product.product_image.filter(is_feature=True)
+        self.assertEqual(featured_images.count(), 2)
+        self.assertIn(img1, featured_images)
+        self.assertIn(img3, featured_images)
+        self.assertNotIn(img2, featured_images)
+
+    def test_get_featured_image(self):
+        """Test getting the first featured image"""
+        PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image1.jpg",
+            is_feature=False
+        )
+        featured = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image2.jpg",
+            is_feature=True
+        )
+        
+        first_featured = self.product.product_image.filter(is_feature=True).first()
+        self.assertEqual(first_featured, featured)
+
+    def test_related_name_product_image(self):
+        """Test the related_name 'product_image' works correctly"""
+        PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/image.jpg"
+        )
+        
+        # Access via related_name
+        self.assertEqual(self.product.product_image.count(), 1)
+
+    def test_image_priority_uploaded_over_url(self):
+        """Test that uploaded image takes priority over external URL"""
+        image = SimpleUploadedFile(
+            name='test_image.jpg',
+            content=b'fake image content',
+            content_type='image/jpeg'
+        )
+        
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image=image,
+            image_url="https://example.com/image.jpg"
+        )
+        
+        # Should return uploaded image, not URL
+        self.assertEqual(product_image.get_image_url(), product_image.image.url)
+
+    def test_default_image_path(self):
+        """Test default image is set correctly"""
+        product_image = PopUpProductImage.objects.create(
+            product=self.product
+        )
+        
+        # Check that default exists in the path
+        expected_default = settings.STATIC_URL + 'images/default.png'
+        self.assertEqual(product_image.get_image_url(), expected_default)
+
+
+    def test_upload_to_directory(self):
+        """Test images are uploaded to correct directory"""
+        image = SimpleUploadedFile(
+            name='test_image.jpg',
+            content=b'fake image content',
+            content_type='image/jpeg'
+        )
+        
+        product_image = PopUpProductImage.objects.create(
+            product=self.product,
+            image=image
+        )
+        
+        # Check upload path
+        self.assertIn('images/', product_image.image.name)
+
+    def test_multiple_products_same_image_url(self):
+        """Test that different products can use the same external URL"""
+        product2 = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Another Sneaker",
+            slug="another-sneaker",
+            retail_price=Decimal("150.00")
+        )
+        
+        img1 = PopUpProductImage.objects.create(
+            product=self.product,
+            image_url="https://example.com/shared-image.jpg"
+        )
+        img2 = PopUpProductImage.objects.create(
+            product=product2,
+            image_url="https://example.com/shared-image.jpg"
+        )
+        
+        self.assertEqual(img1.image_url, img2.image_url)
+        self.assertNotEqual(img1.product, img2.product)
 
 """
 THINGS TO TEST

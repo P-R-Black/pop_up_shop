@@ -726,7 +726,7 @@ function updateNavigationWithUserData(userData) {
         if (userData.isStaff) {
             dashboardLink = `
                 <li class="nav-link">
-                    <a href="/accounts/dashboard-admin/">
+                    <a href="/pop_accounts/dashboard-admin/">
                         <i class='bx bxs-user-detail icon'></i>
                         <span class="text nav-text">Dashboard</span>
                     </a>
@@ -736,7 +736,7 @@ function updateNavigationWithUserData(userData) {
         } else {
             dashboardLink = `
                 <li class="nav-link">
-                    <a href="/accounts/dashboard/">
+                    <a href="/pop_accounts/dashboard/">
                         <i class='bx bxs-user-detail icon'></i>
                         <span class="text nav-text">Dashboard</span>
                     </a>
