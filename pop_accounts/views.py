@@ -313,7 +313,7 @@ class UserDashboardView(LoginRequiredMixin, View):
 
 class UserInterestedInView(LoginRequiredMixin, View):
     # 🟢 View Test Completed
-    # ⚪️ Model Test Completed
+    # 🟢 Model Test Completed
     # ✅ Mobile / Tablet Media Query Completed
     """
     Display all products that the authenticated user has marked as "interested in."

@@ -5,9 +5,24 @@ from pop_up_auction.auction_dummy_data import test_account_data
 from django.utils.text import slugify
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+import requests
+from urllib.parse import urlparse
+from django.core.files.base import ContentFile
+
+
+
+def download_image_from_url(url):
+    """Download an image file from a remote URL and return (filename, ContentFile)."""
+    response = requests.get(url)
+    if response.status_code != 200:
+        return None
+
+    filename = urlparse(url).path.split('/')[-1]
+    return filename, ContentFile(response.content)
 
 
 class Command(BaseCommand):
+
     def handle(self, *args, **kwargs):
         print('test')
 
@@ -114,13 +129,32 @@ class Command(BaseCommand):
             if PopUpProductImage.objects.filter(image=tad['image']).exists():
                 self.stdout.write(self.style.WARNING(f"Image {tad['image']} already exists, skipping name..."))
                 continue
+            
+            img_url = tad.get("image")
+
+            image_file = None
+
+            if img_url and img_url.startswith("http"):
+                downloaded = download_image_from_url(img_url)
+                if downloaded:
+                    filename, file_content = downloaded
+                    image_file = file_content
+                    image_file.name = filename
 
             image = PopUpProductImage.objects.create(
                 product=product,
-                image = tad['image'], 
-                alt_text = tad['alternative_text'], 
-                is_feature = (str(tad['is_feature']).lower() == 'true'),
+                alt_text = tad.get("alternative_text", ""), 
+                is_feature = (str(tad.get("is_feature")).lower() == "true")
             )
+
+            if image_file:
+                image.image.save(image_file.name, image_file, save=True)
+            # image = PopUpProductImage.objects.create(
+            #     product=product,
+            #     image = tad['image'], 
+            #     alt_text = tad['alternative_text'], 
+            #     is_feature = (str(tad['is_feature']).lower() == 'true'),
+            # )
 
             self.stdout.write(self.style.SUCCESS(f"Product '{product.product_title}' created successfully."))
 

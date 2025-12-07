@@ -148,7 +148,6 @@ def create_test_user(email, password, first_name, last_name, shoe_size, size_gen
     profile.size_gender = size_gender
     profile.save()
 
-
     return user, profile
 
 def create_test_user_two():
@@ -174,13 +173,7 @@ def create_test_staff_user(email, password, first_name, last_name, shoe_size, si
     staff_profile.size_gender = size_gender
     staff_profile.save()
 
-    # return User.objects.create_user(
-    #     email="staffuser@staff.com",
-    #     password="staffPassword!232",
-    #     first_name="Staff",
-    #     last_name="User",
-    #     is_staff=True
-    # )
+
     return staff_user, staff_profile
 
 def create_test_address(customer, first_name, last_name, address_line, address_line2, apartment_suite_number, 
@@ -890,8 +883,6 @@ class TestPersonalInfoView(TestCase):
     
     def test_address_form_submission_other_users_address(self):
         """Test updating another user's address returns 404"""
-
-        
         other_address = PopUpCustomerAddress.objects.create(
             customer=self.user2,
             first_name='Other',
@@ -7964,14 +7955,7 @@ class TestUpdateShippingPostView(TestCase):
         """Test successfully updating shipment information"""
         self.client.force_login(self.staff_user)
 
-
-        print('test_view test', django_timezone.now().strftime('%Y-%m-%d %H:%M:%S'),)
-        # 2025-12-05 22:22:58
-
         shipped_at = django_timezone.now()
-        print('shipped_at', shipped_at)
-        #  2025-12-05 22:22:58.702860+00:00
-
 
         estimated_delivery = django_timezone.now() + timedelta(days=3)
 
@@ -8729,7 +8713,7 @@ class TestUpdateProductView(TestCase):
             is_active=True
             )
         
-         # create product types and products
+        # create product types and products
         self.brand = create_brand("New Jordan")
         self.ptype_shoe = create_product_type("creps", True)
         self.ptype_shoe_2 = create_product_type("new_shoes", True)
@@ -8747,9 +8731,6 @@ class TestUpdateProductView(TestCase):
             is_active=True
         )
 
-        # self.test_prod_two = create_test_product_two(inventory_status="in_transit", is_active=True)
-        
-        # self.test_prod_three = create_test_product_three(inventory_status="in_inventory", is_active=True)
 
         self.test_prod_four = create_test_product( 
             product_type=self.product_type,
@@ -13395,6 +13376,8 @@ class SocialLoginCompleteViewTests(TestCase):
     # python3 manage.py test pop_accounts.tests.test_views.PersonalInfoViewIntegrationTests
     # Run Test with Coverage
     # coverage run --omit='*/venv/*' manage.py test pop_accounts/tests 
+    # coverage report | to get overview 
+    # coverage html | to get hml overview
     # """
 
 

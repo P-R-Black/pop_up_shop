@@ -32,7 +32,7 @@ class ProductAdmin(admin.ModelAdmin):
         ProductSpecificationValueInline,
         ProductImageInline,
     ]
-    list_display = ['product_title', 'secondary_product_title', 'slug']
+    list_display = ['product_title', 'secondary_product_title', 'slug',]
 
     def get_prepopulated_fields(self, request, obj=None):
         return {'slug': ('product_title',)}

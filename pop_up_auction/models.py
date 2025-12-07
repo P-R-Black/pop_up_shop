@@ -141,11 +141,11 @@ class PopUpProduct(models.Model):
     """
     
     INVENTORY_STATUS_CHOICES = (
-        ('anticipated', 'Anticipated'),
-        ('in_transit', 'In Transit'),
-        ('in_inventory', 'In Inventory'),
-        ('reserved', 'Reserved'),
-        ('sold_out', 'Sold Out')
+        ('anticipated', 'Anticipated'), # future releases, but not purchased
+        ('in_transit', 'In Transit'), # purchased and in transit to inventory
+        ('in_inventory', 'In Inventory'), # purchased and inventory available for sale
+        ('reserved', 'Reserved'), # buy now item that's been added to cart in an the process of being purchased
+        ('sold_out', 'Sold Out') # sold out item
     )
 
 
@@ -295,7 +295,7 @@ class PopUpProduct(models.Model):
         
         highest_bid = self.bids.order_by('-amount').first()
         if highest_bid:
-            self.winner = highest_bid.user
+            self.winner = highest_bid.customer.user
             self.inventory_status = 'in_inventory'
         else:
             self.winner = None
@@ -427,32 +427,33 @@ class PopUpProductImage(models.Model):
         """
 
         if self.image:
-            if hasattr(self.image, 'url'):
-                try:
-                    return self.image.url
-                except ValueError:
-                    pass
-            
-        # Check for external RUL
+            try:
+                return self.image.url
+            except ValueError:
+                pass # file missing or invalid
+        
+        # 2. external url
         if self.image_url:
             return self.image_url
         
-        # default feedback
-        return settings.STATIC_URL + 'images/default.png'
+        # 3 Fallback default
+        return settings.STATIC_URL + "images/default.png"
     
     @property
     def resolved_image_url(self):
         return self.get_image_url()
-    
+
     def __str__(self):
-        if self.image and hasattr(self.image, 'url'):
+        if self.image and self.image.name:
             try:
                 return self.image.url
             except ValueError:
                 pass
+        
         if self.image_url:
             return self.image_url
-        return "No image"
+        
+        return "No Image"
 
         # if self.image and hasattr(self.image, 'url'):
         #     try:

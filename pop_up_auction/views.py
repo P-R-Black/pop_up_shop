@@ -13,7 +13,7 @@ from django.views import View
 from django.utils import timezone
 from django.utils.timezone import now
 from django.db.models import Q
-from decimal import Decimal
+from decimal import Decimal, DecimalException
 from django.db import transaction
 from pop_accounts.utils.utils import  add_specs_to_products
 from pop_up_order.models import PopUpOrderItem
@@ -21,6 +21,7 @@ from django.http import Http404
 
 # Create your views here.
 class AjaxLoginRequiredMixin(AccessMixin):
+    # 🟢 View Test Completed
     def dispatch(self, request, *args, **kwargs):
         # Check if user is authenticated AND active
         if not request.user.is_authenticated or not request.user.is_active:
@@ -37,6 +38,10 @@ class AjaxLoginRequiredMixin(AccessMixin):
 
 
 class AllAuctionView(View):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
+    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed 
+
     template_name = 'auction/auction.html'
 
     def get(self, request):
@@ -67,24 +72,44 @@ class AllAuctionView(View):
     
 
 
-
-
 class PlaceBidView(AjaxLoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
+    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
     """
-    Recieves POST of bid_amount & product_id, creates a PopUpbids, and updates the products 
-    bid_count and current_highest_bid
-    """
+    Handle AJAX bid submissions for an active product.
 
+    This view:
+      • Accepts a POST request containing `product_id` and `bid_amount`.
+      • Validates that both fields exist and that `bid_amount` is a valid Decimal.
+      • Fetches the active product or returns 404 if the product does not exist.
+      • Ensures the bid is strictly higher than:
+            - the product's retail_price, and
+            - the current highest bid (if one exists).
+      • Creates a new PopUpBid associated with the authenticated user.
+      • Updates the product’s `current_highest_bid` and `bid_count`.
+      • Returns a JSON response containing:
+            - success/error status
+            - validation messages when appropriate
+            - the updated highest bid
+            - the updated bid count
+
+    This endpoint is intended for frontend AJAX usage and requires the user to be
+    authenticated (via AjaxLoginRequiredMixin).
+    """
+   
     def post(self, request):            
         product_id = request.POST.get('product_id')
         bid_amount = request.POST.get('bid_amount')
+
+        
 
         if not product_id or not bid_amount:
             return JsonResponse({"status": "error", "message": "Missing product or amount."}, status=400)
         
         try:
             bid_amount = Decimal(bid_amount)
-        except ValueError:
+        except (ValueError, DecimalException):
             return JsonResponse({'status': 'error', 'message': 'Invalid bid amount.'}, status=400)
         
         product = get_object_or_404(PopUpProduct, pk=product_id, is_active=True)
@@ -93,7 +118,7 @@ class PlaceBidView(AjaxLoginRequiredMixin, View):
         current = product.current_highest_bid or 0
         retail_price = product.retail_price
         floor_price = product.reserve_price
-        print('floor_price', floor_price)
+    
 
         if bid_amount <= float(retail_price):
             return JsonResponse({'status': 'error', 'message': f'Your bid must be better than ${retail_price:.2f}.',
@@ -107,8 +132,9 @@ class PlaceBidView(AjaxLoginRequiredMixin, View):
                                 status=400,
                                 )
         # 3. Create the bid
+        profile = request.user.popupcustomerprofile
         bid = PopUpBid.objects.create(
-            customer=request.user, 
+            customer=profile, 
             product=product,
             amount=bid_amount,
             timestamp=timezone.now()
@@ -129,6 +155,40 @@ class PlaceBidView(AjaxLoginRequiredMixin, View):
 
 
 class ProductAuctionView(DetailView):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
+    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
+    """
+    Class-based view for displaying a product's auction page.
+
+    Provides full product details along with real-time auction information, including:
+    - Product description, images, and specifications
+    - Current highest bid
+    - Total number of bids placed
+    - Auction timing information (e.g., remaining days/hours)
+    - Additional product-specific attributes enriched through the specs utility
+
+    Attributes:
+        model (PopUpProduct): The product model used for the detail view.
+        template_name (str): Template used to render the auction page.
+        context_object_name (str): Name of the product variable in the template.
+        slug_field (str): Field used to look up the product by slug.
+        slug_url_kwarg (str): URL keyword argument used to retrieve the slug.
+
+    Methods:
+        get_object(queryset=None):
+            Retrieves the requested product, ensuring:
+                - The product exists
+                - The product is active (is_active=True)
+                - Product specifications are prefetched for performance
+            Returns the fully populated PopUpProduct instance.
+
+    get_context_data(**kwargs):
+        Adds additional auction-related context to the page, including:
+            - Structured product specifications (via add_specs_to_products)
+            - A {spec_name: value} dictionary for template use
+        Returns the complete context for rendering.
+    """
     model = PopUpProduct
     template_name = 'auction/product_auction.html'
     context_object_name = 'product'
@@ -159,6 +219,9 @@ class ProductAuctionView(DetailView):
         
 
 class ProductsView(ListView):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
+    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
     model = PopUpProduct
     template_name = 'auction/products.html'
     context_object_name = 'product'
@@ -205,6 +268,39 @@ class ProductsView(ListView):
 
 
 class ComingSoonView(ListView):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
+    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
+    """
+    Class-based view for displaying products that are “coming soon.”
+
+    Shows users products that are not yet available for purchase but are already
+    ordered, in transit, and expected to arrive in inventory soon. This view
+    supports optional filtering by product type and enriches products with
+    their associated specifications.
+
+    Attributes:
+        model (PopUpProduct): The product model displayed in the list view.
+        template_name (str): Template used to render the coming-soon product page.
+        context_object_name (str): Name of the product list variable in the template.
+
+    Methods:
+        get_queryset():
+            Retrieves products that:
+                - Are inactive (is_active=False)
+                - Have an inventory_status of "in_transit"
+            If a slug is present in the URL, filters the list to only include products
+            belonging to the specified product type. Prefetches related product
+            specifications for performance.
+
+        get_context_data(**kwargs):
+            Adds additional context required for rendering, including:
+                - Products enriched with specification data via add_specs_to_products
+                - A list of all product types (used for category navigation or filters)
+                - The currently selected product type (if a slug was provided)
+            Returns the fully prepared context dictionary for template rendering.
+    """
+
     model = PopUpProduct
     template_name = "auction/coming_soon.html"
     context_object_name = "product"
@@ -242,6 +338,9 @@ class ComingSoonView(ListView):
 
 
 class FutureReleases(ListView):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
+    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
     model = PopUpProduct
     template_name = "auction/future_releases.html"
     context_object_name = "product"
@@ -277,6 +376,9 @@ class FutureReleases(ListView):
 
 
 class ProductDetailView(DetailView):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
+    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
     model = PopUpProduct
     template_name = "auction/product_detail.html"
     context_object_name = "product"
@@ -291,8 +393,7 @@ class ProductDetailView(DetailView):
     def get_context_data(self, **kwargs):
         """Add product specification to the context"""
         context = super().get_context_data(**kwargs)
-        product = self.get_object
-        print('get_context_data product', product)
+        product = self.get_object()
 
         product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=self.object)}
         context['product_specifications'] = product_specifications
@@ -300,7 +401,9 @@ class ProductDetailView(DetailView):
         # Buy Now Logic
         now_ = now()
         buy_now_start = getattr(product, "buy_now_start", None)
+        
         buy_now_end = getattr(product, "buy_now_end", None)
+        
 
         context['is_buy_now_available'] = (
             buy_now_start and buy_now_end and 
@@ -308,7 +411,6 @@ class ProductDetailView(DetailView):
             getattr(product, "bought_now", False)
         )
         return context
-
 
 
 def past_product_detail(request, item_id):
@@ -321,9 +423,7 @@ def past_product_detail(request, item_id):
         product_with_specs = add_specs_to_products([product])[0]
     else:
         product_with_specs = None
-    
-    print('product_with_specs', product_with_specs)
-    
+        
     context = {
         'item': item, 'product': product_with_specs
 

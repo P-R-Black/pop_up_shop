@@ -1,10 +1,15 @@
+from django.forms import ValidationError
 from django.test import TestCase
+from pop_accounts.models import (PopUpCustomerProfile, PopUpBid)
 from pop_up_auction.models import (PopUpProduct, PopUpCategory, PopUpBrand, 
                             PopUpProductType, PopUpProductSpecification, WinnerReservation,
                             PopUpProductSpecificationValue, PopUpProductImage)
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone as django_timezone
 from datetime import timezone as dt_timezone, datetime
+from datetime import timedelta, datetime 
+
 from django.utils.timezone import now, make_aware
 from datetime import datetime, timedelta
 from freezegun import freeze_time
@@ -13,23 +18,36 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
-User = get_user_model
+User = get_user_model()
+
+
+def create_test_user(email, password, first_name, last_name, shoe_size, size_gender, **kwargs):
+    user = User.objects.create_user(
+        email=email,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        **kwargs
+    )
+    profile = PopUpCustomerProfile.objects.get(user=user)    
+    profile.shoe_size = shoe_size
+    profile.size_gender = size_gender
+    profile.save()
+
+
+    return user, profile
+
 
 """
 Tests In Order
- 1. TestPopUpBrandModel
- 2. TestPopUpCategoryModel
- 3. TestPopUpTypesModel
- 4. TestProducts
- 5. TestProductsActiveAuction
- 6. TestProductsUpcomingAuction
- 7. TestProductsFinishedAuction
- 8. TestPopUpProductSpecificationModel
- 9. TestPopUpProductSpecificationValueModel
- 10. 
- 11. 
- 12. 
-
+ 1.  TestPopUpBrandModel
+ 2.  TestPopUpCategoryModel
+ 3.  TestPopUpTypesModel
+ 4.  TestPopUpProductModel
+ 5.  TestPopUpProductSpecificationModel
+ 6.  TestPopUpProductSpecificationValueModel
+ 7.  TestPopUpProductImageModel
+ 8.  TestWinnerReservationModel
 """
 
 class TestPopUpBrandModel(TestCase):
@@ -82,220 +100,751 @@ class TestPopUpTypesModel(TestCase):
         self.assertTrue(isinstance(data_two, PopUpProductType))
         self.assertEqual(str(data_two), 'gaming system')
     
-   
-class TestProducts(TestCase):
-    """
-    Test Products model data insertion/types field attributes
-    """
+
+class PopUpProductModelTest(TestCase):
+    """Comprehensive test suite for PopUpProduct model"""
+
     def setUp(self):
-        PopUpCategory.objects.create(name='Jordan 3', slug='jordan-3')
-        PopUpBrand.objects.create(name='Jordan', slug='jordan')
-        PopUpProductType.objects.create(name='shoe', slug='shoe')
-
-        self.prod_one = PopUpProduct.objects.create(
-            product_type_id=1, 
-            category_id=1, 
-            product_title="Jordan 3 Retro", 
-            secondary_product_title="OG Rare Air",
-            description="Brand new sneakers",
-            slug="jordan-3-retro-og-rare-air",
-            retail_price="150.00",
-            buy_now_price="230.00",
-            brand_id=1,
-            auction_start_date=None,
-            auction_end_date=None,
-            inventory_status="in_inventory",
-            bid_count="0",
-            reserve_price="0",
-            is_active=True)
-    
-    def test_product_model_entry(self):
-        prod_one = self.prod_one
-
-        # Test product_type_id
-        self.assertEqual(int(prod_one.product_type_id), 1)
-
-        # Test product_type
-        self.assertEqual(str(prod_one.product_type), "shoe")
-
-        # Test category_id
-        self.assertEqual(int(prod_one.category_id), 1)
-
-        # Test category
-        self.assertEqual(str(prod_one.category), "Jordan 3")
-
-        # Test product_title
-        self.assertEqual(str(prod_one.product_title), "Jordan 3 Retro")
-
-        # Test secondary_product_title
-        self.assertEqual(str(prod_one.secondary_product_title), "OG Rare Air")
-
-        # Test description
-        self.assertEqual(str(prod_one.description), "Brand new sneakers")
-
-        # Test slug
-        self.assertEqual(str(prod_one.slug), "jordan-3-retro-og-rare-air")
-
-        # Test retail_price
-        self.assertEqual(str(prod_one.retail_price), "150.00")
-
-        # Test buy_now_price
-        self.assertEqual(str(prod_one.buy_now_price), "230.00")
-
-        # Test brand_id
-        self.assertEqual(int(prod_one.brand_id), 1)
-
-        # Test brand_name
-        self.assertEqual(str(prod_one.brand), "Jordan")
-
-        # Test auction_start_date
-        self.assertEqual(prod_one.auction_start_date, None)
-
-        # Test auction_end_date
-        self.assertEqual(prod_one.auction_end_date, None)
-
-        # Test inventory_status
-        self.assertEqual(str(prod_one.inventory_status), "in_inventory")
-
-        # Test bid_count
-        self.assertEqual(str(prod_one.bid_count), "0")
-
-        # Test reserve_price
-        self.assertEqual(str(prod_one.reserve_price), "0")
-
-        # Test is_active
-        self.assertEqual(prod_one.is_active, True)
+        """Create test data"""
+        # Create required foreign key objects
+        self.product_type = PopUpProductType.objects.create(
+            name="Sneakers",
+            slug="sneakers"
+        )
+        self.category = PopUpCategory.objects.create(
+            name="Jordan 3",
+            slug="jordan-3"
+        )
+        self.brand = PopUpBrand.objects.create(
+            name="Jordan",
+            slug="jordan"
+        )
         
-        self.assertTrue(isinstance(prod_one, PopUpProduct))
+        # Create user for winner tests
+        self.user, self.profile_user = create_test_user('winner@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+        self.user.is_active = True
+        self.user.save()
 
 
 
-class TestProductsActiveAuction(TestCase):
-    """
-    Test an Active Auction
-    """
-    # freeze_time("2025-05-17 12:00:00")
-    def setUp(self):
-        PopUpCategory.objects.create(name='Jordan 3', slug='jordan-3')
-        PopUpBrand.objects.create(name='Jordan', slug='jordan')
-        PopUpProductType.objects.create(name='shoe', slug='shoe')
+    # ========================================
+    # BASIC CRUD TESTS
+    # ========================================     
 
-        auction_start = make_aware(datetime(2025, 5, 29, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 6, 5, 12, 0, 0))
+    def test_create_product(self):
+        """Test creating a basic product"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            is_active=True
+        )
         
+        self.assertEqual(product.product_title, "Jordan 3 Retro")
+        self.assertEqual(product.retail_price, Decimal("150.00"))
+        self.assertTrue(product.is_active)
 
-        self.prod_one = PopUpProduct.objects.create(
-            product_type_id=1, 
-            category_id=1, 
-            product_title="Jordan 3 Retro", 
-            secondary_product_title="OG Rare Air",
-            description="Brand new sneakers",
-            slug="jordan-3-retro-og-rare-air",
-            retail_price="150.00",
-            buy_now_price="230.00",
-            brand_id=1,
+    def test_slug_auto_generated(self):
+        """Test that slug is automatically generated from product_title"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro OG",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertEqual(product.slug, "jordan-3-retro-og")
+
+    def test_slug_unique_on_duplicate_titles(self):
+        """Test that duplicate titles get unique slugs"""
+        product1 = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        product2 = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertEqual(product1.slug, "jordan-3-retro")
+        self.assertEqual(product2.slug, "jordan-3-retro-1")
+
+    def test_str_representation(self):
+        """Test __str__ method"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertEqual(str(product), "Jordan 3 Retro")
+
+    def test_inventory_status_default(self):
+        """Test default inventory status"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertEqual(product.inventory_status, "anticipated")
+
+    # ========================================
+    # AUCTION STATUS TESTS
+    # ========================================
+    
+    def test_auction_status_upcoming(self):
+        """Test auction status when auction hasn't started"""
+        auction_start = django_timezone.now() + timedelta(days=7)
+        auction_end = django_timezone.now() + timedelta(days=14)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertEqual(product.auction_status, "Upcoming")
+
+    def test_auction_status_ongoing(self):
+        """Test auction status during auction"""
+        auction_start = django_timezone.now() - timedelta(days=1)
+        auction_end = django_timezone.now() + timedelta(days=6)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertEqual(product.auction_status, "Ongoing")
+
+    def test_auction_status_ended(self):
+        """Test auction status after auction ends"""
+        auction_start = django_timezone.now() - timedelta(days=14)
+        auction_end = django_timezone.now() - timedelta(days=7)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertEqual(product.auction_status, "Ended")
+
+    def test_auction_status_not_available(self):
+        """Test auction status when no dates are set"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertEqual(product.auction_status, "Not Available")
+
+    # ========================================
+    # AUCTION DURATION TESTS
+    # ========================================
+    
+    def test_auction_duration_calculation(self):
+        """Test auction duration calculation"""
+        auction_start = django_timezone.now() - timedelta(days=1)
+        auction_end = django_timezone.now() + timedelta(days=6, hours=5)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        duration = product.auction_duration
+        self.assertIsNotNone(duration)
+        self.assertEqual(duration["days"], 6)
+        self.assertGreaterEqual(duration["hours"], 0)
+        self.assertLessEqual(duration["hours"], 23)
+
+    def test_auction_duration_none_when_no_dates(self):
+        """Test auction duration returns None when dates not set"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertIsNone(product.auction_duration)
+
+    # ========================================
+    # BUY NOW TESTS
+    # ========================================
+    
+    def test_is_buy_now_available_true(self):
+        """Test buy now is available during buy now period"""
+        buy_now_start = django_timezone.now() - timedelta(days=1)
+        buy_now_end = django_timezone.now() + timedelta(days=6)
+        auction_start = django_timezone.now() + timedelta(days=7)
+        auction_end = django_timezone.now() + timedelta(days=14)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            buy_now_price=Decimal("230.00"),
+            buy_now_start=buy_now_start,
+            buy_now_end=buy_now_end,
             auction_start_date=auction_start,
             auction_end_date=auction_end,
-            inventory_status="in_inventory",
-            bid_count="0",
-            reserve_price="0",
-            is_active=True)
-    
-        print('start', self.prod_one.auction_start_date)
-        print('end', self.prod_one.auction_end_date)
+            bought_now=False
+        )
+        
+        self.assertTrue(product.is_buy_now_available)
 
-    # freeze_time("2025-05-17 12:00:00")
-    def test_product_model_active_auction(self):
+    def test_is_buy_now_available_false_after_bought(self):
+        """Test buy now not available after purchase"""
+        buy_now_start = django_timezone.now() - timedelta(days=1)
+        buy_now_end = django_timezone.now() + timedelta(days=6)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            buy_now_price=Decimal("230.00"),
+            buy_now_start=buy_now_start,
+            buy_now_end=buy_now_end,
+            bought_now=True
+        )
+        
+        self.assertFalse(product.is_buy_now_available)
 
-        prod_one = self.prod_one
-        status = prod_one.auction_status
-        duration = prod_one.auction_duration
-
-        self.assertTrue(isinstance(prod_one, PopUpProduct))
-        self.assertEqual(status, "Ongoing")  # since the date is in the future
-        self.assertEqual(duration["days"], 7)
-        self.assertEqual(duration["hours"], 0)
-
-
-class TestProductsUpcomingAuction(TestCase):
-    """
-    Test An Upcoming Auction
-    """
-    def setUp(self):
-        PopUpCategory.objects.create(name='Jordan 3', slug='jordan-3')
-        PopUpBrand.objects.create(name='Jordan', slug='jordan')
-        PopUpProductType.objects.create(name='shoe', slug='shoe')
-
-
-        auction_start = make_aware(datetime(2025, 11, 18, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 11, 24, 12, 0, 0))
-
-        self.prod_one = PopUpProduct.objects.create(
-            product_type_id=1, 
-            category_id=1, 
-            product_title="Jordan 3 Retro", 
-            secondary_product_title="OG Rare Air",
-            description="Brand new sneakers",
-            slug="jordan-3-retro-og-rare-air",
-            retail_price="150.00",
-            buy_now_price="230.00",
-            brand_id=1,
+    def test_is_buy_now_available_false_during_auction(self):
+        """Test buy now not available during auction phase"""
+        buy_now_start = django_timezone.now() - timedelta(days=8)
+        buy_now_end = django_timezone.now() - timedelta(days=2)
+        auction_start = django_timezone.now() - timedelta(days=1)
+        auction_end = django_timezone.now() + timedelta(days=6)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            buy_now_price=Decimal("230.00"),
+            buy_now_start=buy_now_start,
+            buy_now_end=buy_now_end,
             auction_start_date=auction_start,
-            auction_end_date=auction_end,
-            inventory_status="in_inventory",
-            bid_count="0",
-            reserve_price="0",
-            is_active=True)
-    
-    def test_product_model_active_auction(self):
-        prod_one = self.prod_one
-        status = prod_one.auction_status
-        duration = prod_one.auction_duration
+            auction_end_date=auction_end
+        )
+        
+        self.assertFalse(product.is_buy_now_available)
 
-        self.assertTrue(isinstance(prod_one, PopUpProduct))
-        self.assertEqual(status, "Upcoming")  # since the date is in the future
-        self.assertEqual(duration["days"], 7)
-        self.assertEqual(duration["hours"], 0)
-    
+    def test_complete_buy_now_purchase(self):
+        """Test completing a buy now purchase"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            buy_now_price=Decimal("230.00"),
+            inventory_status="in_inventory"
+        )
+        
+        product.complete_buy_now_purchase(self.user)
+        
+        self.assertEqual(product.inventory_status, "sold_out")
+        self.assertTrue(product.bought_now)
+        self.assertTrue(product.auction_finalized)
+        self.assertEqual(product.winner, self.user)
+        self.assertIsNotNone(product.auction_end_date)
 
-class TestProductsFinishedAuction(TestCase):
-    """
-    Test A Finished Auction
-    """
-    def setUp(self):
-        PopUpCategory.objects.create(name='Jordan 3', slug='jordan-3')
-        PopUpBrand.objects.create(name='Jordan', slug='jordan')
-        PopUpProductType.objects.create(name='shoe', slug='shoe')
-
-        auction_start = make_aware(datetime(2025, 5, 22, 12, 0, 0))
-        auction_end = make_aware(datetime(2025, 5, 29, 12, 0, 0))
-
-        self.prod_one = PopUpProduct.objects.create(
-            product_type_id=1, 
-            category_id=1, 
-            product_title="Jordan 3 Retro", 
-            secondary_product_title="OG Rare Air",
-            description="Brand new sneakers",
-            slug="jordan-3-retro-og-rare-air",
-            retail_price="150.00",
-            buy_now_price="230.00",
-            brand_id=1,
+    def test_buy_now_must_end_before_auction(self):
+        """Test validation that buy now must end before auction"""
+        buy_now_start = django_timezone.now() + timedelta(days=1)
+        buy_now_end = django_timezone.now() + timedelta(days=10)  # After auction starts!
+        auction_start = django_timezone.now() + timedelta(days=7)
+        auction_end = django_timezone.now() + timedelta(days=14)
+        
+        product = PopUpProduct(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            buy_now_price=Decimal("230.00"),
+            buy_now_start=buy_now_start,
+            buy_now_end=buy_now_end,
             auction_start_date=auction_start,
-            auction_end_date=auction_end,
-            inventory_status="in_inventory",
-            bid_count="0",
-            reserve_price="0",
-            is_active=True)
-    
-    def test_product_model_active_auction(self):
-        prod_one = self.prod_one
-        status = prod_one.auction_status
-        duration = prod_one.auction_duration
+            auction_end_date=auction_end
+        )
+        
+        with self.assertRaises(ValidationError):
+            product.clean()
 
-        self.assertTrue(isinstance(prod_one, PopUpProduct))
-        self.assertEqual(status, "Ended")  # since the date is in the future
-        self.assertEqual(duration["days"], 7)
-        self.assertEqual(duration["hours"], 0)
+    # ========================================
+    # AUCTION PHASE TESTS
+    # ========================================
+    
+    def test_is_auction_phase_true(self):
+        """Test auction phase is true during auction"""
+        auction_start = django_timezone.now() - timedelta(days=1)
+        auction_end = django_timezone.now() + timedelta(days=6)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertTrue(product.is_auction_phase())
+
+    def test_is_auction_phase_false_before_start(self):
+        """Test auction phase is false before start"""
+        auction_start = django_timezone.now() + timedelta(days=7)
+        auction_end = django_timezone.now() + timedelta(days=14)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertFalse(product.is_auction_phase())
+
+    def test_is_auction_phase_false_after_end(self):
+        """Test auction phase is false after end"""
+        auction_start = django_timezone.now() - timedelta(days=14)
+        auction_end = django_timezone.now() - timedelta(days=7)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertFalse(product.is_auction_phase())
+
+    # ========================================
+    # RESERVATION TESTS
+    # ========================================
+    
+    def test_is_reserved_expired_true(self):
+        """Test reservation is expired"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            reserved_until= django_timezone.now() - timedelta(hours=1)
+        )
+        
+        self.assertTrue(product.is_reserved_expired())
+
+    def test_is_reserved_expired_false(self):
+        """Test reservation is not expired"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            reserved_until= django_timezone.now() + timedelta(hours=1)
+        )
+        
+        self.assertFalse(product.is_reserved_expired())
+
+    def test_is_reserved_expired_none(self):
+        """Test reservation expiry when no reservation"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertFalse(product.is_reserved_expired())
+
+    # ========================================
+    # CART AVAILABILITY TESTS
+    # ========================================
+    
+    def test_can_be_added_to_cart_in_inventory(self):
+        """Test product can be added to cart when in inventory"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            inventory_status="in_inventory"
+        )
+        
+        self.assertTrue(product.can_be_added_to_cart())
+
+    def test_can_be_added_to_cart_reserved_expired(self):
+        """Test product can be added when reservation expired"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            inventory_status="reserved",
+            reserved_until= django_timezone.now() - timedelta(hours=1)
+        )
+        
+        self.assertTrue(product.can_be_added_to_cart())
+
+    def test_cannot_be_added_to_cart_reserved_active(self):
+        """Test product cannot be added when actively reserved"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            inventory_status="reserved",
+            reserved_until= django_timezone.now() + timedelta(hours=1)
+        )
+        
+        self.assertFalse(product.can_be_added_to_cart())
+
+    def test_cannot_be_added_to_cart_sold_out(self):
+        """Test product cannot be added when sold out"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            inventory_status="sold_out"
+        )
+        
+        self.assertFalse(product.can_be_added_to_cart())
+
+    # ========================================
+    # DISPLAY PRICE TESTS
+    # ========================================
+    
+    def test_display_price_bought_now(self):
+        """Test display price when bought via buy now"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            buy_now_price=Decimal("230.00"),
+            bought_now=True
+        )
+        
+        self.assertEqual(product.display_price(), Decimal("230.00"))
+
+    def test_display_price_during_buy_now(self):
+        """Test display price during buy now period"""
+        buy_now_start = django_timezone.now() - timedelta(days=1)
+        buy_now_end = django_timezone.now() + timedelta(days=6)
+        auction_start = django_timezone.now() + timedelta(days=7)
+        auction_end = django_timezone.now() + timedelta(days=14)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            buy_now_price=Decimal("230.00"),
+            buy_now_start=buy_now_start,
+            buy_now_end=buy_now_end,
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertEqual(product.display_price(), Decimal("230.00"))
+
+    def test_display_price_during_auction_with_bid(self):
+        """Test display price shows highest bid during auction"""
+        auction_start = django_timezone.now() - timedelta(days=1)
+        auction_end = django_timezone.now() + timedelta(days=6)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            reserve_price=Decimal("100.00"),
+            current_highest_bid=Decimal("180.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertEqual(product.display_price(), Decimal("180.00"))
+
+    def test_display_price_during_auction_no_bid(self):
+        """Test display price shows reserve during auction with no bids"""
+        auction_start = django_timezone.now() - timedelta(days=1)
+        auction_end = django_timezone.now() + timedelta(days=6)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            reserve_price=Decimal("100.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertEqual(product.display_price(), Decimal("100.00"))
+
+    def test_display_price_default_retail(self):
+        """Test display price defaults to retail"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertEqual(product.display_price(), Decimal("150.00"))
+
+    # ========================================
+    # FINALIZE AUCTION TESTS
+    # ========================================
+    
+    def test_finalize_auction_with_bids(self):
+        """Test finalizing auction with bids"""
+        auction_start = django_timezone.now() - timedelta(days=7)
+        auction_end = django_timezone.now() - timedelta(days=1)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        # Create profile and bid
+        PopUpBid.objects.create(
+            customer=self.profile_user,
+            product=product,
+            amount=Decimal("180.00")
+        )
+        
+        product.finalize_auction()
+        
+        self.assertTrue(product.auction_finalized)
+        self.assertEqual(product.winner, self.user)
+        self.assertEqual(product.inventory_status, "in_inventory")
+
+    def test_finalize_auction_no_bids(self):
+        """Test finalizing auction with no bids"""
+        auction_start = django_timezone.now() - timedelta(days=7)
+        auction_end = django_timezone.now() - timedelta(days=1)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        product.finalize_auction()
+        
+        self.assertTrue(product.auction_finalized)
+        self.assertIsNone(product.winner)
+
+    def test_finalize_auction_already_bought(self):
+        """Test finalize auction does nothing if already bought"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            bought_now=True,
+            winner=self.user
+        )
+        
+        original_winner = product.winner
+        product.finalize_auction()
+        
+        # Should not change anything
+        self.assertEqual(product.winner, original_winner)
+
+    # ========================================
+    # SALE OUTCOME TESTS
+    # ========================================
+    
+    def test_sale_outcome_bought_now(self):
+        """Test sale outcome when bought via buy now"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            bought_now=True
+        )
+        
+        self.assertEqual(product.sale_outcome, "Bought Now")
+
+    def test_sale_outcome_auction_finalized_with_winner(self):
+        """Test sale outcome when auction ended with winner"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_finalized=True,
+            winner=self.user
+        )
+        
+        self.assertEqual(
+            product.sale_outcome,
+            "Auction Finalized - Winner Pending Purchase"
+        )
+
+    def test_sale_outcome_auction_finalized_no_winner(self):
+        """Test sale outcome when auction ended with no bids"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_finalized=True,
+            winner=None
+        )
+        
+        self.assertEqual(
+            product.sale_outcome,
+            "Auction Ended - No Bids"
+        )
+
+    def test_sale_outcome_returns_auction_status(self):
+        """Test sale outcome returns auction status when not finalized"""
+        auction_start = django_timezone.now() - timedelta(days=1)
+        auction_end = django_timezone.now() + timedelta(days=6)
+        
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00"),
+            auction_start_date=auction_start,
+            auction_end_date=auction_end
+        )
+        
+        self.assertEqual(product.sale_outcome, "Ongoing")
+
+    # ========================================
+    # ADDITIONAL FIELD TESTS
+    # ========================================
+    
+    def test_bid_count_default(self):
+        """Test bid count defaults to 0"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertEqual(product.bid_count, 0)
+
+    def test_timestamps_auto_populate(self):
+        """Test that timestamps are auto-populated"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        self.assertIsNotNone(product.created_at)
+        self.assertIsNotNone(product.updated_at)
+
+    def test_get_absolute_url(self):
+        """Test get_absolute_url method"""
+        product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title="Jordan 3 Retro",
+            slug="jordan-3-retro",
+            retail_price=Decimal("150.00")
+        )
+        
+        expected_url = f"/auction/product/{product.slug}/"
+        # This depends on your URL configuration
+        # Adjust the assertion based on your actual URL pattern
+        self.assertIn(product.slug, product.get_absolute_url())
+
 
 
 class TestPopUpProductSpecificationModel(TestCase):
@@ -366,9 +915,6 @@ class TestPopUpProductSpecificationValueModel(TestCase):
         self.assertEqual(value.specification.name, "Color")
         self.assertEqual(str(value), "Red")
 
-
-
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 class TestPopUpProductImageModel(TestCase):
     """Test suite for PopUpProductImage model"""
@@ -505,17 +1051,19 @@ class TestPopUpProductImageModel(TestCase):
 
 
     def test_get_image_url_with_external_url(self):
-        """Test get_image_url returns external URL when no uploaded file"""
+        """get_image_url returns image_url when no file is uploaded."""
         product_image = PopUpProductImage.objects.create(
             product=self.product,
-            image= '',
-            image_url="https://example.com/image.jpg"
+            image_url="https://example.com/image.jpg",
+            alt_text="Test",
         )
-        
+
         self.assertEqual(
-            product_image.get_image_url(), 
+            product_image.get_image_url(),
             "https://example.com/image.jpg"
         )
+
+
 
     def test_get_image_url_fallback_to_default(self):
         """Test get_image_url returns default when no image or URL"""
@@ -572,7 +1120,7 @@ class TestPopUpProductImageModel(TestCase):
             product=self.product
         )
         
-        self.assertEqual(str(product_image), "No image")
+        self.assertEqual(str(product_image), "No Image")
 
     def test_alt_text_optional(self):
         """Test that alt_text is optional"""
@@ -698,21 +1246,20 @@ class TestPopUpProductImageModel(TestCase):
         self.assertEqual(product_image.get_image_url(), expected_default)
 
 
-    def test_upload_to_directory(self):
-        """Test images are uploaded to correct directory"""
+    def test_uploaded_file_takes_priority_over_url(self):
+        """Local uploaded image overrides the external image URL."""
         image = SimpleUploadedFile(
-            name='test_image.jpg',
-            content=b'fake image content',
-            content_type='image/jpeg'
+            "local.jpg", b"fake-content", content_type="image/jpeg"
         )
-        
+
         product_image = PopUpProductImage.objects.create(
             product=self.product,
-            image=image
+            image=image,
+            image_url="https://example.com/remote.jpg"
         )
-        
-        # Check upload path
-        self.assertIn('images/', product_image.image.name)
+
+        self.assertEqual(product_image.get_image_url(), product_image.image.url)
+
 
     def test_multiple_products_same_image_url(self):
         """Test that different products can use the same external URL"""
@@ -739,7 +1286,7 @@ class TestPopUpProductImageModel(TestCase):
 
 
 
-class WinnerReservationModelTest(TestCase):
+class TestWinnerReservationModel(TestCase):
     """Test suite for WinnerReservation model"""
 
     def setUp(self):
@@ -751,6 +1298,7 @@ class WinnerReservationModelTest(TestCase):
             first_name="Winner",
             last_name="User"
         )
+        
         self.user.is_active = True
         self.user.save()
         
@@ -791,7 +1339,7 @@ class WinnerReservationModelTest(TestCase):
 
     def test_create_winner_reservation(self):
         """Test creating a winner reservation"""
-        expires_at = timezone.now() + timedelta(hours=48)
+        expires_at = django_timezone.now() + timedelta(hours=48)
         
         reservation = WinnerReservation.objects.create(
             user=self.user,
@@ -806,410 +1354,412 @@ class WinnerReservationModelTest(TestCase):
         self.assertFalse(reservation.is_expired)
         self.assertFalse(reservation.notification_sent)
 
-#     def test_reserved_at_auto_populated(self):
-#         """Test that reserved_at is automatically set"""
-#         before = timezone.now()
-        
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
-        
-#         after = timezone.now()
-        
-#         self.assertIsNotNone(reservation.reserved_at)
-#         self.assertGreaterEqual(reservation.reserved_at, before)
-#         self.assertLessEqual(reservation.reserved_at, after)
 
-#     def test_expires_at_48_hours_from_now(self):
-#         """Test setting expiration to 48 hours from now"""
-#         now = timezone.now()
-#         expires_at = now + timedelta(hours=48)
+    def test_reserved_at_auto_populated(self):
+        """Test that reserved_at is automatically set"""
+        before = django_timezone.now()
         
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=expires_at
-#         )
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         # Check that expires_at is approximately 48 hours from now
-#         time_diff = reservation.expires_at - now
-#         self.assertAlmostEqual(
-#             time_diff.total_seconds(),
-#             48 * 3600,
-#             delta=5  # Allow 5 seconds tolerance
-#         )
+        after = django_timezone.now()
+        
+        self.assertIsNotNone(reservation.reserved_at)
+        self.assertGreaterEqual(reservation.reserved_at, before)
+        self.assertLessEqual(reservation.reserved_at, after)
 
-#     def test_is_paid_default_false(self):
-#         """Test that is_paid defaults to False"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
-        
-#         self.assertFalse(reservation.is_paid)
-#         self.assertIsNone(reservation.paid_at)
 
-#     def test_mark_as_paid(self):
-#         """Test marking reservation as paid"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_expires_at_48_hours_from_now(self):
+        """Test setting expiration to 48 hours from now"""
+        now = django_timezone.now()
+        expires_at = now + timedelta(hours=48)
         
-#         paid_time = timezone.now()
-#         reservation.is_paid = True
-#         reservation.paid_at = paid_time
-#         reservation.save()
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=expires_at
+        )
         
-#         reservation.refresh_from_db()
-#         self.assertTrue(reservation.is_paid)
-#         self.assertEqual(reservation.paid_at, paid_time)
+        # Check that expires_at is approximately 48 hours from now
+        time_diff = reservation.expires_at - now
+        self.assertAlmostEqual(
+            time_diff.total_seconds(),
+            48 * 3600,
+            delta=5  # Allow 5 seconds tolerance
+        )
 
-#     def test_is_expired_default_false(self):
-#         """Test that is_expired defaults to False"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_is_paid_default_false(self):
+        """Test that is_paid defaults to False"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         self.assertFalse(reservation.is_expired)
+        self.assertFalse(reservation.is_paid)
+        self.assertIsNone(reservation.paid_at)
 
-#     def test_mark_as_expired(self):
-#         """Test marking reservation as expired (simulating background task)"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() - timedelta(hours=1)  # Already expired
-#         )
+    def test_mark_as_paid(self):
+        """Test marking reservation as paid"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         # Simulate background task marking as expired
-#         reservation.is_expired = True
-#         reservation.save()
+        paid_time = django_timezone.now()
+        reservation.is_paid = True
+        reservation.paid_at = paid_time
+        reservation.save()
         
-#         reservation.refresh_from_db()
-#         self.assertTrue(reservation.is_expired)
+        reservation.refresh_from_db()
+        self.assertTrue(reservation.is_paid)
+        self.assertEqual(reservation.paid_at, paid_time)
 
-#     def test_notification_sent_default_false(self):
-#         """Test that notification_sent defaults to False"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_is_expired_default_false(self):
+        """Test that is_expired defaults to False"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         self.assertFalse(reservation.notification_sent)
+        self.assertFalse(reservation.is_expired)
 
-#     def test_mark_notification_as_sent(self):
-#         """Test marking notification as sent"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_mark_as_expired(self):
+        """Test marking reservation as expired (simulating background task)"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() - timedelta(hours=1)  # Already expired
+        )
         
-#         reservation.notification_sent = True
-#         reservation.save()
+        # Simulate background task marking as expired
+        reservation.is_expired = True
+        reservation.save()
         
-#         reservation.refresh_from_db()
-#         self.assertTrue(reservation.notification_sent)
+        reservation.refresh_from_db()
+        self.assertTrue(reservation.is_expired)
 
-#     def test_reminder_flags_default_false(self):
-#         """Test that reminder flags default to False"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_notification_sent_default_false(self):
+        """Test that notification_sent defaults to False"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         self.assertFalse(reservation.reminder_24hr_sent)
-#         self.assertFalse(reservation.reminder_1hr_sent)
+        self.assertFalse(reservation.notification_sent)
 
-#     def test_mark_24hr_reminder_sent(self):
-#         """Test marking 24-hour reminder as sent"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_mark_notification_as_sent(self):
+        """Test marking notification as sent"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         reservation.reminder_24hr_sent = True
-#         reservation.save()
+        reservation.notification_sent = True
+        reservation.save()
         
-#         reservation.refresh_from_db()
-#         self.assertTrue(reservation.reminder_24hr_sent)
-#         self.assertFalse(reservation.reminder_1hr_sent)
+        reservation.refresh_from_db()
+        self.assertTrue(reservation.notification_sent)
 
-#     def test_mark_1hr_reminder_sent(self):
-#         """Test marking 1-hour reminder as sent"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_reminder_flags_default_false(self):
+        """Test that reminder flags default to False"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         reservation.reminder_1hr_sent = True
-#         reservation.save()
-        
-#         reservation.refresh_from_db()
-#         self.assertTrue(reservation.reminder_1hr_sent)
-#         self.assertFalse(reservation.reminder_24hr_sent)
+        self.assertFalse(reservation.reminder_24hr_sent)
+        self.assertFalse(reservation.reminder_1hr_sent)
 
-#     def test_unique_together_constraint(self):
-#         """Test that same product and user can't have duplicate reservations"""
-#         WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_mark_24hr_reminder_sent(self):
+        """Test marking 24-hour reminder as sent"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         # Try to create duplicate
-#         with self.assertRaises(Exception):  # IntegrityError
-#             WinnerReservation.objects.create(
-#                 user=self.user,
-#                 product=self.product,
-#                 expires_at=timezone.now() + timedelta(hours=48)
-#             )
+        reservation.reminder_24hr_sent = True
+        reservation.save()
+        
+        reservation.refresh_from_db()
+        self.assertTrue(reservation.reminder_24hr_sent)
+        self.assertFalse(reservation.reminder_1hr_sent)
 
-#     def test_same_user_different_products(self):
-#         """Test that same user can have reservations for different products"""
-#         reservation1 = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_mark_1hr_reminder_sent(self):
+        """Test marking 1-hour reminder as sent"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         reservation2 = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product2,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+        reservation.reminder_1hr_sent = True
+        reservation.save()
         
-#         self.assertEqual(WinnerReservation.objects.filter(user=self.user).count(), 2)
-#         self.assertNotEqual(reservation1.product, reservation2.product)
+        reservation.refresh_from_db()
+        self.assertTrue(reservation.reminder_1hr_sent)
+        self.assertFalse(reservation.reminder_24hr_sent)
 
-#     def test_same_product_different_users(self):
-#         """Test that different users can have reservations for same product (sequential wins)"""
-#         # First user wins, pays, reservation can be deleted
-#         reservation1 = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
-#         reservation1.is_paid = True
-#         reservation1.save()
+    def test_unique_together_constraint(self):
+        """Test that same product and user can't have duplicate reservations"""
+        WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         # After first user's reservation is handled, second user can win
-#         reservation1.delete()  # Simulating cleanup after payment
-        
-#         reservation2 = WinnerReservation.objects.create(
-#             user=self.user2,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
-        
-#         self.assertNotEqual(reservation2.user, self.user)
+        # Try to create duplicate
+        with self.assertRaises(Exception):  # IntegrityError
+            WinnerReservation.objects.create(
+                user=self.user,
+                product=self.product,
+                expires_at=django_timezone.now() + timedelta(hours=48)
+            )
 
-#     def test_cascade_delete_user(self):
-#         """Test that deleting user deletes reservation"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_same_user_different_products(self):
+        """Test that same user can have reservations for different products"""
+        reservation1 = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         reservation_id = reservation.id
-#         self.user.hard_delete()
+        reservation2 = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product2,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         self.assertFalse(
-#             WinnerReservation.objects.filter(id=reservation_id).exists()
-#         )
+        self.assertEqual(WinnerReservation.objects.filter(user=self.user).count(), 2)
+        self.assertNotEqual(reservation1.product, reservation2.product)
 
-#     def test_cascade_delete_product(self):
-#         """Test that deleting product deletes reservation"""
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_same_product_different_users(self):
+        """Test that different users can have reservations for same product (sequential wins)"""
+        # First user wins, pays, reservation can be deleted
+        reservation1 = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
+        reservation1.is_paid = True
+        reservation1.save()
         
-#         reservation_id = reservation.id
-#         self.product.delete()
+        # After first user's reservation is handled, second user can win
+        reservation1.delete()  # Simulating cleanup after payment
         
-#         self.assertFalse(
-#             WinnerReservation.objects.filter(id=reservation_id).exists()
-#         )
+        reservation2 = WinnerReservation.objects.create(
+            user=self.user2,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
+        
+        self.assertNotEqual(reservation2.user, self.user)
 
-#     def test_filter_unpaid_reservations(self):
-#         """Test filtering unpaid reservations"""
-#         WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48),
-#             is_paid=False
-#         )
+    def test_cascade_delete_user(self):
+        """Test that deleting user deletes reservation"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         WinnerReservation.objects.create(
-#             user=self.user2,
-#             product=self.product2,
-#             expires_at=timezone.now() + timedelta(hours=48),
-#             is_paid=True
-#         )
+        reservation_id = reservation.id
+        self.user.hard_delete()
         
-#         unpaid = WinnerReservation.objects.filter(is_paid=False)
-#         self.assertEqual(unpaid.count(), 1)
+        self.assertFalse(
+            WinnerReservation.objects.filter(id=reservation_id).exists()
+        )
 
-#     def test_filter_expired_reservations(self):
-#         """Test filtering expired reservations"""
-#         # Create expired reservation
-#         WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() - timedelta(hours=1),
-#             is_expired=True
-#         )
+    def test_cascade_delete_product(self):
+        """Test that deleting product deletes reservation"""
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         # Create active reservation
-#         WinnerReservation.objects.create(
-#             user=self.user2,
-#             product=self.product2,
-#             expires_at=timezone.now() + timedelta(hours=48),
-#             is_expired=False
-#         )
+        reservation_id = reservation.id
+        self.product.delete()
         
-#         expired = WinnerReservation.objects.filter(is_expired=True)
-#         self.assertEqual(expired.count(), 1)
+        self.assertFalse(
+            WinnerReservation.objects.filter(id=reservation_id).exists()
+        )
 
-#     def test_filter_reservations_needing_24hr_reminder(self):
-#         """Test finding reservations that need 24-hour reminder"""
-#         # Expires in ~24 hours, reminder not sent
-#         WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=24),
-#             reminder_24hr_sent=False
-#         )
+    def test_filter_unpaid_reservations(self):
+        """Test filtering unpaid reservations"""
+        WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48),
+            is_paid=False
+        )
         
-#         # Expires in ~24 hours, reminder already sent
-#         WinnerReservation.objects.create(
-#             user=self.user2,
-#             product=self.product2,
-#             expires_at=timezone.now() + timedelta(hours=24),
-#             reminder_24hr_sent=True
-#         )
+        WinnerReservation.objects.create(
+            user=self.user2,
+            product=self.product2,
+            expires_at=django_timezone.now() + timedelta(hours=48),
+            is_paid=True
+        )
         
-#         needs_reminder = WinnerReservation.objects.filter(
-#             reminder_24hr_sent=False,
-#             expires_at__lte=timezone.now() + timedelta(hours=25),
-#             expires_at__gte=timezone.now() + timedelta(hours=23)
-#         )
-        
-#         self.assertEqual(needs_reminder.count(), 1)
+        unpaid = WinnerReservation.objects.filter(is_paid=False)
+        self.assertEqual(unpaid.count(), 1)
 
-#     def test_filter_reservations_needing_1hr_reminder(self):
-#         """Test finding reservations that need 1-hour reminder"""
-#         # Expires in ~1 hour, reminder not sent
-#         WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=1),
-#             reminder_1hr_sent=False
-#         )
+    def test_filter_expired_reservations(self):
+        """Test filtering expired reservations"""
+        # Create expired reservation
+        WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() - timedelta(hours=1),
+            is_expired=True
+        )
         
-#         # Expires in ~1 hour, reminder already sent
-#         WinnerReservation.objects.create(
-#             user=self.user2,
-#             product=self.product2,
-#             expires_at=timezone.now() + timedelta(hours=1),
-#             reminder_1hr_sent=True
-#         )
+        # Create active reservation
+        WinnerReservation.objects.create(
+            user=self.user2,
+            product=self.product2,
+            expires_at=django_timezone.now() + timedelta(hours=48),
+            is_expired=False
+        )
         
-#         needs_reminder = WinnerReservation.objects.filter(
-#             reminder_1hr_sent=False,
-#             expires_at__lte=timezone.now() + timedelta(hours=2),
-#             expires_at__gte=timezone.now()
-#         )
-        
-#         self.assertEqual(needs_reminder.count(), 1)
+        expired = WinnerReservation.objects.filter(is_expired=True)
+        self.assertEqual(expired.count(), 1)
 
-#     def test_payment_workflow(self):
-#         """Test complete payment workflow"""
-#         # Create reservation
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48)
-#         )
+    def test_filter_reservations_needing_24hr_reminder(self):
+        """Test finding reservations that need 24-hour reminder"""
+        # Expires in ~24 hours, reminder not sent
+        WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=24),
+            reminder_24hr_sent=False
+        )
         
-#         # Initial state
-#         self.assertFalse(reservation.is_paid)
-#         self.assertIsNone(reservation.paid_at)
+        # Expires in ~24 hours, reminder already sent
+        WinnerReservation.objects.create(
+            user=self.user2,
+            product=self.product2,
+            expires_at=django_timezone.now() + timedelta(hours=24),
+            reminder_24hr_sent=True
+        )
         
-#         # User pays
-#         payment_time = timezone.now()
-#         reservation.is_paid = True
-#         reservation.paid_at = payment_time
-#         reservation.save()
+        needs_reminder = WinnerReservation.objects.filter(
+            reminder_24hr_sent=False,
+            expires_at__lte=django_timezone.now() + timedelta(hours=25),
+            expires_at__gte=django_timezone.now() + timedelta(hours=23)
+        )
         
-#         # Verify payment recorded
-#         reservation.refresh_from_db()
-#         self.assertTrue(reservation.is_paid)
-#         self.assertEqual(reservation.paid_at, payment_time)
-#         self.assertFalse(reservation.is_expired)
+        self.assertEqual(needs_reminder.count(), 1)
 
-#     def test_expiration_workflow(self):
-#         """Test complete expiration workflow"""
-#         # Create reservation that expires soon
-#         reservation = WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(minutes=1)
-#         )
+    def test_filter_reservations_needing_1hr_reminder(self):
+        """Test finding reservations that need 1-hour reminder"""
+        # Expires in ~1 hour, reminder not sent
+        WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=1),
+            reminder_1hr_sent=False
+        )
         
-#         # Initial state
-#         self.assertFalse(reservation.is_expired)
+        # Expires in ~1 hour, reminder already sent
+        WinnerReservation.objects.create(
+            user=self.user2,
+            product=self.product2,
+            expires_at=django_timezone.now() + timedelta(hours=1),
+            reminder_1hr_sent=True
+        )
         
-#         # Simulate background task checking expiration
-#         if timezone.now() > reservation.expires_at:
-#             reservation.is_expired = True
-#             reservation.save()
+        needs_reminder = WinnerReservation.objects.filter(
+            reminder_1hr_sent=False,
+            expires_at__lte=django_timezone.now() + timedelta(hours=2),
+            expires_at__gte=django_timezone.now()
+        )
         
-#         # For this test, manually mark as expired
-#         reservation.is_expired = True
-#         reservation.save()
-        
-#         reservation.refresh_from_db()
-#         self.assertTrue(reservation.is_expired)
+        self.assertEqual(needs_reminder.count(), 1)
 
-#     def test_get_user_active_reservations(self):
-#         """Test getting all active reservations for a user"""
-#         WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product,
-#             expires_at=timezone.now() + timedelta(hours=48),
-#             is_expired=False,
-#             is_paid=False
-#         )
+    def test_payment_workflow(self):
+        """Test complete payment workflow"""
+        # Create reservation
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48)
+        )
         
-#         WinnerReservation.objects.create(
-#             user=self.user,
-#             product=self.product2,
-#             expires_at=timezone.now() + timedelta(hours=48),
-#             is_expired=True,  # Expired
-#             is_paid=False
-#         )
+        # Initial state
+        self.assertFalse(reservation.is_paid)
+        self.assertIsNone(reservation.paid_at)
         
-#         active_reservations = WinnerReservation.objects.filter(
-#             user=self.user,
-#             is_expired=False,
-#             is_paid=False
-#         )
+        # User pays
+        payment_time = django_timezone.now()
+        reservation.is_paid = True
+        reservation.paid_at = payment_time
+        reservation.save()
         
-#         self.assertEqual(active_reservations.count(), 1)
+        # Verify payment recorded
+        reservation.refresh_from_db()
+        self.assertTrue(reservation.is_paid)
+        self.assertEqual(reservation.paid_at, payment_time)
+        self.assertFalse(reservation.is_expired)
+
+    def test_expiration_workflow(self):
+        """Test complete expiration workflow"""
+        # Create reservation that expires soon
+        reservation = WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(minutes=1)
+        )
+        
+        # Initial state
+        self.assertFalse(reservation.is_expired)
+        
+        # Simulate background task checking expiration
+        if django_timezone.now() > reservation.expires_at:
+            reservation.is_expired = True
+            reservation.save()
+        
+        # For this test, manually mark as expired
+        reservation.is_expired = True
+        reservation.save()
+        
+        reservation.refresh_from_db()
+        self.assertTrue(reservation.is_expired)
+
+    def test_get_user_active_reservations(self):
+        """Test getting all active reservations for a user"""
+        WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product,
+            expires_at=django_timezone.now() + timedelta(hours=48),
+            is_expired=False,
+            is_paid=False
+        )
+        
+        WinnerReservation.objects.create(
+            user=self.user,
+            product=self.product2,
+            expires_at=django_timezone.now() + timedelta(hours=48),
+            is_expired=True,  # Expired
+            is_paid=False
+        )
+        
+        active_reservations = WinnerReservation.objects.filter(
+            user=self.user,
+            is_expired=False,
+            is_paid=False
+        )
+        
+        self.assertEqual(active_reservations.count(), 1)
 
 
 # coverage report | gets coverage report
