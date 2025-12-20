@@ -56,7 +56,16 @@
 
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
-@media screen and (max-width: 800px) {}
+@media screen and (max-width: 800px) {
+    .auction_prod_links_container {
+        flex-direction: column;
+
+    }
+
+    .highest_bid_container {
+        width: 100%
+    }
+}
 
 
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */

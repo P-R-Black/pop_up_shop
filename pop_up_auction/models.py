@@ -513,3 +513,5 @@ class WinnerReservation(models.Model):
 
     class Meta:
         unique_together = ("product", "user",)  # Prevents duplicates
+        verbose_name = "PopUp Winner Reservation"
+        verbose_name_plural = "PopUp Winner Reservations"

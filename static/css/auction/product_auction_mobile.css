@@ -38,7 +38,7 @@
 
     .auction_product_details_container {
         justify-content: center;
-        height: 12rem;
+        height: 14rem;
     }
 
     .lower_auction_container {
@@ -57,10 +57,7 @@
 
 /* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
 @media screen and (max-width: 800px) {
-    .auction_container {
 
-        background-color: green;
-    }
 
     .details_size_container,
     .details_condition_container,
@@ -110,9 +107,87 @@
         margin-bottom: 12rem;
     }
 
+    .auct_details_style_container p,
+    .auct_details_colorway_container p,
+    .auct_details_release_container p,
+    .auct_details_retail_container p {
+        text-align: center;
+    }
+
+    .databox_medium_dark {
+        gap: .25rem;
+        padding: 1rem 1rem;
+        width: 45.5%;
+    }
+
+    .databox_medium_dark_title_box {
+        flex-direction: column;
+
+    }
+
+    .databox_medium_dark_title_box h3 {
+        font-size: 1rem;
+
+    }
+
     /* ===== BID MODAL ===== */
     .modal_content {
         width: 75%;
+        height: 40rem;
+    }
+
+    .modal_bid_shipping_days_left {
+        align-items: center;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .modal_bid_and_shipping {
+        justify-content: center;
+        width: 100%;
+
+    }
+
+    .predefined_bids {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        height: 8rem;
+
+        gap: 1rem;
+    }
+
+
+    .modal_bid_input_submit_btn {
+        align-items: center;
+        flex-direction: column;
+        gap: .5rem;
+        margin-bottom: .5rem;
+
+    }
+
+    .outer_input_container {
+        width: 100%
+    }
+
+    .outer_input_container input.form-control {
+        width: 100%
+    }
+
+    .bid_hint {
+        text-align: center;
+    }
+
+    .modal_user_abbr_user_info {
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .modal_user_pay_email_shipping_container {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: .5rem;
     }
 
     /* ===== BID MODAL ===== */

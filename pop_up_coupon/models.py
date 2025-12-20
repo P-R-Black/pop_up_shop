@@ -11,6 +11,11 @@ class PopUpCoupon(models.Model):
     discount = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
     active = models.BooleanField()
 
+    class Meta:
+        verbose_name = "PopUp Coupon"
+        verbose_name_plural = "PopUp Coupons"
+
+
     def __str__(self):
         return self.code
 
@@ -26,6 +31,11 @@ class PopUpReferral(models.Model):
     invitee = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='referral_from')
     created_at = models.DateTimeField(auto_now_add=True)
     is_reward = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "PopUp Referral"
+        verbose_name_plural = "PopUp Referrals"
+
 
     def __str__(self):
         return f"{self.inviter.email} invited {self.invitee.email if self.invitee else 'Pending'}"

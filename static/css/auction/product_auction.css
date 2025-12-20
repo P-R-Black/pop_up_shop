@@ -83,6 +83,7 @@ p.databox_assign_left {
     align-items: center;
     display: flex;
     flex-direction: column;
+
 }
 
 
@@ -96,19 +97,22 @@ p.databox_assign_left {
 }
 
 .auction_auction_countdown_container p {
-    font-size: 1.25rem;
+    /* font-size: 1.25rem; */
+    font-size: clamp(1rem, 1.25rem, 5vw);
     font-weight: 600;
     margin-bottom: .25rem;
     text-align: center;
 }
 
 .auction_auction_countdown_container h2 {
-    font-size: 4.5rem;
+    /* font-size: 4.5rem; */
+    font-size: clamp(3.5rem, 4.5rem, 5vw);
     text-align: center;
 }
 
 .auction_auction_countdown_container h3 {
-    font-size: 2.25rem;
+    /* font-size: 2.25rem; */
+    font-size: clamp(1.90rem, 2.25rem, 5vw);
     font-weight: 200;
     text-align: center;
 }
@@ -215,14 +219,14 @@ h4.prod_auct_details_title {
     background-color: #fff;
     margin: 15% auto;
     /* Center it */
-    padding: 1rem 1rem;
     border: 1px solid #888;
+    padding: 1rem 1rem;
     width: 45%;
     /* Adjust width */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-
     border: 2px solid var(--text-color);
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
 
     display: flex;
     flex-direction: column;
@@ -321,6 +325,7 @@ h4.prod_auct_details_title {
 
 #predefined_bids {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     margin-bottom: 1rem;
 

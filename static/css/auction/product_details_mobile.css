@@ -9,6 +9,9 @@
         width: 60%;
     }
 
+    .pd_background_circle {
+        width: 30%;
+    }
 
     .pd_container_right {
         width: 40%;
@@ -27,7 +30,7 @@
     }
 
     .pd_background_circle {
-        width: 35%;
+        width: 30%;
 
     }
 
@@ -50,8 +53,7 @@
 @media screen and (max-width: 800px) {
 
     .pd_background_circle {
-        width: 38%;
-
+        width: 30%;
     }
 
     .img_fluid_product_details {
@@ -110,17 +112,21 @@
         justify-content: space-between;
         gap: 1rem;
     }
+
+    .pd_background_circle {
+        width: 30%;
+    }
 }
 
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
 @media screen and (max-width: 450px) {
     .pd_background_circle {
-        width: 35%;
-
+        width: 28%;
     }
 
     .img_fluid_product_details {
+        margin-top: 2rem;
         width: 70%;
     }
 

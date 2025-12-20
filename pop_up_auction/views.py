@@ -40,7 +40,7 @@ class AjaxLoginRequiredMixin(AccessMixin):
 class AllAuctionView(View):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed 
+    # 🟢 Mobile / Tablet Media Query Completed 
 
     template_name = 'auction/auction.html'
 
@@ -75,7 +75,7 @@ class AllAuctionView(View):
 class PlaceBidView(AjaxLoginRequiredMixin, View):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
+    # 🟢 Mobile / Tablet Media Query Completed
     """
     Handle AJAX bid submissions for an active product.
 
@@ -157,7 +157,7 @@ class PlaceBidView(AjaxLoginRequiredMixin, View):
 class ProductAuctionView(DetailView):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
+    # 🟢 Mobile / Tablet Media Query Completed
     """
     Class-based view for displaying a product's auction page.
 
@@ -221,7 +221,38 @@ class ProductAuctionView(DetailView):
 class ProductsView(ListView):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
+    # 🟢 Mobile / Tablet Media Query Completed
+    """
+    Class-based view for displaying products available for immediate purchase.
+
+    Shows all active products that are currently eligible for “Buy Now,” including
+    items that are either fully in inventory or temporarily reserved. Supports
+    optional filtering by product type via slug and enriches all products with
+    their associated specification data for front-end display.
+
+    Attributes:
+        model (PopUpProduct): The product model used for the list view.
+        template_name (str): Template used to render the product listing page.
+        context_object_name (str): Name of the product list variable in the template.
+
+    Methods:
+        get_queryset():
+            Retrieves the list of purchasable products by applying filters:
+                - is_active=True
+                - inventory_status in ["in_inventory", "reserved"]
+                - buy_now_start <= current time <= buy_now_end
+            Prefetches product specification values for performance.
+            If a product-type slug is provided in the URL, filters the list to only
+            include products belonging to that type.
+
+        get_context_data(**kwargs):
+            Adds additional context data for rendering, including:
+                - The list of products enriched with specifications via
+                add_specs_to_products
+                - All product types (for category navigation or user filtering)
+                - The currently selected product type, if a slug was specified
+            Returns the complete context dictionary for template rendering.
+    """
     model = PopUpProduct
     template_name = 'auction/products.html'
     context_object_name = 'product'
@@ -270,7 +301,7 @@ class ProductsView(ListView):
 class ComingSoonView(ListView):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
+    # 🟢 Mobile / Tablet Media Query Completed
     """
     Class-based view for displaying products that are “coming soon.”
 
@@ -340,7 +371,35 @@ class ComingSoonView(ListView):
 class FutureReleases(ListView):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
+    # 🟢 NEEDED -> Mobile / Tablet Media Query Completed
+    """
+    Class-based view for displaying products expected to release in the future.
+
+    Shows items that are not yet active and not yet in inventory, but are marked as
+    "anticipated"—indicating that they are planned for a future release.  
+    Users can browse upcoming products by category or filter by product type.
+
+    Attributes:
+        template_name (str): Template used to render the future releases page.
+        context_object_name (str): The name under which the product list is exposed
+            to the template.
+
+    Methods:
+        get_queryset():
+            Retrieves all products where:
+                - is_active=False
+                - inventory_status="anticipated"
+            If a product type slug is provided, returns only items matching that type.
+            Prefetches product specification values for performance.
+
+        get_context_data(**kwargs):
+            Enhances template context with:
+                - Enriched product data via add_specs_to_products()
+                - A list of all product types for filter navigation
+                - The currently selected product type (if a slug was provided)
+            Returns a context dictionary used by the template.
+    """
+
     model = PopUpProduct
     template_name = "auction/future_releases.html"
     context_object_name = "product"
@@ -378,7 +437,37 @@ class FutureReleases(ListView):
 class ProductDetailView(DetailView):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🛑 NEEDED -> Mobile / Tablet Media Query Completed
+    # 🟢 NEEDED -> Mobile / Tablet Media Query Completed
+    """
+    Class-based view for displaying detailed information about a product available for immediate sale.
+
+    Provides a full product detail page for items that are active and eligible for
+    Buy Now purchasing. Includes product specifications, availability logic, and
+    buy-window timing checks.
+
+    Attributes:
+        model (PopUpProduct): The product model used for the detail view.
+        template_name (str): Template used to render the product detail page.
+        context_object_name (str): The name of the product variable passed to the template.
+        slug_field (str): The model field used to match the product slug.
+        slug_url_kwarg (str): The URL keyword that carries the slug value.
+
+    Methods:
+        get_object(queryset=None):
+            Retrieves the product matching the slug from the URL, ensuring:
+                - The product exists
+                - The product is_active=True
+            Raises 404 if the product is inactive or missing.
+
+        get_context_data(**kwargs):
+            Adds additional metadata required for the product detail page, including:
+                - Product specifications (flattened as a dict: {name: value})
+                - Buy Now availability, based on:
+                    * buy_now_start <= current_time <= buy_now_end
+                    * product has not already been purchased via Buy Now
+            Returns a context dictionary used by the template.
+    """
+
     model = PopUpProduct
     template_name = "auction/product_detail.html"
     context_object_name = "product"

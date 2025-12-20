@@ -22,7 +22,7 @@
                 {% for image in product.product_image.all %}
                 {% if image.is_feature %}
                 <img class="img_fluid"
-                    src="{% if image.image %} {{ image.image }} {% else %} {{ image.get_image_url }} {% endif %}"
+                    src="{% if image.get_image_url  %} {{ image.get_image_url  }} {% else %} {{ image.image }}{% endif %}"
                     alt="{{ image.alt_text }}" />
                 {% endif %}
                 {% endfor %}
@@ -164,17 +164,6 @@
                     <p>Highest Bid:</p>
                     <p class="databox_assign_left">${{ product.current_highest_bid|intcomma }}</p>
                 </div>
-                {% comment %}
-                <div class="details_buy_now_container">
-
-                    <a class="button_small" href="/auction/product-buy">Buy Now</a>
-
-                    <a class="button_medium" href="{% url 'pop_up_payment:buy_now_add_to_cart' p.slug %}">Buy
-                        Now</a>
-                    <p class="databox_assign_left">${{ product.buy_now_price|intcomma }}</p>
-
-                </div>
-                {% endcomment %}
             </div>
             <div class="auction_auction_countdown_container databox">
                 {% if product.auction_duration %}

@@ -58,8 +58,8 @@ class PopUpCustomerProfile(models.Model):
 
 
     class Meta:
-        verbose_name = 'PopUpCustomerProfile'
-        verbose_name_plural = 'PopUpCustomerProfiles'
+        verbose_name = 'PopUp Customer Profile'
+        verbose_name_plural = 'PopUp Customer Profiles'
     
     @property
     def open_bids(self):
@@ -135,8 +135,8 @@ class PopUpCustomerAddress(models.Model):
     all_objects = models.Manager()
 
     class Meta:
-        verbose_name = 'PopUpCustomerAddress'
-        verbose_name_plural = 'PopUpCustomerAddresses'
+        verbose_name = 'PopUp Customer Address'
+        verbose_name_plural = 'PopUp Customer Addresses'
 
     def __str__(self):
         return f"{self.customer.first_name} {self.customer.last_name} - {self.address_line}, {self.town_city}"
@@ -185,8 +185,8 @@ class PopUpBid(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True, help_text="Bid expiration time.")
 
     class Meta:
-        verbose_name = 'PopUpBid'
-        verbose_name_plural = 'PopUpBids'
+        verbose_name = 'PopUp Bid'
+        verbose_name_plural = 'PopUp Bids'
         ordering = ["-timestamp"]
     
     def __str__(self):

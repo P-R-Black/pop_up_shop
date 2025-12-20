@@ -25,7 +25,9 @@ Auction
                 <div class="auct_img_container">
                     {% for image in i.product_image.all %}
                     {% if image.is_feature %}
-                    <img class="min_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}">
+                    <img class="min_img_fluid"
+                        src="{% if image.get_image_url  %} {{ image.get_image_url  }} {% else %} {{ image.image }}{% endif %}"
+                        alt="{{ image.alt_text }}">
                     {% endif %}
                     {% endfor %}
                 </div>
@@ -77,7 +79,9 @@ Auction
                 {% endif %}
             </div>
         </div>
+        {% comment %}
         <!-- Bid Modal -->
+        {% endcomment %}
         <div class="modal fade" id="bidModal-{{i.id}}" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
             <div class="modal_content">
 
@@ -155,7 +159,8 @@ Auction
                     <div class="modal_user_pay_email_shipping_container">
                         {% for image in i.product_image.all %}
                         {% if image.is_feature %}
-                        <img class="modal_user_card_img" alt="{{ image.alt_text }}" src="{{ image.image }}"
+                        <img class="modal_user_card_img"
+                            src="{% if image.get_image_url  %} {{ image.get_image_url  }} {% else %} {{ image.image }}{% endif %}"
                             alt="{{ image.alt_text}}">
                         {% endif %}
                         {% endfor %}
@@ -165,7 +170,7 @@ Auction
                         <p>ship to <span>{{ user_zip }}</span></p>
                     </div>
                     <div class="modal_user_info_update_container">
-                        <a href="/">Update</a>
+                        <a href="{% url 'pop_accounts:personal_info' %}">Update</a>
                     </div>
                 </div>
                 <div class="modal_purchase_disclaimer">

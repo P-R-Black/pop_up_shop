@@ -275,5 +275,6 @@ test_account_data = [
         "town_city": "Gotham",
         "state": "NY",
         "delivery_instructions": "",
+        "is_active": True
     },
 ]
