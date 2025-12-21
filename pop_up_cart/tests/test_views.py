@@ -1,39 +1,27 @@
-# from django.contrib.auth.models import User
-# from django.test import TestCase
-# from django.urls import reverse
-# from auction.models import PoPUpCategory, PopUpProduct
+from django.contrib.auth.models import User
+from django.test import TestCase
+from django.urls import reverse
+from pop_up_auction.models import PopUpCategory, PopUpProduct
+from decimal import Decimal, ROUND_HALF_UP
+from unittest.mock import Mock, patch
+from django.core.cache import cache
+from django.utils.timezone import now, make_aware
+from datetime import timedelta, datetime
+from django.utils import timezone as django_timezone
+from datetime import timezone as dt_timezone, datetime
+from datetime import timedelta, datetime, date 
+from django.utils.text import slugify
+from django.views import View
+from django.http import JsonResponse
+import json
+from django.template import Context, Template
+from django.http import Http404
+from pop_up_cart.cart import Cart
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from pop_up_auction.tests.conftest import (
+    create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
+    create_product_type, create_category, create_brand)
 
-# class TestCartView(TestCase):
-#     def setUp(self):
-#         User.objects.create(username='admin')
-#         PoPUpCategory.objects.create(name='shoe', slug='shoe')
-#         PopUpProduct.objects.create(category_id=1, name='air jordan 1', slug='air-jordan-1', price='200.00', image='')
-#         self.client.post(
-#             reverse('cart:cart_add'), {'productid': 1, 'productqty': 1, 'action': "post"}, xhr=True
-#         )
-#         self.client.post(reverse('cart:cart_add'), {'productid': 2, 'productqty': 2, 'action': "post"}, xhr=True)
+User = get_user_model()
 
-
-#     def test_cart_url(self):
-#         """
-#         Test homepage response status
-#         """
-#         response = self.client.get(reverse('cart:cart_summary'))
-#         self.assertEqual(response.status_code, 200)
-
-#     def test_cart_add(self):
-#         """
-#         Test adding items to cart
-#         """
-#         response = self.client.post(reverse('cart:cart_add'), {'productid': 1, 'productqty': 3, 'action': 'post'}, xhr=True)
-#         self.assertEqual(response.json(), {'qty': 2})
-#         response = self.client.post(reverse('cart:cart_add'), {'productid': 2, 'productqty': 2, 'action': 'post'}, xhr=True)
-#         self.assertEqual(response.json(), {'qty': 3})
-
-
-#     def test_cart_delete(self):
-#         """
-#         Test deleting items from the basket
-#         """
-#         response = self.client.post(reverse('cart:cart_delete'), {'productid': 2, 'action': 'post'}, xhr=True)
-#         self.assertEqual(response.json()), {'qty': 1, 'subtotal': '200.00'}

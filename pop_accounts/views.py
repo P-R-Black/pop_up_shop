@@ -657,22 +657,28 @@ class PersonalInfoView(LoginRequiredMixin, View):
         """Check if address form was submitted"""
         return 'street_address_1' in self.request.POST
     
-    def _handle_personal_form(self, user):
+    def _handle_personal_form(self, profile):
         """Handle personal information form submission"""
+        user = self.request.user
         profile = self.request.user.popupcustomerprofile 
+
         personal_form = PopUpUserEditForm(self.request.POST)
         if personal_form.is_valid():
                 # Manually update user fields
                 data = personal_form.cleaned_data
+
+                # Update user field
                 user.first_name = data.get('first_name', '')
                 user.middle_name = data.get('middle_name', '')
                 user.last_name = data.get('last_name', '')
-                profile.shoe_size = data.get('shoe_size', '')
-                profile.size_gender = data.get('size_gender', '')
-                profile.favorite_brand = data.get('favorite_brand', '')
                 user.mobile_phone = data.get('mobile_phone', '')
                 user.mobile_notification = data.get('mobile_notification', '')
                 user.save()
+
+                profile.shoe_size = data.get('shoe_size', '')
+                profile.size_gender = data.get('size_gender', '')
+                profile.favorite_brand = data.get('favorite_brand', '')
+                profile.save()
 
                 messages.success(self.request, "Your profile has been updated.")
                 return redirect('pop_accounts:personal_info')
