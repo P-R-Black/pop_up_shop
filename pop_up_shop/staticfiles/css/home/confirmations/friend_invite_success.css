@@ -1,0 +1,61 @@
+.friend_invite_section {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.success_friend_invite {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 50%;
+
+    justify-content: center;
+    padding: 1rem 1rem;
+    width: 100vw;
+}
+
+.success_friend_invite h1,
+.success_friend_invite h2,
+.success_friend_invite p {
+    color: var(--text-color);
+}
+
+
+div.error-icon {
+    font-size: 5rem;
+}
+
+.success_friend_invite p {
+    font-size: 1.15rem;
+}
+
+
+
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (min-height: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+
+
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {}

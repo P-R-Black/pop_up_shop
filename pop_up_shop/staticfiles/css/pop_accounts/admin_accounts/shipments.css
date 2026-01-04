@@ -1,0 +1,12 @@
+.all_shipments_section {
+    display: none;
+    margin: 4rem 0;
+}
+
+.all_shipments_section.active_shipment {
+    display: block;
+}
+
+.shipments_title_box_container h2 {
+    color: var(--text-color);
+}

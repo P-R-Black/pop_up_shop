@@ -18,6 +18,12 @@ from django.db import transaction
 from pop_accounts.utils.utils import  add_specs_to_products
 from pop_up_order.models import PopUpOrderItem
 from django.http import Http404
+import logging
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='pop_up_auction.log', level=logging.DEBUG, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+
 
 # Create your views here.
 class AjaxLoginRequiredMixin(AccessMixin):
@@ -258,8 +264,8 @@ class ProductsView(ListView):
     context_object_name = 'product'
 
     def get_queryset(self):
-        """Filter products based on slug if provided"""        
-        
+        """Filter products based on slug if provided"""
+
         base_queryset = PopUpProduct.objects.prefetch_related(
             'popupproductspecificationvalue_set'
         ).filter(
@@ -269,17 +275,19 @@ class ProductsView(ListView):
             buy_now_start__lte=now(),
             buy_now_end__gte=now()
         )
-            
+
         slug = self.kwargs.get('slug')
+        logger.debug("slug is", slug if slug else "No slug")
         if slug:
             product_type = get_object_or_404(PopUpProductType, slug=slug)
             # return product_with_specs.filter(product_type=product_type)
             return base_queryset.filter(product_type=product_type)
         return base_queryset
-    
+
     def get_context_data(self, **kwargs):
         """Add product_types and product_type to context"""
         context = super().get_context_data(**kwargs)
+        logger.debug("get_context_data", context)
 
         # Apply add_specs_to_products utility function
         context['product'] = add_specs_to_products(context['product'])

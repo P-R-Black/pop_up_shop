@@ -1,0 +1,132 @@
+.the_update_shipping_section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin-top: 3rem;
+}
+
+.the_update_shipping_container {
+
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 3rem;
+    width: 100%;
+}
+
+.the_update_shipping_container ol li {
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.the_update_shipping_container ol li a {
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+.update_shipping_title {
+    margin-bottom: 1rem;
+}
+
+.shipping_order_items_container {
+    margin-top: 2rem;
+}
+
+.update_shipping_title h3,
+.shipping_order_items_container_title h3,
+.shipping_info_update_title h3 {
+    color: var(--text-color);
+    font-size: clamp(1rem, 1.5rem, 5vw);
+    text-decoration: underline;
+}
+
+/* ol li {
+    color: var(--text-color);
+    font-size: clamp(.85rem, 1.10rem, 5vw);
+    list-style: decimal;
+    margin-bottom: .5rem;
+} */
+
+
+.shipping_info_update_container,
+.shipping_info_form_container {
+    margin-top: 1rem;
+}
+
+
+/* ThePopUpShippingForm Styles */
+
+.shipping_order_no,
+.shipping_tracking_no {
+
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 95%
+}
+
+
+select#shipping_carrier,
+select#shipping_status {
+    background-color: transparent;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 50%;
+}
+
+.shipping_shipped_at,
+.shipping_estimated_deliv,
+.shipping_delivered_at {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    font-family: var(--text-font);
+    color: var(--text-color);
+    font-size: 1rem;
+
+    height: 2rem;
+    padding-left: .5rem;
+    width: 75%;
+
+}
+
+.shipping_info_data_container {
+    margin-bottom: .75rem;
+}
+
+
+.shipping_info_data_container div {
+    color: var(--text-color);
+}
+
+
+.ship_form_label {
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Shipping Partial CSS */
+.shipping_order_items_container_title {
+    margin-bottom: 1rem;
+}
+
+.shipping_order_items_container ul {
+    background-color: var(--text-color);
+    border-radius: 5px;
+    color: var(--primary-color-light);
+    padding: .75rem .75rem;
+}
+
+.shipping_order_items_container ul li {
+    margin-bottom: .5rem;
+
+}

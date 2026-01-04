@@ -1,0 +1,49 @@
+.interested_in_container {
+    margin-top: 2rem;
+    overflow-y: scroll;
+    padding-bottom: 7rem;
+    height: auto;
+}
+
+.interested_in_databox_headers {
+    color: var(--text-color);
+    display: grid;
+
+    grid-template-columns: 20% 20% 20% 20% 20%;
+    text-align: center;
+    text-decoration: underline;
+}
+
+.interested_in_open_bids {
+    margin-top: .5rem;
+}
+
+.interested_in_items_container {
+    align-items: center;
+    color: var(--chevron-color);
+    display: grid;
+    grid-template-columns: 20% 20% 20% 20% 20%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
+
+.number_of_bids p,
+.account_on_notice_no p strong,
+.account_on_notice_no p,
+.interested_in_year p,
+.interested_in_item p,
+.interested_in_size p {
+    font-size: clamp(1rem, 1.15rem, 2vw);
+}
+
+.interested_in_item a p {
+    color: var(--chevron-color);
+    cursor: pointer;
+    transition: var(--tran-01);
+}
+
+.interested_in_item a p:hover {
+    color: var(--text-color);
+    transition: var(--tran-01);
+}

@@ -1,0 +1,468 @@
+.section_container {
+    margin-bottom: 3rem;
+}
+
+
+.auction_container {
+    align-items: center;
+    display: flex;
+    height: 80vh;
+    margin-top: 2rem;
+}
+
+.auction_container_left {
+    width: 50%;
+}
+
+.img_fluid {
+    aspect-ratio: 3/2.25;
+    width: 90%;
+
+}
+
+.auction_product_desc_container {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: .5rem;
+    width: 100%;
+}
+
+.auction_product_desc_container h3 {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    text-align: center;
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+}
+
+.auction_product_links_container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.auction_container_right {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 68%;
+    justify-content: center;
+    gap: 2rem;
+    width: 50%;
+
+}
+
+
+.details_size_container,
+.details_condition_container,
+.details_buy_now_container {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .75rem;
+    width: 95%;
+
+}
+
+.details_size_container p,
+.details_condition_container p,
+.details_buy_now_container p {
+    color: var(--text-color);
+    font-size: 1.15rem;
+
+}
+
+p.databox_assign_left {
+    width: 50%;
+    text-align: left;
+}
+
+.auction_product_details_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+
+}
+
+
+.auction_auction_countdown_container {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    height: 14rem;
+    justify-content: center;
+}
+
+.auction_auction_countdown_container p {
+    /* font-size: 1.25rem; */
+    font-size: clamp(1rem, 1.25rem, 5vw);
+    font-weight: 600;
+    margin-bottom: .25rem;
+    text-align: center;
+}
+
+.auction_auction_countdown_container h2 {
+    /* font-size: 4.5rem; */
+    font-size: clamp(3.5rem, 4.5rem, 5vw);
+    text-align: center;
+}
+
+.auction_auction_countdown_container h3 {
+    /* font-size: 2.25rem; */
+    font-size: clamp(1.90rem, 2.25rem, 5vw);
+    font-weight: 200;
+    text-align: center;
+}
+
+.lower_auction_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+
+    gap: 1rem;
+    justify-content: center;
+}
+
+.prod_auct_desc_container {
+    background: var(--databox-color);
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    padding: 1rem 2rem;
+    height: auto;
+    width: 100%;
+}
+
+.prod_auct_desc_container h3 {
+    margin-bottom: .5rem;
+}
+
+.prod_auct_details_container {
+    background: var(--databox-color);
+    border-radius: 5px;
+    border: 1px solid var(--text-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: space-between;
+    padding: .5rem 2rem;
+    width: 100%
+}
+
+.auct_details_style_container,
+.auct_details_colorway_container,
+.auct_details_release_container,
+.auct_details_retail_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+h4.prod_auct_details_title {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+h4.prod_auct_details_title {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.verified_return_container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.databox_medium_dark {
+    background: var(--databox-color);
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    padding: 1rem 2rem;
+    width: 45%;
+}
+
+.databox_medium_dark a {
+    color: #069cfa;
+}
+
+.databox_medium_dark_title_box {
+    display: flex;
+}
+
+
+
+/* Modal background */
+.modal {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black background with opacity */
+}
+
+/* Modal content */
+.modal_content {
+    background-color: #fff;
+    margin: 15% auto;
+    /* Center it */
+    border: 1px solid #888;
+    padding: 1rem 1rem;
+    width: 45%;
+    /* Adjust width */
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal_header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.modal_header h3 {
+    color: var(--text-color);
+    font-size: clamp(.90rem, 1.25rem, 5vw);
+    font-weight: 400;
+}
+
+/* Close button */
+
+.btn-close {
+    aspect-ratio: 1;
+    background-color: transparent;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--tran-02);
+    width: 1.5rem;
+
+}
+
+.btn-close:hover,
+.btn-close:focus {
+    background-color: var(--text-color);
+    color: var(--body-color);
+    text-decoration: none;
+    transition: var(--tran-02);
+}
+
+.close:active {
+    transform: scale(0.98);
+}
+
+
+
+.modal_bid_shipping_days_left {
+    display: flex;
+    justify-content: space-between;
+}
+
+.modal_bid_and_shipping {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    width: 33%;
+}
+
+.modal_bid_and_shipping h5:nth-child(2) {
+    font-weight: 200;
+    margin-left: .25rem;
+}
+
+.modal_bid_numb_of_bids {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    font-size: 1.10rem;
+    justify-content: space-around;
+    width: 33%;
+}
+
+.modal_bid_days_left {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    font-size: 1.10rem;
+    justify-content: space-around;
+    width: 33%;
+
+}
+
+.modal_bid_numb_of_bids span,
+.modal_bid_days_left span {
+    font-size: 1.10rem;
+    font-weight: 500;
+    margin-right: .25rem;
+}
+
+.modal_body {
+    display: flex;
+    flex-direction: column;
+
+}
+
+#predefined_bids {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+
+}
+
+.bid_modal_input_container {
+    display: flex;
+    flex-direction: column;
+
+}
+
+
+.bid_modal_input_container label {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    font-size: 1rem;
+    font-weight: 300;
+    justify-content: center;
+    margin-bottom: 1rem;
+
+}
+
+.bid_modal_input_container label span {
+    background: #fff;
+    margin: 0 15px;
+}
+
+label:before,
+label:after {
+    background: var(--text-color);
+    height: 1px;
+    flex: 1;
+    content: '';
+}
+
+
+
+.bid_modal_input_container p {
+    color: #8c8989;
+    font-size: .80rem;
+    margin-top: .25rem;
+
+}
+
+
+
+.modal_bid_input_submit_btn {
+    display: flex;
+    justify-content: space-between;
+
+}
+
+.outer_input_container {
+    align-items: center;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    display: flex;
+    gap: .5rem;
+    height: 1.75rem;
+    justify-content: flex-start;
+    overflow: hidden;
+    width: 65%;
+    padding-left: .5rem;
+}
+
+.outer_input_container input {
+    color: var(--text-color);
+    font-size: 1rem;
+    padding-left: 5px;
+    height: 100%;
+    width: 90%;
+}
+
+.outer_input_container input:focus {
+    outline: none;
+}
+
+.outer_input_container h4 {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    margin-top: .20rem;
+
+}
+
+input#custom_bid {
+    background-color: transparent;
+    border: 0;
+    font-size: 1rem;
+    outline: 0;
+    border-radius: 5px;
+    margin-left: .05rem;
+    width: 100%;
+
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.modal_user_abbr_user_info {
+    border-bottom: 1px solid var(--text-color);
+    border-top: 1px solid var(--text-color);
+    display: flex;
+    justify-content: space-between;
+    padding: .5rem 0 .5rem 0;
+}
+
+.modal_user_card_img {
+    width: 4.5rem;
+}
+
+.modal_user_pay_email_shipping_container {
+    align-items: center;
+    display: flex;
+    gap: .75rem;
+    width: 75%;
+}
+
+.modal_user_pay_email_shipping_container p {
+    color: var(--text-color);
+    font-size: .85rem;
+
+}
+
+.modal_user_info_update_container a {
+    color: var(--primary-light-grey);
+}
+
+.modal_purchase_disclaimer p {
+    color: var(--primary-light-grey);
+    font-size: clamp(.60em, .75rem, 12vw);
+}

@@ -3,9 +3,6 @@ from .base import *
 import os
 from dotenv import load_dotenv
 
-print('base test', INSTALLED_APPS)
-
-
 DEBUG = True
 
 ALLOWED_HOSTS = [

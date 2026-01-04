@@ -1,0 +1,7 @@
+.user_opt_out_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}

@@ -1,0 +1,43 @@
+.sales_items_graphs_container {
+    display: flex;
+    width: 100%;
+}
+
+.sales_items_container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sales_chart_container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sales_chart_present_container {
+    background: transparent;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    margin-left: .5rem;
+    width: auto;
+    aspect-ratio: 3/1;
+}
+
+.sales_chart_present_container canvas {
+    width: 200%;
+    aspect-ratio: 3/1;
+
+}
+
+
+.dashboard_databox_smaller {
+    aspect-ratio: 1/1;
+    background-color: var(--text-color);
+    color: var(--body-color);
+    border-radius: 5px;
+    padding: 1rem 1rem;
+    position: relative;
+    width: 10rem;
+
+}

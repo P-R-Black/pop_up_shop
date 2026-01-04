@@ -1,0 +1,261 @@
+/*  ====== Start of Footer ===== */
+footer {
+    height: auto;
+
+}
+
+.footer_container.container {
+    align-items: center;
+    background-color: rgba(57, 57, 57, 0.87);
+    display: flex;
+    flex-direction: column;
+    left: 15rem;
+
+
+    /* position: relative; */
+    transition: var(--tran-05);
+    width: calc(100% - 15rem);
+}
+
+.footer_container.container {
+
+    /* height: auto; */
+    /* left: 16rem; */
+    /* width: 80%; */
+    /* position: relative; */
+
+    /* left: 16rem; */
+    /* min-height: auto;
+    overflow-y: scroll; */
+    /* position: relative;
+    transition: var(--tran-05); */
+    /* min-width: 100%; */
+    /* width: var(--container-width-lg); */
+}
+
+
+
+footer span div.logo-text {
+    color: var(--text-color);
+    font-family: var(--logo-font);
+    font-size: 3rem;
+    font-weight: 600;
+    text-align: left;
+    transition: var(--tran-03);
+    width: 16rem;
+}
+
+
+.top_footer {
+    align-items: baseline;
+    display: flex;
+    height: auto;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem .5rem;
+    width: 100%;
+
+    border: 2px solid red;
+
+}
+
+.footer_logo_social_container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: auto;
+    width: 12rem;
+}
+
+.footer_social_container {
+    display: flex;
+    height: 2rem;
+    justify-content: center;
+    width: 80%;
+}
+
+.footer_social_container ul {
+    display: flex;
+    height: 2rem;
+    justify-content: space-between;
+    width: 100%;
+
+}
+
+
+
+.footer_social_container ul li a {
+    color: var(--primary-color-light);
+    font-size: 1.35rem;
+    transition: var(--tran-03);
+}
+
+.footer_social_container ul li a:hover {
+    color: var(--text-color);
+
+}
+
+
+.footer_links_container {
+    display: flex;
+    justify-content: space-between;
+    width: 40%;
+}
+
+.footer_about_title h3 {
+    color: var(--primary-color-light);
+    font-family: var(--text-font);
+    font-weight: 500;
+    margin-bottom: .5rem;
+    text-align: left;
+
+
+
+}
+
+.footer_about_options li {
+    margin-bottom: .25rem;
+
+}
+
+.footer_about_options li a {
+    color: var(--primary-color-light);
+    cursor: pointer;
+    font-family: var(--text-font);
+    font-size: .90rem;
+    font-weight: 300;
+    text-align: left;
+    transition: var(--tran-03);
+}
+
+.footer_about_options li a:hover {
+    color: var(--text-color);
+    transition: var(--tran-03);
+}
+
+
+.footer_about_options li p {
+    color: var(--primary-color-light);
+    cursor: pointer;
+    font-family: var(--text-font);
+    font-size: .90rem;
+    font-weight: 300;
+    text-align: left;
+    transition: var(--tran-03);
+}
+
+.footer_about_options li input {
+    background-color: transparent;
+    color: var(--primary-color-light);
+    cursor: pointer;
+    font-family: var(--text-font);
+    font-size: .90rem;
+    font-weight: 300;
+    text-align: left;
+    transition: var(--tran-03);
+}
+
+
+
+
+.footer_about_options li p:hover {
+    color: var(--text-color);
+    transition: var(--tran-03);
+}
+
+.footer_about_options li input:hover {
+    color: var(--text-color);
+    transition: var(--tran-03);
+}
+
+.footer_invite_payment_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 25%;
+}
+
+.footer_payment_options {
+    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(4, 25px);
+    justify-content: space-between;
+    width: 50%;
+
+
+}
+
+.footer_apple_logo {
+    height: 1.25rem;
+    background-color: white;
+}
+
+
+.footer_paypal-logo {
+    height: 1.25rem;
+}
+
+.footer_g-logo,
+.footer_visa-logo,
+.footer_mc-logo,
+.footer_disc-logo {
+    height: 1.75rem;
+}
+
+.footer_dai-logo,
+.footer_usdc-logo {
+    height: 1.2rem;
+}
+
+
+.bottom_footer {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: auto;
+    margin-bottom: 2rem;
+    padding: 1rem 1rem;
+    width: 100%;
+
+}
+
+
+.footer_terms_container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+
+.footer_terms_container ul {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+}
+
+
+
+.footer_terms_container ul li a {
+    color: var(--primary-color-light);
+    font-family: var(--text-font);
+    font-size: .80rem;
+    font-weight: 300;
+    transition: var(--tran-03);
+}
+
+.footer_terms_container ul li {
+    color: var(--primary-color-light);
+    font-family: var(--text-font);
+    font-size: .80rem;
+    font-weight: 300;
+}
+
+.footer_terms_container ul li a:hover {
+    color: var(--text-color);
+    transition: var(--tran-03);
+}
+
+/*  ====== End of Footer ===== */

@@ -1,0 +1,262 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {
+    .container {
+        border: 2px solid yellow;
+        min-height: auto;
+    }
+
+}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {
+    .container {
+        border: 2px solid red;
+        /* min-width: var(--container-width-lg); */
+        min-height: auto;
+    }
+
+    /* =============== SIGN UP MODAL =============== */
+    .img_sign_up {
+        transform: rotate(-50deg);
+        height: 50%;
+    }
+
+    /* =============== END OF SIGN UP MODAL =============== */
+
+}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+/* @media screen and (min-height: 1000px) {
+    .container {
+        border: 2px solid gold;
+        min-height: auto;
+
+    }
+} */
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+
+    .container {
+        border: 2px solid green;
+        min-height: auto;
+        /* left: 15rem;
+        width: calc(100% - 15rem); */
+
+
+    }
+
+
+
+
+
+
+    /* =============== SIGN UP MODAL =============== */
+
+    /* Modal background */
+    .sign_up_modal {
+        /* Hidden by default */
+        display: none;
+
+        /* Enable scroll if needed */
+        position: fixed;
+        z-index: 1000;
+        left: 25%;
+        top: 1%;
+
+        width: 70%;
+        height: 80%;
+        overflow: auto;
+
+        /* Black background with opacity */
+        background-color: rgba(0, 0, 0, 0.4);
+
+    }
+
+    /* Modal content */
+    .sign_up_modal_content {
+        background-color: #fff;
+        /* margin: 15% auto; */
+
+        /* Center it */
+        padding: 1rem 1rem;
+        border: 1px solid #888;
+        width: 85%;
+
+        /* Adjust width */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        border: 2px solid var(--text-color);
+
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        height: 90%;
+        margin: 2.5% auto;
+    }
+
+    /* ===== sign_up_pic_form_container ===== */
+
+    .sign_up_pic_form_container {
+        display: flex;
+    }
+
+
+    .sign_up_image_container {
+        width: 40%;
+
+        display: flex;
+        align-items: center;
+    }
+
+    .img_sign_up {
+        transform: rotate(-90deg);
+        height: 43%;
+        margin-left: -5rem;
+    }
+
+    /* =============== END OF SIGN UP MODAL =============== */
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+
+    .container {
+        border: 2px solid blue;
+
+    }
+
+
+
+
+    /* =============== SIGN UP MODAL =============== */
+    .sign_up_image_container {
+        visibility: hidden;
+        width: 0%;
+    }
+
+    .img_sign_up {
+        visibility: hidden;
+    }
+
+    /* =============== END OF SIGN UP MODAL =============== */
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+
+
+@media screen and (max-width: 640px) {
+    .container {
+        border: 2px solid pink;
+        min-width: 100vw;
+        margin-left: -15rem;
+    }
+
+
+
+    .page_title h2 {
+        text-align: center;
+    }
+
+
+
+    /* ========== SIGN UP MODAL ========== */
+
+    /* Modal background */
+    .sign_up_modal {
+        /* Hidden by default */
+        display: none;
+
+        /* Enable scroll if needed */
+        position: fixed;
+        z-index: 1000;
+        left: 5%;
+        top: 1%;
+
+        width: 90%;
+        height: 80%;
+        overflow: auto;
+
+        /* Black background with opacity */
+        background-color: rgba(0, 0, 0, 0.4);
+
+    }
+
+    /* Modal content */
+    .sign_up_modal_content {
+        background-color: #fff;
+        /* margin: 15% auto; */
+
+        /* Center it */
+        padding: 1rem 1rem;
+        border: 1px solid #888;
+        width: 85%;
+
+        /* Adjust width */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        border: 2px solid var(--text-color);
+
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        height: 90%;
+        margin: 2.5% auto;
+    }
+
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+    .container {
+        border: 2px solid #28f1c9;
+        /* width: 100%; */
+    }
+
+
+    .recaptcha-wrapper {
+        transform: scale(0.85);
+        /* shrink */
+        transform-origin: 0 0;
+    }
+
+    .g-recaptcha {
+        transform: scale(0.85);
+        /* shrink */
+        transform-origin: 0 0;
+    }
+
+
+
+    /* ========== SIGN UP MODAL ========== */
+
+
+
+    /* Modal content */
+    .sign_up_modal_content {
+        background-color: #fff;
+        /* margin: 15% auto; */
+
+        /* Center it */
+        padding: 1rem 1rem;
+        border: 1px solid #888;
+        width: 100%;
+
+        /* Adjust width */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        border: 2px solid var(--text-color);
+
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        height: 90%;
+        margin: 2.5% auto;
+    }
+
+}

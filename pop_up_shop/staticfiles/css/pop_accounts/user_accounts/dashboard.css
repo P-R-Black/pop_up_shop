@@ -1,0 +1,335 @@
+.the_dashboard_container {
+    margin-top: 2rem;
+    min-height: auto;
+    padding-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+
+}
+
+.personal_interest_notice_container {
+    display: grid;
+    grid-template-columns: repeat(2, 49%);
+    justify-content: space-between;
+    gap: 1.15rem;
+
+}
+
+.dashboard_databox_small {
+    background-color: var(--text-color);
+    color: var(--body-color);
+    border-radius: 5px;
+    height: 15rem;
+    padding: 1rem 1rem;
+    position: relative;
+    width: 100%;
+}
+
+.dashboard_addressbox_small {
+    background-color: var(--text-color);
+    color: var(--body-color);
+    border-radius: 5px;
+    height: 15rem;
+    padding: 1rem 1rem;
+    position: relative;
+    width: 18rem;
+}
+
+
+.dashboard_databox_title {
+    align-items: center;
+    display: flex;
+    /* flex-direction: column; */
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.dashboard_databox_title div i.dashboard_icon {
+    font-size: 2rem;
+}
+
+.dashboard_databox_title h2 {
+    font-size: clamp(1rem, 1.75rem, 6vw);
+    font-weight: 800;
+    text-align: center;
+}
+
+.dashboard_databox_title h3 {
+    font-size: clamp(.85rem, 1.5rem, 6vw);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.dashboard_databox_title i {
+    font-size: clamp(.90rem, 1.25rem, 6vw);
+}
+
+.info-icon {
+    position: relative;
+    cursor: pointer;
+}
+
+.tooltip-text {
+    background-color: #f3e8c4;
+    border-radius: 5px;
+    color: #333;
+    font-family: var(--text-font);
+    font-size: .65rem;
+    font-weight: 500;
+    opacity: 0;
+    padding: 10px 15px;
+    position: absolute;
+    right: 50%;
+    /* transform: translateX(-50%); */
+    text-align: center;
+    top: 60%;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    visibility: hidden;
+    white-space: wrap;
+    width: 12rem;
+    z-index: 10;
+}
+
+.info-icon:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.dashboard_more_container {
+    margin-top: 3.5rem;
+    text-align: right;
+}
+
+
+.dashboard_size_container,
+.dashboard_location_container,
+.dashboard_payment_container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: .5rem;
+
+}
+
+.dashboard_size_container p:nth-child(1),
+.dashboard_location_container p:nth-child(1),
+.dashboard_payment_container p:nth-child(1) {
+    font-size: clamp(1rem, 1.15rem, 2vw);
+    font-weight: 700;
+    width: 6rem;
+}
+
+.dashboard_size_container p:nth-child(2),
+.dashboard_location_container p:nth-child(2),
+.dashboard_payment_container p:nth-child(2) {
+    font-size: clamp(1rem, 1.15rem, 2vw);
+    text-align: left;
+    width: 15rem;
+}
+
+.dashboard_interest_container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+
+}
+
+.dashboard_interest_container ul {
+    width: 100%;
+
+
+}
+
+.dashboard_interest_container ul li {
+    display: flex;
+    justify-content: space-between;
+    margin-top: .5rem;
+}
+
+.dashboard_interest_container ul li a {
+    color: var(--body-color);
+    font-size: clamp(1rem, 1.15rem, 2vw);
+    margin-right: 1rem;
+
+}
+
+.dashboard_interest_container ul li a:hover {
+    color: var(--chevron-color);
+}
+
+.bids_purchases_container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.dashboard_databox_large {
+    background-color: var(--text-color);
+    color: var(--body-color);
+    border-radius: 5px;
+    height: auto;
+    padding: 1rem 1rem;
+}
+
+
+.dashboard_databox_headers {
+    display: grid;
+
+    grid-template-columns: 25% 25% 25% 25%;
+    text-align: center;
+    text-decoration: underline;
+}
+
+.dashboard_databox_headers h3,
+.dashboard_databox_past_bids_headers h3 {
+    font-size: clamp(.90rem, 1.5rem, 3vw);
+}
+
+.dashboard_open_bids {
+    margin-top: .5rem;
+}
+
+.indi_bids {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 25% 25% 25% 25%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
+
+.indi_bids_item p,
+.indi_bids_last_bid p,
+.indi_bids_bid_status p {
+    font-size: clamp(.85rem, 1.15rem, 2vw);
+}
+
+.indi_bids_item a p {
+    color: var(--body-color);
+}
+
+.indi_bids_item a p:hover {
+    color: var(--chevron-color);
+}
+
+.indi_bids_action {
+    display: flex;
+    justify-content: center;
+}
+
+
+.dashboard_databox_past_bids_headers {
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    text-align: center;
+    text-decoration: underline;
+}
+
+
+.indi_past_bids {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
+
+.indi_past_bid_items p,
+.indi_past_bid_last_bid p,
+.indi_past_bid_bid_status p {
+    font-size: clamp(.85rem, 1.15rem, 2vw);
+}
+
+.indi_past_bid_items a p {
+    color: var(--body-color);
+}
+
+.indi_past_bid_items a p:hover {
+    color: var(--chevron-color);
+}
+
+
+.indi_past_purchases {
+    align-items: center;
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
+
+
+.indi_past_purchases_items p,
+.indi_past_bid_last_bid p,
+.indi_past_bid_bid_status p {
+    font-size: clamp(.85rem, 1.15rem, 2vw);
+}
+
+.indi_past_purchases_items a p {
+    color: var(--body-color);
+    cursor: pointer;
+}
+
+.indi_past_purchases_items a p:hover {
+    color: var(--chevron-color);
+}
+
+/* ====== Size Modal ====== */
+.size_gender_container {
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-around;
+    padding: .5rem .5rem;
+}
+
+.size_options_container {
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    display: grid;
+    grid-template-columns: repeat(4, 27.5%);
+    margin-top: 1rem;
+    padding: .5rem .5rem;
+}
+
+.size_options_container button {
+
+    margin-bottom: .5rem;
+}
+
+/* ====== End of Size Modal ====== */
+
+
+/* ====== Location Modal ====== */
+.dashbaord_location_update_container {
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    padding: .5rem .5rem;
+}
+
+.dashbaord_location_update_container form .modal_name_inputs {
+    color: var(--text-color);
+    margin-bottom: .5rem;
+}
+
+/* ====== End of Location Modal ====== */
+
+
+/* ====== Payment Modal ====== */
+#dashboardPaymentEdit {
+    color: var(--text-color);
+    font-size: 1rem;
+    width: 40%;
+}
+
+
+.payment_edit_button_container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* ====== End of Payment Modal ====== */

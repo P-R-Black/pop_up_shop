@@ -1,0 +1,311 @@
+.second_title {
+    margin-bottom: 2rem;
+}
+
+.second_title h3 {
+    color: var(--text-color);
+    text-align: center;
+
+}
+
+.product_category_brand_container {
+    display: flex;
+    justify-content: space-around;
+
+}
+
+.add_data_forms {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 2rem;
+}
+
+.add_form_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    justify-content: center;
+}
+
+.add_form_container input {
+    margin-left: .5rem;
+}
+
+.pop_up_product_type,
+.pop_up_product_brand_name,
+.pop_up_product_category {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 80%
+}
+
+
+.add_pricing_title {
+    margin-bottom: 1rem;
+}
+
+.add_pricing_title h4 {
+    text-align: center;
+}
+
+.product_add_long {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 30%
+}
+
+.product_add_short {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 100%;
+}
+
+
+.product_add_description {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 3rem;
+    padding: .25rem .5rem;
+    resize: none;
+    width: 50%;
+
+}
+
+
+.product_add_date_time {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    font-family: var(--text-font);
+    color: var(--text-color);
+    font-size: 1rem;
+
+    height: 2rem;
+    padding-left: .5rem;
+    width: 100%;
+
+}
+
+.product_add_checkbox {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+}
+
+select.product_add_select {
+    background-color: transparent;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: auto;
+}
+
+
+.product_add_type_cat_brand_container {
+    display: flex;
+    justify-content: space-around;
+}
+
+.product_add_type_cat_brand_container div {
+    display: flex;
+    flex-direction: column;
+    width: 24%;
+}
+
+
+
+
+.product_add_buy_now_elements input {
+    width: 100%
+}
+
+.product_add_buy_now_elements_checkbox {
+    display: flex;
+    justify-content: center;
+}
+
+
+.product_add_pricing {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2rem;
+}
+
+.product_add_pricing h4 {
+    color: var(--text-color);
+    text-align: center;
+}
+
+.product_add_pricing_container {
+    display: flex;
+    justify-content: space-around;
+
+}
+
+.product_add_image_container {
+    display: flex;
+    justify-content: space-around;
+
+
+}
+
+.product_add_image_url_elements input {
+    width: clamp(15rem, 35rem, 45vw);
+}
+
+.product_add_image_container_two {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+
+}
+
+.product_add_pricing_elements,
+.product_add_image_elements,
+.product_add_image_url_elements {
+    display: flex;
+    flex-direction: column;
+
+}
+
+
+.image_feature_box {
+    align-items: center;
+    display: flex;
+    gap: .5rem;
+    margin-top: 1rem;
+}
+
+/* Form labels */
+.product_add_image_elements label,
+.product_add_image_url_elements label,
+.product_add_pricing_elements label,
+.product_add_buy_now_elements label {
+    color: var(--text-color);
+}
+
+.checkmark {
+    color: var(--text-color);
+}
+
+
+
+.add_type_brand_cat_messages_container {
+    height: 4rem;
+    margin-bottom: 2rem;
+}
+
+.messages {
+    margin: 10px 0;
+}
+
+.alert {
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.alert-success {
+    color: #155724;
+}
+
+.alert-error {
+    color: #721c24;
+}
+
+/* Form labels */
+
+
+#specifications-container {
+    margin-top: 2rem;
+}
+
+#specifications-container h3 {
+    color: var(--text-color);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+#existing-specifications {
+    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(2, 45%);
+
+}
+
+
+
+.existing-spec-field {
+    margin-bottom: .25rem;
+
+}
+
+.existing-spec-field label {
+    color: var(--text-color);
+}
+
+.specification-form-control {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 80%;
+}
+
+.form-control-add-specs {
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 35%;
+
+}
+
+#custom-specifications {
+    margin-top: 2rem;
+}
+
+.spec-input-group {
+    display: flex;
+    justify-content: center;
+    gap: .50rem;
+    margin-bottom: .50rem;
+}
+
+.add_specs_button {
+    background: var(--text-color);
+    border: 1.5px solid black;
+    border-radius: 5px;
+    color: var(--primary-color-light);
+    cursor: pointer;
+    font-size: clamp(.65rem, .90rem, 2vw);
+    height: 2rem;
+    padding: 0 .5rem 0 .5rem;
+    text-align: center;
+    width: clamp(5rem, 6.5rem, 25vw);
+    transition: var(--tran-03);
+}
+
+.save_prod_button {
+    margin-top: 1rem;
+}

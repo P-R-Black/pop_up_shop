@@ -1,0 +1,41 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+    .sales_items_graphs_container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .sales_items_container {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {
+    .sales_items_container {
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .dashboard_databox_smaller {
+        aspect-ratio: 5/1;
+        width: 100%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {}

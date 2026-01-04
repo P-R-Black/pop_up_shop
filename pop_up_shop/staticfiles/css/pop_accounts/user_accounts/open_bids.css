@@ -1,0 +1,31 @@
+.open_bids_open_bids {
+    margin-top: .5rem;
+}
+
+.open_bids_items_container {
+    align-items: center;
+    color: var(--chevron-color);
+    display: grid;
+    grid-template-columns: 20% 20% 20% 20% 20%;
+    margin-bottom: .75rem;
+    text-align: center;
+}
+
+.open_bids_detail_item p,
+.open_bids_detail_size p,
+.open_bids_last_bid p,
+.open_bids_bid_status p {
+    /* font-size: 1.15rem; */
+    font-size: clamp(1rem, 1.15rem, 2vw);
+}
+
+.open_bids_detail_item a p {
+    color: var(--chevron-color);
+    cursor: pointer;
+    transition: var(--tran-03);
+}
+
+.open_bids_detail_item a p:hover {
+    color: var(--text-color);
+    transition: var(--tran-03);
+}

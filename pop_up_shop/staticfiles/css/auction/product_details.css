@@ -1,0 +1,85 @@
+.product_details_container {
+    align-items: center;
+    display: flex;
+    height: 80vh;
+    margin-top: 2rem;
+
+}
+
+
+.pd_circle_image_container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+
+}
+
+.pd_background_circle {
+    aspect-ratio: 1/1;
+    background-color: var(--text-color);
+    border-radius: 50%;
+    width: 40%;
+    position: absolute;
+
+
+}
+
+
+.img_fluid_product_details {
+    aspect-ratio: 3/2.25;
+    margin-bottom: 3rem;
+    position: relative;
+    width: 75%;
+}
+
+
+.product_details_container_left {
+    width: 70%;
+}
+
+
+.pd_container_right {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    width: 28%;
+
+
+}
+
+
+.pd_details_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.pd_details_size_container,
+.pd_details_condition_container,
+.pd_details_buy_now_container {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .75rem;
+    width: 90%;
+}
+
+.pd_details_size_container p,
+.pd_details_condition_container p,
+.pd_details_buy_now_container p {
+    color: var(--text-color);
+    font-size: 1.15rem;
+}
+
+p.pd_databox_assign_left {
+    width: 50%;
+    text-align: left;
+}
+
+.pd_buttons_container {
+
+    display: flex;
+
+    margin-top: 1rem;
+}
