@@ -12,7 +12,6 @@ db.sqlite3-journal
 media
 
 todo.txt
-requirements.txt
 account_test.py
 auction_dummy_data.py
 disposable_email_blocklist.conf
