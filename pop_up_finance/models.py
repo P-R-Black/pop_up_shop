@@ -1,6 +1,7 @@
 from django.db import models
 from pop_up_order.models import PopUpCustomerOrder
 from pop_up_auction.models import PopUpProduct
+from decimal import Decimal
 from django.utils.translation import gettext_lazy as _
 
 
@@ -28,9 +29,9 @@ class PopUpFinance(models.Model):
     
     def calculate_revenue(self):
         """Use this to calculate revenue"""
-        return self.final_price - self.refunded_amount
+        return Decimal(self.final_price) - Decimal(self.refunded_amount)
 
     def calculate_profit(self):
         """Use this to recalculate if refund or fees change"""
-        revenue = self.final_price - self.refunded_amount
+        revenue = Decimal(self.final_price) - Decimal(self.refunded_amount)
         return revenue - self.fees - self.reserve_price
