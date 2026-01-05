@@ -10,6 +10,9 @@ from pop_accounts.models import PopUpCustomerProfile
 from pop_up_auction.models import PopUpProduct
 from django.db.models import Q
 
+
+
+
 def send_auction_winner_email(user, product):
     """
     Notifies highest bidder in auction that they've won the auction
@@ -127,20 +130,12 @@ def send_customer_shipping_details(user, order, carrier, tracking_no, shipped_at
     Notifies user that item has been shipped. 
     Provides user with order no and shipping details
     """
-    print('send_customer_shipping_details called', carrier)
     links_to_track_shipment = {
             "usps": "https://tools.usps.com/",
             "ups": "https://www.ups.com/us/en/home",
             "FedEx": "https://www.fedex.com/en-us/tracking.html"
 
     }
-    # print('DEBUG carrier', carrier)
-    # print('DEBUG links test', links_to_track_shipment[carrier])
-    # print('DEBUG order.id is', order.id)
-    # print('DEBUG tracking_no', tracking_no)
-    # print('DEBUG shipped_at', shipped_at)
-    # print('DEBUG estimated_deliv', estimated_deliv)
-    # print('DEBUG status', status)
 
     subject = f"Your order has shipped Order #{order.id}."
     html_message = render_to_string('pop_up_email/send_customer_shipping_details.html', {
@@ -150,7 +145,6 @@ def send_customer_shipping_details(user, order, carrier, tracking_no, shipped_at
         'status': status, 
         'tracker_link': links_to_track_shipment[carrier] })
     
-    print('user.email', user.email)
     send_mail(
         subject = subject,
         message = "",
@@ -206,10 +200,10 @@ def interested_in_products_update_and_notify_me_products_update(product_id):
 
     # Fetch all users who are either interested OR notified, without duplicates
     users = PopUpCustomerProfile.objects.filter(Q(prods_interested_in=product) | Q(prods_on_notice_for=product)
-    ).distinct()
+    ).select_related('user').distinct()
 
     # Return their emails
-    return list(users.values_list("email", flat=True))
+    return list(users.values_list("user__email", flat=True))
 
 
 
@@ -224,7 +218,7 @@ def send_interested_in_and_coming_soon_product_update_to_users(
     
     users = PopUpCustomerProfile.objects.filter(
         Q(prods_interested_in=product) | Q(prods_on_notice_for=product)
-        ).distinct()
+        ).select_related('user').distinct()
     
     if not users.exists():
         return
@@ -236,6 +230,8 @@ def send_interested_in_and_coming_soon_product_update_to_users(
 
     # Send Individually for personalization
     for user in users:
+        print('user.user', user.user)
+        print('user', user)
         html_message = render_to_string(
             'pop_up_email/update_interested_users.html', 
             {
@@ -251,7 +247,7 @@ def send_interested_in_and_coming_soon_product_update_to_users(
             subject=subject,
             message = "",
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email], # sent to single user for a more personalized email
+            recipient_list=[user.user.email], # sent to single user for a more personalized email
             html_message=html_message,
             fail_silently=False
         )

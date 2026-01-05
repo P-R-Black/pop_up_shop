@@ -61,7 +61,11 @@ Products
                 <h3>{{ p.secondary_product_title }}</h3>
             </div>
             <div class="products_button_container">
+                {% if request.user.is_authenticated %}
                 <a class="button_medium" href="{% url 'pop_up_payment:buy_now' p.slug %}">Buy Now</a>
+                {% else %}
+                <button class="button_medium signUpModalBtn">Log In To Buy Now</button>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -84,7 +88,7 @@ Products
                 url: '{% url "pop_up_cart:cart_add" %}',
                 data: {
                     productid: productId,
-                    productqty: productQty,  // <-- Typo in key name ("productqty")
+                    productqty: productQty,
                     action: 'POST',
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                 },

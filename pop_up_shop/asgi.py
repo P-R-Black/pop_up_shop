@@ -13,6 +13,6 @@ environ.Env.read_env()
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pop_up_shop.settings.base')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pop_up_shop.settings.development')
 
 application = get_asgi_application()

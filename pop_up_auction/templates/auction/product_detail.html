@@ -23,8 +23,7 @@
 
                 {% for image in product.product_image.all %}
                 {% if image.is_feature %}
-                <img class="img_fluid_product_details" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}"
-                    alt="{{ image.image.alt_text}}" />
+                <img class="img_fluid_product_details" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}" />
                 {% endif %}
                 {% endfor %}
 
@@ -52,12 +51,11 @@
                 </div>
             </div>
             <div class="pd_buttons_container">
+                {% if request.user.is_authenticated %}
                 <a class="button_long" href="{% url 'pop_up_payment:buy_now' product.slug %}">Buy Now</a>
-
-                {% comment %}
-                <a class="button_medium" href="/auction/product-buy">Buy Now</a>
-                <a class="button_medium" href="#">Add to Cart</a>
-                {% endcomment %}
+                {% else %}
+                <button class="button_long signUpModalBtn">Log In To Buy Now</button>
+                {% endif %}
 
             </div>
         </div>

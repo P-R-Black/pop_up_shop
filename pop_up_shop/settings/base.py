@@ -52,6 +52,8 @@ DEBUG=True
 
 
 
+
+
 ALLOWED_HOSTS = [
     "*", 
     'mysite.com',
@@ -199,17 +201,11 @@ WSGI_APPLICATION = 'pop_up_shop.wsgi.application'
 # }
 
 
-# Add PostgreSQL config
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'shared_auth_db',  # Same database as accounts_master
-        'USER': 'paulblack',
-        'PASSWORD': '',  # Blank since using trust auth
-        # 'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
+
+
+DATABASES_ROUTERS = [
+    'shared_apps.routers.SharedAuthRouther'
+]
 
 
 

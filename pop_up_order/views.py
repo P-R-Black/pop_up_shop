@@ -39,7 +39,6 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 class CreateOrderAfterPaymentView(View):
     def post(self, request, *args, **kwargs):
         cart = Cart(request)
-        print('cart', cart)
         ids_in_cart = cart.get_product_ids()
         product_qs = PopUpProduct.objects.filter(Q(id__in=ids_in_cart), Q(is_active=True), Q(inventory_status__in=["reserved", "sold_out"]))
         

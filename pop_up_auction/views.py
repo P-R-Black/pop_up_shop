@@ -18,6 +18,8 @@ from django.db import transaction
 from pop_accounts.utils.utils import  add_specs_to_products
 from pop_up_order.models import PopUpOrderItem
 from django.http import Http404
+import logging
+
 
 # Create your views here.
 class AjaxLoginRequiredMixin(AccessMixin):

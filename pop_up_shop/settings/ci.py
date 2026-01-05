@@ -1,0 +1,43 @@
+from .base import *
+
+DEBUG = False
+SECRET_KEY = "ci-not-secret"
+ALLOWED_HOSTS = ['localhost']
+
+# PostgreSQL — single DB, two aliases
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "ci_db",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "localhost",
+        "PORT": "5432",
+    },
+    "shared_auth": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "ci_db",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
+        "HOST": "localhost",
+        "PORT": "5432",
+    },
+}
+
+# Ensure routers are active
+DATABASE_ROUTERS = [
+    'accounts.routers.SharedAuthRouter',
+]
+
+# Static files (no collectstatic in CI)
+STATIC_URL = "/static/"
+
+# Speed up tests
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.MD5PasswordHasher"
+]
+
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True

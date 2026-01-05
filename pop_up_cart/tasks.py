@@ -1,5 +1,5 @@
 from django.utils import timezone
-from auction.models import PopUpProduct
+from pop_up_auction.models import PopUpProduct
 from celery import shared_task
 
 

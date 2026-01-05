@@ -14,7 +14,6 @@ class Cart:
     """
 
     def __init__(self, request):
-
         self.request = request
         self._user = getattr(request, 'user', None) or AnonymousUser()
         self.session = request.session
@@ -151,7 +150,6 @@ class Cart:
 
 
     def get_subtotal_price(self):
-        print('get_subtotal_price user_cart', self.session_cart)
         if self._user.is_authenticated:
             return sum(
                 Decimal(item.product.display_price() or 0) * item.quantity
@@ -185,9 +183,7 @@ class Cart:
         """
         Delete item from session data
         """
-        print('delete called!')
         product_id = str(product)
-        print('product_id', product_id)
 
         if self._user and self._user.is_authenticated:
             PopUpCartItem.objects.filter(user=self._user, product_id=product_id).delete()
@@ -209,10 +205,35 @@ class Cart:
         Update values in session data
         """
         product_id = str(product)
-        qty = qty
-        if product_id in self.cart:
-            self.cart[product_id]['qty'] = qty
-        self.save()
+        
+        # Validate quantity
+        if qty < 0:
+            raise ValueError("Quantity cannot be negative")
+    
+        if self._user.is_authenticated:
+            # Update database cart for authenticated users
+            try:
+                cart_item = PopUpCartItem.objects.get(
+                    user=self._user,
+                    product_id=product_id
+                )
+                cart_item.quantity = qty
+                cart_item.save()
+            except PopUpCartItem.DoesNotExist:
+                # Product not in cart, optionally handle this
+                pass
+        else:
+            # Update session cart for anonymous users (though not used in your app)
+            if product_id in self.session_cart:
+                self.session_cart[product_id]['qty'] = qty
+                self.save()
+
+
+        # product_id = str(product)
+        # qty = qty
+        # if product_id in self.user_cart:
+        #     self.cart[product_id]['qty'] = qty
+        # self.save()
     
     def save(self):
         self.session[settings.CART_SESSION_ID] = self.session_cart
@@ -229,3 +250,7 @@ class Cart:
             self.save()
         # del self.session[settings.CART_SESSION_ID]
         # self.save()
+
+
+
+

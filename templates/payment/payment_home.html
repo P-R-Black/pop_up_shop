@@ -592,7 +592,7 @@ Payment
                 <div class="checkout_img_title_container">
                     {% for image in c.product.product_image.all %}
                     {% if image.is_feature %}
-                    <img class="checkout_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}" />
+                    <img class="checkout_img_fluid" src="{{ image.get_image_url }}" alt="{{ image.alt_text }}" />
                     {% endif %}
                     {% endfor %}
                     <div class="checkout_product_desc_container">
