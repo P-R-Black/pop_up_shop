@@ -20,13 +20,8 @@ from pop_up_order.models import PopUpOrderItem
 from django.http import Http404
 import logging
 
-<<<<<<< HEAD
-=======
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='pop_up_auction.log', level=logging.DEBUG, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
-
->>>>>>> 5ecd5c2ae04902932d1dc4b0f20cadeb64f1619b
 
 # Create your views here.
 class AjaxLoginRequiredMixin(AccessMixin):
