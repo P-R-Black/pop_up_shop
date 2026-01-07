@@ -27,13 +27,9 @@ jobs:
 
     env:
       DJANGO_SETTINGS_MODULE: pop_up_shop.settings.ci
-      PYTHONPATH: .
 
     steps:
-      - name: Clear pip cache
-        run: pip cache purge
-        
-      - name: Checkout code
+      - name: Checkout pop_up_shop
         uses: actions/checkout@v4
 
       - name: Checkout shared accounts app
@@ -42,60 +38,31 @@ jobs:
           repository: P-R-Black/shared_app_accounts
           path: shared_app_accounts
 
-          
-      - name: Verify shared accounts import
-        run: |
-          python - <<'EOF'
-          import accounts
-          from accounts.models import User
-          print("accounts imported:", accounts.__file__)
-          print("User model:", User)
-          EOF
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -e shared_app_accounts
-      
-      - name: Debug dotenv packages
+
+      - name: Verify shared accounts import
         run: |
-          pip show python-dotenv || true
-          pip show django-dotenv || true
           python - <<'EOF'
-          from dotenv import load_dotenv
-          print("load_dotenv imported successfully")
+          import accounts
+          from accounts.models import User
+          print("accounts imported from:", accounts.__file__)
+          print("User model:", User)
           EOF
 
       - name: Run system checks
         run: python manage.py check
-      
-      - name: Install shared accounts app
-        run: pip install -e ../shared_apps/accounts
-
-      - name: Verify shared apps path
-        run: |
-          python - <<'EOF'
-          import sys
-          print(sys.path)
-          import accounts
-          print("accounts imported successfully")
-          EOF
 
       - name: Run migrations
         run: python manage.py migrate
 
       - name: Run tests
         run: pytest
-
-      - name: Wait for Postgres
-        run: |
-          until pg_isready -h localhost -p 5432; do
-            sleep 1
-          done
-
