@@ -4,6 +4,11 @@ DEBUG = False
 SECRET_KEY = "ci-not-secret"
 ALLOWED_HOSTS = ['localhost']
 
+INSTALLED_APPS = [
+    app for app in INSTALLED_APPS
+    if app != "django_recaptcha"
+]
+
 # PostgreSQL — single DB, two aliases
 DATABASES = {
     "default": {
