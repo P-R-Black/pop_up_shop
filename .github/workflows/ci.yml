@@ -52,8 +52,19 @@ jobs:
       - name: Verify shared accounts import
         run: |
           python - <<'EOF'
+          import os
+          import django
+
+          os.environ.setdefault(
+              "DJANGO_SETTINGS_MODULE",
+              "pop_up_shop.settings.ci"
+          )
+
+          django.setup()
+
           import accounts
           from accounts.models import User
+
           print("accounts imported from:", accounts.__file__)
           print("User model:", User)
           EOF
