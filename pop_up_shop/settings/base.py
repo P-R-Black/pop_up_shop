@@ -235,13 +235,10 @@ DATABASE_ROUTERS = [
 # }
 
 
-<<<<<<< HEAD
-
-
 DATABASES_ROUTERS = [
     'shared_apps.routers.SharedAuthRouther'
 ]
-=======
+
 # Add PostgreSQL config
 # DATABASES = {
 #    'default': {
@@ -253,7 +250,6 @@ DATABASES_ROUTERS = [
 #        'PORT': '5432',
 #    }
 #}
->>>>>>> 5ecd5c2ae04902932d1dc4b0f20cadeb64f1619b
 
 
 
