@@ -11,12 +11,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import os
 import sys
 import environ
 
-load_dotenv()
 
 env = environ.Env()
 # environ.Env.read_env()
@@ -25,6 +24,8 @@ from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+# load_dotenv(BASE_DIR / ".env")
+
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 ROOT_DIR = BASE_DIR.parent
