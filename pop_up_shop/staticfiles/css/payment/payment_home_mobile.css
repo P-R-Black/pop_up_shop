@@ -1,0 +1,92 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+    .checkout_shipping_options_button_container {
+
+        align-items: center;
+        flex-direction: column;
+
+    }
+
+
+    /* ========== CART SECTIOn ========== */
+    .checkout_img_title_container {
+        flex-direction: column;
+        gap: .5rem;
+
+    }
+
+    /* ========== CART SECTIOn ========== */
+
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+
+    .buy_product_container {
+        flex-direction: column;
+        padding-bottom: 2rem;
+    }
+
+    .checkbout_container {
+        border-right: none;
+        border-top: 2px solid pink;
+        height: auto;
+        margin-top: 3rem;
+        padding-top: 1rem;
+    }
+
+    .checkout_container_left {
+        order: 2;
+        width: 100%;
+    }
+
+    .checkout_container_right {
+        order: 1;
+        width: 100%;
+    }
+
+    .checkout_product_container {
+        margin: -1rem 0 1rem .05rem;
+    }
+
+    .checkout_details_size_container,
+    .checkout_details_condition_container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .checkout_details_size_container p:nth-child(1),
+    .checkout_details_condition_container p:nth-child(1) {
+        font-weight: 600;
+        text-decoration: underline;
+    }
+
+    .checkout_details_size_container p:nth-child(2),
+    .checkout_details_condition_container p:nth-child(2) {
+        margin-bottom: .5rem;
+    }
+
+    .checkout_details_condition_button_container {
+        justify-content: center;
+    }
+
+    .payment_option_buttons {
+        width: 85%;
+    }
+}

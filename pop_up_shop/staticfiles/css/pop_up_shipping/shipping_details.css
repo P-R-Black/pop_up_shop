@@ -1,0 +1,73 @@
+.shipping_label_section {
+    margin-top: 5rem;
+}
+
+.shipping_from_choice_container {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.shipping_from_choice_container p {
+    color: var(--text-color);
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.order_id_container p {
+    color: var(--text-color);
+}
+
+
+.shipping_labels_container {
+    margin-top: 2rem;
+}
+
+
+.shipping_labels_container button {
+    margin-top: 2rem;
+}
+
+
+.from_addy_container {
+    color: var(--text-color);
+}
+
+.shippnig_to_container p {
+    font-size: 1.25rem;
+}
+
+
+.shipping_label {
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 5px;
+    color: black;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    padding: 1rem 1rem;
+    width: 40rem;
+}
+
+.shippnig_to_container {
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 5px;
+    margin-top: 2rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    padding: 1rem 1rem;
+    width: 40rem;
+
+}
+
+
+
+
+.shippnig_to_container p {
+    color: black;
+    font-size: 1.5rem;
+    font-weight: 600;
+
+}

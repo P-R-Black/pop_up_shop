@@ -1,0 +1,55 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (min-height: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+
+
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+
+
+    .inviteFriendModal {
+        /* Modal background */
+        height: 50%;
+        left: 5%;
+        top: 5%;
+        width: 90%;
+
+    }
+
+
+    .invite_friend_modal_content {
+        /* Modal content */
+        height: 70%;
+        padding: .5rem .5rem;
+
+        width: 95%;
+
+
+
+        /* display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        height: 90%;
+        margin: 2.5% auto; */
+    }
+}

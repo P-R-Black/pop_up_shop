@@ -1,0 +1,87 @@
+/* * * * * Shipping and Tracking Styles * * * * */
+.shipping_tracking_container {
+    margin-top: 2rem;
+    overflow-y: scroll;
+    padding-bottom: 7rem;
+    height: auto;
+}
+
+.ship_and_track_databox_headers {
+    color: var(--text-color);
+    display: grid;
+
+    grid-template-columns: 15% 15% 15% 15% 15% 15%;
+    text-align: center;
+    text-decoration: underline;
+}
+
+
+.shipping_tracking_info_container {
+    margin-top: .5rem;
+}
+
+.ship_track_items_container {
+    align-items: center;
+    color: var(--chevron-color);
+    display: grid;
+    grid-template-columns: 15% 15% 15% 15% 15% 15%;
+    margin-bottom: .75rem;
+    text-align: center;
+
+}
+
+
+
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+    .ship_and_track_databox_headers {
+        width: 130%;
+    }
+
+    .shipping_tracking_info_container {
+        width: 130%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+
+@media screen and (max-width: 640px) {
+
+    .ship_and_track_databox_headers {
+        width: 130%;
+    }
+
+    .shipping_tracking_info_container {
+        width: 130%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+
+    .shipping_tracking_details_container {
+        width: 250%;
+    }
+
+    .ship_and_track_databox_headers {
+        width: 130%;
+    }
+
+    .shipping_tracking_info_container {
+        width: 130%;
+    }
+
+}

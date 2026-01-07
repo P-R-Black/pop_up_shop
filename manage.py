@@ -6,7 +6,11 @@ import sys
 
 def main():
     """Run administrative tasks."""
+<<<<<<< HEAD
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pop_up_shop.settings.development') #.dev_debug to debug
+=======
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pop_up_shop.settings.development')
+>>>>>>> 5ecd5c2ae04902932d1dc4b0f20cadeb64f1619b
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

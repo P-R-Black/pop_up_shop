@@ -1,0 +1,62 @@
+.account_deleted_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 80vh;
+}
+
+.account_deleted_container h2 {
+    color: var(--text-color);
+    /* font-size: 2rem; */
+    font-size: clamp(1.5rem, 2.5rem, 10vw);
+    text-align: center;
+}
+
+.account_deleted_container h3 {
+    color: var(--text-color);
+    font-family: "Birthstone", cursive;
+    font-size: clamp(1.5rem, 2.75rem, 10vw);
+    font-weight: 300;
+    text-align: center;
+}
+
+
+span.large_emoji {
+    font-size: clamp(1rem, 2.5rem, 5vw);
+    /* font-size: 2.5rem; */
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+/* border color: yellow */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+/* border color: red */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+/* border color: green */
+@media screen and (max-width: 1000px) {
+    .account_deleted_container {
+        height: auto;
+        margin-top: 5rem;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+/* border color: blue */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+/* border color: pink */
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+/* border color: light blue / teal */
+@media screen and (max-width: 450px) {}

@@ -1,0 +1,102 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {
+    .inventory_item_select {
+        min-width: 70%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+    .inventory_item_select {
+        min-width: 100%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+
+    .inventory_item_select {
+        height: auto;
+        width: 80%;
+    }
+
+    .inventory_item_select ul {
+        align-items: flex-start;
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        gap: .25rem;
+    }
+
+    .inventory_shoe_items_container ul li {
+        flex-direction: column;
+        border-bottom: 2px solid var(--chevron-color);
+    }
+
+    .inventory_shoe_items_container ul li button {
+        margin-bottom: 1rem;
+    }
+
+
+
+    .inventory_shoe_items_container ul li p:nth-child(1) {
+        width: 40%;
+    }
+
+    .inventory_shoe_items_container ul li p:nth-child(2) {
+        width: 40%;
+    }
+
+    .inventory_shoe_items_container ul li a {
+        width: 90%;
+    }
+
+    .inventory_shoe_items_container ul li p:nth-child(4) {
+        width: 40%;
+    }
+
+    .inventory_shoe_items_container ul li p:nth-child(5) {
+        width: 40%;
+        margin-bottom: .25rem;
+    }
+
+    .inventory_shoe_items_container ul li p:nth-child(1)::before {
+        color: var(--text-color);
+        content: "Item Count: ";
+    }
+
+    .inventory_shoe_items_container ul li p:nth-child(2)::before {
+        color: var(--text-color);
+        content: "Year: ";
+    }
+
+    .inventory_shoe_items_container ul li a::before {
+        color: var(--text-color);
+        content: "Item: ";
+    }
+
+    .inventory_shoe_items_container ul li p:nth-child(4)::before {
+        color: var(--text-color);
+        content: "Size: ";
+    }
+
+    .inventory_shoe_items_container ul li p:nth-child(5)::before {
+        color: var(--text-color);
+        content: "Gender: ";
+    }
+
+
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {}

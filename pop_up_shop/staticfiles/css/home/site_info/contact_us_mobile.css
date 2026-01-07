@@ -1,0 +1,57 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+
+    .modal_email_contact_input,
+    .modal_subject_contact_input {
+
+        width: 70%;
+    }
+
+    .modal_message_contact_input {
+        width: 70%;
+
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+
+    .modal_email_contact_input,
+    .modal_subject_contact_input {
+
+        width: 80%;
+    }
+
+    .modal_message_contact_input {
+        width: 80%;
+
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+
+    .modal_email_contact_input,
+    .modal_subject_contact_input {
+
+        width: 95%;
+    }
+
+    .modal_message_contact_input {
+        width: 95%;
+
+    }
+}

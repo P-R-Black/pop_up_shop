@@ -1,0 +1,44 @@
+.admin_most_on_notice_container {
+    margin-top: 2rem;
+    overflow-y: scroll;
+    padding-bottom: 7rem;
+    height: auto;
+}
+
+
+
+.admin_most_on_notice_databox_headers {
+    color: var(--text-color);
+    display: grid;
+    grid-template-columns: 25% 25% 25% 25%;
+    text-align: center;
+    text-decoration: underline;
+
+
+}
+
+
+
+.admin_most_on_notice_items_container {
+    align-items: center;
+    color: var(--chevron-color);
+    display: grid;
+    grid-template-columns: 25% 25% 25% 25%;
+
+    margin-bottom: .75rem;
+    text-align: center;
+}
+
+
+
+.admin_bottom_data_container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+}
+
+.data-line-break {
+    margin: 5% 10%;
+    width: 80%;
+    border: 2px dotted var(--text-color);
+}

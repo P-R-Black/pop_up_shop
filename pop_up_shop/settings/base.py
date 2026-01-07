@@ -11,29 +11,49 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
 import sys
 import environ
 
+load_dotenv()
+
 env = environ.Env()
-environ.Env.read_env()
+# environ.Env.read_env()
+
 from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-ROOT_DIR = BASE_DIR.parent
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+ROOT_DIR = BASE_DIR.parent
 sys.path.insert(0, str(ROOT_DIR))
 
+SHARED_APPS_DIR = os.environ.get(
+    'SHARED_APPS_DIR',
+    '/home/paulb/shared_apps'
+)
 
-SHARED_APPS_DIR = '/Users/paulblack/PycharmProjects/Projects/shared_apps'
 sys.path.insert(0, SHARED_APPS_DIR)
+
+# SHARED_APPS_DIR_PROD = '/home/paulb/shared_apps'
+# sys.path.insert(0, SHARED_APPS_DIR_PROD)
+
+# SHARED_APPS_DIR_DEV = Path('/Users/paulblack/PycharmProjects/Projects/shared_apps')
+
+# if SHARED_APPS_DIR_PROD.exists():
+#    sys.path.insert(0, str(SHARED_APPS_DIR_PROD))
+# elif SHARED_APPS_DIR_DEV.exists():
+#    sys.path.insert(0, str(SHARED_APPS_DIR_DEV))
+# else:
+#    raise RuntimeError("shared_apps_directory not found")
+
+# SHARED_APPS_DIR = '/Users/paulblack/PycharmProjects/Projects/shared_apps'
+# sys.path.insert(0, SHARED_APPS_DIR)
 
 
 GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
-
-# /Users/paulblack/PycharmProjects/Projects/shared_app
 
 # GEOIP2 Database paths
 GEOIP_CITY = 'GeoLite2-City.mmdb'
@@ -61,8 +81,10 @@ ALLOWED_HOSTS = [
     "localhost",
     "38c0db4405f5.ngrok-free.app",
     "https://*.ngrok.io",
+    "162.243.128",
+    "dev.popupshop.paulrblack.com",
+    "www.dev.popupshop.paulrblack.com",
     ]
-
 
 
 CSRF_TRUSTED_ORIGINS = [
@@ -72,6 +94,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    # Django core apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -83,6 +106,11 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
     'django_celery_beat',
     'mptt',
+
+    # Shared apps
+    'accounts.apps.AccountsConfig',
+
+    # Project apps
     'pop_up_home.apps.PopUpHomeConfig',
     'pop_up_auction.apps.PopUpAuctionConfig',
     'pop_accounts.apps.PopAccountsConfig',
@@ -97,11 +125,11 @@ INSTALLED_APPS = [
     'social_django',
     'django_extensions',
     'django_recaptcha',
-    'accounts'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -193,6 +221,12 @@ WSGI_APPLICATION = 'pop_up_shop.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+DATABASE_ROUTERS = [
+    'accounts.routers.SharedAuthRouter',
+]
+
+
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
@@ -201,11 +235,25 @@ WSGI_APPLICATION = 'pop_up_shop.wsgi.application'
 # }
 
 
+<<<<<<< HEAD
 
 
 DATABASES_ROUTERS = [
     'shared_apps.routers.SharedAuthRouther'
 ]
+=======
+# Add PostgreSQL config
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'shared_auth_db',  # Same database as accounts_master
+#        'USER': 'paulblack',
+#        'PASSWORD': '',  # Blank since using trust auth
+#        'HOST': 'localhost',
+#        'PORT': '5432',
+#    }
+#}
+>>>>>>> 5ecd5c2ae04902932d1dc4b0f20cadeb64f1619b
 
 
 
@@ -284,6 +332,9 @@ LOGGING = {
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [(os.path.join(BASE_DIR, '../static/'))]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # MEDIA_URL = '/media/'
@@ -294,6 +345,7 @@ STATICFILES_DIRS = [(os.path.join(BASE_DIR, '../static/'))]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # AUTH_USER_MODEL = 'pop_accounts.PopUpCustomer'
+
 AUTH_USER_MODEL = 'accounts.User'
 
 

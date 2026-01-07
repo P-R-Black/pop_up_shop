@@ -3,6 +3,7 @@ from celery import Celery
 
 
 # Set the default Django settings module for the 'celery' program.
+<<<<<<< HEAD
 os.environ.setdefault(
     'DJANGO_SETTINGS_MODULE',
     os.getenv(
@@ -11,6 +12,9 @@ os.environ.setdefault(
     )
 )
 
+=======
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pop_up_shop.settings.development')
+>>>>>>> 5ecd5c2ae04902932d1dc4b0f20cadeb64f1619b
 app = Celery('pop_up_shop')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()

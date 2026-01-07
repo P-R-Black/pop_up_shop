@@ -1,0 +1,91 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {
+    .admin_bottom_data_container {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+    .admin_bottom_data_container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {
+    .admin_most_on_notice_databox_headers {
+        display: none;
+    }
+
+    .admin_most_on_notice_items_container {
+        /* border: 2px solid red; */
+        border-bottom: 2px solid var(--chevron-color);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+
+    }
+
+
+    .account_on_notice_no p:nth-child(1)::before {
+        color: var(--text-color);
+        content: "Accounts on Notice: ";
+        font-size: 1rem;
+        font-weight: 300;
+        width: 40%;
+    }
+
+    .number_of_bids p:nth-child(1)::before {
+        color: var(--text-color);
+        content: "Number of Bids: ";
+        width: 40%;
+    }
+
+
+    .interested_in_year p:nth-child(1)::before {
+        color: var(--text-color);
+        content: "Year: ";
+        width: 40%;
+    }
+
+
+    .interested_in_item p:nth-child(1)::before {
+        color: var(--text-color);
+        content: "Item: ";
+        width: 40%;
+    }
+
+    .interested_in_size p:nth-child(1)::before {
+        color: var(--text-color);
+        content: "Size: ";
+        width: 40%;
+    }
+
+    .data-line-break {
+        display: none;
+    }
+
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+    .admin_bottom_data_container {
+        justify-content: center;
+
+    }
+}

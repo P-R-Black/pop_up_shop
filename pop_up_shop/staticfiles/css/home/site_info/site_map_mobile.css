@@ -1,0 +1,43 @@
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+
+
+@media screen and (max-width: 1245px) {}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+/* @media screen and (min-height: 1000px) {} */
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+
+
+@media screen and (max-width: 640px) {
+
+
+    .site_map_container ol li {
+        display: list-item;
+
+    }
+
+
+    .site_map_container ul li {
+        display: list-item;
+    }
+
+
+}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {}
