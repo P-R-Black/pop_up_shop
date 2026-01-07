@@ -1,7 +1,14 @@
 from django import forms
 import os
 import environ
-from django_recaptcha.fields import ReCaptchaField
+# from django_recaptcha.fields import ReCaptchaField
+from django.conf import settings
+
+if settings.USE_RECAPTCHA:
+    from django_recaptcha.fields import ReCaptchaField
+else:
+    ReCaptchaField = None
+    
 from django_recaptcha.widgets import ReCaptchaV2Checkbox, ReCaptchaV2Invisible, ReCaptchaV3
 
 recaptcha_public_key=os.environ.get('RECAPTCHA_PUBLIC_KEY')
