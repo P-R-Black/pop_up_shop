@@ -15,10 +15,6 @@ if settings.USE_RECAPTCHA:
 else:
     ReCaptchaField = None
 
-# if settings.USE_RECAPTCHA:
-#     from django_recaptcha.fields import ReCaptchaField
-# else:
-#     ReCaptchaField = None
 
 # from django_recaptcha.widgets import ReCaptchaV2Checkbox, ReCaptchaV2Invisible, ReCaptchaV3
 
@@ -80,7 +76,6 @@ class ContactForm(forms.Form):
     # captcha = ReCaptchaField(widget=ReCaptchaV2Invisible) # if v2 invisible
     # captcha = ReCaptchaField(widget=ReCaptchaV3)          # if v3
 
-    # captcha = ReCaptchaField()
 
  
     # captcha = ReCaptchaField(
@@ -92,9 +87,10 @@ class ContactForm(forms.Form):
     # ✅ Conditionally add captcha field
     if settings.USE_RECAPTCHA:
         captcha = ReCaptchaField(
-            widget=ReCaptchaV2Checkbox()
+            # widget=ReCaptchaV2Checkbox()
         )
 
+    # captcha = ReCaptchaField()
 
     class Meta:
         fields = ('email_address', 'subject', 'message')
