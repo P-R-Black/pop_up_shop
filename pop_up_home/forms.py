@@ -1,33 +1,17 @@
 from django import forms
-import os
-import environ
 
 # from django_recaptcha.fields import ReCaptchaField
 from django.conf import settings
 
-# Guard ALL recaptcha imports
+
 USE_RECAPTCHA = getattr(settings, "USE_RECAPTCHA", False)
 
 if USE_RECAPTCHA:
     from django_recaptcha.fields import ReCaptchaField
+    from django_recaptcha.widgets import ReCaptchaV2Checkbox
 else:
     ReCaptchaField = None
-
-# if settings.USE_RECAPTCHA:
-#     from django_recaptcha.fields import ReCaptchaField
-#     from django_recaptcha.widgets import (
-#         ReCaptchaV2Checkbox,
-#         ReCaptchaV2Invisible,
-#         ReCaptchaV3,
-#     )
-# else:
-#     ReCaptchaField = None
-
-
-from django_recaptcha.widgets import ReCaptchaV2Checkbox, ReCaptchaV2Invisible, ReCaptchaV3
-
-recaptcha_public_key=os.environ.get('RECAPTCHA_PUBLIC_KEY')
-recaptcha_private_key=os.environ.get('RECAPTCHA_PRIVATE_KEY')
+    ReCaptchaV2Checkbox = None
 
 # Example: if your key is for v2 Checkbox
 # captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox)
@@ -41,8 +25,8 @@ recaptcha_private_key=os.environ.get('RECAPTCHA_PRIVATE_KEY')
 # captcha = ReCaptchaField(widget=ReCaptchaV3)
 # print('captcha 3', captcha)
 
-# Create your forms here
 
+# Create your forms here
 class ContactForm(forms.Form):
     email_address = forms.EmailField(
         max_length=150, required=True, label='email', help_text='Required',
@@ -86,19 +70,15 @@ class ContactForm(forms.Form):
 
 
  
-    # captcha = ReCaptchaField(
-    #     public_key=recaptcha_public_key,
-    #     private_key=recaptcha_private_key,
-    # )
 
 
     # ✅ Conditionally add captcha field
-    # if settings.USE_RECAPTCHA:
-    #     captcha = ReCaptchaField(
-    #         # widget=ReCaptchaV2Checkbox()
-    #     )
+    if USE_RECAPTCHA:
+        captcha = ReCaptchaField(
+            widget=ReCaptchaV2Checkbox()
+        )
 
-    captcha = ReCaptchaField()
+    # captcha = ReCaptchaField()
 
     class Meta:
         fields = ('email_address', 'subject', 'message')
