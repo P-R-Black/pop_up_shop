@@ -8,10 +8,13 @@ USE_RECAPTCHA = getattr(settings, "USE_RECAPTCHA", False)
 
 if USE_RECAPTCHA:
     from django_recaptcha.fields import ReCaptchaField
-    from django_recaptcha.widgets import ReCaptchaV2Checkbox
+    from django_recaptcha.widgets import (
+        ReCaptchaV2Checkbox,
+        ReCaptchaV2Invisible,
+        ReCaptchaV3,
+    )
 else:
     ReCaptchaField = None
-    ReCaptchaV2Checkbox = None
 
 # Example: if your key is for v2 Checkbox
 # captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox)
