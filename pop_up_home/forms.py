@@ -7,6 +7,7 @@ from django.conf import settings
 
 
 USE_RECAPTCHA = getattr(settings, "USE_RECAPTCHA", False)
+print('USE_RECAPTCHA', USE_RECAPTCHA)
 
 if USE_RECAPTCHA:
     from django_recaptcha.fields import ReCaptchaField
@@ -89,7 +90,7 @@ class ContactForm(forms.Form):
     # ✅ Conditionally add captcha field
     if USE_RECAPTCHA:
         captcha = ReCaptchaField(
-            widget=ReCaptchaV2Checkbox()
+            # widget=ReCaptchaV2Checkbox()
         )
 
     # captcha = ReCaptchaField()
