@@ -4,12 +4,23 @@ import environ
 # from django_recaptcha.fields import ReCaptchaField
 from django.conf import settings
 
+# Guard ALL recaptcha imports
 if settings.USE_RECAPTCHA:
     from django_recaptcha.fields import ReCaptchaField
+    from django_recaptcha.widgets import (
+        ReCaptchaV2Checkbox,
+        ReCaptchaV2Invisible,
+        ReCaptchaV3,
+    )
 else:
     ReCaptchaField = None
-    
-from django_recaptcha.widgets import ReCaptchaV2Checkbox, ReCaptchaV2Invisible, ReCaptchaV3
+
+# if settings.USE_RECAPTCHA:
+#     from django_recaptcha.fields import ReCaptchaField
+# else:
+#     ReCaptchaField = None
+
+# from django_recaptcha.widgets import ReCaptchaV2Checkbox, ReCaptchaV2Invisible, ReCaptchaV3
 
 recaptcha_public_key=os.environ.get('RECAPTCHA_PUBLIC_KEY')
 recaptcha_private_key=os.environ.get('RECAPTCHA_PRIVATE_KEY')
@@ -69,13 +80,21 @@ class ContactForm(forms.Form):
     # captcha = ReCaptchaField(widget=ReCaptchaV2Invisible) # if v2 invisible
     # captcha = ReCaptchaField(widget=ReCaptchaV3)          # if v3
 
-    captcha = ReCaptchaField()
+    # captcha = ReCaptchaField()
 
  
     # captcha = ReCaptchaField(
     #     public_key=recaptcha_public_key,
     #     private_key=recaptcha_private_key,
     # )
+
+
+    # ✅ Conditionally add captcha field
+    if settings.USE_RECAPTCHA:
+        captcha = ReCaptchaField(
+            widget=ReCaptchaV2Checkbox()
+        )
+
 
     class Meta:
         fields = ('email_address', 'subject', 'message')
