@@ -3,11 +3,17 @@ from .base import *
 DEBUG = False
 SECRET_KEY = "ci-not-secret"
 ALLOWED_HOSTS = ['localhost']
+USE_RECAPTCHA = False
+RECAPTCHA_PUBLIC_KEY = ""
+RECAPTCHA_PRIVATE_KEY = ""
+print("CI USE_RECAPTCHA =", USE_RECAPTCHA)
 
 INSTALLED_APPS = [
     app for app in INSTALLED_APPS
     if app != "django_recaptcha"
 ]
+
+
 
 # PostgreSQL — single DB, two aliases
 DATABASES = {
@@ -61,3 +67,9 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+
+
+
+
+print("✅ Loaded CI settings")
+print("USE_RECAPTCHA =", USE_RECAPTCHA)
