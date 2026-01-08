@@ -89,12 +89,18 @@ class ContactForm(forms.Form):
 
 
     # ✅ Conditionally add captcha field
-    if USE_RECAPTCHA:
-        captcha = ReCaptchaField(
-            # widget=ReCaptchaV2Checkbox()
-        )
+    # if USE_RECAPTCHA:
+    #     captcha = ReCaptchaField(
+    #         # widget=ReCaptchaV2Checkbox()
+    #     )
 
     # captcha = ReCaptchaField()
+
+    # ✅ Dynamically add captcha field ONLY if ReCaptcha is enabled
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if USE_RECAPTCHA:
+            self.fields['captcha'] = ReCaptchaField()
 
     class Meta:
         fields = ('email_address', 'subject', 'message')
