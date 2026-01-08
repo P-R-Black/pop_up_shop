@@ -89,12 +89,12 @@ class ContactForm(forms.Form):
 
 
     # ✅ Conditionally add captcha field
-    # if USE_RECAPTCHA:
-    #     captcha = ReCaptchaField(
+    if USE_RECAPTCHA:
+        captcha = ReCaptchaField(
             # widget=ReCaptchaV2Checkbox()
-        # )
+        )
 
-    captcha = ReCaptchaField()
+    # captcha = ReCaptchaField()
 
     class Meta:
         fields = ('email_address', 'subject', 'message')
