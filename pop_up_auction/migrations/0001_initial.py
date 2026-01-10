@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('pop_accounts', '0001_initial'),
+        ('accounts', '0002_user_middle_name'),,
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
