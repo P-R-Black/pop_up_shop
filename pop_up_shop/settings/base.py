@@ -232,9 +232,14 @@ WSGI_APPLICATION = 'pop_up_shop.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+DATABASE_ROUTERS = [
+]
+
 # DATABASE_ROUTERS = [
 #     'accounts.routers.SharedAuthRouter',
 # ]
+
+
 
 
 
