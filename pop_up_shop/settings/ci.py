@@ -7,6 +7,8 @@ USE_RECAPTCHA = False
 RECAPTCHA_PUBLIC_KEY = ""
 RECAPTCHA_PRIVATE_KEY = ""
 print("CI USE_RECAPTCHA =", USE_RECAPTCHA)
+print('sys', sys)
+print('SHARED_APPS_DIR', SHARED_APPS_DIR)
 
 INSTALLED_APPS = [
     app for app in INSTALLED_APPS
@@ -16,28 +18,39 @@ INSTALLED_APPS = [
 
 
 # PostgreSQL — single DB, two aliases
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME":"ci_db", # os.environ.get("POSTGRES_DB", "postgres"),
+#         "USER": os.environ.get("POSTGRES_USER", "postgres"),
+#         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "postgres"),
+#         "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+#         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+#     }
+# }
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "ci_db",
         "USER": "postgres",
-        "PASSWORD": "postgres",
+        "PASSWORD": env('POP_UP_SHARED_DEV_DB_PASSWORD'), #"postgres",
         "HOST": "localhost",
-        "PORT": "5432",
+        "PORT": 5432,
     },
     "shared_auth": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "ci_db",
         "USER": "postgres",
-        "PASSWORD": "postgres",
+        "PASSWORD": env('POP_UP_SHARED_DEV_DB_PASSWORD'), #"postgres",
         "HOST": "localhost",
-        "PORT": "5432",
+        "PORT": 5432,
     },
 }
 
 # Ensure routers are active
 DATABASE_ROUTERS = [
-    'accounts.routers.SharedAuthRouter',
+  
 ]
 
 LOGGING = {
