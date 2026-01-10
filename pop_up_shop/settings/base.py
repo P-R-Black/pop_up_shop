@@ -29,11 +29,12 @@ ROOT_DIR = BASE_DIR.parent
 sys.path.insert(0, str(ROOT_DIR))
 
 # for use on VPS
-# SHARED_APPS_DIR = os.environ.get(
-#     'SHARED_APPS_DIR',
-#     '/home/paulb/shared_apps'
-# )
+SHARED_APPS_DIR = os.environ.get(
+    'SHARED_APPS_DIR',
+    '/home/paulb/shared_apps'
+)
 
+# For local dev use
 SHARED_APPS_DIR = os.environ.get(
     "SHARED_APPS_DIR",
     "/Users/paulblack/PycharmProjects/Projects/shared_apps"
