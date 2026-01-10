@@ -22,21 +22,32 @@ env = environ.Env()
 
 from celery.schedules import crontab
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-# load_dotenv(BASE_DIR / ".env")
-
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
-
 ROOT_DIR = BASE_DIR.parent
 sys.path.insert(0, str(ROOT_DIR))
 
-SHARED_APPS_DIR = os.environ.get(
-    'SHARED_APPS_DIR',
-    '/home/paulb/shared_apps'
-)
+# for use on VPS
+# SHARED_APPS_DIR = os.environ.get(
+#     'SHARED_APPS_DIR',
+#     '/home/paulb/shared_apps'
+# )
 
+SHARED_APPS_DIR = os.environ.get(
+    "SHARED_APPS_DIR",
+    "/Users/paulblack/PycharmProjects/Projects/shared_apps"
+)
 sys.path.insert(0, SHARED_APPS_DIR)
+
+
+
+
+
+
+
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
 
 # SHARED_APPS_DIR_PROD = '/home/paulb/shared_apps'
 # sys.path.insert(0, SHARED_APPS_DIR_PROD)
@@ -70,9 +81,6 @@ SECRET_KEY=os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG=True 
-
-
-
 
 
 ALLOWED_HOSTS = [
@@ -228,6 +236,7 @@ DATABASE_ROUTERS = [
 
 
 
+# SQLite
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
@@ -236,9 +245,7 @@ DATABASE_ROUTERS = [
 # }
 
 
-DATABASES_ROUTERS = [
-    'shared_apps.routers.SharedAuthRouther'
-]
+
 
 # Add PostgreSQL config
 # DATABASES = {
@@ -421,9 +428,9 @@ NOWPAYMENTS_SANDBOX = os.environ.get('NOWPAYMENTS_SANDBOX', 'True').lower() == '
 
 
 # RECAPTCHA Key
-USE_RECAPTCHA = True
-RECAPTCHA_PUBLIC_KEY=os.environ.get('RECAPTCHA_PUBLIC_KEY')
-RECAPTCHA_PRIVATE_KEY=os.environ.get('RECAPTCHA_PRIVATE_KEY')
+USE_RECAPTCHA = os.environ.get('USE_RECAPTCHA', 'True').lower() == 'true'
+RECAPTCHA_PUBLIC_KEY=os.environ.get('RECAPTCHA_PUBLIC_KEY', '')
+RECAPTCHA_PRIVATE_KEY=os.environ.get('RECAPTCHA_PRIVATE_KEY', '')
 
 # Site Map Data
 SITE_ID = 1
