@@ -3,29 +3,33 @@ from django.conf import settings
 from importlib import import_module
 from django.test import TestCase, Client, RequestFactory
 from django.contrib.auth.models import User
-from accounts.models import PopUpCustomer
+from pop_accounts.models import PopUpCustomerProfile
 from django.http import HttpRequest
 from pop_up_home.views import home_page
+from django.contrib.auth import get_user_model
 
-def create_test_user(email, password, first_name, last_name, shoe_size, size_gender):
-    return PopUpCustomer.objects.create_user(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            shoe_size=shoe_size,
-            size_gender=size_gender
-        )
+User = get_user_model()
+
+
+def create_test_user(email, password, first_name, last_name, shoe_size, size_gender, **kwargs):
+    user = User.objects.create_user(
+        email=email,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        **kwargs
+    )
+    profile = PopUpCustomerProfile.objects.get(user=user)    
+    profile.shoe_size = shoe_size
+    profile.size_gender = size_gender
+    profile.save()
 
 class TestPopUpHomeViewResponses(TestCase):
     def setUp(self):
         self.c = Client()
-        self.user = create_test_user(email="testuser@example.com",
-            password="securePassword!23",
-            first_name="Test",
-            last_name="User",
-            shoe_size="10",
-            size_gender="male")
+        self.user, self.user_profile = create_test_user(
+            "testuser@example.com", "securePassword!23", "Test", "User", "10", "male"
+        )
 
     def test_url_allowed_hosts(self):
         """
