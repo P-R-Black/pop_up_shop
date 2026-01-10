@@ -3,39 +3,36 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from unittest.mock import patch
-from accounts.models import PopUpCustomer, PopUpCustomerAddress
+from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerAddress
+from django.utils.text import slugify
 
 
-def create_test_user(email, password, first_name, last_name, shoe_size, size_gender):
-    return PopUpCustomer.objects.create_user(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            shoe_size=shoe_size,
-            size_gender=size_gender
-        )
+User = get_user_model()
 
-def create_test_user_two():
-    return PopUpCustomer.objects.create_user(
-            email="testuse2r@example.com",
-            password="securePassword!232",
-            first_name="Test2",
-            last_name="User2",
-            shoe_size="11",
-            size_gender="male"
-        )
+
+def create_test_user(email, password, first_name, last_name, shoe_size, size_gender, **kwargs):
+    user = User.objects.create_user(
+        email=email,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        **kwargs
+    )
+    profile = PopUpCustomerProfile.objects.get(user=user)    
+    profile.shoe_size = shoe_size
+    profile.size_gender = size_gender
+    profile.save()
+
+
 
 
 class AddressViewTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = create_test_user(email="testuser@example.com",
-            password="securePassword!23",
-            first_name="Test",
-            last_name="User",
-            shoe_size="10",
-            size_gender="male")
+        self.user, self.user_profile = create_test_user(
+            "testuser@example.com", "securePassword!23", "Test", "User", "10", "male"
+        )
+        
         self.shipping_url = reverse("payment:shipping_address")
         self.billing_url = reverse("payment:billing_address")
         self.client.login(email="testuser@example.com", password="securePassword!23")
