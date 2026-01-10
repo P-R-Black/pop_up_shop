@@ -28,7 +28,7 @@ jobs:
       
     env:
       DJANGO_SETTINGS_MODULE: pop_up_shop.settings.ci
-      SHARED_APPS_DIR: ${{ github.workspace }}/shared_apps
+      SHARED_APPS_DIR: ${{ github.workspace }}/shared_app_accounts
 
     steps:
       - name: Checkout pop_up_shop
