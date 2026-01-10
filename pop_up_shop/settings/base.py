@@ -35,10 +35,10 @@ SHARED_APPS_DIR = os.environ.get(
 )
 
 # For local dev use
-SHARED_APPS_DIR = os.environ.get(
-    "SHARED_APPS_DIR",
-    "/Users/paulblack/PycharmProjects/Projects/shared_apps"
-)
+# SHARED_APPS_DIR = os.environ.get(
+#     "SHARED_APPS_DIR",
+#     "/Users/paulblack/PycharmProjects/Projects/shared_apps"
+# )
 sys.path.insert(0, SHARED_APPS_DIR)
 
 
