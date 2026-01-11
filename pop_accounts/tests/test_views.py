@@ -11614,8 +11614,14 @@ class TestSendPasswordResetLink(TestCase):
             self.assertIn('Unable to send email', data['error'])
             self.assertIn('try again later', data['error'].lower())
             
+            # Verify send_mail was attempted with correct args
+            mock_send_mail.assert_called_once()
+            call_kwargs = mock_send_mail.call_args.kwargs
+            self.assertEqual(call_kwargs['subject'], 'Reset Your Password')
+            self.assertEqual(call_kwargs['recipient_list'], ['user1@example.com'])
+
             # Verify send_mail was attempted
-            self.assertTrue(mock_send_mail.called)
+            # self.assertTrue(mock_send_mail.called)
             
             # No email should be in outbox
             self.assertEqual(len(mail.outbox), 0)
