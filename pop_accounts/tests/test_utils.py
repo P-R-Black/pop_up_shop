@@ -4,6 +4,7 @@ from pop_accounts.utils.pop_accounts_utils import handle_password_reset_request
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.http import JsonResponse
+from django.utils.timezone import now, make_aware
 from pop_accounts.models import PopUpCustomerProfile
 import json
 import uuid
@@ -60,4 +61,24 @@ class TestHandlePasswordResetRequest(TestCase):
         self.assertIn('Unable to send email at this time. Please try again later.', data['error'])
 
         # Assert send_mail was called once
+        mock_send_mail.assert_called_once()
+
+
+    @patch('pop_accounts.utils.pop_accounts_utils.send_mail', side_effect=Exception('SMTP error'))
+    def test_email_failure_does_not_update_user_record(self, mock_send_mail):
+        """If sending email fails, last_password_reset must not be updated"""
+        request = self.factory.post('/fake-url/', {'email': self.user.email})
+
+        response = handle_password_reset_request(request, self.user.email)
+
+        # Sanity: this is the failure path
+        self.assertEqual(response.status_code, 500)
+
+        # Reload user from DB
+        self.user.refresh_from_db()
+
+        # The key assertion: no update occurred
+        self.assertIsNone(self.user.last_password_reset)
+
+        # And send_mail really was attempted
         mock_send_mail.assert_called_once()
