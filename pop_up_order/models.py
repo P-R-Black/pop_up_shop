@@ -1,5 +1,4 @@
 from django.db import models
-# from accounts.models import PopUpCustomer, PopUpCustomerAddress, PopUpCustomerProfile
 from pop_accounts.models import PopUpCustomerAddress, PopUpCustomerProfile
 from pop_up_auction.models import PopUpProduct
 from pop_up_coupon.models import PopUpCoupon

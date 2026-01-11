@@ -114,7 +114,7 @@ class PopUpCustomerAddress(models.Model):
     last_name = models.CharField(max_length=100, blank=True, null=True)
 
     # Don't actually Need Phone Number in this model, text updates about delivery would be sent
-    # to primary user in PopUpCustomer
+    # to primary user in PopUpCustomerProfile
     phone_number = models.CharField(max_length=20, blank=True, null=True)
 
     postcode = models.CharField(_("Postcode"), max_length=50)

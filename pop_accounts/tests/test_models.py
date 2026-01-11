@@ -461,11 +461,7 @@ class TestSoftDeleteUserManager(TestCase):
         """Create test customer and addresses"""
         cls.product, cls.color_spec, cls.size_spec, cls.user1, cls.profile_one, cls.user2, cls.profile_two = create_seed_data()
 
-        # self.customer = PopUpCustomer.objects.create_user(
-        #     email="customer@example.com",
-        #     password="pass123"
-        # )
-        
+    
         # Active address
         cls.active_address = PopUpCustomerAddress.objects.create(
             customer=cls.user1,
@@ -1201,7 +1197,7 @@ class TestPopUpCustomerAddressModel(TestCase):
 
 
     def test_customer_foreign_key(self):
-        """Test foreign key relationship to PopUpCustomer"""
+        """Test foreign key relationship to PopUpCustomerProfile"""
         self.assertEqual(self.address.customer, self.user)
         self.assertIn(self.address, self.user.address.all())
     
@@ -1586,14 +1582,14 @@ class TestPopUpCustomerAddressModel(TestCase):
         """Test model verbose name"""
         self.assertEqual(
             PopUpCustomerAddress._meta.verbose_name,
-            'PopUpCustomerAddress'
+            'PopUp Customer Address'
         )
     
     def test_verbose_name_plural(self):
         """Test model verbose name plural"""
         self.assertEqual(
             PopUpCustomerAddress._meta.verbose_name_plural,
-            'PopUpCustomerAddresses'
+            'PopUp Customer Addresses'
         )
     
     # ==================== Edge Cases ====================
@@ -2128,11 +2124,11 @@ class TestPopUpBidModel(TestCase):
     
     def test_verbose_name(self):
         """Test model verbose name"""
-        self.assertEqual(PopUpBid._meta.verbose_name, 'PopUpBid')
+        self.assertEqual(PopUpBid._meta.verbose_name, 'PopUp Bid')
     
     def test_verbose_name_plural(self):
         """Test model verbose name plural"""
-        self.assertEqual(PopUpBid._meta.verbose_name_plural, 'PopUpBids')
+        self.assertEqual(PopUpBid._meta.verbose_name_plural, 'PopUp Bids')
     
     # ==================== Edge Cases ====================
     
@@ -3550,11 +3546,7 @@ class TestPopUpPasswordResetRequestLogModel(TestCase):
 
     def test_count_requests_per_customer(self):
         """Test counting total password reset requests per customer"""
-        # customer2 = PopUpCustomer.objects.create(
-        #     email="testuser2@example.com",
-        #     first_name="Test2",
-        #     last_name="User2"
-        # )
+    
         
         # Create 3 requests for customer1
         for i in range(3):

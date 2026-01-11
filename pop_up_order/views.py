@@ -71,7 +71,7 @@ class CreateOrderAfterPaymentView(View):
             user_id = data.get('user_id')
             total_paid = Decimal(data.get('total_paid', '0.00'))
 
-            customer = PopUpCustomer.objects.get(id=user_id)
+            customer = PopUpCustomerProfile.objects.get(id=user_id)
             shipping_address = PopUpCustomerAddress.objects.get(id=data.get('shippingAddressId'))
             billing_address = PopUpCustomerAddress.objects.get(id=data.get('billingAddressId'))
             

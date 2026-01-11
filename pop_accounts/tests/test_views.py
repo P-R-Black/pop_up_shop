@@ -9729,7 +9729,7 @@ class TestEmailCheckView(TestCase):
 
     def test_sql_injection_attempt(self):
         """Test that SQL injection attempts are safely handled"""
-        malicious_email = "'; DROP TABLE PopUpCustomer; --"
+        malicious_email = "'; DROP TABLE PopUpCustomerProfile; --"
         response = self.client.post(self.url, {'email': malicious_email})
         self.assertEqual(response.status_code, 400)
         # Verify the user table still exists
@@ -10927,7 +10927,9 @@ class TestRegisterView(TestCase):
     def test_case_insensitive_email(self):
         """Test email case handling"""
         data = self.valid_data.copy()
+        print('data', data)
         data['email'] = 'TEST@EXAMPLE.COM'
+        print("data['email]", data['email'])
         
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 200)
@@ -11062,6 +11064,7 @@ class TestRegisterView(TestCase):
     def test_verification_token_is_valid(self):
         """Test that generated verification token is valid for the user"""
         response = self.client.post(self.url, self.valid_data)
+        print('response', response)
         
         user = User.objects.get(email='test@example.com')
         token = default_token_generator.make_token(user)

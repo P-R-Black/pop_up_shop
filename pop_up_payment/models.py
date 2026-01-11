@@ -1,5 +1,4 @@
 from django.db import models
-# from accounts.models import PopUpCustomer
 from pop_accounts.models import PopUpCustomerProfile
 from pop_up_order.models import PopUpCustomerOrder, PopUpOrderItem
 from django.utils.translation import gettext_lazy as _

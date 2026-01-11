@@ -28,6 +28,7 @@ jobs:
       
     env:
       DJANGO_SETTINGS_MODULE: pop_up_shop.settings.ci
+      DJANGO_SECRET_KEY: "github-actions-ci-secret"
       SHARED_APPS_DIR: ${{ github.workspace }}/shared_app_accounts
 
     steps:
