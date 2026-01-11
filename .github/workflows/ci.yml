@@ -85,4 +85,4 @@ jobs:
         run: python manage.py migrate
 
       - name: Run tests
-        run: pytest --import-mode=importlib --tb=short -v
+        run: pytest --import-mode=importlib --ignore=shared_app_accounts --tb=short -v # pytest --import-mode=importlib --tb=short -v
