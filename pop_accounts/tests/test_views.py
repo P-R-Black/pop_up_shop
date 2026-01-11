@@ -2872,7 +2872,7 @@ class TestUserShipmentsUtility(TestCase):
         # self.create_pending_shipment = create_test_shipment_two_pending(status="pending", order=self.create_order)
     
 
-    @patch('pop_accounts.utils.utils.add_specs_to_products')
+    @patch('pop_accounts.utils.pop_accounts_utils.add_specs_to_products')
     def test_user_shipments_returns_correct_structure(self, mock_add_specs):
         """Test that user_shipments returns data in the expected format"""
         mock_product = MagicMock()
@@ -2951,7 +2951,7 @@ class TestUserShipmentsUtility(TestCase):
         self.assertNotIn(other_order.id, order_ids)
 
 
-    @patch('pop_accounts.utils.utils.add_specs_to_products')
+    @patch('pop_accounts.utils.pop_accounts_utils.add_specs_to_products')
     def test_user_shipments_handles_null_shipping_address(self, mock_add_specs):
         """Test handling of orders without shipping address"""
         """Test that user_shipments returns data in the expected format"""
@@ -11475,7 +11475,7 @@ class TestSendPasswordResetLink(TestCase):
         # Second request from "different" IP (new client session)
         # In real scenario, this would be different IP
         # For testing, we'd need to mock get_client_ip
-        with patch('pop_accounts.utils.utils.get_client_ip') as mock_ip:
+        with patch('pop_accounts.utils.pop_accounts_utils.get_client_ip') as mock_ip:
             mock_ip.return_value = '192.168.1.100'  # Different IP
             
             # May still be blocked by last_password_reset
@@ -11591,7 +11591,7 @@ class TestSendPasswordResetLink(TestCase):
         self.assertIsNotNone(log_entry.ip_address)
         self.assertTrue(len(log_entry.ip_address) > 0)
     
-    @patch('pop_accounts.utils.utils.logger')
+    @patch('pop_accounts.utils.pop_accounts_utils.logger')
     def test_logging_occurs(self, mock_logger):
         """Test that password reset request is logged"""
         response = self.client.post(self.url, {'email': 'user1@example.com'})
@@ -11602,32 +11602,54 @@ class TestSendPasswordResetLink(TestCase):
         self.assertIn('user1@example.com', call_args)
     
     def test_email_failure_handled_gracefully(self):
-        """Test that email sending failure is handled"""
-        mail.outbox = []
-        
-        # ✅ Mock the utility function that the view calls
-        with patch('pop_accounts.views.handle_password_reset_request') as mock_handler:
-            # Make it return the error response
-            mock_handler.return_value = JsonResponse({
-                'success': False,
-                'error': 'Unable to send email at this time. Please try again later.'
-            }, status=500)
+        """Test that email sending failure is handled""" 
+        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail: 
+            mock_send_mail.side_effect = Exception('SMTP error') 
+            response = self.client.post(self.url, {'email': 'user1@example.com'}) 
+            self.assertEqual(response.status_code, 500) 
+            data = response.json() 
+            self.assertFalse(data['success']) 
+            self.assertIn('Unable to send email', data['error']) 
+            self.assertIn('try again later', data['error'].lower()) 
+            # Verify send_mail was attempted with correct args 
             
-            response = self.client.post(self.url, {'email': 'user1@example.com'})
+            mock_send_mail.assert_called_once() 
+            call_kwargs = mock_send_mail.call_args.kwargs 
+            self.assertEqual(call_kwargs['subject'], 'Reset Your Password') 
+            self.assertEqual(call_kwargs['recipient_list'], ['user1@example.com']) 
 
-            self.assertEqual(response.status_code, 500)
-            data = response.json()
-            self.assertFalse(data['success'])
-            self.assertIn('Unable to send email', data['error'])
-            self.assertIn('try again later', data['error'].lower())
-            
-            # Verify handler was called with correct email
-            mock_handler.assert_called_once()
-            args = mock_handler.call_args
-            self.assertEqual(args[0][1], 'user1@example.com')  # Second arg is email
-            
-            # No email should be in outbox
+
+            # Verify send_mail was attempted 
+            # self.assertTrue(mock_send_mail.called) 
+
+            # No email should be in outbox 
             self.assertEqual(len(mail.outbox), 0)
+        # """Test that email sending failure is handled"""
+        # mail.outbox = []
+        
+        # # ✅ Mock the utility function that the view calls
+        # with patch('pop_accounts.views.handle_password_reset_request') as mock_handler:
+        #     # Make it return the error response
+        #     mock_handler.return_value = JsonResponse({
+        #         'success': False,
+        #         'error': 'Unable to send email at this time. Please try again later.'
+        #     }, status=500)
+            
+        #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+
+        #     self.assertEqual(response.status_code, 500)
+        #     data = response.json()
+        #     self.assertFalse(data['success'])
+        #     self.assertIn('Unable to send email', data['error'])
+        #     self.assertIn('try again later', data['error'].lower())
+            
+        #     # Verify handler was called with correct email
+        #     mock_handler.assert_called_once()
+        #     args = mock_handler.call_args
+        #     self.assertEqual(args[0][1], 'user1@example.com')  # Second arg is email
+            
+        #     # No email should be in outbox
+        #     self.assertEqual(len(mail.outbox), 0)
 
 
     def test_email_failure_does_not_update_user_record(self):
@@ -11636,7 +11658,7 @@ class TestSendPasswordResetLink(TestCase):
         self.user.last_password_reset = None
         self.user.save()
         
-        with patch('pop_accounts.utils.utils.send_mail') as mock_send_mail:
+        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail:
             mock_send_mail.side_effect = Exception('SMTP connection timeout')
             
             response = self.client.post(self.url, {'email': 'user1@example.com'})
@@ -11657,7 +11679,7 @@ class TestSendPasswordResetLink(TestCase):
 
     def test_email_failure_allows_immediate_retry(self):
         """Test that failed email doesn't trigger rate limiting for retry"""
-        with patch('pop_accounts.utils.utils.send_mail') as mock_send_mail:
+        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail:
             # First attempt fails
             mock_send_mail.side_effect = Exception('SMTP error')
             response1 = self.client.post(self.url, {'email': 'user1@example.com'})
