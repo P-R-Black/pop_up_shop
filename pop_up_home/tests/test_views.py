@@ -24,6 +24,8 @@ def create_test_user(email, password, first_name, last_name, shoe_size, size_gen
     profile.size_gender = size_gender
     profile.save()
 
+    return user, profile
+
 class TestPopUpHomeViewResponses(TestCase):
     def setUp(self):
         self.c = Client()
