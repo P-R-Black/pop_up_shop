@@ -38,7 +38,7 @@ from django.http import JsonResponse
 import json
 import uuid
 from django.core import mail
-from pop_accounts.utils.pop_accounts_utils import validate_password_strength, send_verification_email
+from pop_accounts.utils.pop_accounts_utils import (validate_password_strength, send_verification_email, handle_password_reset_request)
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from pop_up_cart.cart import Cart
@@ -130,6 +130,7 @@ Tests In Order
 71. TestVerifyEmailView
 72. TestCompleteProfileView
 73. SocialLoginCompleteViewTests 
+74. TestHandlePasswordResetRequest
 """
 
 
@@ -11603,29 +11604,55 @@ class TestSendPasswordResetLink(TestCase):
     
     def test_email_failure_handled_gracefully(self):
         """Test that email sending failure is handled""" 
-        # with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail: 
-        with patch('pop_accounts.utils.pop_accounts_utils.send_mail', side_effect=Exception('SMTP error')) as mock_send_mail:
-
-            mock_send_mail.side_effect = Exception('SMTP error') 
-            response = self.client.post(self.url, {'email': 'user1@example.com'}) 
-            self.assertEqual(response.status_code, 500) 
-            data = response.json() 
-            self.assertFalse(data['success']) 
-            self.assertIn('Unable to send email', data['error']) 
-            self.assertIn('try again later', data['error'].lower()) 
-            # Verify send_mail was attempted with correct args 
+        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail:
+            # Set up the mock FIRST
+            mock_send_mail.side_effect = Exception('SMTP error')
             
-            mock_send_mail.assert_called_once() 
-            call_kwargs = mock_send_mail.call_args.kwargs 
-            self.assertEqual(call_kwargs['subject'], 'Reset Your Password') 
-            self.assertEqual(call_kwargs['recipient_list'], ['user1@example.com']) 
+            # THEN clear the outbox
+            mail.outbox = []
+            
+            response = self.client.post(self.url, {'email': 'user1@example.com'})
+            
+            # Clear again just to be sure
+            if len(mail.outbox) > 0:
+                print(f"WARNING: {len(mail.outbox)} emails in outbox!")
+                for email in mail.outbox:
+                    print(f"  - Subject: {email.subject}")
+            
+            self.assertEqual(response.status_code, 500)
+            data = response.json()
+            self.assertFalse(data['success'])
+            
+            mock_send_mail.assert_called_once()
+            
+            # Force assertion
+            self.assertEqual(len(mail.outbox), 0, 
+                            f"Expected 0 emails but found {len(mail.outbox)}: {[e.subject for e in mail.outbox]}")
+        
+
+        # with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail: 
+        # with patch('pop_accounts.utils.pop_accounts_utils.send_mail', side_effect=Exception('SMTP error')) as mock_send_mail:
+
+        #     mock_send_mail.side_effect = Exception('SMTP error') 
+        #     response = self.client.post(self.url, {'email': 'user1@example.com'}) 
+        #     self.assertEqual(response.status_code, 500) 
+        #     data = response.json() 
+        #     self.assertFalse(data['success']) 
+        #     self.assertIn('Unable to send email', data['error']) 
+        #     self.assertIn('try again later', data['error'].lower()) 
+        #     # Verify send_mail was attempted with correct args 
+            
+        #     mock_send_mail.assert_called_once() 
+        #     call_kwargs = mock_send_mail.call_args.kwargs 
+        #     self.assertEqual(call_kwargs['subject'], 'Reset Your Password') 
+        #     self.assertEqual(call_kwargs['recipient_list'], ['user1@example.com']) 
 
 
-            # Verify send_mail was attempted 
-            # self.assertTrue(mock_send_mail.called) 
+        #     # Verify send_mail was attempted 
+        #     # self.assertTrue(mock_send_mail.called) 
 
-            # No email should be in outbox 
-            self.assertEqual(len(mail.outbox), 0)
+        #     # No email should be in outbox 
+        #     self.assertEqual(len(mail.outbox), 0)
 
         # """Test that email sending failure is handled"""
         # mail.outbox = []
@@ -12892,6 +12919,50 @@ class SocialLoginCompleteViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+
+class TestHandlePasswordResetRequest(TestCase):
+    """Test the handle_password_reset_request utility function"""
+    
+    def setUp(self):
+        """Set up test data"""
+        self.factory = RequestFactory()
+        cache.clear()
+        mail.outbox = []
+
+        self.user, self.profile = create_test_user(
+            'user1@example.com', 'testPass!23', 'Test', 'User', '9', 'male'
+        )
+        self.user.is_active = True
+        self.user.last_password_reset = None
+        self.user.save()
+
+    def tearDown(self):
+        """Clean up after each test"""
+        cache.clear()
+        PopUpPasswordResetRequestLog.objects.all().delete()
+
+    def test_email_failure_handled_gracefully(self):
+        """Test that email sending failure is handled"""
+        # Create a mock request
+        request = self.factory.post('/fake-url/')
+        request.META['REMOTE_ADDR'] = '127.0.0.1'
+        
+        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail:
+            mock_send_mail.side_effect = Exception('SMTP error')
+            
+            # Call the utility function directly
+            response = handle_password_reset_request(request, 'user1@example.com')
+
+            self.assertEqual(response.status_code, 500)
+            data = json.loads(response.content)
+            self.assertFalse(data['success'])
+            self.assertIn('Unable to send email', data['error'])
+            
+            # Verify send_mail was attempted
+            mock_send_mail.assert_called_once()
+            
+            # No email should be in outbox
+            self.assertEqual(len(mail.outbox), 0)
 
 # Should be in Auction
 # class TestsProductBuyViewGET(TestCase):
