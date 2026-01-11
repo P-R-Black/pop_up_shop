@@ -1,6 +1,5 @@
-from unittest import TestCase
+from django.test import TestCase, RequestFactory
 from unittest.mock import patch
-from django.test import RequestFactory
 from pop_accounts.utils.pop_accounts_utils import handle_password_reset_request
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -35,9 +34,9 @@ class TestHandlePasswordResetRequest(TestCase):
         cache.clear()
 
         # Create a test user
-        self.email = f"testuser_{uuid.uuid4().hex[:6]}@example.com"
+        # self.email = f"testuser_{uuid.uuid4().hex[:6]}@example.com"
         self.user, self.user_profile = create_test_user(
-            self.email, "testpass!23", "Test", "User1", "9", "male")
+            "testuser@example.com", "testpass!23", "Test", "User1", "9", "male")
         
 
 
@@ -46,9 +45,9 @@ class TestHandlePasswordResetRequest(TestCase):
         """If sending email fails, the helper should return 500"""
 
         print('self.user', self.user)
-        request = self.factory.post('/fake-url/', {'email': self.email})
+        request = self.factory.post('/fake-url/', {'email': 'testuser@example.com'})
 
-        response = handle_password_reset_request(request, self.email)
+        response = handle_password_reset_request(request, 'testuser@example.com')
 
         # Assert that we get JsonResponse with status 500
         self.assertIsInstance(response, JsonResponse)
