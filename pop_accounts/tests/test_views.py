@@ -38,7 +38,7 @@ from django.http import JsonResponse
 import json
 import uuid
 from django.core import mail
-from pop_accounts.utils.pop_accounts_utils import validate_password_strength #, send_verification_email
+from pop_accounts.utils.pop_accounts_utils import validate_password_strength, send_verification_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from pop_up_cart.cart import Cart
