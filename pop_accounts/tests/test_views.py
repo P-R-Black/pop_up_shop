@@ -11603,7 +11603,9 @@ class TestSendPasswordResetLink(TestCase):
     
     def test_email_failure_handled_gracefully(self):
         """Test that email sending failure is handled""" 
-        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail: 
+        # with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail: 
+        with patch('pop_accounts.utils.pop_accounts_utils.send_mail', side_effect=Exception('SMTP error')) as mock_send_mail:
+
             mock_send_mail.side_effect = Exception('SMTP error') 
             response = self.client.post(self.url, {'email': 'user1@example.com'}) 
             self.assertEqual(response.status_code, 500) 
