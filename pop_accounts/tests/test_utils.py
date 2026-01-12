@@ -83,6 +83,7 @@ class TestHandlePasswordResetRequest(TestCase):
         # And send_mail really was attempted
         mock_send_mail.assert_called_once()
     
+
     @patch('pop_accounts.utils.pop_accounts_utils.send_mail')
     @patch('pop_accounts.utils.pop_accounts_utils.logger')
     def test_logging_occurs(self, mock_logger, mock_send_mail):
@@ -103,3 +104,45 @@ class TestHandlePasswordResetRequest(TestCase):
         # Ensure the email appears in the log message
         log_args, _ = mock_logger.info.call_args
         self.assertIn(self.user.email, log_args[0])
+    
+
+    @patch('pop_accounts.utils.pop_accounts_utils.increment_rate_limit')
+    @patch('pop_accounts.utils.pop_accounts_utils.check_rate_limit', return_value=(True, 3))
+    @patch('pop_accounts.utils.pop_accounts_utils.validate_email_address', return_value=True)
+    @patch('pop_accounts.utils.pop_accounts_utils.User.objects.get')
+    @patch('pop_accounts.utils.pop_accounts_utils.send_mail')
+    def test_email_failure_allows_immediate_retry(
+        self,
+        mock_send_mail,
+        mock_get_user,
+        mock_validate,
+        mock_rate,
+        mock_increment,
+    ):
+        """
+        If email sending fails, the user should be able to retry immediately
+        without being rate-limited.
+        """
+
+        mock_get_user.return_value = self.user
+
+        request1 = self.factory.post('/fake-url/', {'email': 'retryuser@example.com'})
+
+        # First call fails
+        mock_send_mail.side_effect = Exception("SMTP error")
+        response1 = handle_password_reset_request(request1, 'retryuser@example.com')
+
+        self.assertEqual(response1.status_code, 500)
+
+        # Clear any cache written during the failed attempt
+        cache.clear()
+
+        # Second call succeeds
+        mock_send_mail.side_effect = None
+        request2 = self.factory.post('/fake-url/', {'email': 'retryuser@example.com'})
+        response2 = handle_password_reset_request(request2, 'retryuser@example.com')
+
+        self.assertEqual(response2.status_code, 200)
+        data = json.loads(response2.content)
+        self.assertTrue(data['success'])
+        self.assertIn('password reset link', data['message'].lower())
