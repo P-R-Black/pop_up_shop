@@ -82,3 +82,24 @@ class TestHandlePasswordResetRequest(TestCase):
 
         # And send_mail really was attempted
         mock_send_mail.assert_called_once()
+    
+    @patch('pop_accounts.utils.pop_accounts_utils.send_mail')
+    @patch('pop_accounts.utils.pop_accounts_utils.logger')
+    def test_logging_occurs(self, mock_logger, mock_send_mail):
+        """
+        When a valid user requests a password reset, the helper
+        should log the event.
+        """
+        request = self.factory.post('/fake-url/', {'email': self.user.email})
+
+        response = handle_password_reset_request(request, self.user.email)
+
+        # Sanity check: request succeeded
+        self.assertEqual(response.status_code, 200)
+
+        # Verify logger.info was called
+        mock_logger.info.assert_called_once()
+
+        # Ensure the email appears in the log message
+        log_args, _ = mock_logger.info.call_args
+        self.assertIn(self.user.email, log_args[0])
