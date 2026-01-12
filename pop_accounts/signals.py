@@ -3,7 +3,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import PopUpCustomerIP, PopUpCustomerProfile
 from django.contrib.auth import get_user_model
-from .utils.utils import get_client_ip 
+from .utils.pop_accounts_utils import get_client_ip 
 
 User = get_user_model()
 

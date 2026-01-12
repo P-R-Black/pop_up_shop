@@ -48,7 +48,7 @@ from django.core.cache import cache
 from django.utils.timezone import now
 from django.contrib.auth import logout
 from django.views import View
-from .utils.utils import (validate_email_address, get_client_ip, add_specs_to_products, is_disposable_email,
+from .utils.pop_accounts_utils import (validate_email_address, get_client_ip, add_specs_to_products, is_disposable_email,
                           increment_rate_limit, calculate_auction_progress, handle_password_reset_request, 
                           send_verification_email, check_rate_limit, get_email_provider, log_registration_with_geo)
 from django.conf import settings
@@ -71,7 +71,7 @@ from django.db.models import Count, Max, Q
 from django.http import Http404
 from social_django.utils import load_strategy, load_backend
 from social_django.views import _do_login
-from pop_accounts.utils.utils import get_stripe_payment_reference 
+from pop_accounts.utils.pop_accounts_utils import get_stripe_payment_reference 
 
 User = get_user_model()
 
@@ -2202,7 +2202,6 @@ class UpdateShippingPostView(UserPassesTestMixin, UpdateView):
     
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        print('DEBUG self.object', self.object)
         return super().post(request, *args, **kwargs)
 
 
@@ -2383,7 +2382,6 @@ class UpdateProductView(UserPassesTestMixin, View):
                         image_instance.save()
                     else:
                         messages.error(request, "There was an error with the image upload.")
-                        print("Product Image Form Errors", image_form.errors)
 
                 # Handle specifications if they exist
                 self._handle_specifications(request, product)
@@ -2770,7 +2768,6 @@ class RegisterView(View):
 
         # Step 3: Check for disposable email
         if is_disposable_email(email):
-            print('is_disposable_email being checked')
             return JsonResponse({
                 'success': False,
                 'errors': {'email': ['Disposable email addresses are not allowed.']}
@@ -3012,7 +3009,6 @@ class Verify2FACodeView(View):
         # Login if code matches and user is verified
         if str(code_entered).strip() == str(session_code).strip():
             try:
-                print('user_id', user_id)
                 user = User.objects.get(id=user_id)
 
                 # Check if user is active before login
@@ -3148,7 +3144,6 @@ class SendPasswordResetLink(View):
     """
     def post(self, request):
         email = request.POST.get('email', '').strip().lower()
-        print('email from SendPasswordResetLink', email) 
         return handle_password_reset_request(request, email)
 
     

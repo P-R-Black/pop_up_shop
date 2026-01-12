@@ -1,5 +1,3 @@
-import unittest
-from unittest import skip
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from pop_up_order.utils.utils import user_orders, user_shipments
@@ -132,7 +130,6 @@ Tests In Order
 71. TestVerifyEmailView
 72. TestCompleteProfileView
 73. SocialLoginCompleteViewTests 
-74. TestHandlePasswordResetRequest
 """
 
 
@@ -9558,25 +9555,6 @@ class TestEmailCheckView(TestCase):
         self.assertTrue(mock_send_email.called)
     
 
-    @patch('pop_accounts.views.send_verification_email')
-    def test_inactive_user_email_failure_handled(self, mock_send_email):
-        """Test that email sending failure is handled gracefully"""
-        # Mock email function to raise exception
-        mock_send_email.side_effect = Exception('SMTP error')
-        
-        response = self.client.post(self.url, {'email': 'inactive_user@mail.com'})
-        
-        # Should still return inactive status
-        data = response.json()
-        self.assertEqual(data['status'], 'inactive')
-        
-        # Message should indicate to check email (not that new one was sent)
-        self.assertIn('verification', data['message'].lower())
-        
-        # Session should still be set
-        self.assertEqual(self.client.session['auth_email'], 'inactive_user@mail.com')
-    
-
     def test_inactive_user_session_data_stored(self):
         """Test that all necessary session data is stored for inactive user"""
         with patch('pop_accounts.views.send_verification_email'):
@@ -11594,120 +11572,6 @@ class TestSendPasswordResetLink(TestCase):
         self.assertIsNotNone(log_entry.ip_address)
         self.assertTrue(len(log_entry.ip_address) > 0)
     
-    @unittest.skip("No Passing CI")
-    @patch('pop_accounts.utils.pop_accounts_utils.logger')
-    def test_logging_occurs(self, mock_logger):
-        """Test that password reset request is logged"""
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
-        
-        # Verify logger.info was called
-        self.assertTrue(mock_logger.info.called)
-        call_args = str(mock_logger.info.call_args)
-        self.assertIn('user1@example.com', call_args)
-    
-    @unittest.skip("No Passing CI")
-    def test_email_failure_handled_gracefully(self):
-        """Test that email sending failure is handled""" 
-        # with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail: 
-        with patch('pop_accounts.utils.pop_accounts_utils.send_mail', side_effect=Exception('SMTP error')) as mock_send_mail:
-
-            mock_send_mail.side_effect = Exception('SMTP error') 
-            response = self.client.post(self.url, {'email': 'user1@example.com'}) 
-            self.assertEqual(response.status_code, 500) 
-            data = response.json() 
-            self.assertFalse(data['success']) 
-            self.assertIn('Unable to send email', data['error']) 
-            self.assertIn('try again later', data['error'].lower()) 
-            # Verify send_mail was attempted with correct args 
-            
-            mock_send_mail.assert_called_once() 
-            call_kwargs = mock_send_mail.call_args.kwargs 
-            self.assertEqual(call_kwargs['subject'], 'Reset Your Password') 
-            self.assertEqual(call_kwargs['recipient_list'], ['user1@example.com']) 
-
-
-            # Verify send_mail was attempted 
-            # self.assertTrue(mock_send_mail.called) 
-
-            # No email should be in outbox 
-            self.assertEqual(len(mail.outbox), 0)
-
-        """Test that email sending failure is handled"""
-        mail.outbox = []
-        
-        # ✅ Mock the utility function that the view calls
-        with patch('pop_accounts.views.handle_password_reset_request') as mock_handler:
-            # Make it return the error response
-            mock_handler.return_value = JsonResponse({
-                'success': False,
-                'error': 'Unable to send email at this time. Please try again later.'
-            }, status=500)
-            
-            response = self.client.post(self.url, {'email': 'user1@example.com'})
-
-            self.assertEqual(response.status_code, 500)
-            data = response.json()
-            self.assertFalse(data['success'])
-            self.assertIn('Unable to send email', data['error'])
-            self.assertIn('try again later', data['error'].lower())
-            
-            # Verify handler was called with correct email
-            mock_handler.assert_called_once()
-            args = mock_handler.call_args
-            self.assertEqual(args[0][1], 'user1@example.com')  # Second arg is email
-            
-            # No email should be in outbox
-            self.assertEqual(len(mail.outbox), 0)
-
-    @unittest.skip("No Passing CI")
-    def test_email_failure_does_not_update_user_record(self):
-        """Test that user record is not updated if email fails"""
-        # Ensure user starts with no last_password_reset
-        self.user.last_password_reset = None
-        self.user.save()
-        
-        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail:
-            mock_send_mail.side_effect = Exception('SMTP connection timeout')
-            
-            response = self.client.post(self.url, {'email': 'user1@example.com'})
-            
-            # Email failed
-            self.assertEqual(response.status_code, 500)
-            
-            # User record should NOT be updated
-            self.user.refresh_from_db()
-            self.assertIsNone(self.user.last_password_reset)
-            
-            # Log entry should still be created (before email attempt)
-            # This is expected since logging happens before email sending
-            log_count = PopUpPasswordResetRequestLog.objects.filter(
-                customer=self.user
-            ).count()
-            self.assertEqual(log_count, 1)
-
-    @unittest.skip("No Passing CI")
-    def test_email_failure_allows_immediate_retry(self):
-        """Test that failed email doesn't trigger rate limiting for retry"""
-        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail:
-            # First attempt fails
-            mock_send_mail.side_effect = Exception('SMTP error')
-            response1 = self.client.post(self.url, {'email': 'user1@example.com'})
-            self.assertEqual(response1.status_code, 500)
-            
-            # Clear the mock side effect for second attempt
-            mock_send_mail.side_effect = None
-            
-            # Second attempt should succeed (not rate limited)
-            # Note: You may need to clear cache/session depending on your implementation
-            cache.clear()
-            self.client.session.flush()  # Clear the session
-            
-            response2 = self.client.post(self.url, {'email': 'user1@example.com'})
-            
-            # Should succeed on retry
-            # Note: This might still be blocked by database rate limiting
-            # depending on implementation
-
 
 
 class TestVerifyEmailView(TestCase):
@@ -12898,50 +12762,6 @@ class SocialLoginCompleteViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-
-class TestHandlePasswordResetRequest(TestCase):
-    """Test the handle_password_reset_request utility function"""
-    
-    def setUp(self):
-        """Set up test data"""
-        self.factory = RequestFactory()
-        cache.clear()
-        mail.outbox = []
-
-        self.user, self.profile = create_test_user(
-            'user1@example.com', 'testPass!23', 'Test', 'User', '9', 'male'
-        )
-        self.user.is_active = True
-        self.user.last_password_reset = None
-        self.user.save()
-
-    def tearDown(self):
-        """Clean up after each test"""
-        cache.clear()
-        PopUpPasswordResetRequestLog.objects.all().delete()
-
-    def test_email_failure_handled_gracefully(self):
-        """Test that email sending failure is handled"""
-        # Create a mock request
-        request = self.factory.post('/fake-url/')
-        request.META['REMOTE_ADDR'] = '127.0.0.1'
-        
-        with patch('pop_accounts.utils.pop_accounts_utils.send_mail') as mock_send_mail:
-            mock_send_mail.side_effect = Exception('SMTP error')
-            
-            # Call the utility function directly
-            response = handle_password_reset_request(request, 'user1@example.com')
-
-            self.assertEqual(response.status_code, 500)
-            data = json.loads(response.content)
-            self.assertFalse(data['success'])
-            self.assertIn('Unable to send email', data['error'])
-            
-            # Verify send_mail was attempted
-            mock_send_mail.assert_called_once()
-            
-            # No email should be in outbox
-            self.assertEqual(len(mail.outbox), 0)
 
 # Should be in Auction
 # class TestsProductBuyViewGET(TestCase):

@@ -58,6 +58,7 @@ def send_verification_email(request, user):
 def handle_password_reset_request(request, email: str):
     """Utility to handle sending a password reset link with rate limiting"""
     now_time = now()
+
     if not email:
         return JsonResponse({'success': False, 'error': 'An email address is required'}, status=400)
     
@@ -74,7 +75,8 @@ def handle_password_reset_request(request, email: str):
             'error': 'Too many password reset attempts. Please try again later.'
         }, status=429)
 
-    cache_key = f"password_reset_requested: {email}"
+    cache_key = f"password_reset_requested: {email}".replace(' ', '_')
+ 
     if cache.get(cache_key):
         return JsonResponse({'success': False, 'error': 'Please wait before requesting another reset email'})
 
@@ -337,7 +339,7 @@ def check_rate_limit(ip_address, action_type, max_attempts=4, window_seconds=360
     Returns:
         tuple: (is_allowed: bool, attempts_remaining: int)
     """
-    cache_key = f"{action_type}_attempt_{ip_address}"
+    cache_key = f"{action_type}_attempt_{ip_address}".replace(' ', '_')
     attempts = cache.get(cache_key, 0)
     if attempts >= max_attempts:
         return False, 0
@@ -354,11 +356,8 @@ def increment_rate_limit(ip_address, action_type, window_seconds=3600):
         action_type (str): Type of action
         window_seconds (int): Time window in seconds
     """
-    print('increment_rate_limit called')
-    cache_key = f"{action_type}_attempt_{ip_address}"
-    print('cache_key', cache_key)
+    cache_key = f"{action_type}_attempt_{ip_address}".replace(' ', '_')
     attempts = cache.get(cache_key, 0)
-    print('attempts', attempts)
     cache.set(cache_key, attempts + 1, window_seconds)
 
 

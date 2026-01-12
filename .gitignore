@@ -15,8 +15,6 @@ media
 todo.txt
 account_test.py
 auction_dummy_data.py
-disposable_email_blocklist.conf
-pop_accounts/utils/disposable_email_blocklist.conf
 
 
 .coverage
@@ -34,4 +32,4 @@ coverage.xml
 dev_venv/
 pop_up_shop/settings/.env
 geoip/*mmdb
-pop_accounts/utils/*conf
+# pop_accounts/utils/*conf

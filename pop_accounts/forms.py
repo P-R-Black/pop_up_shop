@@ -3,7 +3,7 @@ from .models import PopUpCustomerProfile, PopUpCustomerAddress
 from django.contrib.auth.forms import (AuthenticationForm, PasswordResetForm, SetPasswordForm)
 import re
 from django.core.exceptions import ValidationError
-from .utils.utils import validate_password_strength
+from .utils.pop_accounts_utils import validate_password_strength
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
