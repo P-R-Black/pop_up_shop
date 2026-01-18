@@ -8,6 +8,15 @@ RECAPTCHA_PUBLIC_KEY = ""
 RECAPTCHA_PRIVATE_KEY = ""
 print("CI USE_RECAPTCHA =", USE_RECAPTCHA)
 print('sys', sys)
+
+# ------ Shared Apps Path ------
+# for use on VPS
+SHARED_APPS_DIR = os.environ.get(
+    'SHARED_APPS_DIR',
+    '/home/paulb/shared_apps'
+)
+sys.path.insert(0, SHARED_APPS_DIR)
+
 print('SHARED_APPS_DIR', SHARED_APPS_DIR)
 
 INSTALLED_APPS = [
