@@ -34,20 +34,7 @@ sys.path.insert(0, str(ROOT_DIR))
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
-# for use on VPS
-# SHARED_APPS_DIR = os.environ.get(
-#     'SHARED_APPS_DIR',
-#     '/home/paulb/shared_apps'
-# )
 
-# ------ Shared Apps Path ------
-# For local dev use
-SHARED_APPS_DIR = os.environ.get(
-    "SHARED_APPS_DIR",
-    "/Users/paulblack/PycharmProjects/Projects/shared_apps"
-)
-
-sys.path.insert(0, SHARED_APPS_DIR)
 
 # SHARED_APPS_DIR = os.environ.get("SHARED_APPS_DIR")
 # if SHARED_APPS_DIR:
@@ -88,11 +75,29 @@ SECRET_KEY=os.environ.get('SECRET_KEY', 'ci-insecure-secret-key')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG=True 
+DEBUG=True 
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+# DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-print('base.py DEBUG', DEBUG)
+
+# ------ Shared Apps Path ------
+if DEBUG:
+    # For local dev use
+    SHARED_APPS_DIR = os.environ.get(
+        "SHARED_APPS_DIR",
+        "/Users/paulblack/PycharmProjects/Projects/shared_apps"
+    )
+    sys.path.insert(0, SHARED_APPS_DIR)
+else:
+    # for use on VPS
+    SHARED_APPS_DIR = os.environ.get(
+        'SHARED_APPS_DIR',
+        '/home/paulb/shared_apps'
+    )
+    sys.path.insert(0, SHARED_APPS_DIR)
+
+
+
 
 
 ALLOWED_HOSTS = [

@@ -409,27 +409,74 @@ class TestPopUpCustomerOrderModel(TestCase):
         with self.assertRaises(PopUpCustomerOrder.DoesNotExist):
             PopUpCustomerOrder.objects.get(id=order_id)
 
-    # def test_set_null_on_address_delete(self):
-    #     """Test that address fields are set to null when address is deleted"""
-    #     order = PopUpCustomerOrder.objects.create(
-    #         user=self.user,
-    #         full_name='Test User',
-    #         email='test@example.com',
-    #         address1='123 Test St',
-    #         postal_code='12345',
-    #         city='Test City',
-    #         state='TS',
-    #         total_paid=Decimal('215.00'),
-    #         order_key='TEST-ORDER-001',
-    #         shipping_address=self.shipping_address
-    #     )
+    def test_set_null_on_address_delete(self):
+        """Test that address fields are set to null when address is deleted"""
+        from django.db import connection
+        order = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            full_name='Test User',
+            email='test@example.com',
+            address1='123 Test St',
+            postal_code='12345',
+            city='Test City',
+            state='TS',
+            total_paid=Decimal('215.00'),
+            order_key='TEST-ORDER-001',
+            shipping_address=self.shipping_address
+        )
+        
+       # Soft delete the address (what actually happens in production)
+        self.shipping_address.delete()
+        
+        # Refresh order
+        order.refresh_from_db()
+        
+        # Order should still have the address reference
+        self.assertIsNotNone(order.shipping_address)
+        
+        # But address is marked as deleted
+        self.assertTrue(order.shipping_address.is_deleted)
+        
+        # Address is hidden from default queryset
+        self.assertFalse(
+            PopUpCustomerAddress.objects.filter(id=self.shipping_address.id).exists()
+        )
+        
+        # But still exists in all_objects
+        self.assertTrue(
+            PopUpCustomerAddress.all_objects.filter(id=self.shipping_address.id).exists()
+        )
+        
 
+    def test_hard_delete_sets_address_to_null(self):
+        """Test that actually deleting an address sets order field to null"""
+        order = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            full_name='Test User',
+            email='test@example.com',
+            address1='123 Test St',
+            postal_code='12345',
+            city='Test City',
+            state='TS',
+            total_paid=Decimal('215.00'),
+            order_key='TEST-ORDER-001',
+            shipping_address=self.shipping_address
+        )
         
-    #     self.shipping_address.delete()
-    #     order.save()
-    #     order.refresh_from_db()
+        # Force hard delete (bypass soft delete override)
+        address_id = self.shipping_address.id
+        PopUpCustomerAddress.all_objects.filter(id=address_id).delete()
         
-    #     self.assertIsNone(order.shipping_address)
+        # Verify address is truly gone
+        self.assertFalse(
+            PopUpCustomerAddress.all_objects.filter(id=address_id).exists()
+        )
+        
+        # Refresh order
+        order.refresh_from_db()
+        
+        # Should be None after hard deletion
+        self.assertIsNone(order.shipping_address)
 
     def test_optional_fields_blank(self):
         """Test that optional fields can be blank"""
@@ -781,16 +828,18 @@ class TestPopUpOrderItemModel(TestCase):
             'PopUp Order Items'
         )
 
-    # def test_zero_quantity_not_allowed(self):
-    #     """Test that quantity must be positive"""
-    #     with self.assertRaises(IntegrityError):
-    #         PopUpOrderItem.objects.create(
-    #             order=self.order,
-    #             product=self.product,
-    #             product_title='Air Jordan 4',
-    #             price=Decimal('215.00'),
-    #             quantity=0
-    #         )
+    def test_zero_quantity_not_allowed(self):
+        """Test that quantity must be positive (at least 1)"""
+        order_item = PopUpOrderItem.objects.create(
+            order=self.order,
+            product=self.product,
+            product_title='Air Jordan 4',
+            price=Decimal('215.00'),
+            quantity=0
+        )
+        # Validator is checked during full_clean()
+        with self.assertRaises(ValidationError):
+            order_item.full_clean()
 
     def test_total_cost_calculation_integration(self):
         """Test integration between order items and order total cost"""

@@ -162,6 +162,14 @@ class PopUpCustomerAddress(models.Model):
         return self.deleted_at is not None
 
     def delete(self, *args, **kwargs):
+        """
+        Soft delete implementation.
+        
+        Note: Orders reference addresses via ForeignKey with SET_NULL.
+        Soft delete preserves order history by keeping the address record
+        with deleted_at timestamp. Hard deletes (via all_objects manager)
+        will trigger SET_NULL on related orders.
+        """
         self.soft_delete()
 
 

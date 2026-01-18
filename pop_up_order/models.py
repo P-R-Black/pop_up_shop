@@ -71,7 +71,7 @@ class PopUpOrderItem(models.Model):
     size = models.CharField(max_length=10, blank=True, null=True)
     color = models.CharField(max_length=50, blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.PositiveIntegerField(default=1)
+    quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
 
 
     class Meta:
