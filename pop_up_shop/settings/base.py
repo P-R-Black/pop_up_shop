@@ -80,37 +80,19 @@ DEBUG=True
 # DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 
-# ------ Shared Apps Path ------
-if DEBUG:
-    # For local dev use
-    SHARED_APPS_DIR = os.environ.get(
-        "SHARED_APPS_DIR",
-        "/Users/paulblack/PycharmProjects/Projects/shared_apps"
-    )
-    sys.path.insert(0, SHARED_APPS_DIR)
-else:
-    # for use on VPS
-    SHARED_APPS_DIR = os.environ.get(
-        'SHARED_APPS_DIR',
-        '/home/paulb/shared_apps'
-    )
-    sys.path.insert(0, SHARED_APPS_DIR)
 
 
-
-
-
-ALLOWED_HOSTS = [
-    "*", 
-    'mysite.com',
-    "localhost:8000", 
-    "localhost",
-    "38c0db4405f5.ngrok-free.app",
-    "https://*.ngrok.io",
-    "162.243.128",
-    "dev.popupshop.paulrblack.com",
-    "www.dev.popupshop.paulrblack.com",
-    ]
+# ALLOWED_HOSTS = [
+#     "*", 
+#     'mysite.com',
+#     "localhost:8000", 
+#     "localhost",
+#     "38c0db4405f5.ngrok-free.app",
+#     "https://*.ngrok.io",
+#     "162.243.128",
+#     "dev.popupshop.paulrblack.com",
+#     "www.dev.popupshop.paulrblack.com",
+#     ]
 
 
 CSRF_TRUSTED_ORIGINS = [

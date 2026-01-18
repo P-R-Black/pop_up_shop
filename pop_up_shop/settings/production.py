@@ -7,6 +7,15 @@ env = environ.Env()
 
 DEBUG = False
 
+# ------ Shared Apps Path ------
+# for use on VPS
+SHARED_APPS_DIR = os.environ.get(
+    'SHARED_APPS_DIR',
+    '/home/paulb/shared_apps'
+)
+sys.path.insert(0, SHARED_APPS_DIR)
+
+
 ALLOWED_HOSTS = [
     'popupshop.paulrblack.com', 
     'www.popupshop.paulrblack.com'

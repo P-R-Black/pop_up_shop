@@ -9,32 +9,31 @@ env = environ.Env()
 DEBUG = True
 
 # ------ Shared Apps Path ------
-# For local dev use
+# for use on VPS
 SHARED_APPS_DIR = os.environ.get(
-    "SHARED_APPS_DIR",
-    "/Users/paulblack/PycharmProjects/Projects/shared_apps"
+    'SHARED_APPS_DIR',
+    '/home/paulb/shared_apps'
 )
 sys.path.insert(0, SHARED_APPS_DIR)
 
 
 ALLOWED_HOSTS = [
-    'mysite.com', "localhost:8000",  
-    "localhost", 
-    "38c0db4405f5.ngrok-free.app","https://*.ngrok.io","162.243.128"
+    'dev.popupshop.paulrblack.com', 
+    'www.dev.popupshop.paulrblack.com',
     ]
 
 
 
 # Database
-# Add PostgreSQL config
+# Add VPS Def PostgreSQL config
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'shared_auth_db',  # Same database as accounts_master
-        'USER': 'paulblack',
-        'PASSWORD': '',  # Blank since using trust auth
-        # 'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': env('POP_UP_SHARED_VPS_DEV_DB_ENGINE'),
+        'NAME': env('POP_UP_SHARED_VPS_DEV_DB_NAME'),
+        'USER':  env('POP_UP_SHARED_VPS_DEV_DB_USER'),
+        'PASSWORD': env('POP_UP_SHARED_VPS_DEV_DB_PASSWORD'),
+        'HOST': env('POP_UP_SHARED_VPS_DEV_DB_HOST'),
+        'PORT': env('POP_UP_SHARED_VPS_DEV_DB_PORT'),
     }
 }
 
@@ -83,4 +82,4 @@ DATABASES = {
 # }
 
 # print('Databases Config', DATABASES)
-print("Loaded LOCAL DEVELOPMENT settings")
+print("Loaded VPS DEVELOPMENT settings")
