@@ -18,10 +18,10 @@ print(f"Loading settings for: {environment}")
 
 if environment == 'production':
     from .production import *
+elif environment == 'vps_dev':
+    from .vps_dev import *
 elif environment == 'ci':
     from .ci import *
-# elif environment == 'test':
-#     from .test import *
 else:
     from .development import *
 

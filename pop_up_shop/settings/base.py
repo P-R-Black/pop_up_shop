@@ -34,32 +34,6 @@ sys.path.insert(0, str(ROOT_DIR))
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
-
-
-# SHARED_APPS_DIR = os.environ.get("SHARED_APPS_DIR")
-# if SHARED_APPS_DIR:
-#     sys.path.insert(0, SHARED_APPS_DIR)
-
-
-
-
-
-# SHARED_APPS_DIR_PROD = '/home/paulb/shared_apps'
-# sys.path.insert(0, SHARED_APPS_DIR_PROD)
-
-# SHARED_APPS_DIR_DEV = Path('/Users/paulblack/PycharmProjects/Projects/shared_apps')
-
-# if SHARED_APPS_DIR_PROD.exists():
-#    sys.path.insert(0, str(SHARED_APPS_DIR_PROD))
-# elif SHARED_APPS_DIR_DEV.exists():
-#    sys.path.insert(0, str(SHARED_APPS_DIR_DEV))
-# else:
-#    raise RuntimeError("shared_apps_directory not found")
-
-# SHARED_APPS_DIR = '/Users/paulblack/PycharmProjects/Projects/shared_apps'
-# sys.path.insert(0, SHARED_APPS_DIR)
-
-
 GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
 
 # GEOIP2 Database paths
