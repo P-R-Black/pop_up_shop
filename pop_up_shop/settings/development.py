@@ -1,17 +1,22 @@
-from pathlib import Path
+# from pathlib import Path
 from .base import *
 import os
-# from dotenv import load_dotenv
+import environ
+
+env = environ.Env()
+# environ.Env.read_env()
 
 DEBUG = True
 
 ALLOWED_HOSTS = [
     'dev.popupshop.paulrblack.com', 
-    'www.dev.popupshop.paulrblack.com', 'mysite.com', "localhost:8000",  "localhost", "38c0db4405f5.ngrok-free.app","https://*.ngrok.io","162.243.128"]
+    'www.dev.popupshop.paulrblack.com', 
+    'mysite.com', "localhost:8000",  
+    "localhost", 
+    "38c0db4405f5.ngrok-free.app","https://*.ngrok.io","162.243.128"
+    ]
 
 
-env = environ.Env()
-environ.Env.read_env()
 
 # Database
 # Add PostgreSQL config
@@ -71,3 +76,4 @@ DATABASES = {
 # }
 
 # print('Databases Config', DATABASES)
+print("Loaded DEVELOPMENT settings")

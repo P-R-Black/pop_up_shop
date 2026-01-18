@@ -1,28 +1,49 @@
-import os
 from .base import *
+import os
 import environ
 
 env = environ.Env()
-environ.Env.read_env()
+# environ.Env.read_env()
 
-ALLOWED_HOSTS = ['*']
+DEBUG = False
 
-# Database
-# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+ALLOWED_HOSTS = [
+    'popupshop.paulrblack.com', 
+    'www.popupshop.paulrblack.com'
+    ]
+
+
+# Prod Database
+DATABASES = {
+    'default': {
+        'ENGINE': env('POP_UP_SHARED_PROD_DB_ENGINE'), # 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('POP_UP_SHARED_DEFAULT_PROD_DB_NAME'), # 'pop_up_shop_prod_db',
+        'USER': env('POP_UP_SHARED_PROD_DB_USER'), # doadmin
+        'PASSWORD': env('POP_UP_SHARED_PROD_DB_PASSWORD'),
+        'HOST': env('POP_UP_SHARED_PROD_DB_HOST'),
+        'PORT': env('POP_UP_SHARED_PROD_DB_PORT'),
+    },
+    'shared_auth': {
+        'ENGINE': env('POP_UP_SHARED_PROD_DB_ENGINE'),
+        'NAME': env('POP_UP_SHARED_PROD_DB_NAME'), # 'shared_auth_db',
+        'USER': env('POP_UP_SHARED_PROD_DB_USER'),
+        'PASSWORD': env('POP_UP_SHARED_PROD_DB_PASSWORD'),
+        'HOST': env('POP_UP_SHARED_PROD_DB_HOST'),
+        'PORT': env('POP_UP_SHARED_PROD_DB_PORT'),
+    }
+}
+
+
 
 # Once domain name secured, uncomment
+# Production security settings
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 
-# SECURE_SSL_REDIRECT = True
-
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
-# SECURE_BROWSER_XSS_FILTER = True
 
 
 
@@ -71,3 +92,5 @@ ALLOWED_HOSTS = ['*']
 # EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 # EMAIL_PORT = env('EMAIL_PORT')
 # EMAIL_USE_TLS = True
+
+print("Loaded PRODUCTION settings")

@@ -15,18 +15,24 @@ from pathlib import Path
 import os
 import sys
 import environ
-
-
-env = environ.Env()
-# environ.Env.read_env()
-
 from celery.schedules import crontab
 
 
+# ------ Setup Environment Reader ------
+# env = environ.Env(
+#     DEBUG=(bool, True), # # fallback if not in env or .env
+#     DJANGO_ENV=(str, 'development') # # fallback if not in env or .env
+# )
+
+# ------ Base Paths ------
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = BASE_DIR.parent
 sys.path.insert(0, str(ROOT_DIR))
+
+# ------ Read .env ------
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
 
 # for use on VPS
 # SHARED_APPS_DIR = os.environ.get(
@@ -34,7 +40,7 @@ sys.path.insert(0, str(ROOT_DIR))
 #     '/home/paulb/shared_apps'
 # )
 
-
+# ------ Shared Apps Path ------
 # For local dev use
 SHARED_APPS_DIR = os.environ.get(
     "SHARED_APPS_DIR",
@@ -48,7 +54,7 @@ sys.path.insert(0, SHARED_APPS_DIR)
 #     sys.path.insert(0, SHARED_APPS_DIR)
 
 
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
 
 
 # SHARED_APPS_DIR_PROD = '/home/paulb/shared_apps'
@@ -82,7 +88,11 @@ SECRET_KEY=os.environ.get('SECRET_KEY', 'ci-insecure-secret-key')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG=True 
+# DEBUG=True 
+
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+
+print('base.py DEBUG', DEBUG)
 
 
 ALLOWED_HOSTS = [

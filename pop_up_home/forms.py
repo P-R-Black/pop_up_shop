@@ -8,8 +8,6 @@ from django.conf import settings
 
 USE_RECAPTCHA = getattr(settings, "USE_RECAPTCHA", False)
 
-print('USE_RECAPTCHA', USE_RECAPTCHA)
-
 if USE_RECAPTCHA:
     from django_recaptcha.fields import ReCaptchaField
     from django_recaptcha.widgets import (

@@ -9,10 +9,12 @@ https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
 
 import os
 import environ
-environ.Env.read_env()
+
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pop_up_shop.settings.development')
+
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pop_up_shop.settings')
 
 application = get_asgi_application()
