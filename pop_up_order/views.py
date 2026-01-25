@@ -27,7 +27,11 @@ import braintree
 import re
 from django.db.models import Q
 from django.db.models import Prefetch
+from django.contrib.auth import get_user_model
 import logging
+
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +45,6 @@ class CreateOrderAfterPaymentView(View):
         cart = Cart(request)
         ids_in_cart = cart.get_product_ids()
         product_qs = PopUpProduct.objects.filter(Q(id__in=ids_in_cart), Q(is_active=True), Q(inventory_status__in=["reserved", "sold_out"]))
-        
 
         # Build diction for lookup
         product_map = {}
@@ -58,20 +61,45 @@ class CreateOrderAfterPaymentView(View):
 
         try:
             data = json.loads(request.body)
-            print('CreateOrderAfterPaymentView data', data, '\n')
+            # print('CreateOrderAfterPaymentView data', data, '\n')
+
+            # Add Validation- Before doing anything else
+            required_fields = [
+                'payment_data_id',
+                'payment_method',
+                'order_key',
+                'user_id',
+                'total_paid',
+                'email',
+                'address1',
+                'postal_code',
+                'city',
+                'state',
+                'shippingAddressId',
+                'billingAddressId'
+            ]
+            
+            missing_fields = [field for field in required_fields if not data.get(field)]
+            if missing_fields:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Missing required fields: {", ".join(missing_fields)}'
+                }, status=400)
 
             payment_data_id = data.get('payment_data_id')
-            print('payment_data_id', payment_data_id)
+            print('DEBUG payment_data_id', payment_data_id)
 
             payment_method = data.get('payment_method')
-            print('payment_method', payment_method)
+            # print('payment_method', payment_method)
 
 
             order_key = data.get('order_key')
             user_id = data.get('user_id')
             total_paid = Decimal(data.get('total_paid', '0.00'))
 
-            customer = PopUpCustomerProfile.objects.get(id=user_id)
+            customer = PopUpCustomerProfile.objects.get(user_id=user_id)
+            user = customer.user
+            
             shipping_address = PopUpCustomerAddress.objects.get(id=data.get('shippingAddressId'))
             billing_address = PopUpCustomerAddress.objects.get(id=data.get('billingAddressId'))
             
@@ -79,7 +107,7 @@ class CreateOrderAfterPaymentView(View):
                 try:
                     stripe_customer = stripe.Customer.create(
                         email=data.get('email'),
-                        name=f"{customer.first_name} {customer.last_name}",
+                        name=f"{user.first_name} {user.last_name}",
                         address={
                             "line1": data.get('address1'),
                             "line2": data.get('address2'),
@@ -105,10 +133,11 @@ class CreateOrderAfterPaymentView(View):
                     except stripe.error.StripeError as e:
                         print(f"Error attaching PaymentMethod to customer: {e}")
                         
+                        
                 except stripe.error.StripeError as e:
                     print(f"Stripe error creating customer: {e}")
-                except stripe.error.StripeError as e:
-                    print(f"Stripe error creating customer: {e}")
+                # except stripe.error.StripeError as e:
+                #     print(f"Stripe error creating customer: {e}")
 
             
             # Need to work on the get_fees_by_payment function
@@ -144,8 +173,8 @@ class CreateOrderAfterPaymentView(View):
             
             # create order
             order = PopUpCustomerOrder.objects.create(
-                user=customer,
-                full_name = customer,
+                user=user,
+                full_name = f"{user.first_name} {user.last_name}",
                 email=data.get('email'),
                 address1=data.get('address1'),
                 address2=data.get('address2'),
@@ -184,7 +213,6 @@ class CreateOrderAfterPaymentView(View):
             for item in cart:
                 product_id = item['product'].id
                 prod_data = product_map.get(product_id)
-                print('prod_data', prod_data)
                 if not prod_data:
                     continue
                 order_item = PopUpOrderItem.objects.create(
@@ -197,7 +225,6 @@ class CreateOrderAfterPaymentView(View):
                     price=item['price'], 
                     quantity=item['qty']
                 )
-
                 order_items.append(order_item)
             
             # Create shipping instance here with order_no, set status to pending
@@ -215,32 +242,31 @@ class CreateOrderAfterPaymentView(View):
             except Exception as e:
                 print('create_shipping e', e)
         
-
             send_order_confirmation_email(request.user, order_id, order_items, total_paid, payment_status="pending")
-          
+            try:
+                PopUpFinance.objects.create(
+                    order=order,
+                    product=product,
+                    reserve_price=product.reserve_price,
+                    final_price=total_paid,
+                    fees=payment_fees,
+                    refunded_amount=0.00,
+                    profit=Decimal(total_paid) - Decimal(product.reserve_price),
+                    payment_method=payment_method,
+                    is_disputed=False,
+                    is_refunded=False
+                )
+            except Exception as e:
+                print('PopUpFinance Error', e)
+
             for id in ids_in_cart:
+                
                 product = PopUpProduct.objects.get(id=id)
                 product.inventory_status = 'sold_out'
                 product.is_active = False
                 product.save()
             
-                reservation = WinnerReservation.objects.filter(user=customer, product=product, is_paid=False).first()
-
-                try:
-                    PopUpFinance.objects.create(
-                        order=order,
-                        product=product,
-                        reserve_price=product.reserve_price,
-                        final_price=total_paid,
-                        fees=payment_fees,
-                        refunded_amount=0.00,
-                        profit=Decimal(total_paid) - Decimal(product.reserve_price),
-                        payment_method=payment_method,
-                        is_disputed=False,
-                        is_refunded=False
-                    )
-                except Exception as e:
-                    print('PopUpFinance Error', e)
+                reservation = WinnerReservation.objects.filter(user=user, product=product, is_paid=False).first()
                 
                 if reservation:
                     reservation.is_paid = True
