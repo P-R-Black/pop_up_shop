@@ -148,25 +148,6 @@ class TestProductBuyViewGet(TestCase):
             inventory_status='in_inventory',
             is_active=True
         )
-        
-        # Create test address
-        self.default_address = PopUpCustomerAddress.objects.create(
-            customer=self.user,
-            address_line="123 Main St",
-            town_city="Orlando",
-            state="Florida",
-            postcode="32801",
-            default=True
-        )
-
-        self.billing_address = PopUpCustomerAddress.objects.create(
-            customer=self.user,
-            address_line="456 Billing St",
-            town_city="Tampa",
-            state="Florida",
-            postcode="33601",
-            default=False
-        )
 
         # url
         self.url = reverse('pop_up_payment:payment_home')
@@ -259,8 +240,8 @@ class TestProductBuyViewGet(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # Verify default address is displayed
-        self.assertContains(response, self.default_address.address_line)
-        self.assertContains(response, self.default_address.town_city)
+        self.assertContains(response, self.shipping_address.address_line)
+        self.assertContains(response, self.shipping_address.town_city)
 
         # Verify tax and fees are present
         self.assertContains(response, 'Processing Fee')
