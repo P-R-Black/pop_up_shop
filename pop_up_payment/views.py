@@ -115,6 +115,7 @@ class ProductBuyView(OptionalLoginMixin, View):
             
             # 4 Item quantity in cart
             cart_length = len(cart)
+            print('cart_length', cart_length)
 
             # 5. Shipping Standard
             standard_shipping = 1499
@@ -220,8 +221,10 @@ class ProductBuyView(OptionalLoginMixin, View):
             grand_total_adjusted = grand_total_adjust_decimal.replace('.','')
 
 
-             # braintree client_token
+            # braintree client_token
             client_token = gateway.client_token.generate()
+            # client_token = 0
+         
 
             context = {"user": user, 
                     "cart_items": enriched_cart, 
@@ -338,6 +341,7 @@ def buy_now_add_to_cart(request, slug):
 
 class ShippingAddressView(LoginRequiredMixin, View):
     template_name = "payment/shipping_address.html"
+
     def post(self, request):
         user = request.user
         address_instance = None
