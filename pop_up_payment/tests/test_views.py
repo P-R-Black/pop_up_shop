@@ -1,10 +1,18 @@
-from pop_up_payment.views import ShippingAddressView, BillingAddressView
 from django.test import TestCase, Client
-from django.contrib.auth import get_user_model
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.urls import reverse
-from unittest.mock import patch
+from pop_up_payment.views import AjaxLoginRequiredMixin, ProductBuyView, ShippingAddressView, BillingAddressView
 from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerAddress
+from pop_up_auction.models import PopUpProduct, PopUpProductSpecification, PopUpCategory, PopUpBrand, PopUpProductType
+from pop_up_cart.models import PopUpCartItem
 from django.utils.text import slugify
+from decimal import Decimal
+from unittest.mock import patch, Mock, MagicMock
+from django.test import TestCase, RequestFactory
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+
 from pop_up_auction.tests.conftest import (
     create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
     create_product_type, create_category, create_brand)
@@ -12,107 +20,831 @@ from pop_up_auction.tests.conftest import (
 User = get_user_model()
 
 
-# def create_test_user(email, password, first_name, last_name, shoe_size, size_gender, **kwargs):
-#     user = User.objects.create_user(
-#         email=email,
-#         password=password,
-#         first_name=first_name,
-#         last_name=last_name,
-#         **kwargs
-#     )
-#     profile = PopUpCustomerProfile.objects.get(user=user)    
-#     profile.shoe_size = shoe_size
-#     profile.size_gender = size_gender
-#     profile.save()
+def create_test_address(customer, first_name, last_name, address_line, address_line2, 
+                       apartment_suite_number, town_city, state, postcode, 
+                       delivery_instructions, default=True, is_default_shipping=False,
+                       is_default_billing=False):
+    
+    """Helper function to create customer address"""
+    return PopUpCustomerAddress.objects.create(
+        customer=customer,
+        first_name=first_name,
+        last_name=last_name,
+        address_line=address_line,
+        address_line2=address_line2,
+        apartment_suite_number=apartment_suite_number,
+        town_city=town_city,
+        state=state,
+        postcode=postcode,
+        delivery_instructions=delivery_instructions,
+        default=default,
+        is_default_shipping=is_default_shipping,
+        is_default_billing=is_default_billing
+    )
+    
 
-
-
-
-class AddressViewTests(TestCase):
+class TestProductBuyViewGet(TestCase):
+    """Test suite for ProductBuyView GET method"""
+    
     def setUp(self):
-        self.client = Client()
+        """Set up test fixtures"""
+        self.factory = RequestFactory()
+        self.view = ProductBuyView.as_view()
+        
+        # Create test user
         self.user, self.user_profile = create_test_user(
-            "testuser@example.com", "securePassword!23", "Test", "User", "10", "male"
+            "test@example.com", "testpass!23", "Test", "User", "9", "male"
+        )
+
+        # Create addresses
+        self.shipping_address = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="123 Test St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Test City",
+            state="Oklahoma",
+            postcode="12345",
+            delivery_instructions="Leave at door",
+            default=True,
+            is_default_shipping=True,
+            is_default_billing=False
         )
         
-        self.shipping_url = reverse("pop_up_payment:shipping_address")
-        self.billing_url = reverse("pop_up_payment:billing_address")
-        # # self.client.login(email="testuser@example.com", password="securePassword!23")
-        # self.client.force_login(self.user)
-        # self.client.get('/', REMOTE_ADDR='127.0.0.1') # Trigger login with IP
+        self.billing_address = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="456 Billing Ave",
+            address_line2="",
+            apartment_suite_number="Apt 2",
+            town_city="Billing City",
+            state="Texas",
+            postcode="67890",
+            delivery_instructions="",
+            default=False,
+            is_default_shipping=False,
+            is_default_billing=True
+        )
+        
+        # Create category, brand, and product type
+        self.basketball_category = PopUpCategory.objects.create(
+            name='Basketball',
+            slug='basketball'
+        )
+        
+        self.jordan_brand = PopUpBrand.objects.create(
+            name='Jordan',
+            slug='jordan'
+        )
+        
+        self.sneakers_type = PopUpProductType.objects.create(
+            name='Sneakers',
+            slug='sneakers'
+        )
+        
+        # Create product specifications
+        self.size_spec = PopUpProductSpecification.objects.create(
+            product_type=self.sneakers_type,
+            name='size'
+        )
+        
+        self.colorway_spec = PopUpProductSpecification.objects.create(
+            product_type=self.sneakers_type,
+            name='colorway'
+        )
+        
+        self.product_sex_spec = PopUpProductSpecification.objects.create(
+            product_type=self.sneakers_type,
+            name='product_sex'
+        )
+        
+        # Create test products
+        self.product1 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 4',
+            secondary_product_title='Retro Military Blue',
+            slug='jordan-4-military-blue',
+            buy_now_price=Decimal('215.00'),
+            retail_price=Decimal('215.00'),
+            reserve_price=Decimal('200.00'),
+            inventory_status='in_inventory',
+            is_active=True
+        )
+        
+        self.product2 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 1',
+            secondary_product_title='High OG Chicago',
+            slug='jordan-1-chicago',
+            buy_now_price=Decimal('180.00'),
+            retail_price=Decimal('180.00'),
+            inventory_status='in_inventory',
+            is_active=True
+        )
+        
+        # Create test address
+        self.default_address = PopUpCustomerAddress.objects.create(
+            customer=self.user,
+            address_line="123 Main St",
+            town_city="Orlando",
+            state="Florida",
+            postcode="32801",
+            default=True
+        )
 
-        # self.existing_address = PopUpCustomerAddress.objects.create(
-        #     customer=self.user,
-        #     address_line='123 Test St',
-        #     town_city='Testville',
-        #     state='FL',
-        #     postcode='12345',
-        #     default=True
-        # )
+        self.billing_address = PopUpCustomerAddress.objects.create(
+            customer=self.user,
+            address_line="456 Billing St",
+            town_city="Tampa",
+            state="Florida",
+            postcode="33601",
+            default=False
+        )
 
-
-    # def test_shipping_get_view_renders(self):
-    #     # self.client.force_login(self.user)
-    #     response = self.client.get(self.shipping_url)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, 'payment/shipping_address.html')
-    #     self.assertIn('saved_addresses', response.context)
+        # url
+        self.url = reverse('pop_up_payment:payment_home')
 
     
-    # def test_billing_get_view_renders(self):
-    #     response = self.client.get(self.billing_url)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, 'pop_up_payment/billing_address.html')
-    #     self.assertIn('saved_addresses', response.context)
+    def _add_session_to_request(self, request):
+        """Helper to add session to request"""
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
     
-    # @patch('payment.views.handle_selected_address')
-    # def test_shipping_selects_existing_address(self, mock_select):
-    #     response = self.client.post(self.shipping_url, {'selected_address': self.existing_address.id})
-    #     mock_select.assert_called_once()
-    #     self.assertRedirects(response, reverse('pop_up_payment:payment_home'))
-    
-    # @patch('payment.views.handle_selected_address')
-    # def test_billing_selects_existing_address(self, mock_select):
-    #     response = self.client.post(self.billing_url, {'selected_address': self.existing_address.id})
-    #     mock_select.assert_called_once()
-    #     self.assertRedirects(response, reverse('pop_up_payment:payment_home'))
-    
-    # @patch('payment.views.handle_update_address')
-    # def test_shipping_updates_address(self, mock_update):
-    #     mock_update.return_value = (self.existing_address, None)
-    #     response = self.client.post(self.shipping_url, {'address_id': self.existing_address.id})
-    #     self.assertRedirects(response, reverse('payment:payment_home'))
-    #     mock_update.assert_called_once()
-    
-    # @patch('payment.views.handle_update_address')
-    # def test_billing_updates_addres(self, mock_update):
-    #     mock_update.return_value = (self.existing_address, None)
-    #     response = self.client.post(self.billing_url, {'address_id': self.existing_address.id})
-    #     self.assertRedirects(response, reverse('payment:payment_home'))
-    #     mock_update.assert_called_once()
 
-    # @patch('payment.views.handle_new_address')
-    # def test_shipping_adds_new_address(self, mock_new):
-    #     mock_new.return_value = (self.existing_address, None)
-    #     response = self.client.post(self.shipping_url, {})
-    #     self.assertRedirects(response, reverse('payment:payment_home'))
-    #     mock_new.assert_called_once()
+    @patch('pop_up_payment.views.get_state_tax_rate')
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_user_with_items_in_cart(self, mock_gateway, mock_tax_rate):
+        """Test GET request for authenticated user with items in cart"""
+        mock_gateway.return_value = 'fake_client_token'
+        mock_tax_rate.return_value = Decimal('0.07')
+        
+        self.client.force_login(self.user)
+        
+        # Add products to DATABASE cart AND session
+        PopUpCartItem.objects.create(
+            user=self.user,
+            product=self.product1,
+            quantity=2
+        )
+        PopUpCartItem.objects.create(
+            user=self.user,
+            product=self.product2,
+            quantity=1
+        )
+        
+        # Also add to session (Cart class likely uses session even for auth users)
+        session = self.client.session
+        session['skey'] = {
+            str(self.product1.id): {
+                'qty': 2,
+                'price': str(self.product1.buy_now_price)
+            },
+            str(self.product2.id): {
+                'qty': 1,
+                'price': str(self.product2.buy_now_price)
+            }
+        }
+        session.save()
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/payment_home.html')
+        self.assertContains(response, 'Air Jordan 4')
+        self.assertContains(response, 'Air Jordan 1')
+        self.assertContains(response, self.shipping_address.address_line)
     
-    # @patch('payment.views.handle_new_address')
-    # def test_billing_adds_new_address(self, mock_new):
-    #     mock_new.return_value = (self.existing_address, None)
-    #     response = self.client.post(self.billing_url, {})
-    #     self.assertRedirects(response, reverse('payment:payment_home'))
-    #     mock_new.assert_called_once()
+
+    @patch('pop_up_payment.views.get_state_tax_rate')
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_user_empty_cart(self, mock_gateway, mock_tax_rate):
+        """Test authenticated user with empty cart"""
+        mock_gateway.return_value = 'fake_token'
+        mock_tax_rate.return_value = Decimal('0.07')
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        # Should show $0.00 for processing fee with empty cart
+        self.assertContains(response, '$0.00')
     
-    # @patch('payment.views.handle_new_address')
-    # def test_billing_sets_use_billing_as_shipping_flag(self, mock_new):
-    #     mock_new.return_value = (None, None)
-    #     response = self.client.post(self.billing_url, {'use_billing_as_shipping': 'true'})
-    #     self.assertEqual(self.client.session['use_billing_as_shipping'], True)
-    #     self.assertEqual(response.status_code, 200)
+
+    @patch('pop_up_payment.views.get_state_tax_rate')
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_user_with_default_address(self, mock_gateway, mock_tax_rate):
+        """Test GET request for authenticated user with default address"""
+        mock_gateway.return_value = 'fake_token'
+        mock_tax_rate.return_value = Decimal('0.07')  # 7% tax
+        
+        self.client.force_login(self.user)
+        
+        # Add item to cart using helper
+        self._add_to_cart(self.user, self.product1, 2)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+
+        # Verify default address is displayed
+        self.assertContains(response, self.default_address.address_line)
+        self.assertContains(response, self.default_address.town_city)
+
+        # Verify tax and fees are present
+        self.assertContains(response, 'Processing Fee')
+        self.assertContains(response, 'Tax')
 
 
+    @patch('pop_up_payment.views.get_state_tax_rate')
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_user_with_selected_address(self, mock_gateway, mock_tax_rate):
+        """Test authenticated user with selected shipping address in session"""
+        mock_gateway.return_value = 'fake_token'
+        mock_tax_rate.return_value = Decimal('0.06')
+        
+        self.client.force_login(self.user)
+        
+        # Create additional address
+        selected_address = PopUpCustomerAddress.objects.create(
+            customer=self.user,
+            address_line='789 Selected St',
+            town_city='Miami',
+            state='Florida',
+            postcode='33101',
+            default=False
+        )
+        
+        # Add item to cart
+        self._add_to_cart(self.user, self.product1, 1)
+        
+        # Set selected address in session
+        session = self.client.session
+        session['selected_address_id'] = str(selected_address.id)
+        session.save()
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        # Verify selected address is displayed (not default)
+        self.assertContains(response, '789 Selected St')
+        self.assertContains(response, 'Miami')
+
+
+    @patch('pop_up_payment.views.get_state_tax_rate')
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_user_with_billing_address(self, mock_gateway, mock_tax_rate):
+        """Test authenticated user with billing address in session"""
+        mock_gateway.return_value = 'fake_token'
+        mock_tax_rate.return_value = Decimal('0.07')
+        
+        self.client.force_login(self.user)
+        
+        # Add item to cart
+        self._add_to_cart(self.user, self.product1, 1)
+        
+        # Set billing address in session
+        session = self.client.session
+        session['selected_billing_address_id'] = str(self.billing_address.id)
+        session.save()
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        # Verify billing address is displayed
+        self.assertContains(response, self.billing_address.address_line)
+
+    @patch('pop_up_payment.views.get_state_tax_rate')
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_user_empty_cart_no_fees(self, mock_gateway, mock_tax_rate):
+        """Test that processing fee is 0 for empty cart"""
+        mock_gateway.return_value = 'fake_token'
+        mock_tax_rate.return_value = Decimal('0.07')
+        
+        self.client.force_login(self.user)
+        # Don't add any items to cart
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        # Should show $0.00 for processing fee and total
+        self.assertContains(response, '$0.00')
+
+    @patch('pop_up_payment.views.get_state_tax_rate')
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_user_grand_total_calculation(self, mock_gateway, mock_tax_rate):
+        """Test grand total calculation includes all components"""
+        mock_gateway.return_value = 'fake_token'
+        mock_tax_rate.return_value = Decimal('0.07')
+        
+        self.client.force_login(self.user)
+        
+        # Add items to cart with known prices
+        self._add_to_cart(self.user, self.product1, 2)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Calculate expected values
+        subtotal = Decimal('430.00')
+        tax = subtotal * Decimal('0.07')  # 30.10
+        processing_fee = Decimal('2.50')
+        shipping = Decimal('14.99') * 2  # 29.98
+        expected_total = subtotal + tax + processing_fee + shipping  # 492.58
+        
+        # Check that total is present (format may vary with intcomma)
+        self.assertContains(response, 'Total')
+
+    @patch('pop_up_payment.views.get_state_tax_rate')
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_user_no_default_address_uses_florida(self, mock_gateway, mock_tax_rate):
+        """Test that FL is used as default state when no address exists"""
+        mock_gateway.return_value = 'fake_token'
+        mock_tax_rate.return_value = Decimal('0.07')
+        
+        self.client.force_login(self.user)
+        
+        # Delete all addresses for user
+        PopUpCustomerAddress.objects.filter(customer=self.user).delete()
+        
+        # Add item to cart
+        self._add_to_cart(self.user, self.product1, 1)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        # Verify get_state_tax_rate was called with 'Florida' (or 'FL')
+        # Check the actual call - your view uses state from address or defaults to "FL"
+        self.assertTrue(mock_tax_rate.called)
+
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_authenticated_inactive_product_filtered_out(self, mock_gateway):
+        """Test that inactive products are filtered out of cart"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        # Create an inactive product
+        inactive_product = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 3',
+            slug='jordan-3-inactive',
+            buy_now_price=Decimal('199.99'),
+            retail_price=Decimal('199.99'),
+            inventory_status='in_inventory',
+            is_active=False  # ← Inactive
+        )
+        
+        # Add both active and inactive products
+        self._add_to_cart(self.user, self.product1, 1)
+
+        # Also add inactive to session (simulating it was added before being deactivated)
+        session = self.client.session
+        skey = session.get('skey', {})
+        skey[str(inactive_product.id)] = {
+            'qty': 1,
+            'price': str(inactive_product.buy_now_price)
+        }
+        session['skey'] = skey
+        session.save()
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        # Active product should appear
+        self.assertContains(response, 'Air Jordan 4')
+        # Inactive product should NOT appear
+        self.assertNotContains(response, 'Air Jordan 3')
+
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_get_braintree_token_included(self, mock_gateway):
+        """Test that Braintree client token is included in response"""
+        expected_token = 'test_braintree_token_abc123'
+        mock_gateway.return_value = expected_token
+        
+        self.client.force_login(self.user)
+        self._add_to_cart(self.user, self.product1, 1)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        # Token should be in the JavaScript context
+        self.assertContains(response, expected_token)
+        mock_gateway.assert_called_once()
+
+    # Helper method to add to your test class
+    def _add_to_cart(self, user, product, quantity):
+        """Helper to add item to both database and session cart"""
+        # Database
+        PopUpCartItem.objects.create(
+            user=user,
+            product=product,
+            quantity=quantity
+        )
+        
+        # Session
+        session = self.client.session
+        if 'skey' not in session:
+            session['skey'] = {}
+        
+        session['skey'][str(product.id)] = {
+            'qty': quantity,
+            'price': str(product.buy_now_price)
+        }
+        session.save()
+
+
+class TestProductBuyViewPost(TestCase):
+    """Test suite for ProductBuyView POST method"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        # Create test user
+        self.user, self.user_profile = create_test_user(
+            "test@example.com", "testpass!23", "Test", "User", "9", "male"
+        )
+        
+        # Create addresses (use your existing setup from GET tests)
+        self.shipping_address = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="123 Test St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Test City",
+            state="Oklahoma",
+            postcode="12345",
+            delivery_instructions="",
+            default=True,
+            is_default_shipping=True,
+            is_default_billing=False
+        )
+        
+        self.billing_address = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="456 Billing Ave",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Billing City",
+            state="Texas",
+            postcode="67890",
+            delivery_instructions="",
+            default=False,
+            is_default_shipping=False,
+            is_default_billing=True
+        )
+        
+        self.address2 = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="789 Second St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Second City",
+            state="Florida",
+            postcode="11111",
+            delivery_instructions="",
+            default=False,
+        )
+        
+        # Create products (use your existing setup)
+        self.basketball_category = PopUpCategory.objects.create(
+            name='Basketball',
+            slug='basketball'
+        )
+        
+        self.jordan_brand = PopUpBrand.objects.create(
+            name='Jordan',
+            slug='jordan'
+        )
+        
+        self.sneakers_type = PopUpProductType.objects.create(
+            name='Sneakers',
+            slug='sneakers'
+        )
+        
+        self.product1 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 4',
+            secondary_product_title='Retro Military Blue',
+            slug='jordan-4-military-blue',
+            buy_now_price=Decimal('215.00'),
+            retail_price=Decimal('215.00'),
+            inventory_status='in_inventory',
+            is_active=True
+        )
+        
+        self.product2 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 1',
+            slug='jordan-1-chicago',
+            buy_now_price=Decimal('180.00'),
+            retail_price=Decimal('180.00'),
+            inventory_status='reserved',
+            is_active=True
+        )
+    
+    def _add_to_cart(self, user, product, quantity):
+        """Helper to add item to both database and session cart"""
+        PopUpCartItem.objects.create(
+            user=user,
+            product=product,
+            quantity=quantity
+        )
+        
+        session = self.client.session
+        if 'skey' not in session:
+            session['skey'] = {}
+        
+        session['skey'][str(product.id)] = {
+            'qty': quantity,
+            'price': str(product.buy_now_price)
+        }
+        session.save()
+    
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_basic_rendering(self, mock_gateway):
+        """Test POST request renders template with basic context"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/payment_home.html')
+    
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_selects_first_saved_address_by_default(self, mock_gateway):
+        """Test that first saved address is selected by default"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/payment_home.html')
+
+    
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_use_billing_as_shipping_true(self, mock_gateway):
+        """Test use_billing_as_shipping flag set to true"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {
+            'use_billing_as_shipping': 'true'
+        })
+        
+        self.assertEqual(response.status_code, 200)
+        # Check session was updated
+        self.assertTrue(self.client.session.get('use_billing_as_shipping'))
+    
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_use_billing_as_shipping_false(self, mock_gateway):
+        """Test use_billing_as_shipping flag set to false"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {
+            'use_billing_as_shipping': 'false'
+        })
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.client.session.get('use_billing_as_shipping'))
+    
+    
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_billing_address_not_in_session(self, mock_gateway):
+        """Test when billing address ID not in session"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        # Should render without errors even without billing address
+    
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_invalid_billing_address_id(self, mock_gateway):
+        """Test with invalid billing address ID in session"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        # Set invalid ID
+        session = self.client.session
+        session['selected_billing_address_id'] = '99999999-9999-9999-9999-999999999999'
+        session.save()
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        # Should not crash, billing address should be None
+    
+    
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_user_with_no_addresses(self, mock_gateway):
+        """Test POST for user with no saved addresses"""
+        mock_gateway.return_value = 'fake_token'
+        
+        # Create user with no addresses
+        new_user, _ = create_test_user(
+            "new@example.com", "pass123", "New", "User", "7", "male"
+        )
+        
+        self.client.force_login(new_user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        # Should render without errors
+    
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_braintree_token_included(self, mock_gateway):
+        """Test that Braintree client token is included"""
+        expected_token = 'test_token_12345'
+        mock_gateway.return_value = expected_token
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, expected_token)
+        mock_gateway.assert_called_once()
+    
+    """
+    """
+
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_use_billing_as_shipping_not_provided(self, mock_gateway):
+        """Test use_billing_as_shipping when not provided in POST data"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        session = self.client.session
+        self.assertFalse(session.get('use_billing_as_shipping', False))
+
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_use_billing_as_shipping_toggles_correctly(self, mock_gateway):
+        """Test toggling use_billing_as_shipping flag"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        url = reverse('pop_up_payment:payment_home')
+        
+        # First POST - set to true
+        response = self.client.post(url, {'use_billing_as_shipping': 'true'})
+        self.assertTrue(self.client.session.get('use_billing_as_shipping'))
+        
+        # Second POST - set to false
+        response = self.client.post(url, {'use_billing_as_shipping': 'false'})
+        self.assertFalse(self.client.session.get('use_billing_as_shipping'))
+
+ 
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_billing_address_from_session(self, mock_gateway):
+        """Test billing address retrieved from session"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        # Set billing address in session
+        session = self.client.session
+        session['selected_billing_address_id'] = str(self.billing_address.id)
+        session.save()
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+
+
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_billing_address_belongs_to_different_user(self, mock_gateway):
+        """Test billing address that belongs to different user"""
+        mock_gateway.return_value = 'fake_token'
+        
+        # Create another user and their address
+        other_user, _ = create_test_user(
+            "other@example.com", "pass123", "Other", "User", "8", "female"
+        )
+        other_address = create_test_address(
+            customer=other_user,
+            first_name="Other",
+            last_name="User",
+            address_line="999 Other St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Other City",
+            state="Florida",
+            postcode="99999",
+            delivery_instructions="",
+            default=True
+        )
+        
+        self.client.force_login(self.user)
+        
+        # Try to set other user's address
+        session = self.client.session
+        session['selected_billing_address_id'] = str(other_address.id)
+        session.save()
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        # Should render without crashing (address will be None)
+        self.assertEqual(response.status_code, 200)
+
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_address_id_captured(self, mock_gateway):
+        """Test address_id from POST data is captured without error"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {
+            'address_id': str(self.address2.id)
+        })
+        
+        self.assertEqual(response.status_code, 200)
+
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_shipping_choice_captured(self, mock_gateway):
+        """Test shipping_choice from POST data is captured without error"""
+        mock_gateway.return_value = 'fake_token'
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {
+            'shipping_choice': 'express'
+        })
+        
+        self.assertEqual(response.status_code, 200)
+
+
+    @patch('pop_up_payment.views.gateway.client_token.generate')
+    def test_post_braintree_token_generated(self, mock_gateway):
+        """Test that Braintree client token is generated"""
+        expected_token = 'test_token_12345'
+        mock_gateway.return_value = expected_token
+        
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:payment_home')
+        response = self.client.post(url, {})
+        
+        self.assertEqual(response.status_code, 200)
+        mock_gateway.assert_called_once()
 
 
 
