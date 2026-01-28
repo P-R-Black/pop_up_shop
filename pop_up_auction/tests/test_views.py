@@ -36,6 +36,19 @@ from pop_up_auction.tests.conftest import (
 
 User = get_user_model()
 
+"""
+Tests In Order
+ 1. TestAllAuctionView
+ 2. TestProtectedView
+ 3. TestAjaxLoginRequiredMixin
+ 4. TestPlaceBidView
+ 5. TestProductAuctionView
+ 6. TestProductsView
+ 7. TestComingSoonView
+ 8. TestFutureReleasesView
+ 9. TestProductDetailView
+ 10. TestBuyNowFlow
+"""
 
 
 class TestAllAuctionView(TestCase):

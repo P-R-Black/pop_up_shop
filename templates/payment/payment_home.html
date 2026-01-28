@@ -648,10 +648,8 @@ Payment
 
         // Spinner
         const $btn = $(this);
-        console.log('$btn', $btn)
 
         const $spinner = $btn.find('.spinner')
-        console.log('$spinner', $spinner)
 
         // Disable button and show spiner
         $btn.prop('disable', true);
@@ -727,8 +725,6 @@ Payment
                     const procFee = processingFee.innerHTML.replace("$", "").replace(",", "");
                     const ship = shippingCost.innerHTML.replace("$", "").replace(",", "");
                     const taxes = taxOwed.innerHTML;
-
-                    console.log('purchaseSubTotal', purchaseSubTotal)
 
                     console.log('taxes', taxes)
 

@@ -268,7 +268,7 @@ class ProductsView(ListView):
             'popupproductspecificationvalue_set'
         ).filter(
             is_active=True,
-            inventory_status__in=['in_inventory', 'reserved']
+            inventory_status__in=['in_inventory']
         ).filter(
             buy_now_start__lte=now(),
             buy_now_end__gte=now()

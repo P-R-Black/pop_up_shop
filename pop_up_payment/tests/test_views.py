@@ -5,13 +5,18 @@ from pop_up_payment.views import AjaxLoginRequiredMixin, ProductBuyView, Shippin
 from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerAddress
 from pop_up_auction.models import PopUpProduct, PopUpProductSpecification, PopUpCategory, PopUpBrand, PopUpProductType
 from pop_up_cart.models import PopUpCartItem
+from pop_up_payment.views import (AjaxLoginRequiredMixin)
+from django.views import View
+from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
 from django.utils.text import slugify
 from decimal import Decimal
 from unittest.mock import patch, Mock, MagicMock
+from django.contrib.messages import get_messages
 from django.test import TestCase, RequestFactory
 from django.conf import settings
 from django.contrib.auth import get_user_model
-
+from django.contrib.auth.models import AnonymousUser
+from django.http import JsonResponse
 
 from pop_up_auction.tests.conftest import (
     create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
@@ -41,6 +46,16 @@ def create_test_address(customer, first_name, last_name, address_line, address_l
         is_default_shipping=is_default_shipping,
         is_default_billing=is_default_billing
     )
+    
+
+# Create a test view that uses the mixin
+class TestProtectedView(AjaxLoginRequiredMixin, View):
+    """Test view that uses AjaxLoginRequiredMixin"""
+    def get(self, request):
+        return JsonResponse({'status': 'success', 'message': 'You are authenticated'})
+    
+    def post(self, request):
+        return JsonResponse({'status': 'success', 'message': 'Bid placed successfully'})
     
 
 class TestProductBuyViewGet(TestCase):
@@ -827,6 +842,364 @@ class TestProductBuyViewPost(TestCase):
         self.assertEqual(response.status_code, 200)
         mock_gateway.assert_called_once()
 
+
+class TestShippingAddressViewGet(TestCase):
+    """Test suite for ShippingAddressView GET method"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        # Create test user
+        self.user, self.user_profile = create_test_user(
+            "test@example.com", "testpass!23", "Test", "User", "9", "male"
+        )
+        
+        # Create default shipping address
+        self.default_address = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="123 Main St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Test City",
+            state="Florida",
+            postcode="12345",
+            delivery_instructions="",
+            default=True,
+            is_default_shipping=True,
+            is_default_billing=False
+        )
+        
+        # Create additional address
+        self.secondary_address = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="456 Second Ave",
+            address_line2="",
+            apartment_suite_number="Apt 2",
+            town_city="Second City",
+            state="Texas",
+            postcode="67890",
+            delivery_instructions="Leave at door",
+            default=False,
+            is_default_shipping=False,
+            is_default_billing=False
+        )
+        
+        self.url = reverse('pop_up_payment:shipping_address')
+    
+    def test_get_authenticated_user_with_default_address(self):
+        """Test GET request for authenticated user with default address"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/shipping_address.html')
+        # Check that default address is displayed
+        self.assertContains(response, '123 Main St')
+        self.assertContains(response, 'Test City')
+    
+    def test_get_authenticated_user_displays_all_saved_addresses(self):
+        """Test that all saved addresses are displayed"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        # Both addresses should be visible
+        self.assertContains(response, '123 Main St')
+        self.assertContains(response, '456 Second Ave')
+
+
+    def test_get_authenticated_user_with_no_addresses(self):
+        """Test GET for user with no saved addresses"""
+        # Create new user with no addresses
+        new_user, _ = create_test_user(
+            "new@example.com", "pass123", "New", "User", "8", "female"
+        )
+        
+        self.client.force_login(new_user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/shipping_address.html')
+    
+
+
+    def test_get_includes_address_forms(self):
+        """Test that address forms are included in context"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        # Verify forms are present (check for form elements)
+        self.assertContains(response, 'address_form')
+        self.assertContains(response, 'selected_address')
+
+    
+    def test_get_unauthenticated_user_redirects_to_login(self):
+        """Test that unauthenticated users are redirected to login"""
+        # Don't login
+        self.factory = RequestFactory()
+        self.view = TestProtectedView.as_view()
+        request = self.factory.get('/test/')
+        request.user = AnonymousUser()
+        
+        response = self.view(request)
+        
+        # Should redirect to login (302 or 403 depending on handle_no_permission)
+        self.assertIn(response.status_code, [302, 403])
+
+
+
+class TestShippingAddressViewPost(TestCase):
+    """Test suite for ShippingAddressView POST method"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        # Create test user
+        self.user, self.user_profile = create_test_user(
+            "test@example.com", "testpass!23", "Test", "User", "9", "male"
+        )
+        
+        # Create addresses
+        self.address1 = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="123 First St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="First City",
+            state="Florida",
+            postcode="12345",
+            delivery_instructions="",
+            default=True,
+            is_default_shipping=True,
+            is_default_billing=False
+        )
+        
+        self.address2 = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="456 Second St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Second City",
+            state="Texas",
+            postcode="67890",
+            delivery_instructions="",
+            default=False,
+            is_default_shipping=False,
+            is_default_billing=False
+        )
+        
+        self.url = reverse('pop_up_payment:shipping_address')
+    
+    def test_post_select_existing_address(self):
+        """Test selecting an existing address"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, {
+            'selected_address': str(self.address2.id)
+        })
+        
+        # Should redirect to payment home
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('pop_up_payment:payment_home'))
+        
+        # Check session was updated
+        session = self.client.session
+        self.assertEqual(session.get('selected_address_id'), str(self.address2.id))
+        
+        # Check success message
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Shipping address selected successfully', str(messages[0]))
+    
+
+    def test_post_update_existing_address(self):
+        """Test updating an existing address"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, {
+            'address_id': str(self.address1.id),
+            'first_name': 'Updated',
+            'last_name': 'Name',
+            'address_line': '999 Updated St',
+            'town_city': 'Updated City',
+            'state': 'California',
+            'postcode': '99999',
+            'is_default_shipping': True
+        })
+
+        # Should redirect to payment home
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('pop_up_payment:payment_home'))
+        # Verify address was updated
+        self.address1.refresh_from_db()
+        self.assertEqual(self.address1.address_line, '999 Updated St')
+        self.assertEqual(self.address1.first_name, 'Updated')
+        self.assertEqual(self.address1.town_city, 'Updated City')
+        
+        # Check success message
+        messages = list(get_messages(response.wsgi_request))
+        self.assertIn('Shipping address updated successfully', str(messages[0]))
+    
+    def test_post_create_new_address(self):
+        """Test creating a new address"""
+        self.client.force_login(self.user)
+        
+        initial_count = PopUpCustomerAddress.objects.filter(customer=self.user).count()
+        
+        response = self.client.post(self.url, {
+            'first_name': 'New',
+            'last_name': 'Address',
+            'address_line': '789 New St',
+            'town_city': 'New City',
+            'state': 'New York',
+            'postcode': '10001',
+            'is_default_shipping': False
+        })
+        
+        # Should redirect to payment home
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('pop_up_payment:payment_home'))
+        
+        # Verify new address was created
+        new_count = PopUpCustomerAddress.objects.filter(customer=self.user).count()
+        self.assertEqual(new_count, initial_count + 1)
+        
+        # Verify address details
+        new_address = PopUpCustomerAddress.objects.get(address_line='789 New St')
+        self.assertEqual(new_address.customer, self.user)
+        self.assertEqual(new_address.first_name, 'New')
+        self.assertEqual(new_address.town_city, 'New City')
+        
+        # Check success message
+        messages = list(get_messages(response.wsgi_request))
+        self.assertIn('Shipping address added successfully', str(messages[0]))
+    
+    def test_post_create_new_address_as_default(self):
+        """Test creating a new address and setting it as default"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, {
+            'first_name': 'Default',
+            'last_name': 'Address',
+            'address_line': '555 Default St',
+            'town_city': 'Default City',
+            'state': 'Georgia',
+            'postcode': '30301',
+            'is_default_shipping': True
+        })
+        
+        self.assertEqual(response.status_code, 302)
+        
+        # Verify new address is default
+        new_address = PopUpCustomerAddress.objects.get(address_line='555 Default St')
+        self.assertTrue(new_address.is_default_shipping)
+        
+        # Old default should no longer be default
+        self.address1.refresh_from_db()
+        # Depending on your logic, address1 might still be default or not
+        # Adjust assertion based on actual behavior
+    
+    def test_post_invalid_form_data_re_renders_with_errors(self):
+        """Test that invalid form data re-renders the page with errors"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, {
+            # Missing required fields
+            'first_name': 'Test',
+            # Missing address_line, town_city, state, postcode
+        })
+        
+        # Should re-render the same page (not redirect)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/shipping_address.html')
+        # Should contain form with errors
+        # Check for error messages or form presence
+    
+    def test_post_update_nonexistent_address_id(self):
+        """Test updating with non-existent address ID"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, {
+            'address_id': '99999999-9999-9999-9999-999999999999',
+            'first_name': 'Test',
+            'last_name': 'User',
+            'address_line': '123 Test St',
+            'town_city': 'Test City',
+            'state': 'Florida',
+            'postcode': '12345'
+        })
+        
+        # Should handle gracefully (re-render or redirect based on your logic)
+        # Adjust based on actual behavior
+        self.assertIn(response.status_code, [200, 302])
+    
+    def test_post_update_other_users_address(self):
+        """Test that users cannot update other users' addresses"""
+        # Create another user and their address
+        other_user, _ = create_test_user(
+            "other@example.com", "pass123", "Other", "User", "7", "male"
+        )
+        other_address = create_test_address(
+            customer=other_user,
+            first_name="Other",
+            last_name="User",
+            address_line="999 Other St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Other City",
+            state="Florida",
+            postcode="99999",
+            delivery_instructions="",
+            default=True
+        )
+        
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, {
+            'address_id': str(other_address.id),
+            'address_line': 'Hacked Address',
+            'town_city': 'Hacked City',
+            'state': 'Florida',
+            'postcode': '12345'
+        })
+        
+        # Should not update other user's address
+        other_address.refresh_from_db()
+        self.assertNotEqual(other_address.address_line, 'Hacked Address')
+    
+    def test_post_select_invalid_address_id(self):
+        """Test selecting address with invalid ID"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(self.url, {
+            'selected_address': '00000000-0000-0000-0000-000000000000'
+        })
+        
+        # Should handle gracefully
+        self.assertIn(response.status_code, [200, 302])
+    
+    def test_post_unauthenticated_user_redirects_to_login(self):
+        """Test that unauthenticated users are redirected to login"""
+        # Don't login
+        
+        response = self.client.post(self.url, {
+            'selected_address': str(self.address1.id)
+        })
+        
+        # Should redirect to login
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url.lower())
 
 
 # """

@@ -1,3 +1,9 @@
+"""
+NEED TO WORK ON THE PAYMENTS APP BEFORE THE ORDERS APP
+ONCE PAYMENTS IS TESTED AND SQUARED AWAY, CAN FINISH THESE TESTS
+ALSO, NEED TO VERIFY THAT THE "admin_order_detail" VIEW IS NEEDED
+"""
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -584,3 +590,423 @@ class TestCreateOrderAfterPaymentView(TestCase):
         product2.refresh_from_db()
         self.assertEqual(self.product.inventory_status, 'sold_out')
         self.assertEqual(product2.inventory_status, 'sold_out')
+
+
+
+
+class TestAdminOrderDetailView(TestCase):
+    """Test suite for admin_order_detail view"""
+
+    def setUp(self):
+        """Set up test data"""
+        self.client = Client()
+        
+        # Create regular user
+        self.user, self.user_profile = create_test_user(
+            "customer@example.com", "testpass!23", "John", "Customer", "9", "male"
+        )
+        
+        # Create staff user (admin)
+        # self.staff_user, self.staff_profile = create_test_user(
+        #     "admin@example.com", "adminpass!23", "Admin", "User", "10", "male"
+        # )
+        # self.staff_user.is_staff = True
+        # self.staff_user.save()
+        
+        self.staff_user, self.staff_profile = create_test_staff_user(
+            'admin@example.com', 'adminpass!23', 'Admin',' User', '10', 'male'
+        )
+        
+        # Create superuser
+        self.superuser, self.superuser_profile = create_test_user(
+            "super@example.com", "superpass!23", "Super", "Admin", "11", "male"
+        )
+        self.superuser.is_staff = True
+        self.superuser.is_superuser = True
+        self.superuser.save()
+        
+        # Create category, brand, and product type
+        self.basketball_category = PopUpCategory.objects.create(
+            name='Basketball',
+            slug='basketball'
+        )
+        
+        self.jordan_brand = PopUpBrand.objects.create(
+            name='Jordan',
+            slug='jordan'
+        )
+        
+        self.sneakers_type = PopUpProductType.objects.create(
+            name='Sneakers',
+            slug='sneakers'
+        )
+        
+        # Create test products
+        self.product1 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 4',
+            secondary_product_title='Retro Military Blue',
+            slug='jordan-4-military-blue',
+            buy_now_price=Decimal('215.00'),
+            retail_price=Decimal('215.00'),
+            inventory_status='sold_out',
+            is_active=False
+        )
+        
+        self.product2 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 1',
+            secondary_product_title='Chicago',
+            slug='jordan-1-chicago',
+            buy_now_price=Decimal('180.00'),
+            retail_price=Decimal('180.00'),
+            inventory_status='sold_out',
+            is_active=False
+        )
+        
+        # Create test order
+        """
+        self.order = PopUpCustomerOrder.objects.create(
+            user=self.user1,
+            email=self.user1.email,
+            billing_status=True,
+            address1="111 Test St",
+            city="New York",
+            state="NY",
+            postal_code="10001",
+            total_paid="100.00"
+        )
+        PopUpOrderItem.objects.create(
+            order=minimal_order,
+            product=self.test_product_one,
+            product_title="Past Bid Product 1",
+            quantity=1,
+            price=Decimal('170.00')
+        )
+
+        """
+        self.order = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            email=self.user.email,
+            billing_status=True,
+            address1='123 Test St',
+            address2='Apt 4B',
+            apartment_suite_number='4B',
+            city='Test City',
+            state='TN',
+            postal_code="12345",
+            total_paid=Decimal('395.00'),
+        )
+        
+        # Create order items
+        self.order_item1 = PopUpOrderItem.objects.create(
+            order=self.order,
+            product=self.product1,
+            product_title='Air Jordan 4',
+            secondary_product_title='Retro Military Blue',
+            price=Decimal('215.00'),
+            quantity=1
+        )
+        
+        self.order_item2 = PopUpOrderItem.objects.create(
+            order=self.order,
+            product=self.product2,
+            product_title='Air Jordan 1',
+            secondary_product_title='Chicago',
+            price=Decimal('180.00'),
+            quantity=1
+        )
+
+    def test_unauthenticated_user_redirected_to_login(self):
+        """Test that unauthenticated users are redirected to login"""
+        url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order_item1.id})
+        
+        response = self.client.get(url)
+        
+        # Should redirect to login
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/', response.url)
+
+    def test_non_staff_user_forbidden(self):
+        """Test that non-staff users cannot access the view"""
+        self.client.force_login(self.user)
+        url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order_item1.id})
+        
+        response = self.client.get(url)
+        
+        # Should redirect to login (staff_member_required behavior)
+        self.assertEqual(response.status_code, 302)
+
+    # @unittest.skip("Come Back And Reasses I many not need this view")
+    # def test_staff_user_can_access(self):
+    #     """Test that staff users can access the view"""
+    #     self.client.force_login(self.staff_user)
+    #     print('DEBUG test_staff_user_can_access self.order_item1.id', self.order_item1.id)
+    #     print('DEBUG test_staff_user_can_access self.orde', self.order.id)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order_item1.id})
+        
+    #     response = self.client.get(url)
+    #     print('response.context', response.context)
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertTemplateUsed(response, 'orders/admin/detail.html')
+
+    # @unittest.skip("Come Back And Reasses I may not need this view")
+    # def test_superuser_can_access(self):
+    #     """Test that superusers can access the view"""
+    #     self.client.force_login(self.superuser)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order_item1.id})
+        
+    #     response = self.client.get(url)
+        
+    #     # self.assertEqual(response.status_code, 200)
+    #     self.assertTemplateUsed(response, 'orders/admin/detail.html')
+
+    # def test_order_in_context(self):
+    #     """Test that order is passed to template context"""
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order_item1.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertIn('order', response.context)
+    #     self.assertEqual(response.context['order'], self.order)
+
+    # def test_order_details_displayed(self):
+    #     """Test that order details are displayed in the response"""
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     # Check order details in response
+    #     content = response.content.decode('utf-8')
+    #     self.assertIn('John Customer', content)
+    #     self.assertIn('customer@example.com', content)
+    #     self.assertIn('123 Test St', content)
+    #     self.assertIn('Test City', content)
+    #     self.assertIn('12345', content)
+
+    # def test_order_items_displayed(self):
+    #     """Test that order items are displayed"""
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     content = response.content.decode('utf-8')
+    #     # Check both products are shown
+    #     self.assertIn('Air Jordan 4', content)
+    #     self.assertIn('Air Jordan 1', content)
+
+    # def test_order_total_displayed(self):
+    #     """Test that order total is calculated and displayed"""
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     # Check total is correct (215 + 180 = 395)
+    #     content = response.content.decode('utf-8')
+    #     self.assertIn('395', content)  # Total amount
+
+    # def test_nonexistent_order_returns_404(self):
+    #     """Test that requesting a non-existent order returns 404"""
+    #     self.client.force_login(self.staff_user)
+        
+    #     # Generate random UUID that doesn't exist
+    #     fake_order_id = uuid.uuid4()
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': fake_order_id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 404)
+
+    # def test_order_with_no_items(self):
+    #     """Test display of order with no items"""
+    #     # Create order with no items
+    #     empty_order = PopUpCustomerOrder.objects.create(
+    #         user=self.user,
+    #         full_name='Empty Order',
+    #         email='empty@example.com',
+    #         address1='456 Empty St',
+    #         postal_code='99999',
+    #         city='Empty City',
+    #         state='ES',
+    #         total_paid=Decimal('0.00'),
+    #         order_key='EMPTY-ORDER',
+    #         billing_status=False
+    #     )
+        
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': empty_order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.context['order'].items.count(), 0)
+
+    # def test_order_with_discount(self):
+    #     """Test display of order with discount applied"""
+    #     # Create order with discount
+    #     discounted_order = PopUpCustomerOrder.objects.create(
+    #         user=self.user,
+    #         full_name='Discount Customer',
+    #         email='discount@example.com',
+    #         address1='789 Discount Ave',
+    #         postal_code='88888',
+    #         city='Discount City',
+    #         state='DC',
+    #         total_paid=Decimal('180.00'),
+    #         order_key='DISCOUNT-ORDER',
+    #         billing_status=True,
+    #         discount=10  # 10% discount
+    #     )
+        
+    #     # Add item
+    #     PopUpOrderItem.objects.create(
+    #         order=discounted_order,
+    #         product=self.product1,
+    #         product_title='Air Jordan 4',
+    #         price=Decimal('200.00'),
+    #         quantity=1
+    #     )
+        
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': discounted_order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     # Check discounted total (200 - 10% = 180)
+    #     order_total = response.context['order'].get_total_cost()
+    #     self.assertEqual(order_total, Decimal('180.00'))
+
+    # def test_breadcrumbs_present(self):
+    #     """Test that breadcrumb navigation is present"""
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     content = response.content.decode('utf-8')
+    #     self.assertIn('breadcrumbs', content)
+    #     self.assertIn('Home', content)
+    #     self.assertIn('Orders', content)
+
+    # def test_print_button_present(self):
+    #     """Test that print button is present"""
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     content = response.content.decode('utf-8')
+    #     self.assertIn('Print Order', content)
+    #     self.assertIn('window.print()', content)
+
+    # def test_order_status_paid_displayed(self):
+    #     """Test that paid status is displayed correctly"""
+    #     # Order already has billing_status=True
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     content = response.content.decode('utf-8')
+    #     # Based on template: {% if order.paid %}Paid{% else %}Pending payment{% endif %}
+    #     # Note: Your template uses order.paid but model has billing_status
+    #     # This might need adjustment in template or test
+    #     # Assuming template should check billing_status
+    #     self.assertIn('Paid', content)
+
+    # def test_order_status_pending_displayed(self):
+    #     """Test that pending payment status is displayed"""
+    #     # Create unpaid order
+    #     unpaid_order = PopUpCustomerOrder.objects.create(
+    #         user=self.user,
+    #         full_name='Unpaid Customer',
+    #         email='unpaid@example.com',
+    #         address1='999 Unpaid Rd',
+    #         postal_code='77777',
+    #         city='Unpaid City',
+    #         state='UP',
+    #         total_paid=Decimal('100.00'),
+    #         order_key='UNPAID-ORDER',
+    #         billing_status=False  # Not paid
+    #     )
+        
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': unpaid_order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     content = response.content.decode('utf-8')
+    #     self.assertIn('Pending payment', content)
+
+    # def test_multiple_quantity_items_cost_calculation(self):
+    #     """Test that item costs are calculated correctly for multiple quantities"""
+    #     # Create order with multiple quantity item
+    #     multi_qty_order = PopUpCustomerOrder.objects.create(
+    #         user=self.user,
+    #         full_name='Multi Qty Customer',
+    #         email='multi@example.com',
+    #         address1='111 Multi St',
+    #         postal_code='66666',
+    #         city='Multi City',
+    #         state='MQ',
+    #         total_paid=Decimal('600.00'),
+    #         order_key='MULTI-QTY-ORDER',
+    #         billing_status=True
+    #     )
+        
+    #     # Add item with quantity 3
+    #     multi_item = PopUpOrderItem.objects.create(
+    #         order=multi_qty_order,
+    #         product=self.product1,
+    #         product_title='Air Jordan 4',
+    #         price=Decimal('200.00'),
+    #         quantity=3
+    #     )
+        
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': multi_qty_order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     # Verify item cost calculation (200 * 3 = 600)
+    #     self.assertEqual(multi_item.get_cost(), Decimal('600.00'))
+
+    # def test_order_id_in_page_title(self):
+    #     """Test that order ID appears in page title"""
+    #     self.client.force_login(self.staff_user)
+    #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order.id})
+        
+    #     response = self.client.get(url)
+        
+    #     self.assertEqual(response.status_code, 200)
+        
+    #     content = response.content.decode('utf-8')
+    #     self.assertIn(f'Order {self.order.id}', content)

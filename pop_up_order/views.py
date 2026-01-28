@@ -289,7 +289,9 @@ def payment_confirmation(data):
 
 @staff_member_required
 def admin_order_detail(request, order_id):
+    print('DEBUG order_id', order_id)
     order = get_object_or_404(PopUpCustomerOrder, id=order_id)
-    return render(request, 'orders/admin/details.html', {'order': order})
+    print('DEBUG order', order)
+    return render(request, 'orders/admin/detail.html', {'order': order})
 
 

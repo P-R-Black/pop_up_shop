@@ -2676,7 +2676,7 @@ class TestPastPurchaseView(TestCase):
                                            is_default_shipping=False, is_default_billing=False)
 
         # def create_test_order(user, full_name, email, address1, postal_code, city, state, phone, total_paid, order_key):
-
+        
         self.order = PopUpCustomerOrder.objects.create(
             user=self.user1,
             email=self.user1.email,
@@ -3709,7 +3709,7 @@ class TestUserOrderPager(TestCase):
             user=self.user,
             email=self.user.email
         )
-
+        
         PopUpOrderItem.objects.create(
             order=minimal_order,
             product=self.test_product_one,

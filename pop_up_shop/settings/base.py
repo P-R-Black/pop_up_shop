@@ -11,12 +11,13 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
 import sys
 import environ
 from celery.schedules import crontab
 
+load_dotenv()
 
 # ------ Setup Environment Reader ------
 # env = environ.Env(
@@ -32,6 +33,7 @@ sys.path.insert(0, str(ROOT_DIR))
 
 # ------ Read .env ------
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+load_dotenv(BASE_DIR / ".env")
 
 
 GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
@@ -394,8 +396,8 @@ STRIPE_ENDPOINT_SECRET =os.environ.get('STRIPE_ENDPOINT_SECRET')
 # stripe listen --forward-to 127.0.0.1:8000/payment/webhook
 
 
-BRAINTREE_MERCHANT_ID=os.environ.get('BRAINTREE_MERCHANT_ID')
-BRAINTREE_PUBLIC_KEY=os.environ.get('BRAINTREE_PUBLIC_KEY')
+BRAINTREE_MERCHANT_ID=os.getenv('BRAINTREE_MERCHANT_ID')
+BRAINTREE_PUBLIC_KEY=os.getenv('BRAINTREE_PUBLIC_KEY')
 BRAINTREE_PRIVATE_KEY=os.environ.get('BRAINTREE_PRIVATE_KEY')
 
 NOWPAYMENTS_API_KEY = os.environ.get('NOWPAYMENTS_API_KEY', '')

@@ -22,7 +22,7 @@ def handle_update_address(request, form_class, address_id, user, default_flag_na
     if form.is_valid():
         updated_address = form.save(commit=False)
         if form.cleaned_data.get(default_flag_name):
-            PopUpCustomerAddress.objects.filter(custoemr=user, **{default_field_name: True}).exclude(id=updated_address.id).update(**{default_field_name: False})
+            PopUpCustomerAddress.objects.filter(customer=user, **{default_field_name: True}).exclude(id=updated_address.id).update(**{default_field_name: False})
             setattr(updated_address, default_field_name, True)
         else:
             setattr(updated_address, default_field_name, False)
