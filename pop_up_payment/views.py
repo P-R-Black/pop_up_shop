@@ -76,6 +76,9 @@ class OptionalLoginMixin(AccessMixin):
     
 
 class ProductBuyView(OptionalLoginMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 Model Test Completed
+    # 🔴 NEEDED -> Mobile / Tablet Media Query Completed
     template_name = 'payment/payment_home.html'
     
     def get(self, request):
@@ -316,6 +319,8 @@ class ProductBuyView(OptionalLoginMixin, View):
 
 
 def buy_now_add_to_cart(request, slug):
+    # 🟢 View Test Completed
+    # 🔴 Model Test Completed
     product = get_object_or_404(PopUpProduct, slug=slug, is_active=True)
     
     # check if already sold/reserved | CREATE A PAGE FOR THIS - > ITEM HAS BEEN PURCHASED OR IN THE PROCESS OF BEING PURCHASED
@@ -324,7 +329,7 @@ def buy_now_add_to_cart(request, slug):
     
     # Lock the product
     product.inventory_status = 'reserved'
-    product.reserved_at = now()
+    product.reserved_until = now() + timedelta(minutes=10)
     product.save()
 
     cart = Cart(request)
@@ -340,6 +345,9 @@ def buy_now_add_to_cart(request, slug):
 
 
 class ShippingAddressView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 Model Test Completed
+    # 🔴 NEEDED -> Mobile / Tablet Media Query Completed
     template_name = "payment/shipping_address.html"
 
     def post(self, request):
@@ -420,16 +428,20 @@ class ShippingAddressView(LoginRequiredMixin, View):
 
 
 class BillingAddressView(LoginRequiredMixin, View):
+    # 🟢 View Test Completed
+    # 🔴 Model Test Completed
+    # 🔴 NEEDED -> Mobile / Tablet Media Query Completed
     template_name = "payment/billing_address.html"
 
     def post(self, request):
+        print('DEBUG Post hit')
         user = request.user
         address_instance = None
         address_id = request.POST.get('address_id')
         selected_address_id = request.POST.get('selected_address') 
         saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
         selected_address = saved_addresses.first()
-
+        print('DEBUG selected_address', selected_address)
         if selected_address_id:
             handle_selected_address(
                 request, 
@@ -449,7 +461,10 @@ class BillingAddressView(LoginRequiredMixin, View):
                 'selected_billing_address_id',
                 'Shipping address updated successfully.'
             )
+            print('DEBUG updated_address:', updated_address)
+
             if updated_address:
+                print('DEBUG updated_address 2:', updated_address)
                 return redirect('pop_up_payment:payment_home')
         else:
             new_address, form = handle_new_address(
@@ -467,12 +482,14 @@ class BillingAddressView(LoginRequiredMixin, View):
         edit_address_form = PopUpUpdateShippingInformationForm(instance=updated_address if address_id else None)
 
         use_billing_as_shipping = request.POST.get('use_billing_as_shipping') == "true"
+        print('DEBUG use_billing_as_shipping', use_billing_as_shipping)
         request.session['use_billing_as_shipping'] = use_billing_as_shipping
         
 
         # If the form isn't valid, re-render the page with the forms filled in
         cart = Cart(request)
-        saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)        
+        saved_addresses = PopUpCustomerAddress.objects.filter(customer=user) 
+        print('saved_addresses', saved_addresses)       
         address_form = PopUpUpdateShippingInformationForm(instance=address_instance)
         edit_address_form = PopUpUpdateShippingInformationForm()
 
@@ -488,7 +505,7 @@ class BillingAddressView(LoginRequiredMixin, View):
 
     def get(self, request):
         user = request.user
-
+        print('DEBUG Get hit')
         saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
         default_address = saved_addresses.filter(default=True).first()
         billing_address_id = request.session.get("selected_billing_address_id")
