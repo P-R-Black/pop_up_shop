@@ -11,6 +11,11 @@ from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
 from django.utils.text import slugify
 from decimal import Decimal
 from unittest.mock import patch, Mock, MagicMock
+import time
+from django.utils.timezone import now, make_aware
+from django.utils import timezone as django_timezone
+from datetime import timezone as dt_timezone, datetime
+from datetime import timedelta, datetime, date 
 from django.contrib.messages import get_messages
 from django.test import TestCase, RequestFactory
 from django.conf import settings
@@ -1651,6 +1656,326 @@ class TestBillingAddressViewPost(TestCase):
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
         self.assertIn('/', response.url.lower())
+
+class BuyNowAddToCartViewTestCase(TestCase):
+    """Test suite for buy_now_add_to_cart view"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        # Create test user
+        self.user, self.user_profile = create_test_user(
+            "test@example.com", "testpass!23", "Test", "User", "9", "male"
+        )
+        
+        # Create category, brand, and product type
+        self.basketball_category = PopUpCategory.objects.create(
+            name='Basketball',
+            slug='basketball'
+        )
+        
+        self.jordan_brand = PopUpBrand.objects.create(
+            name='Jordan',
+            slug='jordan'
+        )
+        
+        self.sneakers_type = PopUpProductType.objects.create(
+            name='Sneakers',
+            slug='sneakers'
+        )
+        
+        # Create available product
+        self.available_product = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 4',
+            secondary_product_title='Retro Military Blue',
+            slug='jordan-4-military-blue',
+            buy_now_price=Decimal('215.00'),
+            retail_price=Decimal('215.00'),
+            inventory_status='in_inventory',
+            is_active=True
+        )
+        
+        # Create reserved product
+        self.reserved_product = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 1',
+            secondary_product_title='High OG Chicago',
+            slug='jordan-1-chicago',
+            buy_now_price=Decimal('180.00'),
+            retail_price=Decimal('180.00'),
+            inventory_status='reserved',
+            reserved_until = now() + timedelta(minutes=10),
+            is_active=True,
+            
+        )
+        
+        # Create sold product
+        self.sold_product = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 3',
+            slug='jordan-3-sold',
+            buy_now_price=Decimal('200.00'),
+            retail_price=Decimal('200.00'),
+            inventory_status='sold',
+            is_active=True
+        )
+        
+        # Create inactive product
+        self.inactive_product = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 5',
+            slug='jordan-5-inactive',
+            buy_now_price=Decimal('190.00'),
+            retail_price=Decimal('190.00'),
+            inventory_status='in_inventory',
+            is_active=False
+        )
+    
+    def test_buy_now_available_product_authenticated_user(self):
+        """Test buying an available product as authenticated user"""
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
+        response = self.client.get(url)
+        
+        # Should redirect to payment page
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('pop_up_payment:payment_home'))
+        
+        # Verify product status changed to reserved
+        self.available_product.refresh_from_db()
+        self.assertEqual(self.available_product.inventory_status, 'reserved')
+        self.assertIsNotNone(self.available_product.reserved_until)
+        
+        # Verify expiry time in session (10 minutes from now)
+        session = self.client.session
+        expiry_str = session.get('buy_now_expiry')
+        self.assertIsNotNone(expiry_str)
+        
+        # Verify expiry is approximately 10 minutes from now
+        from django.utils.dateparse import parse_datetime
+        expiry_time = parse_datetime(expiry_str)
+        expected_expiry = django_timezone.now() + timedelta(minutes=10)
+        time_diff = abs((expiry_time - expected_expiry).total_seconds())
+        self.assertLess(time_diff, 5)  # Within 5 seconds tolerance
+
+        # Verify product is in database cart (authenticated users use PopUpCartItem)
+        cart_item = PopUpCartItem.objects.get(user=self.user, product=self.available_product)
+        self.assertEqual(cart_item.quantity, 1)
+    
+    def test_buy_now_reserved_product_redirects_to_detail(self):
+        """Test that reserved products redirect back to product detail"""
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.reserved_product.slug})
+        response = self.client.get(url)
+        
+        # Should redirect to product detail page
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse('pop_up_auction:product_detail', kwargs={'slug': self.reserved_product.slug})
+        )
+        
+        # Product status should remain reserved
+        self.reserved_product.refresh_from_db()
+        self.assertEqual(self.reserved_product.inventory_status, 'reserved')
+    
+    def test_buy_now_sold_product_redirects_to_detail(self):
+        """Test that sold products redirect back to product detail"""
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.sold_product.slug})
+        response = self.client.get(url)
+        
+        # Should redirect to product detail page
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url,
+            reverse('pop_up_auction:product_detail', kwargs={'slug': self.sold_product.slug})
+        )
+        
+        # Product status should remain sold
+        self.sold_product.refresh_from_db()
+        self.assertEqual(self.sold_product.inventory_status, 'sold')
+    
+    def test_buy_now_nonexistent_product_returns_404(self):
+        """Test that non-existent product returns 404"""
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': 'nonexistent-product'})
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 404)
+    
+    def test_buy_now_inactive_product_returns_404(self):
+        """Test that inactive products return 404"""
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.inactive_product.slug})
+        response = self.client.get(url)
+        
+        # Should return 404 because is_active=False
+        self.assertEqual(response.status_code, 404)
+    
+    def test_buy_now_unauthenticated_user(self):
+        """Test buy now as unauthenticated user"""
+        # Don't login
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
+        response = self.client.get(url)
+        
+        # View doesn't have LoginRequiredMixin, so it should work
+        # Product will be reserved and added to session cart
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('pop_up_payment:payment_home'))
+        
+        # Verify product was reserved
+        self.available_product.refresh_from_db()
+        self.assertEqual(self.available_product.inventory_status, 'reserved')
+
+        # Unauthenticated users store cart in session under 'pop_up_cart'
+        session = self.client.session
+        session_cart = session.get('pop_up_cart', {})
+        self.assertIn(str(self.available_product.id), session_cart)
+    
+    def test_buy_now_sets_reserved_at_timestamp(self):
+        """Test that reserved_at timestamp is set"""
+        self.client.force_login(self.user)
+        
+        # Record time before request
+        before_time = django_timezone.now() + timedelta(minutes=10)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
+        response = self.client.get(url)
+        
+        # Record time after request
+        after_time = django_timezone.now() + timedelta(minutes=10) 
+        
+        # Verify reserved_at is set and within expected range
+        self.available_product.refresh_from_db()
+        self.assertIsNotNone(self.available_product.reserved_until)
+        self.assertGreaterEqual(self.available_product.reserved_until, before_time)
+        self.assertLessEqual(self.available_product.reserved_until, after_time)
+    
+    def test_buy_now_cart_contains_correct_quantity(self):
+        """Test that product is added to cart with quantity of 1"""
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
+        response = self.client.get(url)
+        
+        # Authenticated users store cart in database, not session
+        cart_item = PopUpCartItem.objects.get(user=self.user, product=self.available_product)
+        self.assertEqual(cart_item.quantity, 1)
+    
+    def test_buy_now_multiple_users_race_condition(self):
+        """Test that only first user can reserve product"""
+        user1, _ = create_test_user(
+            "user1@example.com", "pass123", "User", "One", "9", "male"
+        )
+        user2, _ = create_test_user(
+            "user2@example.com", "pass123", "User", "Two", "8", "female"
+        )
+        
+        # User 1 buys the product
+        self.client.force_login(user1)
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
+        response1 = self.client.get(url)
+        
+        self.assertEqual(response1.status_code, 302)
+        self.assertEqual(response1.url, reverse('pop_up_payment:payment_home'))
+        
+        # Logout and login as user 2
+        self.client.logout()
+        self.client.force_login(user2)
+        
+        # User 2 tries to buy the same product
+        response2 = self.client.get(url)
+        
+        # Should redirect to product detail (already reserved)
+        self.assertEqual(response2.status_code, 302)
+        self.assertEqual(
+            response2.url,
+            reverse('pop_up_auction:product_detail', kwargs={'slug': self.available_product.slug})
+        )
+    
+    def test_buy_now_session_modified_flag_set(self):
+        """Test that session.modified is set to True"""
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
+        response = self.client.get(url)
+        
+        # Session should have the expiry set
+        session = self.client.session
+        self.assertIn('buy_now_expiry', session)
+    
+    def test_buy_now_expiry_format(self):
+        """Test that expiry is stored in ISO format"""
+        self.client.force_login(self.user)
+        
+        url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
+        response = self.client.get(url)
+        
+        session = self.client.session
+        expiry_str = session.get('buy_now_expiry')
+        
+        # Should be able to parse as datetime
+        from django.utils.dateparse import parse_datetime
+        expiry_time = parse_datetime(expiry_str)
+        self.assertIsNotNone(expiry_time)
+        
+        # Should be in the future
+        self.assertGreater(expiry_time, django_timezone.now())
+    
+    def test_buy_now_subsequent_purchase_overwrites_expiry(self):
+        """Test that buying another product updates the expiry time"""
+        self.client.force_login(self.user)
+        
+        # Create another available product
+        product2 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 6',
+            slug='jordan-6-available',
+            buy_now_price=Decimal('220.00'),
+            retail_price=Decimal('220.00'),
+            inventory_status='in_inventory',
+            is_active=True
+        )
+        
+        # Buy first product
+        url1 = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
+        response1 = self.client.get(url1)
+        
+        session = self.client.session
+        first_expiry = session.get('buy_now_expiry')
+        
+        # Wait a moment
+        import time
+        time.sleep(0.1)
+        
+        # Buy second product
+        url2 = reverse('pop_up_payment:buy_now', kwargs={'slug': product2.slug})
+        response2 = self.client.get(url2)
+        
+        session = self.client.session
+        second_expiry = session.get('buy_now_expiry')
+        
+        # Expiry should be updated
+        self.assertNotEqual(first_expiry, second_expiry)
+
+
 
 # """
 # Run Test
