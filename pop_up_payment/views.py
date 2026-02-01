@@ -551,8 +551,6 @@ class CreatePaymentIntentView(View):
             if not amount:
                 return JsonResponse({"error": "Missing amount"}, status=400)
             
-            
-        
             stripe.api_key = settings.STRIPE_SECRET_KEY
 
             # Ensure Stripe customer exists
