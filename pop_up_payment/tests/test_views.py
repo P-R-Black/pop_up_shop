@@ -2244,7 +2244,8 @@ class TestCreatePaymentIntentView(TestCase):
         mock_intent_create.return_value = {'client_secret': 'pi_secret_csrf_test'}
         
         # enforce_csrf_checks=True makes the test client check CSRF
-        csrf_client = self.client.__class__(enforce_csrf_checks=True)
+        # csrf_client = self.client.__class__(enforce_csrf_checks=True)
+        csrf_client = Client(enforce_csrf_checks=True)
         csrf_client.force_login(self.user)
         
         response = csrf_client.post(
