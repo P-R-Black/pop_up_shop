@@ -2235,7 +2235,6 @@ class TestCreatePaymentIntentView(TestCase):
     @patch('pop_up_payment.views.stripe.Customer.retrieve')
     def test_post_csrf_exempt(self, mock_customer_retrieve, mock_intent_create):
         """Test that view is CSRF exempt (needed for frontend JS calls)"""
-        self.client.force_login(self.user)
         
         self.user_profile.stripe_customer_id = 'cus_existing_123'
         self.user_profile.save()
@@ -2244,7 +2243,6 @@ class TestCreatePaymentIntentView(TestCase):
         mock_intent_create.return_value = {'client_secret': 'pi_secret_csrf_test'}
         
         # enforce_csrf_checks=True makes the test client check CSRF
-        # csrf_client = self.client.__class__(enforce_csrf_checks=True)
         csrf_client = Client(enforce_csrf_checks=True)
         csrf_client.force_login(self.user)
         
