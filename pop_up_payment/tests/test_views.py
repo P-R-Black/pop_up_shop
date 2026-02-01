@@ -12,6 +12,8 @@ from django.utils.text import slugify
 from decimal import Decimal
 from unittest.mock import patch, Mock, MagicMock
 import time
+import json
+import stripe
 from django.utils.timezone import now, make_aware
 from django.utils import timezone as django_timezone
 from datetime import timezone as dt_timezone, datetime
@@ -1743,8 +1745,15 @@ class BuyNowAddToCartViewTestCase(TestCase):
         """Test buying an available product as authenticated user"""
         self.client.force_login(self.user)
         
+        # Check what's actually in the DB
+        from pop_up_auction.models import PopUpProduct
+        db_product = PopUpProduct.objects.get(slug=self.available_product.slug)
+
         url = reverse('pop_up_payment:buy_now', kwargs={'slug': self.available_product.slug})
         response = self.client.get(url)
+        
+        # Re-fetch from DB directly
+        db_product = PopUpProduct.objects.get(slug=self.available_product.slug)
         
         # Should redirect to payment page
         self.assertEqual(response.status_code, 302)
@@ -1976,6 +1985,277 @@ class BuyNowAddToCartViewTestCase(TestCase):
         self.assertNotEqual(first_expiry, second_expiry)
 
 
+class TestCreatePaymentIntentView(TestCase):
+    """Test suite for CreatePaymentIntentView"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        self.user, self.user_profile = create_test_user(
+            "test@example.com", "testpass!23", "Test", "User", "9", "male"
+        )
+        
+        self.url = reverse('pop_up_payment:create_payment')  # Update with actual URL name
+    
+    # ─── Missing / Invalid Input ───────────────────────────────────
+    
+    def test_post_missing_amount_returns_400(self):
+        """Test that missing amount returns 400 error"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertEqual(data['error'], 'Missing amount')
+    
+    def test_post_empty_body_returns_400(self):
+        """Test that empty request body returns 400"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+    
+    def test_post_amount_is_none_returns_400(self):
+        """Test that amount set to None returns 400"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': None}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertEqual(data['error'], 'Missing amount')
+    
+    def test_post_amount_is_zero_returns_400(self):
+        """Test that amount of 0 returns 400"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': 0}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+    
+    # ─── New Stripe Customer ───────────────────────────────────────
+    
+    @patch('pop_up_payment.views.stripe.PaymentIntent.create')
+    @patch('pop_up_payment.views.stripe.Customer.create')
+    def test_post_creates_stripe_customer_if_not_exists(self, mock_customer_create, mock_intent_create):
+        """Test that a Stripe customer is created if user doesn't have one"""
+        self.client.force_login(self.user)
+        
+        # Ensure user has no stripe_customer_id
+        self.user_profile.stripe_customer_id = None
+        self.user_profile.save()
+        
+        # Mock Stripe Customer.create
+        mock_customer_create.return_value = MagicMock(id='cus_test_123')
+        
+        # Mock Stripe PaymentIntent.create
+        mock_intent_create.return_value = {'client_secret': 'pi_test_secret_123'}
+        
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': 21500}),
+            content_type='application/json'
+        )
+        print("response.status_code", response.status_code)
+        print(f"Response body: {response.json()}")
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify Customer.create was called with correct params
+        mock_customer_create.assert_called_once_with(
+            email=self.user.email,
+            name=f"{self.user.first_name} {self.user.last_name}"
+        )
+        
+        # Verify stripe_customer_id was saved to user
+        self.user_profile.refresh_from_db()
+        self.assertEqual(self.user_profile.stripe_customer_id, 'cus_test_123')
+    
+    @patch('pop_up_payment.views.stripe.PaymentIntent.create')
+    @patch('pop_up_payment.views.stripe.Customer.retrieve')
+    def test_post_retrieves_existing_stripe_customer(self, mock_customer_retrieve, mock_intent_create):
+        """Test that existing Stripe customer is retrieved, not created"""
+        self.client.force_login(self.user)
+        
+        # Set existing stripe_customer_id
+        self.user_profile.stripe_customer_id = 'cus_existing_456'
+        self.user_profile.save()
+        
+        mock_customer_retrieve.return_value = MagicMock(id='cus_existing_456')
+        mock_intent_create.return_value = {'client_secret': 'pi_test_secret_456'}
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': 18000}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify retrieve was called, not create
+        mock_customer_retrieve.assert_called_once_with('cus_existing_456')
+    
+    # ─── PaymentIntent Creation ────────────────────────────────────
+    
+    @patch('pop_up_payment.views.stripe.PaymentIntent.create')
+    @patch('pop_up_payment.views.stripe.Customer.create')
+    def test_post_creates_payment_intent_with_correct_params(self, mock_customer_create, mock_intent_create):
+        """Test that PaymentIntent is created with correct parameters"""
+        self.client.force_login(self.user)
+        
+        self.user_profile.stripe_customer_id = None
+        self.user_profile.save()
+        
+        mock_customer_create.return_value = MagicMock(id='cus_test_789')
+        mock_intent_create.return_value = {'client_secret': 'pi_test_secret_789'}
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': 21500}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify PaymentIntent.create was called with correct params
+        mock_intent_create.assert_called_once_with(
+            amount=21500,
+            currency='usd',
+            customer='cus_test_789',
+            automatic_payment_methods={"enabled": True},
+            setup_future_usage="off_session"
+        )
+    
+    @patch('pop_up_payment.views.stripe.PaymentIntent.create')
+    @patch('pop_up_payment.views.stripe.Customer.retrieve')
+    def test_post_returns_client_secret(self, mock_customer_retrieve, mock_intent_create):
+        """Test that response contains client_secret"""
+        self.client.force_login(self.user)
+        
+        self.user_profile.stripe_customer_id = 'cus_existing_123'
+        self.user_profile.save()
+        
+        mock_customer_retrieve.return_value = MagicMock(id='cus_existing_123')
+        mock_intent_create.return_value = {'client_secret': 'pi_secret_abc_123'}
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': 15000}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['clientSecret'], 'pi_secret_abc_123')
+    
+    # ─── Stripe API Errors ─────────────────────────────────────────
+    
+    @patch('pop_up_payment.views.stripe.PaymentIntent.create')
+    @patch('pop_up_payment.views.stripe.Customer.retrieve')
+    def test_post_stripe_payment_intent_failure_returns_400(self, mock_customer_retrieve, mock_intent_create):
+        """Test that Stripe PaymentIntent failure returns 400"""
+        self.client.force_login(self.user)
+        
+        self.user_profile.stripe_customer_id = 'cus_existing_123'
+        self.user_profile.save()
+        
+        mock_customer_retrieve.return_value = MagicMock(id='cus_existing_123')
+        mock_intent_create.side_effect = Exception('Stripe API error: Invalid amount')
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': 21500}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('Stripe API error', data['error'])
+    
+    @patch('pop_up_payment.views.stripe.Customer.create')
+    def test_post_stripe_customer_create_failure_returns_400(self, mock_customer_create):
+        """Test that Stripe Customer.create failure returns 400"""
+        self.client.force_login(self.user)
+        
+        self.user.stripe_customer_id = None
+        self.user.save()
+        
+        mock_customer_create.side_effect = Exception('Stripe API error: Authentication failed')
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': 21500}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('Authentication failed', data['error'])
+    
+    @patch('pop_up_payment.views.stripe.Customer.retrieve')
+    def test_post_stripe_customer_retrieve_failure_returns_400(self, mock_customer_retrieve):
+        """Test that Stripe Customer.retrieve failure returns 400"""
+        self.client.force_login(self.user)
+        
+        self.user_profile.stripe_customer_id = 'cus_deleted_customer'
+        self.user_profile.save()
+        
+        mock_customer_retrieve.side_effect = Exception('Stripe API error: No such customer')
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({'amount': 21500}),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('No such customer', data['error'])
+    
+    # ─── CSRF ──────────────────────────────────────────────────────
+    
+    @patch('pop_up_payment.views.stripe.PaymentIntent.create')
+    @patch('pop_up_payment.views.stripe.Customer.retrieve')
+    def test_post_csrf_exempt(self, mock_customer_retrieve, mock_intent_create):
+        """Test that view is CSRF exempt (needed for frontend JS calls)"""
+        self.client.force_login(self.user)
+        
+        self.user_profile.stripe_customer_id = 'cus_existing_123'
+        self.user_profile.save()
+        
+        mock_customer_retrieve.return_value = MagicMock(id='cus_existing_123')
+        mock_intent_create.return_value = {'client_secret': 'pi_secret_csrf_test'}
+        
+        # enforce_csrf_checks=True makes the test client check CSRF
+        csrf_client = self.client.__class__(enforce_csrf_checks=True)
+        csrf_client.force_login(self.user)
+        
+        response = csrf_client.post(
+            self.url,
+            data=json.dumps({'amount': 21500}),
+            content_type='application/json'
+            # Note: no csrfmiddlewaretoken provided
+        )
+        
+        # Should succeed despite no CSRF token (view is csrf_exempt)
+        self.assertEqual(response.status_code, 200)
 
 # """
 # Run Test

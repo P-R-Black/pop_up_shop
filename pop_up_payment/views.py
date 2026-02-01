@@ -539,11 +539,15 @@ def set_billling_address(request):
 class CreatePaymentIntentView(View):
     def post(self, request, *args, **kwargs):
         user = request.user
+        profile = request.user.popupcustomerprofile
+        print('user', user)
         cart = Cart(request)
 
         try:
             data = json.loads(request.body)
+            print('data', data)
             amount = data.get('amount')
+            print('amount', amount)
 
             if not amount:
                 return JsonResponse({"error": "Missing amount"}, status=400)
@@ -553,21 +557,21 @@ class CreatePaymentIntentView(View):
             stripe.api_key = settings.STRIPE_SECRET_KEY
 
             # Ensure Stripe customer exists
-            if not user.stripe_customer_id:
+            if not profile.stripe_customer_id:
                 customer = stripe.Customer.create(
                     email=user.email,
                     name=f"{user.first_name} {user.last_name}"
                 )
-                user.stripe_customer_id = customer.id
-                user.save(update_fields=['stripe_customer_id'])
+                profile.stripe_customer_id = customer.id
+                profile.save(update_fields=['stripe_customer_id'])
             else:
-                customer = stripe.Customer.retrieve(user.stripe_customer_id)
+                customer = stripe.Customer.retrieve(profile.stripe_customer_id)
 
             # Create PaymentIntent for that customer
             intent = stripe.PaymentIntent.create(
                 amount=amount,
                 currency='usd',
-                customer=user.stripe_customer_id,
+                customer=profile.stripe_customer_id,
                 automatic_payment_methods={"enabled": True},  # Enable Apple Pay, Google Pay, etc.
                 setup_future_usage="off_session"
             )
