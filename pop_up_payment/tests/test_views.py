@@ -2238,25 +2238,28 @@ class TestCreatePaymentIntentView(TestCase):
         
         self.user_profile.stripe_customer_id = 'cus_existing_123'
         self.user_profile.save()
-
-        # enforce_csrf_checks=True makes the test client check CSRF
+        
         csrf_client = Client(enforce_csrf_checks=True)
         csrf_client.force_login(self.user)
         
-
-        with patch('pop_up_payment.views.stripe.Customer.retrieve') as mock_customer_retrieve, patch('pop_up_payment.views.stripe.PaymentIntent.create') as mock_intent_create:
+        with patch('pop_up_payment.views.stripe.Customer.retrieve') as mock_customer_retrieve, \
+            patch('pop_up_payment.views.stripe.PaymentIntent.create') as mock_intent_create:
+            
             mock_customer_retrieve.return_value = MagicMock(id='cus_existing_123')
             mock_intent_create.return_value = {'client_secret': 'pi_secret_csrf_test'}
-        
-
+            
             response = csrf_client.post(
                 self.url,
                 data=json.dumps({'amount': 21500}),
                 content_type='application/json'
-                # Note: no csrfmiddlewaretoken provided
             )
             
-            # Should succeed despite no CSRF token (view is csrf_exempt)
+            # Debug inside the patch context
+            print(f"Status: {response.status_code}")
+            print(f"Response: {response.json()}")
+            print(f"Customer.retrieve called: {mock_customer_retrieve.called}")
+            print(f"PaymentIntent.create called: {mock_intent_create.called}")
+        
         self.assertEqual(response.status_code, 200)
 
 # """
