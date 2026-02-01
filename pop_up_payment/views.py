@@ -540,7 +540,6 @@ class CreatePaymentIntentView(View):
     def post(self, request, *args, **kwargs):
         user = request.user
         profile = request.user.popupcustomerprofile
-        print('user', user)
         cart = Cart(request)
 
         try:
@@ -659,7 +658,7 @@ def stripe_webhook_view(request):
         intent = event['data']['object']
         payment_reference = intent['id']
 
-        # 🛑 Warn if payment_reference not found in DB
+        # Warn if payment_reference not found in DB
         if not PopUpPayment.objects.filter(payment_reference=payment_reference).exists():
             logger.error(f"⚠️ Webhook received unknown payment_reference: {payment_reference}")
         else:
