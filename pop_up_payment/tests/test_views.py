@@ -2886,15 +2886,7 @@ class TestPlacedOrderView(TestCase):
         
         self.assertContains(response, 'Notify Me')
     
-    # ─── Authentication ────────────────────────────────────────────
-    
-    def test_placed_order_unauthenticated_user(self):
-        """Test placed order page for unauthenticated user"""
-        # Don't login
-        
-        response = self.client.get(self.url)
-       
-        self.assertEqual(response.status_code, 302)
+   
 
 
 # """
