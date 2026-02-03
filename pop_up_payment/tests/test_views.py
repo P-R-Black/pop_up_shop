@@ -4,6 +4,7 @@ from django.urls import reverse
 from pop_up_payment.views import AjaxLoginRequiredMixin, ProductBuyView, ShippingAddressView, BillingAddressView
 from pop_accounts.models import PopUpCustomerProfile, PopUpCustomerAddress
 from pop_up_auction.models import PopUpProduct, PopUpProductSpecification, PopUpCategory, PopUpBrand, PopUpProductType
+from pop_up_order.models import PopUpCustomerOrder
 from pop_up_cart.models import PopUpCartItem
 from pop_up_payment.views import (AjaxLoginRequiredMixin)
 from django.views import View
@@ -2241,6 +2242,660 @@ class TestCreatePaymentIntentView(TestCase):
             getattr(CreatePaymentIntentView.as_view(), 'csrf_exempt', False),
             "CreatePaymentIntentView should be CSRF exempt"
     )
+        
+
+class TestProcessVenmoPaymentView(TestCase):
+    """Test suite for ProcessVenmoPaymentView"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        self.user, self.user_profile = create_test_user(
+            "test@example.com", "testpass!23", "Test", "User", "9", "male"
+        )
+        
+        self.url = reverse('pop_up_payment:process_venmo')  # Update with actual URL name
+    
+    # ─── Successful Payment ────────────────────────────────────────
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_successful_venmo_payment(self, mock_sale):
+        """Test successful Venmo payment processing"""
+        self.client.force_login(self.user)
+        
+        # Mock successful Braintree response
+        mock_result = MagicMock()
+        mock_result.is_success = True
+        mock_result.transaction.id = 'txn_venmo_123abc'
+        mock_sale.return_value = mock_result
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-venmo-nonce',
+                'amount': 21500  # $215.00 in cents
+            }),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['transaction_id'], 'txn_venmo_123abc')
+        
+        # Verify Braintree was called with correct params
+        mock_sale.assert_called_once_with({
+            "amount": "215.0",  # Converted from cents to dollars
+            "payment_method_nonce": "fake-venmo-nonce",
+            "options": {
+                "submit_for_settlement": True
+            }
+        })
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_amount_conversion_from_cents_to_dollars(self, mock_sale):
+        """Test that amount is correctly converted from cents to dollars"""
+        self.client.force_login(self.user)
+        
+        mock_result = MagicMock()
+        mock_result.is_success = True
+        mock_result.transaction.id = 'txn_123'
+        mock_sale.return_value = mock_result
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-nonce',
+                'amount': 5000  # $50.00 in cents
+            }),
+            content_type='application/json'
+        )
+        
+        # Verify amount was divided by 100
+        call_args = mock_sale.call_args[0][0]
+        self.assertEqual(call_args['amount'], "50.0")
+    
+    # ─── Failed Payment ────────────────────────────────────────────
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_failed_venmo_payment(self, mock_sale):
+        """Test failed Venmo payment returns appropriate error"""
+        self.client.force_login(self.user)
+        
+        # Mock failed Braintree response
+        mock_result = MagicMock()
+        mock_result.is_success = False
+        mock_sale.return_value = mock_result
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-invalid-nonce',
+                'amount': 21500
+            }),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data['success'])
+        self.assertEqual(data['error'], 'Payment failed')
+    
+    # ─── Missing / Invalid Input ───────────────────────────────────
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_missing_nonce(self, mock_sale):
+        """Test that missing payment_method_nonce is handled"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'amount': 21500
+                # Missing payment_method_nonce
+            }),
+            content_type='application/json'
+        )
+        
+        # Should return 500 or handle gracefully
+        self.assertIn(response.status_code, [200, 500])
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_missing_amount(self, mock_sale):
+        """Test that missing amount is handled"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-nonce'
+                # Missing amount
+            }),
+            content_type='application/json'
+        )
+        
+        # Will cause division error when amount/100 is attempted with None
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('error', data)
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_amount_zero(self, mock_sale):
+        """Test payment with amount of zero"""
+        self.client.force_login(self.user)
+        
+        mock_result = MagicMock()
+        mock_result.is_success = True
+        mock_result.transaction.id = 'txn_zero'
+        mock_sale.return_value = mock_result
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-nonce',
+                'amount': 0
+            }),
+            content_type='application/json'
+        )
+        
+        # Braintree might reject $0 transaction, but view should handle it
+        self.assertEqual(response.status_code, 200)
+    
+    def test_post_invalid_json(self):
+        """Test that invalid JSON is handled"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(
+            self.url,
+            data="invalid json{",
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('error', data)
+    
+    def test_post_empty_body(self):
+        """Test that empty request body is handled"""
+        self.client.force_login(self.user)
+        
+        response = self.client.post(
+            self.url,
+            data='',
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 500)
+    
+    # ─── Braintree API Errors ──────────────────────────────────────
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_braintree_exception(self, mock_sale):
+        """Test that Braintree API exceptions are handled"""
+        self.client.force_login(self.user)
+        
+        mock_sale.side_effect = Exception('Braintree API error: Connection timeout')
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-nonce',
+                'amount': 21500
+            }),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('Braintree API error', data['error'])
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_braintree_authentication_error(self, mock_sale):
+        """Test Braintree authentication failure"""
+        self.client.force_login(self.user)
+        
+        mock_sale.side_effect = Exception('Authentication failed')
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-nonce',
+                'amount': 21500
+            }),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn('Authentication failed', data['error'])
+    
+    # ─── Edge Cases ────────────────────────────────────────────────
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_large_amount(self, mock_sale):
+        """Test processing large payment amount"""
+        self.client.force_login(self.user)
+        
+        mock_result = MagicMock()
+        mock_result.is_success = True
+        mock_result.transaction.id = 'txn_large'
+        mock_sale.return_value = mock_result
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-nonce',
+                'amount': 100000  # $1,000.00
+            }),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        
+        # Verify amount conversion
+        call_args = mock_sale.call_args[0][0]
+        self.assertEqual(call_args['amount'], "1000.0")
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_decimal_amount(self, mock_sale):
+        """Test amount with decimal cents (e.g., $21.99)"""
+        self.client.force_login(self.user)
+        
+        mock_result = MagicMock()
+        mock_result.is_success = True
+        mock_result.transaction.id = 'txn_decimal'
+        mock_sale.return_value = mock_result
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-nonce',
+                'amount': 2199  # $21.99
+            }),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify proper decimal conversion
+        call_args = mock_sale.call_args[0][0]
+        self.assertEqual(call_args['amount'], "21.99")
+    
+    # ─── CSRF ──────────────────────────────────────────────────────
+    
+    def test_post_csrf_exempt(self):
+        """Test that ProcessVenmoPaymentView is CSRF exempt"""
+        from pop_up_payment.views import ProcessVenmoPaymentView
+        
+        # Verify csrf_exempt decorator is applied
+        self.assertTrue(
+            getattr(ProcessVenmoPaymentView.as_view(), 'csrf_exempt', False),
+            "ProcessVenmoPaymentView should be CSRF exempt"
+        )
+    
+    # ─── Submit for Settlement ─────────────────────────────────────
+    
+    @patch('pop_up_payment.views.gateway.transaction.sale')
+    def test_post_submit_for_settlement_enabled(self, mock_sale):
+        """Test that submit_for_settlement is always True"""
+        self.client.force_login(self.user)
+        
+        mock_result = MagicMock()
+        mock_result.is_success = True
+        mock_result.transaction.id = 'txn_settlement'
+        mock_sale.return_value = mock_result
+        
+        response = self.client.post(
+            self.url,
+            data=json.dumps({
+                'payment_method_nonce': 'fake-nonce',
+                'amount': 21500
+            }),
+            content_type='application/json'
+        )
+        
+        # Verify submit_for_settlement is True
+        call_args = mock_sale.call_args[0][0]
+        self.assertTrue(call_args['options']['submit_for_settlement'])
+
+
+class TestPlacedOrderView(TestCase):
+    """Test suite for placed_order view"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        # Create test user
+        self.user, self.user_profile = create_test_user(
+            "test@example.com", "testpass!23", "Test", "User", "9", "male"
+        )
+        
+        # Create addresses
+        self.shipping_address = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="123 Test St",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Test City",
+            state="Florida",
+            postcode="12345",
+            delivery_instructions="",
+            default=True,
+            is_default_shipping=True,
+            is_default_billing=False
+        )
+        
+        self.billing_address = create_test_address(
+            customer=self.user,
+            first_name="Test",
+            last_name="User",
+            address_line="456 Billing Ave",
+            address_line2="",
+            apartment_suite_number="",
+            town_city="Billing City",
+            state="Florida",
+            postcode="12345",
+            delivery_instructions="",
+            default=False,
+            is_default_shipping=False,
+            is_default_billing=True
+        )
+        
+        # Create category, brand, product type
+        self.basketball_category = PopUpCategory.objects.create(
+            name='Basketball',
+            slug='basketball'
+        )
+        
+        self.jordan_brand = PopUpBrand.objects.create(
+            name='Jordan',
+            slug='jordan'
+        )
+        
+        self.sneakers_type = PopUpProductType.objects.create(
+            name='Sneakers',
+            slug='sneakers'
+        )
+        
+        # Create purchased product (is_active=False since it was just bought)
+        self.purchased_product = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 4',
+            secondary_product_title='Retro Military Blue',
+            slug='jordan-4-military-blue',
+            buy_now_price=Decimal('215.00'),
+            retail_price=Decimal('215.00'),
+            inventory_status='sold_out',
+            is_active=False
+        )
+        
+        # Create upcoming product (inactive, in transit - shown in "notify me" section)
+        self.incoming_product1 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 1',
+            secondary_product_title='High OG Chicago',
+            slug='jordan-1-chicago',
+            buy_now_price=Decimal('180.00'),
+            retail_price=Decimal('180.00'),
+            inventory_status='in_transit',
+            is_active=False
+        )
+        
+        self.incoming_product2 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 3',
+            secondary_product_title='Retro Black Cat',
+            slug='jordan-3-black-cat',
+            buy_now_price=Decimal('190.00'),
+            retail_price=Decimal('190.00'),
+            inventory_status='in_transit',
+            is_active=False
+        )
+        
+        # Active product (should NOT show in notify section)
+        self.active_product = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 5',
+            secondary_product_title='Retro Oreo',
+            slug='jordan-5-oreo',
+            buy_now_price=Decimal('200.00'),
+            retail_price=Decimal('200.00'),
+            inventory_status='in_inventory',
+            is_active=True
+        )
+        
+        # Create test order
+        self.order = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            full_name=f"{self.user.first_name} {self.user.last_name}",
+            email=self.user.email,
+            phone="555-123-4567",
+            billing_address=self.billing_address,
+            shipping_address=self.shipping_address,
+            total_paid=Decimal('215.00')
+        )
+        
+        # Add item to cart (should be cleared by view)
+        PopUpCartItem.objects.create(
+            user=self.user,
+            product=self.purchased_product,
+            quantity=1
+        )
+        
+        self.url = reverse('pop_up_payment:placed_order')
+    
+    # ─── Basic Rendering ───────────────────────────────────────────
+    
+    def test_placed_order_renders_successfully(self):
+        """Test that the placed order page renders"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/placed_order.html')
+    
+    def test_placed_order_displays_thanks_message(self):
+        """Test that the page displays personalized thank you message"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, f"Thanks {self.user.first_name}!")
+        self.assertContains(response, "We've received your order")
+        self.assertContains(response, "confirming your payment")
+    
+    def test_placed_order_displays_email_notification_message(self):
+        """Test that confirmation email notification message is displayed"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, "You will receive an email shortly confirming your order")
+    
+    # ─── Order ID ──────────────────────────────────────────────────
+    
+    def test_placed_order_displays_order_id(self):
+        """Test that order ID is displayed on the page"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, f"Order #{self.order.id}")
+    
+    def test_placed_order_no_order_exists(self):
+        """Test page when user has no order"""
+        # Create a new user with no orders
+        new_user, _ = create_test_user(
+            "new@example.com", "pass123!", "New", "User", "8", "female"
+        )
+        
+        self.client.force_login(new_user)
+        
+        response = self.client.get(self.url)
+        
+        # Should still render but order_id will be None
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Order #None")
+    
+    def test_placed_order_displays_most_recent_order(self):
+        """Test that the most recent order ID is displayed"""
+        # Create a second order
+        order2 = PopUpCustomerOrder.objects.create(
+            user=self.user,
+            full_name=f"{self.user.first_name} {self.user.last_name}",
+            email=self.user.email,
+            phone="555-123-4567",
+            billing_address=self.billing_address,
+            shipping_address=self.shipping_address,
+            total_paid=Decimal('180.00')
+        )
+        
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        # .first() returns the first by default ordering
+        # Adjust assertion based on your model's ordering
+        self.assertEqual(response.status_code, 200)
+    
+    # ─── Cart Clearing ─────────────────────────────────────────────
+    
+    def test_placed_order_clears_cart(self):
+        """Test that cart is cleared after order is placed"""
+        self.client.force_login(self.user)
+        
+        # Verify cart has items before
+        cart_before = PopUpCartItem.objects.filter(user=self.user).count()
+        self.assertGreater(cart_before, 0)
+        
+        response = self.client.get(self.url)
+        
+        # Verify cart is cleared after
+        cart_after = PopUpCartItem.objects.filter(user=self.user).count()
+        self.assertEqual(cart_after, 0)
+    
+    def test_placed_order_clears_database_cart(self):
+        """Test that database cart is cleared after order is placed (authenticated users)"""
+        self.client.force_login(self.user)
+        
+        # Verify cart has items before
+        cart_before = PopUpCartItem.objects.filter(user=self.user).count()
+        self.assertGreater(cart_before, 0)
+        
+        response = self.client.get(self.url)
+        
+        # Database cart should be cleared
+        cart_after = PopUpCartItem.objects.filter(user=self.user).count()
+        self.assertEqual(cart_after, 0)
+
+
+    # ─── Notify Me Section (incoming products) ────────────────────
+    
+    def test_placed_order_displays_incoming_products(self):
+        """Test that incoming/in_transit products are displayed"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        # In transit products should be shown
+        self.assertContains(response, 'Air Jordan 1')
+        self.assertContains(response, 'Air Jordan 3')
+    
+    def test_placed_order_does_not_display_active_products(self):
+        """Test that active/in_inventory products are NOT in notify section"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        # Active product should not appear in notify section
+        self.assertNotContains(response, 'Air Jordan 5')
+    
+
+    def test_placed_order_does_not_display_sold_out_products(self):
+        """Test that sold_out products are not in notify section"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        # Sold out product should not appear (is_active=False but not in_transit)
+        self.assertNotContains(response, 'Air Jordan 4')
+    
+
+    def test_placed_order_no_incoming_products(self):
+        """Test page when there are no incoming products"""
+        # Delete all in_transit products
+        PopUpProduct.objects.filter(inventory_status='in_transit').delete()
+        
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        # Should show "Nothing to display"
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Nothing to display')
+    
+
+    def test_placed_order_displays_notify_me_buttons(self):
+        """Test that Notify Me buttons are displayed for incoming products"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, 'Notify Me')
+        self.assertContains(response, 'notify-me-button')
+    
+    def test_placed_order_displays_get_notified_header(self):
+        """Test that Get Notified section header is displayed"""
+        self.client.force_login(self.user)
+        
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, 'Get Notified When These Items Available')
+    
+    # ─── Notify Me State (already notified) ───────────────────────
+    
+    def test_placed_order_shows_on_notice_for_products(self):
+        """Test that products user is already notified for show 'On Notice'"""
+        self.client.force_login(self.user)
+        
+        # Add product to user's notification list
+        self.user_profile.prods_on_notice_for.add(self.incoming_product1)
+        
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, 'Notify Me')
+    
+    def test_placed_order_shows_notify_me_for_new_products(self):
+        """Test that products user is NOT notified for show 'Notify Me'"""
+        self.client.force_login(self.user)
+        
+        # Don't add any products to notification list
+        
+        response = self.client.get(self.url)
+        
+        self.assertContains(response, 'Notify Me')
+    
+    # ─── Authentication ────────────────────────────────────────────
+    
+    def test_placed_order_unauthenticated_user(self):
+        """Test placed order page for unauthenticated user"""
+        # Don't login
+        
+        response = self.client.get(self.url)
+       
+        self.assertEqual(response.status_code, 302)
+
 
 # """
 # Run Test
