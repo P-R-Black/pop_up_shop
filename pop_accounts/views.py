@@ -127,7 +127,7 @@ class UserPasswordResetConfirmView(View):
     - POST: Validate and updates the user's password
     """
     template_name = "pop_accounts/login/password_reset_confirm.html"
-    user_password_rest_page = USER_PASSWORD_RESET_PAGE
+    user_password_reset_page = USER_PASSWORD_RESET_PAGE
 
     def _get_user_form_uid(self, uidb64):
         """
@@ -146,9 +146,9 @@ class UserPasswordResetConfirmView(View):
         user = self._get_user_form_uid(uidb64)
 
         if user is not None and default_token_generator.check_token(user, token):
-            context = {"validlink": True, "uidb64": uidb64, "token": token, 'user_password_rest_page': self.user_password_rest_page}
+            context = {"validlink": True, "uidb64": uidb64, "token": token, 'user_password_reset_page': self.user_password_reset_page}
         else:
-            context = {"validlink": False, 'user_password_rest_page': self.user_password_rest_page}
+            context = {"validlink": False, 'user_password_reset_page': self.user_password_reset_page}
 
         return render(request, self.template_name, context)
     
@@ -229,8 +229,9 @@ class UserDashboardView(LoginRequiredMixin, View):
             HttpResponse: Rendered HTML response with user interest data and product specs.
         """
         user = request.user
-        profile = request.user.popupcustomerprofile
-        # profile, created = PopUpCustomerProfile.objects.get_or_create(user=request.user)
+        # profile = request.user.popupcustomerprofile
+        profile, created = PopUpCustomerProfile.objects.get_or_create(user=request.user)
+        print('profile UserDashboardView', profile, created)
         
         addresses = user.address.filter(default=True)
         prod_interested_in = profile.prods_interested_in.all()[:3]
@@ -609,7 +610,9 @@ class PersonalInfoView(LoginRequiredMixin, View):
     def get_context_data(self):
         """Get common context data for both GET and POST"""
         user = self.request.user
-        profile = self.request.user.popupcustomerprofile
+        # profile = self.request.user.popupcustomerprofile
+        profile, created = PopUpCustomerProfile.objects.get_or_create(user=self.request.user)
+        print('profile PersonalInfoView', profile)
         addressess = PopUpCustomerAddress.objects.filter(customer=user)
         # payment_methods = get_stripe_payment_reference(user)
 
@@ -638,6 +641,7 @@ class PersonalInfoView(LoginRequiredMixin, View):
         """Handle POST requests"""
         user = request.user
         profile = request.user.popupcustomerprofile
+        print('profile', profile)
 
         # Determine which form was submitted
         if self._is_personal_form_submission():
