@@ -11153,7 +11153,7 @@ class TestRegisterView(TestCase):
         nonexistent_time = time.time() - start
         
         # Times should be similar (within 200ms)
-        self.assertLess(abs(existing_time - nonexistent_time), 0.25)
+        self.assertLess(abs(existing_time - nonexistent_time), 0.20)
 
 
 class TestPasswordStrengthValidation(TestCase):
@@ -11814,7 +11814,7 @@ class TestVerifyEmailView(TestCase):
         
         # Try to login with wrong email
         login_data = {
-            'email': 'wrong@example.com',
+            # 'email': 'wrong@example.com',
             'password': 'testPass!23'
         }
         
@@ -11826,6 +11826,7 @@ class TestVerifyEmailView(TestCase):
         # User should NOT be logged in
         self.assertFalse(response.wsgi_request.user.is_authenticated)
     
+
     def test_login_with_empty_credentials(self):
         """Test login failure with empty credentials"""
         # Verify email first

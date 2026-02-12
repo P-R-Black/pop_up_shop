@@ -231,7 +231,6 @@ class UserDashboardView(LoginRequiredMixin, View):
         user = request.user
         # profile = request.user.popupcustomerprofile
         profile, created = PopUpCustomerProfile.objects.get_or_create(user=request.user)
-        print('profile UserDashboardView', profile, created)
         
         addresses = user.address.filter(default=True)
         prod_interested_in = profile.prods_interested_in.all()[:3]
@@ -612,7 +611,6 @@ class PersonalInfoView(LoginRequiredMixin, View):
         user = self.request.user
         # profile = self.request.user.popupcustomerprofile
         profile, created = PopUpCustomerProfile.objects.get_or_create(user=self.request.user)
-        print('profile PersonalInfoView', profile)
         addressess = PopUpCustomerAddress.objects.filter(customer=user)
         # payment_methods = get_stripe_payment_reference(user)
 
@@ -641,7 +639,6 @@ class PersonalInfoView(LoginRequiredMixin, View):
         """Handle POST requests"""
         user = request.user
         profile = request.user.popupcustomerprofile
-        print('profile', profile)
 
         # Determine which form was submitted
         if self._is_personal_form_submission():
@@ -1832,7 +1829,6 @@ class TotalAccountsView(UserPassesTestMixin, TemplateView):
         # Add copy text
         context['admin_total_accounts_copy'] = ADMIN_TOTAL_ACCOUNTS_COPY
 
-        print('context', context)
         return context
 
 
@@ -2486,38 +2482,6 @@ class UpdateProductView(UserPassesTestMixin, View):
                     continue  # Skip invalid specification IDs
 
 
-
-# class UpdateProductPostView(UserPassesTestMixin, View):
-#     """
-#     View for product updates
-#     """
-#     def test_func(self):
-#         return self.request.user.is_staff
-    
-#     def post(self, request, product_id):
-#         product = get_object_or_404(PopUpProduct, id=product_id)
-#         form = PopUpAddProductForm(request.POST, instance=product)
-
-#         if form.is_valid():
-#             try:
-#                 updated_product = form.save()
-
-#                 PopUpProductSpecificationValue.objects.filter(product=updated_product).delete()
-
-#                 # Save the new specifications
-#                 self.save_existing_specifications(request, updated_product)
-#                 self.save_custom_specifications(request, updated_product)
-#                 messages.success(request, f'Product "{updated_product.product_title} {updated_product.secondary_product_title} updated successfully!')
-#                 return redirect('pop_accounts:update_product')
-#             except Exception as e:
-#                 messages.error(request, 'An error occurred while updating the product.')
-#                 print('Update error:', e)
-#         else:
-#             messages.error(request, 'Please correct the errors in the form.')
-#             print('Form errors', form.errors)
-#         return redirect('pop_accounts:updated_product')
-
-
 class AddProductsView(UserPassesTestMixin, View):
     # 🟢 View Test Completed
     # ✅ Mobile / Tablet Media Query Completed
@@ -2874,7 +2838,6 @@ class Login2FAView(View):
         password = request.POST.get('password')
         now_time = now()
 
-
         # Check session lockout
         attempts = request.session.get('login_attempts', 0)
         first_try = request.session.get('first_attempt_time')
@@ -2884,12 +2847,12 @@ class Login2FAView(View):
             return JsonResponse({'authenticated': False, 'error': 'Locked out'}, status=429)
         
         user = authenticate(request, username=email, password=password)
-
+                
         # ADDED: Explicitly check if user is active
         if user and not user.is_active:
             user = None
-            # # Treat inactive user same as invalid credentials
-            # # Don't increment attempts counter for inactive users (optional - see note below)
+            # Treat inactive user same as invalid credentials
+            # Don't increment attempts counter for inactive users (optional - see note below)
             # return JsonResponse({
             #     'authenticated': False, 
             #     'error': 'Account not activated. Please check your email.'
@@ -3215,7 +3178,8 @@ class VerifyEmailView(View):
         
         if user and default_token_generator.check_token(user, token):
             user.is_active = True
-            user.save()
+            user.last_login = None
+            user.save(update_fields=["is_active", "last_login"])
             return render(request, self.template_name, {'email_verified': True, 'form': login_form, 'uidb64': uidb64, 'token': token })
         else:
             return render(request, self.template_name, {'invalid_link': True, 'form': login_form})
@@ -3247,7 +3211,14 @@ class VerifyEmailView(View):
 
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
-            user = authenticate(request, username=email, password=password)
+            # user = authenticate(request, username=email, password=password)
+
+            user = authenticate(
+                request,
+                username=user_from_token.email,
+                password=password
+            )
+
 
             if user is not None:
                 login(request, user)

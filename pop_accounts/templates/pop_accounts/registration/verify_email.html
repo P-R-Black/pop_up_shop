@@ -23,7 +23,10 @@ Email Verification
                 <form action="{%  url 'pop_accounts:verify_email' uidb64 token %}" method="POST" class="">
                     {% csrf_token %}
 
+                    {% comment %}
                     {{ form.email }}
+                    {% endcomment %}
+
                     {{ form.password }}
 
                     <input type="submit" value="Sign In" class="button_medium">
