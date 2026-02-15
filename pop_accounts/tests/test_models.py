@@ -1505,7 +1505,7 @@ class TestPopUpCustomerAddressModel(TestCase):
         from django.db.models.deletion import ProtectedError
 
         with self.assertRaises(ProtectedError):
-            self.user.delete()
+            self.user.hard_delete()
         
     def test_soft_deleting_customer_does_not_delete_addresses(self):
         """Test that soft deleting customer doesn't cascade to addresses"""
