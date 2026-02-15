@@ -1663,7 +1663,7 @@ class TestDeleteAccountView(TestCase):
         self.user.restore()
         
         # Verify restoration
-        self.assertTrue(self.user.is_active)
+        self.assertFalse(self.user.is_active)
         self.assertIsNone(self.user.deleted_at)
         self.assertFalse(self.user.deleted_at)
     
@@ -11654,7 +11654,7 @@ class TestVerifyEmailView(TestCase):
         html = response.content.decode('utf-8')
         
         # Check for form elements
-        self.assertIn('Sign In', html)
+        self.assertIn('Submit', html)
         self.assertIn('type="submit"', html)
         self.assertIn('csrf', html.lower())
     

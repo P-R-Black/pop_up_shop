@@ -50,7 +50,8 @@ from django.contrib.auth import logout
 from django.views import View
 from .utils.pop_accounts_utils import (validate_email_address, get_client_ip, add_specs_to_products, is_disposable_email,
                           increment_rate_limit, calculate_auction_progress, handle_password_reset_request, 
-                          send_verification_email, check_rate_limit, get_email_provider, log_registration_with_geo)
+                          send_verification_email, check_rate_limit, get_email_provider, log_registration_with_geo,
+                          send_restore_email)
 from django.conf import settings
 import json
 from typing import Any, Dict, Optional
@@ -2641,41 +2642,87 @@ class EmailCheckView(View):
     """
     def post(self, request):
         email = request.POST.get('email', '').strip().lower()
+        print("DEBUG EMAILCHECK email", email)
         
         # Validate email
         if not email or not validate_email_address(email):
             return JsonResponse(
                 {'status': False, 'error': 'Invalid or missing email'}, status=400)
         
+        user = User.all_objects.filter(email__iexact=email).first()
 
-        try:
-            # Try to get the user by email
-            user = User.objects.get(email__iexact=email, deleted_at__isnull=True)
-            
-            # Check if user has verified their email (is_active)
-            if not user.is_active:
+        # --------------------------------
+        # CASE 1 — User NOT FOUND
+        # --------------------------------
+        if not user:
+            return JsonResponse({'status': True})
 
-                # Email exists but account not verified
-                request.session['auth_email'] = email
-                request.session['pending_verification_user_id'] = str(user.id)
 
-                try:
-                    # Try to send email with rate limiting
-                    email_sent = send_verification_email(request, user)
-                    message = 'Account not verified. A new verification link has been sent to your email.'
-                except Exception as e:
-                    message = 'Account not verified. Please check your email for the verification link. (A new link was recenlty sent)'
-              
-                return JsonResponse({'status': 'inactive', 'message': message})
-            
-
-            # Email exists and account is active - proceed to password
+        # --------------------------------
+        # CASE 2 — Previously Deleted
+        # --------------------------------
+        if user.is_deleted:
             request.session['auth_email'] = email
-            return JsonResponse({'status': False})  # Existing active user
+            request.session['deleted_user_id'] = str(user.id)
+
+            return JsonResponse({'status': 'deleted'})
+
+
+        # --------------------------------
+        # CASE 3 — Exists but Not Verified
+        # --------------------------------
+        if not user.is_active:
+            request.session['auth_email'] = email
+            request.session['pending_verification_user_id'] = str(user.id)
+
+            try:
+                send_verification_email(request, user)
+                message = 'Account not verified. A new verification link has been sent.'
+            except Exception:
+                message = 'Account not verified. Please check your email.'
+
+            return JsonResponse({
+                'status': 'inactive',
+                'message': message
+            })
+
+
+        # --------------------------------
+        # CASE 4 — Active User
+        # --------------------------------
+        request.session['auth_email'] = email
+        return JsonResponse({'status': False})
+        # try:
+        #     # Try to get the user by email
+
+        #     user = User.objects.get(email__iexact=email, deleted_at__isnull=True)
+        
             
-        except User.DoesNotExist:
-            # Email not found - new user, show registration form
-            return JsonResponse({'status': True})  # New user
+        #     # Check if user has verified their email (is_active)
+        #     if not user.is_active:
+
+        #         # Email exists but account not verified
+        #         request.session['auth_email'] = email
+        #         request.session['pending_verification_user_id'] = str(user.id)
+
+        #         try:
+        #             # Try to send email with rate limiting
+        #             email_sent = send_verification_email(request, user)
+        #             message = 'Account not verified. A new verification link has been sent to your email.'
+        #         except Exception as e:
+        #             message = 'Account not verified. Please check your email for the verification link. (A new link was recenlty sent)'
+              
+        #         return JsonResponse({'status': 'inactive', 'message': message})
+            
+
+        #     # Email exists and account is active - proceed to password
+        #     request.session['auth_email'] = email
+        #     return JsonResponse({'status': False})  # Existing active user
+            
+        # except User.DoesNotExist:
+        #     # Email not found - new user, show registration form
+        #     print("DEBUG EMAILCHECK, User does not exists")
+        #     return JsonResponse({'status': True})  # New user
     
         
         
@@ -2753,6 +2800,29 @@ class RegisterView(View):
         except Exception as e:
             return JsonResponse({'error': 'Form init failed', 'details': str(e)}, status=500)
 
+        # existing_user = User.all_objects.filter(email__iexact=email).first()
+
+        # if existing_user:
+            
+        #     if existing_user.is_deleted:
+
+        #         existing_user.restore()
+        #         existing_user.set_password(password)
+        #         existing_user.save()
+
+        #         send_verification_email(request, existing_user)
+
+        #         return JsonResponse({
+        #             "restored": True,
+        #             "message": "Account restored. Please verify your email."
+        #         })
+
+        #     else:
+        #         return JsonResponse({
+        #             "success": False,
+        #             "errors": {"email": ["Account already exists. Please login."]}
+        #         }, status=400)
+    
         if form.is_valid():
             increment_rate_limit(ip, 'registration')
             user = form.save(commit=False)
@@ -3404,6 +3474,29 @@ class SocialLoginCompleteView(TemplateView):
             'isStaff': user.is_staff if user.is_authenticated else False,
             'userId': user.id if user.is_authenticated else None,
         })
+
+
+
+
+def restore_account(request):    
+    data = json.loads(request.body)
+    email = data.get("email")
+
+
+    user = User.all_objects.filter(email__iexact=email, deleted_at__isnull=False).first()
+
+    if not user:
+        return JsonResponse({"status": False})
+
+    # Move from Deleted → Unverified
+    user.deleted_at = None
+    user.is_active = False
+    user.save()
+
+    send_verification_email(request, user)
+
+    return JsonResponse({"status": True})
+
 
 
 
