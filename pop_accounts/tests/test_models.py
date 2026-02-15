@@ -910,10 +910,15 @@ class TestPopUpCustomerProfileModel(TestCase):
         # Use hard_delete to actually delete from database
         self.user_profile.delete()
         
-        # Profile should be cascade deleted
-        self.assertFalse(PopUpCustomerProfile.objects.filter(pk=profile_pk).exists())
-        # User should be deleted too
-        self.assertFalse(User.all_objects.filter(id=user_id).exists())
+        # Profile deleted
+        self.assertFalse(
+            PopUpCustomerProfile.objects.filter(pk=profile_pk).exists()
+        )
+
+        # User should STILL exist
+        self.assertTrue(
+            User.all_objects.filter(id=user_id).exists()
+        )
 
 
     def test_soft_delete_user_keeps_profile(self):
@@ -1496,18 +1501,12 @@ class TestPopUpCustomerAddressModel(TestCase):
     
     # ==================== Cascade Delete Tests ====================
     
-    def test_deleting_customer_deletes_addresses(self):
-        """Test that deleting customer cascades to addresses"""
-        address_id = self.address.id
-        customer_id = self.user.id
+    def test_cannot_delete_user_while_profile_exists(self):
+        from django.db.models.deletion import ProtectedError
+
+        with self.assertRaises(ProtectedError):
+            self.user.hard_delete()
         
-        # Hard delete customer
-        self.user.hard_delete()
-        
-        # Address should be deleted too (cascade)
-        with self.assertRaises(PopUpCustomerAddress.DoesNotExist):
-            PopUpCustomerAddress.all_objects.get(id=address_id)
-    
     def test_soft_deleting_customer_does_not_delete_addresses(self):
         """Test that soft deleting customer doesn't cascade to addresses"""
         address_id = self.address.id
