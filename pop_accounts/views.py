@@ -50,8 +50,7 @@ from django.contrib.auth import logout
 from django.views import View
 from .utils.pop_accounts_utils import (validate_email_address, get_client_ip, add_specs_to_products, is_disposable_email,
                           increment_rate_limit, calculate_auction_progress, handle_password_reset_request, 
-                          send_verification_email, check_rate_limit, get_email_provider, log_registration_with_geo,
-                          send_restore_email)
+                          send_verification_email, check_rate_limit, get_email_provider, log_registration_with_geo)
 from django.conf import settings
 import json
 from typing import Any, Dict, Optional
