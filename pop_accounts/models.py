@@ -44,7 +44,7 @@ class PopUpCustomerProfile(models.Model):
         ('male', 'Male'),
         ('female', 'Female')
     )
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, primary_key=True, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, primary_key=True, on_delete=models.PROTECT)
 
     stripe_customer_id = models.CharField(max_length=200, blank=True, null=True)
     shoe_size = models.CharField(max_length=10, blank=True, null=True)
