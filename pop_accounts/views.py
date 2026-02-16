@@ -3476,26 +3476,102 @@ class SocialLoginCompleteView(TemplateView):
 
 
 
+class RestoreAccountView(View):
+    # 🟢 View Test Recommended
+    # 🔴 No Model Test Needed (Soft-delete behavior tested elsewhere)
+    """
+    Handles restoration of a soft-deleted user account and re-initiates
+    the email verification process.
 
-def restore_account(request):    
-    data = json.loads(request.body)
-    email = data.get("email")
+    This view allows a previously deleted user (soft-deleted via `deleted_at`)
+    to restore their account. Instead of immediately reactivating the account,
+    the system moves the user into an "Unverified" state and sends a new
+    verification email.
+
+    --- POST Request ---
+    Restores a soft-deleted account:
+
+        1. Parses the JSON request body to retrieve the `email`.
+        2. Searches for a user where:
+               - `email` matches (case-insensitive).
+               - `deleted_at` is NOT null (meaning the account was soft-deleted).
+        3. If no matching deleted user is found:
+               - Returns {"status": False}.
+        4. If a matching user is found:
+               - Sets `deleted_at = None` (removes soft-delete flag).
+               - Sets `is_active = False` (requires re-verification).
+               - Saves the updated user.
+               - Sends a new verification email.
+               - Returns {"status": True}.
+
+    Error Handling:
+        - If the request body is not valid JSON:
+              Returns HTTP 400 with {"status": False}.
+        - If no deleted account matches the provided email:
+              Returns {"status": False}.
+
+    Expected Behavior:
+        • A previously deleted user submits their email to restore their account.
+        • The system restores the account but requires email verification.
+        • A new verification email is sent to confirm ownership.
+
+    Example:
+        POST /restore-account/
+        Body:
+        {
+            "email": "user@example.com"
+        }
+
+    Response:
+        {
+            "status": true
+        }
+    """
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            print('DEBUG data', data)
+            email = data.get("email")
+            print('DEBUG email', email)
+        except json.JSONDecodeError:
+            return JsonResponse({"status": False}, status=400)
+
+        user = User.all_objects.filter(
+            email__iexact=email, 
+            deleted_at__isnull=False
+        ).first()
+        print('user', user)
+
+        if not user:
+            return JsonResponse({"status": False})
+
+        # Move from Deleted → Unverified
+        user.deleted_at = None
+        user.is_active = False
+        user.save()
+
+        send_verification_email(request, user)
+
+        return JsonResponse({"status": True})
+    
+# def restore_account(request):    
+#     data = json.loads(request.body)
+#     email = data.get("email")
 
 
-    user = User.all_objects.filter(email__iexact=email, deleted_at__isnull=False).first()
+#     user = User.all_objects.filter(email__iexact=email, deleted_at__isnull=False).first()
 
-    if not user:
-        return JsonResponse({"status": False})
+#     if not user:
+#         return JsonResponse({"status": False})
 
-    # Move from Deleted → Unverified
-    user.deleted_at = None
-    user.is_active = False
-    user.save()
+#     # Move from Deleted → Unverified
+#     user.deleted_at = None
+#     user.is_active = False
+#     user.save()
 
-    send_verification_email(request, user)
+#     send_verification_email(request, user)
 
-    return JsonResponse({"status": True})
-
+#     return JsonResponse({"status": True})
 
 
 

@@ -12,7 +12,7 @@ from pop_up_auction.models import (PopUpProduct, PopUpBrand, PopUpCategory, PopU
 from pop_accounts.views import (
     PersonalInfoView, AdminInventoryView, AdminDashboardView, UpdateShippingPostView, TotalOpenBidsView, 
     AccountSizesView, PendingOkayToShipView, UpdateShippingView,ViewShipmentsView, UpdateProductView, 
-    AddProductsGetView, PopUpPasswordResetRequestLog, VerifyEmailView, CompleteProfileView)
+    AddProductsGetView, PopUpPasswordResetRequestLog, VerifyEmailView, CompleteProfileView, RestoreAccountView)
 from pop_up_auction.forms import (PopUpAddProductForm, PopUpProductImageForm)
 
 from unittest.mock import patch, Mock
@@ -130,6 +130,7 @@ Tests In Order
 71. TestVerifyEmailView
 72. TestCompleteProfileView
 73. SocialLoginCompleteViewTests 
+74. TestRestoreAccountView
 """
 
 
@@ -12764,516 +12765,303 @@ class SocialLoginCompleteViewTests(TestCase):
 
 
 
-# Should be in Auction
-# class TestsProductBuyViewGET(TestCase):
-        
-#     # test correct user displayed
-#     def setUp(self):
-#         self.client = Client()
-#         self.user, self.user_profile = create_test_user(email="testuser@example.com",
-#             password="securePassword!23",
-#             first_name="Test",
-#             last_name="User",
-#             shoe_size="10",
-#             size_gender="male")
-        
-#         auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
-#         auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
-#         self.brand = create_brand("Jordan")
-#         self.category = create_category("Jordan 3", True)
-#         self.product_type = create_product_type("shoe", True)
-
-
-        
-#         self.product = create_test_product(
-#             product_type=self.product_type, 
-#             category=self.category, 
-#             product_title="Air Jordan 1 Retro", 
-#             secondary_product_title="Carolina Blue", 
-#             description="The most uncomfortable basketball shoe their is", 
-#             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-#             buy_now_price="150.00", 
-#             current_highest_bid="0", 
-#             retail_price="100", 
-#             brand=self.brand, 
-#             auction_start_date=auction_start, 
-#             auction_end_date=auction_end, 
-#             inventory_status="in_inventory", 
-#             bid_count="0", 
-#             reserve_price="0", 
-#             is_active=True)
-        
-#         self.client.login(email="testuser@example.com", password="securePassword!23")
-        
-#         request = self.client.get('/dummy/')
-#         request = request.wsgi_request
-
-#         cart = Cart(request)
-
-#         cart.add(product=self.product, qty=1)
-
-#         # Save the cart back to the test client's session
-#         session = self.client.session
-#         session.update(request.session)
-#         session.save()
+class TestRestoreAccountView(TestCase):
+    """
+    Test suite for RestoreAccountView
     
-
-#         # Create Address for user
-#         self.address = PopUpCustomerAddress.objects.create(
-#             customer = self.user,
-#             address_line = "123 Main St",
-#             apartment_suite_number = "1A",
-#             town_city = "New York",
-#             state = "NY",
-#             postcode="10001",
-#             delivery_instructions="Leave with doorman",
-#             default=True
-#         )
-
-#         self.tax_rate = get_state_tax_rate("NY")
-#         self.standard_shipping = Decimal('14.99')
-#         self.processing_fee = Decimal('2.50')
-
-
-#     def test_user_is_correct_in_view(self):
-#         self.assertEqual(self.user.first_name, "Test")
-#         self.assertEqual(self.user.last_name, "User")
-        
-
-#     def test_product_buy_view_get_correct_tax_rate_applied(self):
-#         self.assertEqual(get_state_tax_rate("NY"), 0.08375)
-#         self.assertEqual(get_state_tax_rate("FL"), 0.0)
-#         self.assertEqual(get_state_tax_rate("CA"), 0.095)
-#         self.assertEqual(get_state_tax_rate("GA"), 0.07)
-#         self.assertEqual(get_state_tax_rate("TX"), 0.0625)
-#         self.assertEqual(get_state_tax_rate("IL"), 0.0886)
-            
-
-#     def test_product_buy_view_get_basic_cart_data(self):
-#         response = self.client.get(reverse('pop_up_auction:product_buy'))
-#         self.assertEqual(response.status_code, 200)
-
-#         context = response.context
-#         cart_items = context['cart_items']
-
-#         self.assertEqual(len(cart_items), 1)
-
-#         self.assertEqual(cart_items[0]['qty'], 1)
-#         self.assertEqual(cart_items[0]['product'], self.product)
-#         self.assertIn('cart_total', context)
-#         self.assertIn('sales_tax', context)
-
-        
-#         # Test tax rate and tax calculation
-#         expected_subtotal = Decimal(self.product.buy_now_price)
-#         expected_tax = expected_subtotal * Decimal(self.tax_rate)
-#         self.assertEqual(Decimal(context['sales_tax']), expected_tax.quantize(Decimal('0.01')))
-
-#         # Test grand total calcuation
-#         expected_grand_total = expected_subtotal + expected_tax + (self.standard_shipping  * len(cart_items)) + self.processing_fee
-#         self.assertEqual(Decimal(context['grand_total']), expected_grand_total.quantize(Decimal('0.01')))
+    Tests the account restoration flow for soft-deleted users,
+    ensuring proper state transitions and verification email delivery.
+    """
     
+    def setUp(self):
+        """Set up test fixtures before each test method"""
+        self.factory = RequestFactory()
+        self.view = RestoreAccountView.as_view()
 
-    # def test_selected_address_used_if_exists(self):
-    #     # Simulate address selected in session
-    #     session = self.client.session
-    #     session['selected_address_id'] = str(self.address.id)
-    #     session.save()
+        # Create a soft-deleted user
+        self.deleted_user = User.objects.create_user(
+            email = 'deleted@example.com',
+            password = 'testPass!23',
+            first_name = 'Unverified',
+            last_name = 'User',
+        )
 
-    #     # response = self.client.get(reverse('pop_up_auction:product_buy'))
-    #     self.assertEqual(response.context['selected_address'], self.address)
-    #     self.assertEqual(response.context['address_form'].instance, self.address)
+        self.deleted_user.is_active = True
+        self.deleted_user.deleted_at=django_timezone.now()
+        self.deleted_user.save(update_fields=['is_active', 'deleted_at'])
         
-        
-
-    # def _login_and_seed_cart(self, qty: int = 1):
-    #     """Log the test client in and drop one product in to the Cart session"""
-    #     self.client.login(email=self.user.email, password=self.user.password)
-
-    #     # make a cart entry directly into the session
-    #     session = self.client.session
-    #     session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.buy_now_price)}}
-    #     session.save()
+        # Create an active (non-deleted) user
+        self.active_user = User.objects.create_user(
+            email='active@example.com',
+            password='testPass!23',
+        )
+        self.active_user.is_active=True
+        self.active_user.deleted_at=None
+        self.active_user.save(update_fields=['is_active', 'deleted_at'])
     
-    # def test_product_buy_view_get_selected_address_displayed(self):
-    #     """
-    #     If we stuff selected_address_id into session, the view shoudl surface that exact PopUpCustomerAddress
-    #     instance via context['selected_address']
-    #     """
-    #     self._login_and_seed_cart()
-
-    #     # store chosen address ID in session
-    #     session = self.client.session
-    #     session['selected_address_id'] = str(self.address.id)
-    #     session.save()
-
-    #     response = self.client.get(reverse('pop_up_auction:product_buy'))
-    #     self.assertEqual(response.status_code, 200)
-
-    #     # the view should echo back exactly *that* address as selected
-    #     self.assertIn('selected_address', response.context)
-    #     self.assertEqual(response.context['selected_address'], self.address)
-
-
-    # def test_product_buy_view_get_cart_totals_correct(self):
-    #     """
-    #     Verify subtotal, sales-tax, shipping and grand-total calculations
-    #     for 1 item at $150 (NY tax ≈ 8.375 %), $14.99 std shipping & $2.50 fee.
-    #     """
-    #     self._login_and_seed_cart()          # qty = 1
-    #     # store chosen address ID in session
-    #     session = self.client.session
-    #     session['selected_address_id'] = str(self.address.id)
-    #     session.save()
-
-    #     response = self.client.get(reverse('pop_up_auction:product_buy'))
-    #     self.assertEqual(response.status_code, 200)
-
-    #     # the view should echo back exactly *that* address as selected
-    #     self.assertIn('selected_address', response.context)
-    #     self.assertEqual(response.context['selected_address'], self.address)
-
-    
-    # def test_product_buy_view_get_cart_totals_correct(self):
-    #     """
-    #     Verify subtotal, sales-tax, shipping and grand-total calculations
-    #     for 1 item at $150 (NY tax ≈ 8.375 %), $14.99 std shipping & $2.50 fee.
-    #     """
-    #     self._login_and_seed_cart()          # qty = 1
-
-    #     response = self.client.get(reverse('pop_up_auction:product_buy'))
-    #     ctx      = response.context
-
-    #     # --- compute what we EXPECT -----------------
-    #     subtotal        = Decimal('150.00')
-    #     tax_rate        = Decimal(str(get_state_tax_rate('New York')))
-    #     expected_tax    = (subtotal * tax_rate).quantize(Decimal('0.01'), ROUND_HALF_UP)
-
-    #     shipping        = Decimal('14.99')   # 1499/100 * qty(1)
-    #     processing_fee  = Decimal('2.50')
-
-    #     expected_total  = (subtotal + expected_tax + shipping + processing_fee).quantize(
-    #                             Decimal('0.01'), ROUND_HALF_UP)
-
-    #     # --- pull what the view produced -------------
-    #     view_subtotal   = ctx['cart_subtotal']
-    #     view_tax        = Decimal(ctx['sales_tax'])
-    #     view_total      = Decimal(ctx['grand_total'])
-
-    #     # --- assertions ------------------------------
-    #     self.assertEqual(view_subtotal, subtotal)
-    #     self.assertEqual(view_tax,      expected_tax)
-    #     self.assertEqual(view_total,    expected_total)
-    
-
-    # def test_invalid_selected_address_id_fails_gracefully(self):
-    #     self._login_and_seed_cart()
-    #     session = self.client.session
-    #     session["selected_address_id"] = "99999999-0000-0000-0000-000000000000"  # invalid UUID
-    #     session.save()
-
-    #     response = self.client.get(reverse("auction:product_buy"))
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertNotContains(response, "\n<h3>Shipping to</h3>\n")  # whatever text implies success
-
-
-# Should be in pop up auction app tests
-# class ProductBuyViewPOSTTests(TestCase):
-#      # test correct user displayed
-#     def setUp(self):
-#         self.client = Client()
-#         self.user = create_test_user(email="testuser@example.com",
-#             password="securePassword!23",
-#             first_name="Test",
-#             last_name="User",
-#             shoe_size="10",
-#             size_gender="male")
+    @patch('pop_accounts.views.send_verification_email')
+    def test_restore_deleted_account_success(self, mock_send_verification):
+        """
+        Test successful restoration of a soft-deleted account.
         
-#         auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
-#         auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
-#         self.brand = create_brand("Jordan")
-#         self.category = create_category("Jordan 3", True)
-#         self.product_type = create_product_type("shoe", True)
-
-
-#         self.product = create_test_product(
-#             product_type=self.product_type, 
-#             category=self.category, 
-#             product_title="Air Jordan 1 Retro", 
-#             secondary_product_title="Carolina Blue", 
-#             description="The most uncomfortable basketball shoe their is", 
-#             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-#             buy_now_price="150.00", 
-#             current_highest_bid="0", 
-#             retail_price="100", 
-#             brand=self.brand, 
-#             auction_start_date=auction_start, 
-#             auction_end_date=auction_end, 
-#             inventory_status="in_inventory", 
-#             bid_count="0", 
-#             reserve_price="0", 
-#             is_active=True)
+        Expected behavior:
+        - deleted_at should be set to None
+        - is_active should be set to False
+        - Verification email should be sent
+        - Response should return {"status": True}
+        """
+        request = self.factory.post(
+            '/restore-account/',
+            data=json.dumps({'email': 'deleted@example.com'}),
+            content_type='application/json'
+        )
         
-#         self.client.login(email="testuser@example.com", password="securePassword!23")
+        response = self.view(request)
         
-#         request = self.client.get('/dummy/')
-#         request = request.wsgi_request
-
-#         cart = Cart(request)
-
-#         cart.add(product=self.product, qty=1)
-
-#         # Save the cart back to the test client's session
-#         session = self.client.session
-#         session.update(request.session)
-#         session.save()
+        # Assert response
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.content)
+        print('response.content', response.content)
+        self.assertTrue(response_data['status'])
+        
+        # Assert user state changed
+        self.deleted_user.refresh_from_db()
+        self.assertIsNone(self.deleted_user.deleted_at)
+        self.assertFalse(self.deleted_user.is_active)
+        
+        # Assert verification email was sent
+        mock_send_verification.assert_called_once_with(request, self.deleted_user)
     
-
-#         # Create Address for user
-#         self.address = PopUpCustomerAddress.objects.create(
-#             customer = self.user,
-#             address_line = "123 Main St",
-#             apartment_suite_number = "1A",
-#             town_city = "New York",
-#             state = "NY",
-#             postcode="10001",
-#             delivery_instructions="Leave with doorman",
-#             default=True
-#         )
-
-#         self.tax_rate = get_state_tax_rate("NY")
-#         self.standard_shipping = Decimal('14.99')
-#         self.processing_fee = Decimal('2.50')
-    
-
-#     def _login_and_seed_cart(self, qty: int = 1):
-#         """Log the test client in and drop one product in to the Cart session"""
-#         self.client.login(email=self.user.email, password=self.user.password)
-
-#         # make a cart entry directly into the session
-#         session = self.client.session
-#         session['cart'] = {str(self.product.id): {'qty': qty, 'price': str(self.product.buy_now_price)}}
-#         session.save()
-
-#     def test_post_select_existing_address_sets_session(self):
-#         self._login_and_seed_cart()
-#         post_data = {"selected_address": str(self.address.id),}
-#         response = self.client.post(reverse('pop_up_auction:product_buy'), post_data, follow=True)
-#         session = self.client.session
-
-#         self.assertEqual(response.status_code, 200)
-#         self.assertIn('selected_address_id', session)
-#         self.assertEqual(session['selected_address_id'], str(self.address.id))
-
-
-#     def test_post_update_existing_address_success(self):
-#         self._login_and_seed_cart()
-
-#         updated_data = {
-#             'address_id': self.address.id,
-#             'prefix': 'Mr.',
-#             'first_name': 'Updated',
-#             'last_name': 'Name',
-#             'address_line': '456 New Ave',
-#             'apartment_suite_number': '2B',
-#             'town_city': 'Brooklyn',
-#             'state': 'New York',
-#             'postcode': '11201',
-#             'delivery_instructions': 'New instructions',
-#         }
-
-#         response = self.client.post(reverse('pop_up_auction:product_buy'), updated_data, follow=True)
-#         self.address.refresh_from_db()
+    @patch('pop_accounts.views.send_verification_email')
+    def test_restore_with_case_insensitive_email(self, mock_send_verification):
+        """
+        Test that email matching is case-insensitive.
         
-#         self.assertEqual(response.status_code, 200)
-#         self.assertEqual(self.address.first_name, 'Updated')
-#         self.assertContains(response, 'Address updated successfully.')
-#         self.assertEqual(self.client.session['selected_address_id'], str(self.address.id))
-
-
-#     def test_post_add_new_address_success(self):
-#         self._login_and_seed_cart()
-
-#         new_data = {
-#             'prefix': 'Ms.',
-#             'first_name': 'New',
-#             'last_name': 'User',
-#             'address_line': '789 Fresh St',
-#             'apartment_suite_number': '3C',
-#             'town_city': 'Queens',
-#             'state': 'New York',
-#             'postcode': '11375',
-#             'delivery_instructions': 'Ring bell',
-#         }
-
-#         response = self.client.post(reverse('pop_up_auction:product_buy'), new_data, follow=True)
-
-#         self.assertEqual(response.status_code, 200)
-#         self.assertTrue(PopUpCustomerAddress.objects.filter(first_name='New', customer=self.user).exists())
-
-#         new_address = PopUpCustomerAddress.objects.get(first_name='New')
-#         self.assertEqual(self.client.session['selected_address_id'], str(new_address.id))
-#         self.assertContains(response, "Address added successfully")
-
-
-#     def test_post_add_new_address_invalid_form(self):
-#         self._login_and_seed_cart()
-
-#         invalid_data = {
-#             'first_name': '',  # Missing required fields
-#             'last_name': '',
-#             'postcode': '',
-#         }
-
-#         response = self.client.post(reverse('pop_up_auction:product_buy'), invalid_data)
-#         self.assertEqual(response.status_code, 200)
-#         self.assertContains(response, "Please correct the errors below.")
-
-
-#     def test_product_not_in_inventory_skipped_in_cart(self):
-#         self._login_and_seed_cart()
-
-#         # Mark product as not in inventory
-#         self.product.inventory_status = 'sold'
-#         self.product.save()
-
-#         response = self.client.get(reverse('pop_up_auction:product_buy'))
-#         cart_items = response.context['cart_items']
-
-#         self.assertEqual(len(cart_items), 0)
-
-
-#     def test_cart_is_empty_grand_total_zero(self):
-#         self.client.login(email='test@test.com', password='123Strong!')
-#         session = self.client.session
-#         session['cart'] = {}  # Empty cart
-#         session.save()
-
-#         response = self.client.get(reverse('pop_up_auction:product_buy'))
-
-#         self.assertEqual(response.context['cart_total'], 0)
-#         self.assertEqual(response.context['grand_total'], "0.00")
-
-
-# class ProductBuyGuestTest(TestCase):
-    
-#     def setUp(self):
-#         self.client = Client()
-
-#         auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
-#         auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
-#         self.brand = create_brand("Jordan")
-#         self.category = create_category("Jordan 3", True)
-#         self.product_type = create_product_type("shoe", True)
-
-#         # seed one product in session cart
-#         self.product = create_test_product(
-#             product_type=self.product_type, 
-#             category=self.category, 
-#             product_title="Air Jordan 1 Retro", 
-#             secondary_product_title="Carolina Blue", 
-#             description="The most uncomfortable basketball shoe their is", 
-#             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-#             buy_now_price="150.00", 
-#             current_highest_bid="0", 
-#             retail_price="100", 
-#             brand=self.brand, 
-#             auction_start_date=auction_start, 
-#             auction_end_date=auction_end, 
-#             inventory_status="in_inventory", 
-#             bid_count="0", 
-#             reserve_price="0", 
-#             is_active=True
-#         )
-
-#         session = self.client.session
-#         session['cart'] = {str(self.product.id) : {"qty": 1, "price": str(self.product.buy_now_price)}}
-#         session.save()
-    
-#     def test_guest_sees_cart_summary_only(self):
-#         resp = self.client.get(reverse('pop_up_auction:product_buy'))
-#         self.assertEqual(resp.status_code, 200)
-
-#         # Cart bits should be present
-#         self.assertContains(resp, self.product.product_title)
-#         self.assertContains(resp, "Subtotal")
-
-#         self.assertNotContains(resp, "Shipping Address")
-#         self.assertNotContains(resp, '<button>Sign in or create account to complete order.</button>')
-
-
-# class ProductBuyAuthTest(TestCase):
-#     def setUp(self):
-#         self.client = Client()
-#         self.user = create_test_user(email="testuser@example.com",
-#             password="securePassword!23",
-#             first_name="Test",
-#             last_name="User",
-#             shoe_size="10",
-#             size_gender="male")
+        Should successfully restore account even with different casing.
+        """
+        request = self.factory.post(
+            '/restore-account/',
+            data=json.dumps({'email': 'DELETED@EXAMPLE.COM'}),
+            content_type='application/json'
+        )
         
-#         auction_start = make_aware(datetime(2025, 6, 22, 12, 0, 0))
-#         auction_end = make_aware(datetime(2025, 6, 29, 12, 0, 0))
-#         self.brand = create_brand("Jordan")
-#         self.category = create_category("Jordan 3", True)
-#         self.product_type = create_product_type("shoe", True)
-
-
-#         self.product = create_test_product(
-#             product_type=self.product_type, 
-#             category=self.category, 
-#             product_title="Air Jordan 1 Retro", 
-#             secondary_product_title="Carolina Blue", 
-#             description="The most uncomfortable basketball shoe their is", 
-#             slug=slugify("Air Jordan 1 Retro Carolina Blue"), 
-#             buy_now_price="150.00", 
-#             current_highest_bid="0", 
-#             retail_price="100", 
-#             brand=self.brand, 
-#             auction_start_date=auction_start, 
-#             auction_end_date=auction_end, 
-#             inventory_status="in_inventory", 
-#             bid_count="0", 
-#             reserve_price="0", 
-#             is_active=True)
+        response = self.view(request)
         
-#         # Create Address for user
-#         self.address = PopUpCustomerAddress.objects.create(
-#             customer = self.user,
-#             address_line = "123 Main St",
-#             apartment_suite_number = "1A",
-#             town_city = "New York",
-#             state = "NY",
-#             postcode="10001",
-#             delivery_instructions="Leave with doorman",
-#             default=True
-#         )
-
-#         self.client.login(email="testuser@example.com", password="securePassword!23")
-
-#         # seed cart
-#         session = self.client.session
-#         session['cart'] = {str(self.product.id) : {"qty": 1, "price": str(self.product.buy_now_price)}}
-#         session.save()
+        response_data = json.loads(response.content)
+        self.assertTrue(response_data['status'])
+        
+        # Verify user was found and updated
+        self.deleted_user.refresh_from_db()
+        self.assertIsNone(self.deleted_user.deleted_at)
+        mock_send_verification.assert_called_once()
+    
+    @patch('pop_accounts.views.send_verification_email')
+    def test_restore_nonexistent_email(self, mock_send_verification):
+        """
+        Test restoration attempt with an email that doesn't exist.
+        
+        Expected behavior:
+        - Should return {"status": False}
+        - No verification email should be sent
+        """
+        request = self.factory.post(
+            '/restore-account/',
+            data=json.dumps({'email': 'nonexistent@example.com'}),
+            content_type='application/json'
+        )
+        
+        response = self.view(request)
+        
+        response_data = json.loads(response.content)
+        self.assertFalse(response_data['status'])
+        
+        # Verify no email was sent
+        mock_send_verification.assert_not_called()
+    
+    @patch('pop_accounts.views.send_verification_email')
+    def test_restore_active_user_not_deleted(self, mock_send_verification):
+        """
+        Test restoration attempt on a user who is NOT deleted.
+        
+        Expected behavior:
+        - Should return {"status": False}
+        - User state should remain unchanged
+        - No verification email should be sent
+        """
+        request = self.factory.post(
+            '/restore-account/',
+            data=json.dumps({'email': 'active@example.com'}),
+            content_type='application/json'
+        )
+        
+        response = self.view(request)
+        
+        response_data = json.loads(response.content)
+        self.assertFalse(response_data['status'])
+        
+        # Verify active user was not modified
+        self.active_user.refresh_from_db()
+        self.assertIsNone(self.active_user.deleted_at)
+        self.assertTrue(self.active_user.is_active)
+        
+        # Verify no email was sent
+        mock_send_verification.assert_not_called()
+    
+    @patch('pop_accounts.views.send_verification_email')
+    def test_invalid_json_body(self, mock_send_verification):
+        """
+        Test request with invalid JSON in the body.
+        
+        Expected behavior:
+        - Should return HTTP 400
+        - Should return {"status": False}
+        - No verification email should be sent
+        """
+        request = self.factory.post(
+            '/restore-account/',
+            data='invalid json{',
+            content_type='application/json'
+        )
+        
+        response = self.view(request)
+        
+        self.assertEqual(response.status_code, 400)
+        response_data = json.loads(response.content)
+        self.assertFalse(response_data['status'])
+        
+        # Verify no email was sent
+        mock_send_verification.assert_not_called()
+    
+    @patch('pop_accounts.views.send_verification_email')
+    def test_missing_email_field(self, mock_send_verification):
+        """
+        Test request with missing 'email' field in JSON body.
+        
+        Expected behavior:
+        - Should return {"status": False}
+        - No verification email should be sent
+        """
+        request = self.factory.post(
+            '/restore-account/',
+            data=json.dumps({'username': 'someuser'}),
+            content_type='application/json'
+        )
+        
+        response = self.view(request)
+        
+        response_data = json.loads(response.content)
+        self.assertFalse(response_data['status'])
+        
+        # Verify no email was sent
+        mock_send_verification.assert_not_called()
+    
+    @patch('pop_accounts.views.send_verification_email')
+    def test_empty_email_field(self, mock_send_verification):
+        """
+        Test request with empty email field.
+        
+        Expected behavior:
+        - Should return {"status": False}
+        - No verification email should be sent
+        """
+        request = self.factory.post(
+            '/restore-account/',
+            data=json.dumps({'email': ''}),
+            content_type='application/json'
+        )
+        
+        response = self.view(request)
+        
+        response_data = json.loads(response.content)
+        self.assertFalse(response_data['status'])
+        
+        # Verify no email was sent
+        mock_send_verification.assert_not_called()
+    
+    @patch('pop_accounts.views.send_verification_email')
+    def test_null_email_field(self, mock_send_verification):
+        """
+        Test request with null email field.
+        
+        Expected behavior:
+        - Should return {"status": False}
+        - No verification email should be sent
+        """
+        request = self.factory.post(
+            '/restore-account/',
+            data=json.dumps({'email': None}),
+            content_type='application/json'
+        )
+        
+        response = self.view(request)
+        
+        response_data = json.loads(response.content)
+        self.assertFalse(response_data['status'])
+        
+        # Verify no email was sent
+        mock_send_verification.assert_not_called()
+    
+    def test_get_request_not_allowed(self):
+        """
+        Test that GET requests are not allowed.
+        
+        Expected behavior:
+        - Should return HTTP 405 Method Not Allowed
+        """
+        request = self.factory.get('/restore-account/')
+        response = self.view(request)
+        
+        self.assertEqual(response.status_code, 405)
+    
+    def test_put_request_not_allowed(self):
+        """
+        Test that PUT requests are not allowed.
+        
+        Expected behavior:
+        - Should return HTTP 405 Method Not Allowed
+        """
+        request = self.factory.put(
+            '/restore-account/',
+            data=json.dumps({'email': 'deleted@example.com'}),
+            content_type='application/json'
+        )
+        response = self.view(request)
+        
+        self.assertEqual(response.status_code, 405)
     
     
-#     def test_authenticated_sees_checkout_controls(self):
-#         resp = self.client.get(reverse("auction:product_buy"))
-#         self.assertEqual(resp.status_code, 200)
-#         self.assertContains(resp, "Shipping Choice")
-#         self.assertContains(resp, self.address.address_line)
-#         # self.assertContains(resp, "<button>\n<i class=\'bx bxl-apple\'></i>Pay\n</button>\n")
-    
+    @patch('pop_accounts.views.send_verification_email')
+    def test_user_state_transition(self, mock_send_verification):
+        """
+        Test the complete state transition from Deleted → Unverified.
+        
+        Verifies:
+        - deleted_at transitions from timestamp → None
+        - is_active transitions from True → False
+        - Changes are persisted to database
+        """
+        # Record initial state
+        initial_deleted_at = self.deleted_user.deleted_at
+        self.assertIsNotNone(initial_deleted_at)
+        self.assertTrue(self.deleted_user.is_active)
+        
+        request = self.factory.post(
+            '/restore-account/',
+            data=json.dumps({'email': 'deleted@example.com'}),
+            content_type='application/json'
+        )
+        
+        response = self.view(request)
+        
+        # Verify state transition
+        self.deleted_user.refresh_from_db()
+        self.assertIsNone(self.deleted_user.deleted_at)
+        self.assertFalse(self.deleted_user.is_active)
+        
+        # Verify changes are different from initial state
+        self.assertNotEqual(self.deleted_user.deleted_at, initial_deleted_at)
 
-#     def test_empty_cart_totals_zero_for_guest(self):
-#         resp = self.client.get(reverse("auction:product_buy"))
-#         self.assertContains(resp, "$0.00")
-    
 
-#     def test_no_default_address_guest_graceful(self):
-#         # user with no addresses (or guest) should not 500:
-#         resp = self.client.get(reverse("auction:product_buy"))
-#         self.assertEqual(resp.status_code, 200)
 
 
 
