@@ -1567,18 +1567,23 @@ class TestWinnerReservationModel(TestCase):
     def test_cascade_delete_user(self):
         """Test that deleting user deletes reservation"""
         reservation = WinnerReservation.objects.create(
-            user=self.user,
-            product=self.product,
-            expires_at=django_timezone.now() + timedelta(hours=48)
+        user=self.user,
+        product=self.product,
+        expires_at=django_timezone.now() + timedelta(hours=48)
         )
-        
+
         reservation_id = reservation.id
+
+        # Delete profile first (because of PROTECT)
+        self.user.popupcustomerprofile.delete()
+
+        # Now delete user
         self.user.hard_delete()
-        
+
         self.assertFalse(
             WinnerReservation.objects.filter(id=reservation_id).exists()
         )
-
+        
     def test_cascade_delete_product(self):
         """Test that deleting product deletes reservation"""
         reservation = WinnerReservation.objects.create(

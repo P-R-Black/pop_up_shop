@@ -287,15 +287,26 @@ class TestPopUpCartItemModel(TestCase):
         )
         
         cart_item_id = cart_item.id
-        
-        # Use hard_delete() instead of delete() since User has soft delete
+
+        # Delete profile first (because of PROTECT)
+        self.user.popupcustomerprofile.delete()
+
+        # Now delete user
         self.user.hard_delete()
-        
-        # Cart item should be deleted
+
         self.assertFalse(
-            PopUpCartItem.objects.filter(id=cart_item_id).exists(),
-            "Cart item should be deleted when user is hard deleted"
+            PopUpCartItem.objects.filter(id=cart_item_id).exists()
         )
+
+        
+        # # Use hard_delete() instead of delete() since User has soft delete
+        # self.user.hard_delete()
+        
+        # # Cart item should be deleted
+        # self.assertFalse(
+        #     PopUpCartItem.objects.filter(id=cart_item_id).exists(),
+        #     "Cart item should be deleted when user is hard deleted"
+        # )
     
     def test_soft_delete_user_keeps_cart_items(self):
         """Test that soft deleting a user keeps their cart items."""
