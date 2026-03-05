@@ -29,34 +29,11 @@ from pop_up_payment.views import CreatePaymentIntentView
 
 from pop_up_auction.tests.conftest import (
     create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
-    create_product_type, create_category, create_brand)
+    create_product_type, create_category, create_brand, create_test_address)
 
 User = get_user_model()
 
-
-def create_test_address(customer, first_name, last_name, address_line, address_line2, 
-                       apartment_suite_number, town_city, state, postcode, 
-                       delivery_instructions, default=True, is_default_shipping=False,
-                       is_default_billing=False):
     
-    """Helper function to create customer address"""
-    return PopUpCustomerAddress.objects.create(
-        customer=customer,
-        first_name=first_name,
-        last_name=last_name,
-        address_line=address_line,
-        address_line2=address_line2,
-        apartment_suite_number=apartment_suite_number,
-        town_city=town_city,
-        state=state,
-        postcode=postcode,
-        delivery_instructions=delivery_instructions,
-        default=default,
-        is_default_shipping=is_default_shipping,
-        is_default_billing=is_default_billing
-    )
-    
-
 # Create a test view that uses the mixin
 class TestProtectedView(AjaxLoginRequiredMixin, View):
     """Test view that uses AjaxLoginRequiredMixin"""

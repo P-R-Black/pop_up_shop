@@ -18,11 +18,13 @@ sys.path.insert(0, SHARED_APPS_DIR)
 
 
 ALLOWED_HOSTS = [
-    'mysite.com', "localhost:8000",  
+    'mysite.com', 
+    "localhost:8000",  
     "localhost", 
-    "38c0db4405f5.ngrok-free.app","https://*.ngrok.io","162.243.128"
+    "b537-2600-1700-1580-da40-95ee-f24c-ab30-f44f.ngrok-free.app", 
+    "https://*.ngrok.io",
+    "162.243.128",
     ]
-
 
 
 # Database

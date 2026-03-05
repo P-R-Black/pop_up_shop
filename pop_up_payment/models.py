@@ -69,19 +69,13 @@ class PopUpPayment(models.Model):
 
     def is_suspicious(self):
         order = self.order
-        print('order', order)
-        print('order.total_paid', order.total_paid)
-        print('order.billing_address', order.billing_address)
-        print('order.shipping_address', order.shipping_address)
-
         try:
             if order.total_paid > 500:
                 return True
             if not order.billing_address or not order.shipping_address:
                 return True
-            if order.billing_address and order.shipping_address:
-                if order.billing_address.postcode != order.shipping_address.postcode:
-                    return True
+            if order.billing_address.postcode != order.shipping_address.postcode:
+                return True
             if not order.phone or '@' not in order.email:
                 return True
         except Exception as e:

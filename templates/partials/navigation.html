@@ -1,4 +1,7 @@
 {% load static %}
+{% load navigation_tags %}
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
 <nav class="sidebar">
     <header>
         <div class="image-text">
@@ -22,7 +25,7 @@
             {% endif %}
             <ul>
                 <li class="search-box">
-                    <i class='bx bx-search icon'></i>
+                    <i class='bx bx-search icon' aria-hidden="true"></i>
                     <input type="text" placeholder="Search..." aria-label="search-box" autofocus>
                 </li>
                 <li class="mobile-search-box hide-mobile-search-box">
@@ -31,52 +34,52 @@
             </ul>
             <ul class="menu-links" id="menu-links">
                 <li class="nav-link nav-link-mobile">
-                    <i class='bx bx-search icon' id="mobile-search-icon"></i>
+                    <i class='bx bx-search icon' id="mobile-search-icon" aria-hidden="true"></i>
                 </li>
                 <li class="nav-link">
                     <a href="/" aria-current="page">
-                        <i class='bx bx-home-alt icon'></i>
+                        <i class='bx bx-home-alt icon' aria-hidden="true"></i>
                         <span class="text nav-text">Home</span>
                     </a>
                 </li>
                 {% if request.user.is_authenticated and request.user.is_staff %}
                 <li class="dash-nav-link" id="dashboard-nav">
-                    <a href="{% url 'pop_accounts:dashboard_admin' %}" class="dashboard_link">
-                        <!-- <i class='bx bxs-dashboard icon'></i> -->
-                        <i class='bx bxs-user-detail icon'></i>
+                    <button type="button" aria-expanded="false" aria-controls="dashboard-submenu" aria-haspopup="true"
+                        href="{% url 'pop_accounts:dashboard_admin' %}" class="dashboard_link">
+                        <i class='bx bxs-user-detail icon' aria-hidden="true"></i>
                         <span class="text nav-text">Dashboard</span>
-                        <i class='bx bxs-chevron-down dashboard_expand' id="dashboard_expand"></i>
-                    </a>
+                        <i class='bx bxs-chevron-down dashboard_expand' id="dashboard_expand" aria-hidden="true"></i>
+                    </button>
 
 
                     <!-- Nested Menu -->
-                    <div class="nested-menu" id="dashboard-submenu">
+                    <div class="nested-menu" id="dashboard-submenu" role="region" aria-label="Dashboard submenu" hidden>
                         <!-- Accounts Category -->
                         <div class="nested-category">
                             <div class="category-header" data-category="accounts">
-                                <i class='bx bx-user icon'></i>
+                                <i class='bx bx-user icon' aria-hidden="true"></i>
                                 <span>Accounts</span>
-                                <i class='bx bxs-chevron-down category-expand'></i>
+                                <i class='bx bxs-chevron-down category-expand' aria-hidden="true"></i>
                             </div>
                             <div class="sub-menu" id="accounts-submenu">
                                 <a href="{% url 'pop_accounts:account_sizes' %}">
-                                    <i class='bx  bx-sneaker icon'></i>
+                                    <i class='bx  bx-sneaker icon' aria-hidden="true"></i>
                                     <span>Account Sizes</span>
                                 </a>
                                 <a href="{% url 'pop_accounts:most_interested' %}">
-                                    <i class="fa-regular fa-check-double icon"></i>
+                                    <i class="fa-regular fa-check-double icon" aria-hidden="true"></i>
                                     <span>Most Interested</span>
                                 </a>
                                 <a href="{% url 'pop_accounts:most_on_notice' %}">
-                                    <i class="fa-regular fa-bell icon"></i>
+                                    <i class="fa-regular fa-bell icon" aria-hidden="true"></i>
                                     <span>On Notice</span>
                                 </a>
                                 <a href="{% url 'pop_accounts:total_accounts' %}">
-                                    <i class='bx bx-group icon'></i>
+                                    <i class='bx bx-group icon' aria-hidden="true"></i>
                                     <span>Total Accounts</span>
                                 </a>
                                 <a href="{% url 'pop_accounts:total_open_bids' %}">
-                                    <i class="fa-regular fa-clock-rotate-left icon"></i>
+                                    <i class="fa-regular fa-clock-rotate-left icon" aria-hidden="true"></i>
                                     <span>Total Open Bids</span>
                                 </a>
                             </div>
@@ -85,25 +88,25 @@
                         <!-- Products Category -->
                         <div class="nested-category">
                             <div class="category-header" data-category="products">
-                                <i class='bx bx-package icon'></i>
+                                <i class='bx bx-package icon' aria-hidden="true"></i>
                                 <span>Products</span>
                                 <i class='bx bxs-chevron-down category-expand'></i>
                             </div>
                             <div class="sub-menu" id="products-submenu">
                                 <a href="{% url 'pop_accounts:add_products' %}">
-                                    <i class='bx bx-plus-circle icon'></i>
+                                    <i class='bx bx-plus-circle icon' aria-hidden="true"></i>
                                     <span>Add Products</span>
                                 </a>
                                 <a href="{% url 'pop_accounts:enroute' %}">
-                                    <i class='bx bx-trip icon'></i>
+                                    <i class='bx bx-trip icon' aria-hidden="true"></i>
                                     <span>En Route</span>
                                 </a>
                                 <a href="{% url 'pop_accounts:inventory_admin' %}">
-                                    <i class='bx bx-cabinet icon'></i>
+                                    <i class='bx bx-cabinet icon' aria-hidden="true"></i>
                                     <span>Inventory</span>
                                 </a>
                                 <a href="{% url 'pop_accounts:update_product' %}">
-                                    <i class='bx bx-edit icon'></i>
+                                    <i class='bx bx-edit icon' aria-hidden="true"></i>
                                     <span>Update Product</span>
                                 </a>
                             </div>
@@ -111,13 +114,13 @@
                         <!-- Sales Category -->
                         <div class="nested-category">
                             <div class="category-header" data-category="sales">
-                                <i class="fa-regular fa-money-check-dollar icon"></i>
+                                <i class="fa-regular fa-money-check-dollar icon" aria-hidden="true"></i>
                                 <span>Sales</span>
-                                <i class='bx bxs-chevron-down category-expand'></i>
+                                <i class='bx bxs-chevron-down category-expand' aria-hidden="true"></i>
                             </div>
                             <div class="sub-menu" id="sales-submenu">
                                 <a href="{% url 'pop_accounts:sales_admin'%}">
-                                    <i class="fa-light fa-money-bill icon"></i>
+                                    <i class="fa-light fa-money-bill icon" aria-hidden="true"></i>
                                     <span>Sales</span>
                                 </a>
                             </div>
@@ -125,17 +128,17 @@
                         <!-- Shipping Category -->
                         <div class="nested-category">
                             <div class="category-header" data-category="shipping">
-                                <i class='bx bx-send icon'></i>
+                                <i class='bx bx-send icon' aria-hidden="true"></i>
                                 <span>Shipping</span>
-                                <i class='bx bxs-chevron-down category-expand'></i>
+                                <i class='bx bxs-chevron-down category-expand' aria-hidden="true"></i>
                             </div>
                             <div class="sub-menu" id="shipping-submenu">
                                 <a href="{% url 'pop_accounts:shipments' %}">
-                                    <i class='bx  bx-truck icon'></i>
+                                    <i class='bx  bx-truck icon' aria-hidden="true"></i>
                                     <span>Shipments</span>
                                 </a>
                                 <a href="{% url 'pop_accounts:update_shipping' %}">
-                                    <i class='bx bx-edit-alt icon'></i>
+                                    <i class='bx bx-edit-alt icon' aria-hidden="true"></i>
                                     <span>Update Shipping</span>
                                 </a>
                             </div>
@@ -145,44 +148,55 @@
 
                 {% elif request.user.is_authenticated %}
                 <li class="nav-link">
-                    <a href="{% url 'pop_accounts:dashboard' %}">
-                        <!-- <i class='bx bxs-dashboard icon'></i> -->
-                        <i class='bx bxs-user-detail icon'></i>
+
+                    <a href="{% url 'pop_accounts:dashboard' %}" {% active_page 'pop_accounts:dashboard' %}>
+                        <i class='bx bxs-user-detail icon' aria-hidden="true"></i>
                         <span class="text nav-text">Dashboard</span>
                     </a>
+                    {% comment %}
+                    <a href="{% url 'pop_accounts:dashboard' %}">
+
+                        <!-- <i class='bx bxs-dashboard icon'></i> -->
+
+                        <i class='bx bxs-user-detail icon' aria-hidden="true"></i>
+                        <span class="text nav-text">Dashboard</span>
+                    </a>
+                    {% endcomment %}
                 </li>
                 {% endif %}
                 <li class="nav-link">
-                    <a href="{% url 'pop_up_auction:products' %}">
-                        <i class='bx bx-package icon'></i>
+                    <a href="{% url 'pop_up_auction:products' %}" {% active_page 'pop_up_auction:products' %}>
+                        <i class='bx bx-package icon' aria-hidden="true"></i>
                         <span class="text nav-text">Products</span>
                     </a>
                 </li>
                 <li class="nav-link">
-                    <a href="{% url 'pop_up_auction:auction' %}">
-                        <i class="fa-solid fa-gavel icon"></i>
+                    <a href="{% url 'pop_up_auction:auction' %}" {% active_page 'pop_up_auction:auction' %}>
+                        <i class="fa-solid fa-gavel icon" aria-hidden="true"></i>
                         <span class="text nav-text">Auction</span>
                     </a>
                 </li>
                 <li class="nav-link">
-                    <a href="{% url 'pop_up_auction:coming_soon' %}">
-                        <i class="fa-solid fa-bullhorn icon"></i>
+                    <a href="{% url 'pop_up_auction:coming_soon' %}" {% active_page 'pop_up_auction:coming_soon' %}>
+                        <i class="fa-solid fa-bullhorn icon" aria-hidden="true"></i>
                         <span class="text nav-text">Coming Soon</span>
                     </a>
                 </li>
                 <li class="nav-link">
-                    <a href="{% url 'pop_up_auction:future_releases' %}">
-                        <i class='bx bxs-calendar icon'></i>
+                    <a href="{% url 'pop_up_auction:future_releases' %}" {% active_page 'pop_up_auction:future_releases'
+                        %}>
+                        <i class='bx bxs-calendar icon' aria-hidden="true"></i>
                         <span class="text nav-text">Future Releases</span>
                     </a>
                 </li>
                 <li class="nav-link">
-                    <a type="button" role="button" href="{% url 'pop_up_payment:payment_home' %}">
-
-                        <i class='bx bx-cart icon'></i>
+                    <a href="{% url 'pop_up_payment:payment_home' %}" {% active_page 'pop_up_payment:payment_home' %}
+                        type="button" role="button">
+                        <i class='bx bx-cart icon' aria-hidden="true"></i>
                         <span class="text nav-text">Cart</span>
                         {% with total_qty=cart|length %}
-                        <div class="cart_qty" id="cart_qty">
+                        <div class="cart_qty" id="cart_qty" aria-live="polite" aria-atomic="true"
+                            aria-label="Imtes in cart">
                             {% if total_qty > 0 %}
                             {{ total_qty }}
                             {% else %}
@@ -193,8 +207,8 @@
                     </a>
                 </li>
                 <li class="nav-link inviteFriendBtn">
-                    <button>
-                        <i class='bx bx-mail-send icon'></i>
+                    <button type="button" aria-haspopup="dialog" aria-label="Invite a friend to join">
+                        <i class='bx bx-mail-send icon' aria-hidden="true"></i>
                         <span class="text nav-text">Invite a Friend</span>
                     </button>
                 </li>
@@ -203,16 +217,16 @@
                 <form action="{% url 'pop_accounts:logout' %}" method="POST" id="logout_form">
                     {% csrf_token %}
                     <li class="nav-link">
-                        <button>
-                            <i class='bx bx-log-out icon'></i>
+                        <button type="submit">
+                            <i class='bx bx-log-out icon' aria-hidden="true"></i>
                             <span class="text nav-text">Log out</span>
                         </button>
                     </li>
                 </form>
                 {% else %}
                 <li class="signUpModalBtn" id="login_button">
-                    <button>
-                        <i class='bx bx-log-in icon'></i>
+                    <button type="button" aria-haspopup="dialog" aria-label="Open login and registraton modal">
+                        <i class='bx bx-log-in icon' aria-hidden="true"></i>
                         <span class="text nav-text">Log in</span>
                     </button>
                 </li>
@@ -221,15 +235,15 @@
                 {% if not request.user.is_authenticated %}
                 <li class="signUpModalBtn" id="signup_button">
                     <a href="#">
-                        <i class='bx bx-user-plus icon'></i>
+                        <i class='bx bx-user-plus icon' aria-hidden="true"></i>
                         <span class="text nav-text">Sign Up</span>
                     </a>
                 </li>
                 {% endif %}
                 <li class="mode">
                     <div class="moon-sun">
-                        <i class='bx bx-moon icon moon'></i>
-                        <i class='bx bx-sun icon sun'></i>
+                        <i class='bx bx-moon icon moon' aria-hidden="true"></i>
+                        <i class='bx bx-sun icon sun' aria-hidden="true"></i>
                     </div>
                     <span class="mode-text text">Dark Mode</span>
                     <div class="toggle-switch">
@@ -237,18 +251,26 @@
                     </div>
                 </li>
                 <li class="mobile-mode" id="mobile-moon-sun">
-                    <i class='bx bx-moon icon mobile-moon'></i>
-                    <i class='bx bx-sun icon mobile-sun'></i>
+                    <i class='bx bx-moon icon mobile-moon' aria-hidden="true"></i>
+                    <i class='bx bx-sun icon mobile-sun' aria-hidden="true"></i>
                 </li>
             </ul>
         </div>
     </div>
+
+    {% comment %}
     <!-- Start of Sign Up Modal -->
-    <div class="sign_up_modal fade" id="signUpModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true">
+    {% endcomment %}
+
+    <div class="sign_up_modal fade" id="signUpModal" tabindex="-1" aria-labelledby="bidModalLabel" aria-hidden="true"
+        role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="sign_up_modal_content">
+            <div class="visually-hidden" id="modalAnnouncer" aria-atomic="true" aria-live="polite"></div>
             <div class="modal_header">
                 <div class="empty_div"></div>
-                <button type="button" class="btn-close closeSignUpModal" aria-label="Close">X</button>
+                <button type="button" class="btn-close closeSignUpModal" aria-label="Close modal">
+                    <span aria-hidden="true">X</span>
+                </button>
             </div>
             <div class="sign_up_pic_form_container">
                 <div class="sign_up_image_container">
@@ -256,62 +278,84 @@
                         alt="{{ image.image.alt_text}}" />
                 </div>
                 <div class="interntal_sign_up_container">
+                    {% comment %}
+                    <!-- Sign-in / Registration Options -> Facebook, Google, Email -->
+                    {% endcomment %}
                     <div class="sign_up_title_options_container show_container">
-                        <div class="sign_up_modal_title">
-                            <h3>Log in or sign up in seconds</h3>
-                            <p>Use your email or another service to contine with The Pop Up (It's Free).</p>
-                        </div>
-                        <div class="sign_up_options_container">
-                            <input type="hidden" id="googleLoginUrl" value="{% url 'social:begin' 'google-oauth2' %}">
-                            <button class="sign_up_option_buttons googleSignUpButton" id="googleSignUpButton">
-                                <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
-                                <p>Continue with Google</p>
-                            </button>
+                        <div class="modal_screen_inner">
+                            <div class="sign_up_modal_title">
+                                <h3>Log in or sign up in seconds</h3>
+                                <p>Use your email or another service to contine with The Pop Up (It's Free).</p>
+                            </div>
+                            <div class="sign_up_options_container">
+                                <input type="hidden" id="googleLoginUrl"
+                                    value="{% url 'social:begin' 'google-oauth2' %}">
+                                <button class="sign_up_option_buttons googleSignUpButton" id="googleSignUpButton">
+                                    <img src="{% static 'img/g_icon.svg' %}" class='g-logo' />
+                                    <p>Continue with Google</p>
+                                </button>
 
-                            <input type="hidden" id="facebookLoginUrl" value="{% url 'social:begin' 'facebook' %}">
-                            <button class="sign_up_option_buttons facebookSignUpButton" id="facebookSignUpButton">
-                                <img src="{% static 'img/facebook.svg' %}" class='g-logo' />
+                                <input type="hidden" id="facebookLoginUrl" value="{% url 'social:begin' 'facebook' %}">
+                                <button class="sign_up_option_buttons facebookSignUpButton" id="facebookSignUpButton">
+                                    <img src="{% static 'img/facebook.svg' %}" class='g-logo' />
+                                    <p> Continue with Facebook</p>
+                                </button>
+                                <button class="sign_up_option_buttons emailSignUpButton">
+                                    <i class='bx bx-envelope icon'></i>
+                                    <p> Continue with email</p>
+                                </button>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to
+                                    <a href="{% url 'pop_up_home:terms' %}">The Pop Up's Terms of Use</a>.
+                                    <a href="{% url 'pop_up_home:privacy' %}">Read our Privacy Policy</a>.
 
-                                <p> Continue with Facebook</p>
-                            </button>
-                            <button class="sign_up_option_buttons emailSignUpButton">
-                                <i class='bx bx-envelope icon'></i>
-                                <p> Continue with email</p>
-                            </button>
-                        </div>
-                        <div class="sign_up_modal_policy">
-                            <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.
-                            </p>
+                                </p>
+                            </div>
                         </div>
                     </div>
+                    {% comment %}
+                    <!-- Email Check, if on file, go to password, if not on file go to registration -->
+                    {% endcomment %}
                     <div class="email_verification_container hide_container">
-                        <div class="email_sign_up_modal_title">
-                            <div class="email_sign_up_modal_container">
-                                <i class='bx bx-chevron-left backChevron' id='backChevron'
-                                    onclick="moveBackwardSignInButton('show_email_verification_container', 'hide_container', 'hide_container', 'show_container', '.email_verification_container', '.sign_up_title_options_container')"></i>
-                                <h3>Continue with email</h3>
+                        <div class="modal_screen_inner">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <button type="button" class="back_button" aria-label="Go back to previous step"
+                                        onclick="newMoveBackwardSignIn('.email_verification_container', '.sign_up_title_options_container')">
+                                        <i class='bx bx-chevron-left backChevron' id='backChevron'
+                                            aria-hidden="true"></i>
+                                        <span class="visually-hidden">Back</span>
+                                    </button>
+                                    <h3 id="emailVerificationTitle">Continue with email</h3>
+                                </div>
+                                <p>We'll check if you have an account and help you create one if you don't.</p>
                             </div>
+                            <div class="sign_up_options_container">
+                                <form action="{% url 'pop_accounts:check_email' %}" method="POST"
+                                    class="sign_up_options_form" aria-labelledby="emailVerificationTitle">
+                                    {% csrf_token %}
 
-                            <p>We'll check if you have an account and help you create one if you don't.</p>
-                        </div>
-                        <div class="sign_up_options_container">
-                            <form action="{% url 'pop_accounts:check_email' %}" method="POST"
-                                class="sign_up_options_form">
-                                {% csrf_token %}
+                                    {% if email_form.errors %}
+                                    <div role="alert" aria-live="assertive" class="error-message">
+                                        <strong>Error:</strong>Incorrect Username or Password!
+                                    </div>
+                                    {% endif %}
 
-                                {% if email_form.errors %}
-                                <div role="alert">Error: Incorrect Username or Password!</div>
-                                {% endif %}
+                                    <label for="id_email" class="visually-hidden">Email Address</label>
+                                    {{ email_form.email }}
 
-                                {{ email_form.email }}
-
-                                <button type="submit" class="button_small_white emailSubmitButton" id="emailContinueBtn"
-                                    disabled>Continue</button>
-                            </form>
-                        </div>
-                        <div class="sign_up_modal_policy">
-                            <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.
-                            </p>
+                                    <button type="submit" class="button_small_white emailSubmitButton"
+                                        id="emailContinueBtn" aria-disabled="true" disabled>Continue
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to
+                                    <a href="{% url 'pop_up_home:terms' %}"> The Pop Up's Terms of Use</a>.
+                                    <a href="{% url 'pop_up_home:privacy'%}">Read our Privacy Policy</a>.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -320,41 +364,61 @@
                     register_by_email_container
                     {% endcomment %}
 
-                    <div class="register_by_email_container hide_register_by_email_container">
-                        <div class="email_sign_up_modal_title">
-                            <div class="email_sign_up_modal_container">
-                                <i class='bx bx-chevron-left backChevron'
-                                    onclick="moveBackwardSignInButton('show_register_by_email_container', 'hide_register_by_email_container', 'shift_left', 'show_email_verification_container', '.register_by_email_container', '.email_verification_container')"></i>
-                                {% comment %}
-                                moveBackwardSignInButton(removeShowThisContainer, addHideForThisContainer,
-                                removeNextClass, addNextClass, nameOfContainerToHide,
-                                nameOfContainerToShow) {% endcomment %}
-                                <h3>Create account with</h3>
+                    <div class="register_by_email_container hide_container">
+                        <div class="modal_screen_inner">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <button type="button" class="back_button" aria-label="Go back to previous step"
+                                        onclick="newMoveBackwardSignIn('.register_by_email_container', '.email_verification_container')">
+                                        <i class='bx bx-chevron-left backChevron' aria-hidden="true"></i>
+                                        <span class="visually-hidden">Back</span>
+                                    </button>
+                                    <h3 id="emailRegistrationTitle">Create account with</h3>
+                                </div>
+
+                                <p class="email_provided_signin_popup"></p>
+                                <div class="registration_form_errors"
+                                    style="color: red; display: none; margin-bottom: 4px; font-size: 16px;">
+                                </div>
                             </div>
+                            <div class="sign_up_options_form_container">
 
-                            <p class="email_provided_signin_popup"></p>
-                            <div class="registration_form_errors"
-                                style="color: red; display: none; margin-bottom: 4px; font-size: 16px;">
+                                <form action="{% url 'pop_accounts:register' %}" method="POST"
+                                    class="registration_options_form" aria-labelledby="emailRegistrationTitle">
+                                    {% csrf_token %}
+
+                                    <label for="id_email" class="visually-hidden">Email address</label>
+                                    {{ registration_form.email }}
+                                    <label for="id_first_name" class="visually-hidden">First Name</label>
+                                    {{ registration_form.first_name }}
+
+                                    <div class="password-field-wrapper">
+                                        <label for="id_reg_password" class="visually-hidden">Password</label>
+                                        {{ registration_form.password }}
+                                        <button type="button" class="toggle-password" data-target="id_reg_password"
+                                            aria-label="Show password" aria-pressed="false">
+                                            <i class="bx bx-show" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="password-field-wrapper">
+                                        <label for="id_reg_conf_password" class="visually-hidden">Password
+                                            Confirmation</label>
+                                        {{ registration_form.password2 }}
+                                        <button type="button" class="toggle-password" data-target="id_reg_conf_password"
+                                            aria-label="Show password confirmation" aria-pressed="false">
+                                            <i class="bx bx-show" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+
+                                    <button type="submit"
+                                        class="button_small_white registrationSubmitButton">Submit</button>
+                                </form>
                             </div>
-                        </div>
-                        <div class="sign_up_options_form_container">
-
-                            <form action="{% url 'pop_accounts:register' %}" method="POST"
-                                class="registration_options_form">
-                                {% csrf_token %}
-
-                                {{ registration_form.email }}
-                                {{ registration_form.first_name }}
-                                {{ registration_form.password }}
-                                {{ registration_form.password2 }}
-
-                                <button type="submit"
-                                    class="button_small_white registrationSubmitButton">Submit</button>
-                            </form>
-                        </div>
-                        <div class="sign_up_modal_policy">
-                            <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.
-                            </p>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -362,146 +426,220 @@
                     After user registers by email
                     {% endcomment %}
 
-                    <div class="register_by_email_complete_container hide_register_by_email_complete_container">
-                        <div class="email_sign_up_modal_title">
-                            <div class="email_sign_up_modal_container">
-                                <h3>Check your email</h3>
+                    <div class="register_by_email_complete_container hide_container">
+                        <div class="modal_screen_inner">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <h3 id="emailCheckTitle">Check your email</h3>
+                                </div>
                             </div>
-                        </div>
-                        <div class="registration_notice_container">
-                            <h2>We've sent you a message to complete your registration.</h2>
-                            <h3>You can close this window.</h3>
-                        </div>
-                        <div class="sign_up_modal_policy">
-                            <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.
-                            </p>
+                            <div class="registration_notice_container">
+                                <h2>We've sent you a message to complete your registration.</h2>
+                                <h3>You can close this window.</h3>
+                            </div>
+                            <div class="sign_up_modal_policy">
+                                <p>By continuing you agree to The Pop Up's Terms of Use. Read our Privacy Policy.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="email_login_container hide_email_login_container">
-                        <div class="email_sign_up_modal_title">
-                            <div class="email_sign_up_modal_container">
-                                <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronThree'
-                                    onclick="moveBackwardSignInButton('show_email_login_container', 'hide_email_login_container', 'shift_left', 'show_email_verification_container', '.email_login_container', '.email_verification_container')"></i>
-                                <h3>Login</h3>
+                    <div class="email_login_container hide_container">
+                        <div class="modal_screen_inner">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <button type="button" class="back_button" aria-label="Go back to previous step"
+                                        onclick="newMoveBackwardSignIn('.email_login_container', '.email_verification_container')">
+                                        <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronThree'
+                                            aria-hidden="true"></i>
+                                        <span class="visually-hidden">Back</span>
+                                    </button>
+                                    <h3 id="emailLoginTitle">Login</h3>
+                                </div>
+                            </div>
+                            <div class="sign_up_options_container">
+                                <form action="{% url 'pop_accounts:user_login' %}" method="POST"
+                                    class="sign_up_options_form" aria-labelledby="emailLoginTitle">
+                                    {% csrf_token %}
+
+                                    {% if password_form.errors %}
+                                    <div role="alert">Error: Incorrect Username or Password!</div>
+                                    {% endif %}
+
+                                    <p class="email_provided_signin_popup"></p>
+
+                                    <div class="password-field-wrapper">
+                                        <label for="id_password_only" class="visually-hidden">Password</label>
+                                        {{ password_form.password }}
+
+                                        <button type="button" class="toggle-password" aria-label="Show password"
+                                            data-target="id_password_only" aria-pressed="false">
+                                            <i class="bx bx-show" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <button type="submit" class="button_small_white loginSubmitButton"
+                                        id="passwordSubmitBtn" disabled>Submit</button>
+                                </form>
+                            </div>
+                            <div class="login_user_options_error_container">
+                                <p class="login_user_options_error" style="color: red; display: none;"> </p>
+                            </div>
+                            <div class="login_user_options_container">
+                                <a class="passwordForgetLink" href="#">Forgot Password</a>
                             </div>
                         </div>
-                        <div class="sign_up_options_container">
-                            <form action="{% url 'pop_accounts:user_login' %}" method="POST"
-                                class="sign_up_options_form">
-                                {% csrf_token %}
-
-                                {% if password_form.errors %}
-                                <div role="alert">Error: Incorrect Username or Password!</div>
-                                {% endif %}
-
-                                <p class="email_provided_signin_popup"></p>
-                                {{ password_form.password }}
-
-                                <button type="submit" class="button_small_white loginSubmitButton"
-                                    id="passwordSubmitBtn" disabled>Submit</button>
-                            </form>
-                        </div>
-                        <div class="login_user_options_error_container">
-                            <p class="login_user_options_error" style="color: red; display: none;"> </p>
-                        </div>
-                        <div class="login_user_options_container">
-                            <a class="passwordForgetLink" href="#">Forgot Password</a>
-                        </div>
                     </div>
-
 
                     {% comment %}
                     if "forgotton password" selected show this slide
                     {% endcomment %}
-                    <div class="forgot_password_container hide_forgot_password_container">
+                    <div class="forgot_password_container hide_container">
                         <div class="email_sign_up_modal_title">
                             <div class="email_sign_up_modal_container">
-                                <i class='bx bx-chevron-left backChevron'
-                                    onclick="moveBackwardSignInButton('show_forgot_password_container', 'hide_forgot_password_container', 'hide_email_login_container_to_left', 'show_email_login_container', '.forgot_password_container', '.email_login_container')"></i>
-
-                                <h3>Forgot your password?</h3>
+                                <button type="button" class="back_button" aria-label="Go back to previous step"
+                                    onclick="newMoveBackwardSignIn('.forgot_password_container', '.email_login_container')">
+                                    <i class='bx bx-chevron-left backChevron' aria-hidden="true"></i>
+                                    <span class="visually-hidden">Back</span>
+                                </button>
+                                <h3 id="passwordForgottenTitle">Forgot your password?</h3>
                             </div>
 
                             <p>No problem. Enter your email, press continue, and then check your email.</p>
                             <p>We've sent you a message to help you reset your password.</p>
                         </div>
                         <div class="forgot_password_options_container">
-                            <form action="" method="POST" class="password_reset_sign_up_options_form">
+                            <form action="" method="POST" class="password_reset_sign_up_options_form"
+                                aria-labelledby="passwordForgottenTitle">
                                 {% csrf_token %}
 
                                 {% if email_password_reset_form.errors %}
                                 <div role="alert">Error: Email not on file!</div>
                                 {% endif %}
 
+                                <label for="email_password_reset_form" class="visually-hidden">Email</label>
                                 {{ email_password_reset_form.email }}
 
                                 <button type="submit" class="button_small_white resetPasswordBtn" id="resetPasswordBtn"
                                     disabled>Continue</button>
                             </form>
-                            <div id="resetSpinner" style="display: none; text-align: center; margin-top: 10px;">
-                                <div class="spinner"></div>
+                            <div class="password-reset-error" role="alert" aria-live="assertive"
+                                style="color: red; display: none; margin-top: 1rem">
+
+                            </div>
+                            <div id="resetSpinner" style="display: none; text-align: center; margin-top: 10px;"
+                                role="status" aria-live="polite">
+                                <div class="spinner" aria-hidden="true"></div>
+                                <span class="visually-hidden">Sending reset email...</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="sign_up_email_confirm_container hide_sign_up_email_confirm_container">
-                        <div class="email_sign_up_modal_title">
-                            <div class="email_sign_up_modal_container">
-                                <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronSix'
-                                    data-attribute="" {% comment %}
-                                    moveBackwardSignInButton(removeThisClass,addThisClass, removeNextClass,
-                                    addNextClass, nameOfContainerToHide, nameOfContainerToShow) {% endcomment %}
-                                    onclick="moveBackwardSignInButton('show_sign_up_email_confirm_container', 'hide_sign_up_email_confirm_container', 'hide_email_login_container_to_left', 'show_email_login_container', '.sign_up_email_confirm_container', '.email_login_container')"></i>
-                                <h3>Confirmation</h3>
-                            </div>
-                        </div>
-                        <div class="comfirmation_input_container">
-                            <div class="confirmation_input_container_text">
-                                <p>A confirmation code has been sent to your email.</p>
-                                <p>Enter confirmation code below.</p>
-                                <p><span id="code_timer">05:00</span></p>
-                            </div>
+                    <div class="sign_up_email_confirm_container hide_container">
+                        <div class="modal_screen_inner">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <button type="button" class="back_button" aria-label="Go back to previous step"
+                                        onclick="newMoveBackwardSignIn('.sign_up_email_confirm_container', '.email_login_container')">
+                                        <i class='bx bx-chevron-left backChevron' id='confirmContainerBackChevronSix'
+                                            data-hidden="true"></i>
+                                        <span class="visually-hidden">Back</span>
 
-                            <form method="post">
-                                {% csrf_token %}
-                                <div class="confirmation_input">
-                                    <input class="code-input" type="number" maxlength="1">
-                                    <input class="code-input" type="number" maxlength="1">
-                                    <input class="code-input" type="number" maxlength="1">
-                                    <input class="code-input" type="number" maxlength="1">
-                                    <input class="code-input" type="number" maxlength="1">
-                                    <input class="code-input" type="number" maxlength="1">
+                                    </button>
+                                    <h3 id="confirmationTitle">Confirmation</h3>
                                 </div>
-                                <button type="button" class="button_small_white confirm_submit_button"
-                                    id="confirmSubmitBtn">Submit
-                                </button>
-                            </form>
-                            <div class="resend_request_container">
-                                <div class="inner_resend_request_container">
-                                    <p>Didn’t get the code? </p>
-                                    <a class="button_medium_white" href="#" id="resend_code_link">Resend Code
-                                    </a>
-
-                                </div>
-                                <p id="resend_status_message" style="color: green; display: none;"></p>
                             </div>
+                            <div class="comfirmation_input_container">
+                                <div class="confirmation_input_container_text">
+                                    <p>A confirmation code has been sent to your email.</p>
+                                    <p>Enter confirmation code below.</p>
+                                    <p><span id="code_timer">05:00</span></p>
+                                </div>
+
+                                <form method="post" aria-labelledby="confirmationTitle">
+                                    {% csrf_token %}
+                                    <div class="confirmation_input" role="group"
+                                        aria-label="Enter 6-digit confirmation code">
+
+                                        <label for="code-1" class="visually-hidden">Digit 1</label>
+                                        <input id="code-1" class="code-input" type="text" inputmode="numberic"
+                                            maxlength="1" pattern="[0-9]" aria-label="Digit 1" required>
+
+                                        <label for="code-2" class="visually-hidden">Digit 2</label>
+                                        <input id="code-2" class="code-input" type="text" inputmode="numeric"
+                                            maxlength="1" pattern="[0-9]" aria-label="Digit 2" required>
+
+                                        <label for="code-3" class="visually-hidden">Digit 3</label>
+                                        <input id="code-3" class="code-input" type="text" inputmode="numeric"
+                                            maxlength="1" pattern="[0-9]" aria-label="Digit 3" required>
+
+                                        <label for="code-4" class="visually-hidden">Digit 4</label>
+                                        <input id="code-4" class="code-input" type="text" inputmode="numeric"
+                                            maxlength="1" pattern="[0-9]" aria-label="Digit 4" required>
+
+                                        <label for="code-5" class="visually-hidden">Digit 5</label>
+                                        <input id="code-5" class="code-input" type="text" inputmode="numeric"
+                                            maxlength="1" pattern="[0-9]" aria-label="Digit 5" required>
+
+                                        <label for="code-6" class="visually-hidden">Digit 6</label>
+                                        <input id="code-6" class="code-input" type="text" inputmode="numeric"
+                                            maxlength="1" pattern="[0-9]" aria-label="Digit 6" required>
+                                    </div>
+                                    <button type="submit" class="button_small_white confirm_submit_button"
+                                        id="confirmSubmitBtn">Submit
+                                    </button>
+                                </form>
+                                <div class="resend_request_container">
+                                    <div class="inner_resend_request_container">
+                                        <p>Didn’t get the code? </p>
+                                        <a class="button_medium_white" href="#" id="resend_code_link">Resend Code
+                                        </a>
+                                    </div>
+                                    <p id="resend_status_message" style="color: green; display: none;" role="status"
+                                        aria-live="polite"></p>
+                                </div>
+                            </div>
+                            <div class="empty_div"></div>
                         </div>
-                        <div class="empty_div"></div>
                     </div>
                     <!-- After forgot password continue button hit -->
                     {% comment %}
                     if "after forgotton password" tells to check email for link.
                     {% endcomment %}
-                    <div class="forgot_password_email_check_container hide_forgot_password_email_check_container">
-                        <div class="email_sign_up_modal_title">
-                            <div class="email_sign_up_modal_container">
-                                <h3>Everything went as planned</h3>
-                            </div>
+                    <div class="forgot_password_email_check_container hide_container">
+                        <div class="modal_screen_inner">
+                            <div class="email_sign_up_modal_title">
+                                <div class="email_sign_up_modal_container">
+                                    <h3 id="passwordResetContainerTitle">Everything went as planned</h3>
+                                </div>
 
-                            <p>You've been sent an email.</p>
-                            <p>To reset your password, follow the instructions in th email.</p>
-                            <p>You can close this window.</p>
+                                <p>You've been sent an email.</p>
+                                <p>To reset your password, follow the instructions in the email.</p>
+                                <p>You can close this window.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- User has deleted their account, but now wants to register again  -->
+                    <div class="restore_deleted_account_container hide_container">
+                        <div class="modal_screen_inner">
+                            <div class="restore_deleted_container">
+                                <div class="inactive_found_notice">
+                                    <h2 id="accountRestoreContainerTitle">We found a previously deleted account using
+                                        this
+                                        email.</h2>
+                                </div>
+
+                                <div class="">
+                                    <h3>Would you like to restore this account?</h3>
+                                    <div class="restore_deleted_options_container">
+                                        <button type="button" class="button_small" id="restoreDeletedAccount">
+                                            Yes
+                                        </button>
+                                        <button type="button" class="button_small"
+                                            onclick="moveBackwardSignInButton('show_restore_deleted_account_container', 'hide_restore_deleted_account_container', 'shift_left', 'show_email_verification_container', '.restore_deleted_account_container', '.email_verification_container')">No
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

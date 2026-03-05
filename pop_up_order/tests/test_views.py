@@ -669,26 +669,6 @@ class TestAdminOrderDetailView(TestCase):
         )
         
         # Create test order
-        """
-        self.order = PopUpCustomerOrder.objects.create(
-            user=self.user1,
-            email=self.user1.email,
-            billing_status=True,
-            address1="111 Test St",
-            city="New York",
-            state="NY",
-            postal_code="10001",
-            total_paid="100.00"
-        )
-        PopUpOrderItem.objects.create(
-            order=minimal_order,
-            product=self.test_product_one,
-            product_title="Past Bid Product 1",
-            quantity=1,
-            price=Decimal('170.00')
-        )
-
-        """
         self.order = PopUpCustomerOrder.objects.create(
             user=self.user,
             email=self.user.email,

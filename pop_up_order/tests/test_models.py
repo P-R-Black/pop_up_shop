@@ -404,7 +404,6 @@ class TestPopUpCustomerOrderModel(TestCase):
         )
         
         order_id = order.id
-        # self.user.hard_delete()        
 
         # Delete profile first (because of PROTECT)
         self.user.popupcustomerprofile.delete()
@@ -415,8 +414,7 @@ class TestPopUpCustomerOrderModel(TestCase):
         self.assertFalse(
             PopUpCustomerOrder.objects.filter(id=order_id).exists()
         )
-        # with self.assertRaises(PopUpCustomerOrder.DoesNotExist):
-        #     PopUpCustomerOrder.objects.get(id=order_id)
+   
 
     def test_set_null_on_address_delete(self):
         """Test that address fields are set to null when address is deleted"""

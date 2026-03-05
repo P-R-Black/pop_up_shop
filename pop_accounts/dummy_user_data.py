@@ -140,7 +140,7 @@ test_account_data = [
         "delivery_instructions": "",
     },{
         "id": "3333000990",
-        "email": "CBarton@avengers.com",
+        "email": "CBarton@avengers.com", 
         "password": 'spotonDtarget0^',
         "first_name":"Clinton",
         "middle_name":"F",
@@ -278,3 +278,7 @@ test_account_data = [
         "is_active": True
     },
 ]
+
+
+# mightymouse@acme.com 
+# 1BigMouse$$$

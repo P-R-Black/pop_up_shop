@@ -1,5 +1,16 @@
 // Sign-in / Registration modal flow
-// registred user, email sign-in | - sign-in option (google, facebook, email) -> enter email -> enter password -> enter 6-digit code from email
+/*
+   Modal Flow:
+   1. Initial Screen (signUpTitleOptionsContainer)
+      ├→ Email Verification (emailVerificationContainer)
+         ├→ Login (emailLoginContainer)
+         │  ├→ 2FA (twoFactorAuthContainer)
+         │  └→ Forgot Password (forgotPasswordContainer)
+         ├→ Registration (emailRegistrationContainer)
+         │  └→ Check Email (emailRegistrationCompleteContainer)
+         └→ Restore Account (accountPreviouslyDeletedContainer)
+   */
+
 
 // Sign Up Modal
 const signUpModal = document.getElementById('signUpModal');
@@ -20,9 +31,7 @@ const emailRegistrationContainer = document.querySelector('.register_by_email_co
 const registrationSubmitButton = document.querySelector('.registrationSubmitButton');
 const emailRegistrationCompleteContainer = document.querySelector('.register_by_email_complete_container')
 
-// Variables for Register/Login by Facebook
-const facebookSignUpButton = document.querySelector('.facebookSignUpButton');
-const socialVerificationContainer = document.querySelector('.social_registration_container')
+const accountPreviouslyDeletedContainer = document.querySelector('.restore_deleted_account_container')
 
 
 // Variables for container to enter password and sign-in
@@ -39,9 +48,10 @@ const confirmInputs = document.querySelectorAll('.confirmation_input input');
 // Variable for password reset
 const emailPasswordResetInput = document.getElementById('email_password_reset_form'); // class inherted from custom form
 
-// Facebook Sign Button and Values
+// Variables for Register/Login by Facebook
 const fbBtn = document.getElementById("facebookSignUpButton");
 const fbUrl = document.getElementById("facebookLoginUrl").value;
+const socialVerificationContainer = document.querySelector('.social_registration_container')
 
 // Google Sign Button and Values
 const googleBtn = document.getElementById("googleSignUpButton");
@@ -50,6 +60,8 @@ const googleUrl = document.getElementById("googleLoginUrl").value;
 
 // Timer Display for 2 factor auth 
 const timerDisplay = document.querySelector('#code_timer');
+
+let emailOnFile;
 
 
 
@@ -69,20 +81,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     googleBtn.addEventListener('click', (e) => {
         e.preventDefault()
-        console.log('ggogle Button Clicked')
+        console.log('google Button Clicked')
         openPopUp(googleUrl)
 
     })
 
-    // const sModal = document.getElementById('signUpModal')
 
-
-
+    const firstFocusable = signUpModal.querySelector('button, input, a, [tabindex]:not([tabindex="-1"])')
     // Opens Register / Login Modal
     if (signUpModalBtn) {
+        signUpModal.dataset.triggerElement = document.activeElement;
+
         signUpModalBtn.forEach((sub) => {
             sub.addEventListener('click', () => {
                 signUpModal.style.display = 'block';
+                signUpModal.setAttribute('aria-hidden', 'false');
+
+                // move focus into modal
+                firstFocusable.focus();
+
+                // Trap focus within modal
+                trapFocus(signUpModal);
             })
         })
     } else {
@@ -103,6 +122,13 @@ document.addEventListener("DOMContentLoaded", () => {
         window.addEventListener('click', function (event) {
             if (event.target === signUpModal) {
                 signUpModal.style.display = 'none';
+                signUpModal.setAttribute('aria-hidden', 'true');
+
+                const triggerElement = this.document.querySelector(`[data-trigger="${modal.id}"]`) || this.document.getElementById(signUpModal.dataset.triggerElement);
+
+                if (triggerElement) {
+                    triggerElement.focus();
+                }
             }
         });
     } else {
@@ -110,11 +136,44 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+    // Trap focus within modal
+    function trapFocus(element) {
+        const focusableElements = element.querySelectorAll(
+            'button:not([disabled]), [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstFocusable = focusableElements[0];
+        const lastFocusable = focusableElements[focusableElements.length - 1];
+
+        element.addEventListener('keydown', function (e) {
+            if (e.key === 'Tab') {
+                if (e.shiftKey) {
+                    // shift + Tab (backwards)
+                    if (document.activeElement === firstFocusable) {
+                        lastFocusable.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    // Tab (forwards)
+                    if (document.activeElement === lastFocusable) {
+                        firstFocusable.focus()
+                        e.preventDefault();
+                    }
+                }
+            }
+            if (e.key === 'Escape') {
+                closeSignUpModal();
+            }
+        })
+    }
+
+
+
+
     // From Sign in Modal Home
     if (emailSignUpButton) {
         emailSignUpButton.addEventListener('click', () => {
             console.log('email clicked')
-            moveForwardSignIn('hide_container', 'show_container', 'hide_container', 'show_email_verification_container', signUpTitleOptionsContainer, emailVerificationContainer)
+            newMoveForwardSignIn(signUpTitleOptionsContainer, emailVerificationContainer)
         })
     }
 
@@ -127,6 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Disable Email Submit Button
     emailInput.addEventListener('input', () => {
         emailSubmitButton.disabled = !emailInput.value.includes('@');
+
     });
 
 
@@ -140,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const form = emailSubmitButton.closest('form');
             const formData = new FormData(form);
-            const emailProvidedSigninPopup = document.querySelectorAll('.email_provided_signin_popup')
+            const emailProvidedSigninPopup = document.querySelectorAll('.email_provided_signin_popup');
 
             fetch(form.action, {
                 method: 'POST',
@@ -153,16 +213,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 .then(response => response.json())
                 .then(data => {
                     console.log('data is', data)
+                    console.log('data.status is', data.status)
+
                     if (data.status === false) {
                         // move forward to password login container
-                        moveForwardSignIn('shift_left', 'show_container', 'hide_email_login_container', 'show_email_login_container', emailVerificationContainer, emailLoginContainer)
+                        newMoveForwardSignIn(emailVerificationContainer, emailLoginContainer)
                         emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
+
                     } else if (data.status === true) {
                         const email = formData.get('email');
                         sessionStorage.setItem('auth_email', email);
 
                         // Go to registration container
-                        moveForwardSignIn('shift_left', 'show_container', 'hide_register_by_email_container', 'show_register_by_email_container', emailVerificationContainer, emailRegistrationContainer)
+                        newMoveForwardSignIn(emailVerificationContainer, emailRegistrationContainer)
                         emailProvidedSigninPopup.forEach((epp) => epp.innerHTML = formData.get('email'));
 
                         // Pre-fill email in registration form
@@ -172,8 +235,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
 
                     } else if (data.status == 'inactive') {
-                        // const moveForwardSignIn( addThisHideClass, removeThisShowClass,  | removeNextHideClass, addNextShowClass,  | containerToHide, containerToShow)
-                        moveForwardSignIn('shift_left', 'show_container', 'hide_register_by_email_complete_container', 'show_register_by_email_complete_container', emailVerificationContainer, emailRegistrationCompleteContainer)
+                        // Email on file but not verified, got check email container
+                        newMoveForwardSignIn(emailVerificationContainer, emailRegistrationCompleteContainer)
+
+                    } else if (data.status == 'deleted') {
+                        // Email still on file after being deleted
+                        newMoveForwardSignIn(emailVerificationContainer, accountPreviouslyDeletedContainer)
+                        emailProvidedSigninPopup.forEach((epp) => {
+                            epp.innerHTML = formData.get('email')
+                            emailOnFile = epp.innerHTML;
+                        });
+
                     } else {
                         console.error('Unexpected response:', data);
                     }
@@ -216,9 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 .then(response => response.json())
                 .then(data => {
                     if (data['authenticated'] === true) {
-                        // const moveForwardSignIn( addThisHideClass, removeThisShowClass, removeNextHideClass, addNextShowClass, containerToHide, containerToShow)
-                        moveForwardSignIn('hide_email_login_container_to_left', 'show_email_login_container', 'hide_sign_up_email_confirm_container', 'show_sign_up_email_confirm_container', emailLoginContainer, signUpEmailConfirmContainer)
-
+                        newMoveForwardSignIn(emailLoginContainer, signUpEmailConfirmContainer);
                         setTimeout(() => {
                             const fiveMinutes = 5 * 60;
                             startCodeTimer(fiveMinutes, timerDisplay)
@@ -320,7 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     });
 
-    // Backspace to empty input
+    // Backspace to empty input for 2FA
     document.querySelectorAll('.code-input').forEach((input, index, inputs) => {
         input.addEventListener('input', () => {
             if (input.value.length === input.maxLength && index < inputs.length - 1) {
@@ -360,11 +430,8 @@ document.addEventListener("DOMContentLoaded", () => {
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('data in js', data)
                     if (data.registered) {
-                        // const moveForwardSignIn( addThisHideClass, removeThisShowClass,  | removeNextHideClass, addNextShowClass,  | containerToHide, containerToShow)
-                        moveForwardSignIn('register_by_email_container_shift_left', 'show_register_by_email_container', 'hide_register_by_email_complete_container', 'show_register_by_email_complete_container', emailRegistrationContainer, emailRegistrationCompleteContainer)
-
+                        newMoveForwardSignIn(emailRegistrationContainer, emailRegistrationCompleteContainer)
                     } else if (data.errors) {
                         displayFormErrorsTwo(data.errors);
                     }
@@ -384,17 +451,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (passwordForgetLink) {
         passwordForgetLink.addEventListener('click', () => {
             console.log('forgot password has been called!')
-            // const moveForwardSignIn( addThisHideClass, removeThisShowClass,  | removeNextHideClass, addNextShowClass,  | containerToHide, containerToShow)
-            moveForwardSignIn('hide_email_login_container_to_left', 'show_email_login_container',
-                'hide_forgot_password_container', 'show_forgot_password_container',
-                emailLoginContainer, passwordForgetContainer
-            )
-
-
+            newMoveForwardSignIn(emailLoginContainer, passwordForgetContainer)
         })
     }
-
-
 
 
     // Enter email for password reset
@@ -415,12 +474,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
             e.preventDefault();
 
-            console.log('button clicked!')
+            console.log('resetPasswordBtn button clicked!')
 
             const email = emailPasswordResetInput.value.trim();
+
+            // Client side validation
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+
             const csrfToken = getCookie('csrftoken');
-
-
             const originalButtonText = resetPasswordBtn.textContent;
             const resetSpinner = document.getElementById('resetSpinner');
 
@@ -443,20 +508,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
                 body: new URLSearchParams({ email })
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (response.status == 429) {
+                        console.log('Reset Password test 429 response:', response)
+                        throw new Error('Too many atttempts. Please try again later.')
+                    }
+                    return response.json()
+                })
                 .then(data => {
                     if (data.success) {
-                        //alert('Password reset link sent to your email.')
-
-
-                        // const moveForwardSignIn( addThisHideClass, removeThisShowClass,  | removeNextHideClass, addNextShowClass,  | containerToHide, containerToShow)
-                        moveForwardSignIn('forgot_password_container_shift_left', 'show_forgot_password_container',
-                            'hide_forgot_password_email_check_container', 'show_forgot_password_email_check_container',
-                            passwordForgetContainer, forgotPasswordEmailCheckContainer
-                        )
-
+                        console.log('Reset Password test data.success:', data)
+                        newMoveForwardSignIn(passwordForgetContainer, forgotPasswordEmailCheckContainer)
+                        announceScreenChange('Password reset link sent. Please check your email.')
                     } else {
-                        alert(data.error || 'Something went wrong')
+                        console.log('Reset Password test else block:', data)
+                        // Show error message
+                        const errorMessage = data.error || 'Unable to send reset link. Please try again.'
+
+                        // Display error in UI (create error container if needed)
+                        const errorContainer = document.querySelector('.password-reset-error');
+                        if (errorContainer) {
+                            errorContainer.textContent = errorMessage;
+                            errorContainer.style.display = 'block';
+                            errorContainer.setAttribute('role', 'alert');
+                        }
+
+                        // Also show alert as fallback
+                        alert(errorMessage);
                     }
                 })
                 .catch(error => {
@@ -464,7 +542,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 })
                 .finally(() => {
                     // Hide spiner, reset button text, re-enable button
-                    resetSpinner.style.display = 'none';
+                    if (resetSpinner) {
+                        resetSpinner.style.display = 'none';
+                    }
                     resetPasswordBtn.disabled = false;
                     resetPasswordBtn.textContent = originalButtonText
                 })
@@ -521,64 +601,209 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+    const restoreDeletedAccount = document.getElementById('restoreDeletedAccount');
+    const notRestoreDeletedAccount = document.getElementById('notRestoreDeletedAccount');
+
+    if (notRestoreDeletedAccount) {
+        notRestoreDeletedAccount.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('they said no! so take them back to email screen')
+        })
+    }
+
+    if (restoreDeletedAccount) {
+        restoreDeletedAccount.addEventListener('click', (e) => {
+            e.preventDefault()
+            fetch("/pop_accounts/restore-account/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({ email: emailOnFile })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status) {
+                        newMoveForwardSignIn(accountPreviouslyDeletedContainer, emailRegistrationCompleteContainer)
+                    }
+                })
+        })
+    }
+
+
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function () {
+            // Get the target input ID from data-target attribute
+            const targetId = this.getAttribute('data-target');
+            const passwordInput = document.getElementById(targetId);
+
+            if (!passwordInput) {
+                console.error('Password input not found:', targetId);
+                return;
+            }
+
+            const isPressed = this.getAttribute('aria-pressed') === 'true';
+            const icon = this.querySelector('i');
+
+            // Toggle password visibility
+            passwordInput.type = isPressed ? 'password' : 'text';
+
+            // Update button state
+            this.setAttribute('aria-pressed', !isPressed);
+            this.setAttribute('aria-label', isPressed ?
+                this.getAttribute('aria-label').replace('Hide', 'Show') :
+                this.getAttribute('aria-label').replace('Show', 'Hide')
+            );
+
+            // Toggle icon
+            if (icon) {
+                if (isPressed) {
+                    icon.classList.remove('bx-hide');
+                    icon.classList.add('bx-show');
+                } else {
+                    icon.classList.remove('bx-show');
+                    icon.classList.add('bx-hide');
+                }
+            }
+        });
+    });
 
 })
 
+const ANIMATION_DURATION = 300;
+
+const newMoveForwardSignIn = (containerToHide, containerToShow) => {
+
+    // Show container first so it gets a width
+    containerToShow.style.display = 'block';
+    containerToShow.style.visibility = 'hidden';
+    containerToShow.removeAttribute('hidden');
+
+    // Force browswer to calculate dimensions
+    containerToShow.offsetHeight;
+
+    // Now make it visible and start animation
+    containerToShow.style.visibility = 'visible';
+    containerToShow.classList.remove('hide_container');
+    containerToShow.classList.add('show_container');
+    containerToShow.setAttribute('aria-hidden', 'false');
+
+    // Small delay to ensure width is calcuated
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            // Now start the animation
+            containerToShow.classList.add('slide_in_right');
+            containerToHide.classList.add('slide_out_left');
+        });
+    });
+
+    // Clean up after animation
+    setTimeout(() => {
+        containerToHide.classList.remove('show_container', 'slide_out_left');
+        containerToHide.classList.add('hide_container');
+        containerToHide.setAttribute('hidden', '');
+        containerToHide.setAttribute('aria-hidden', 'true');
+
+        // Must Clear inline styles
+        containerToHide.style.display = '';
+        containerToHide.style.visibility = '';
+
+        containerToShow.classList.remove('slide_in_right');
+
+        // Clear inline styles on shown container too
+        containerToShow.style.display = '';
+        containerToShow.style.visibility = '';
+
+    }, ANIMATION_DURATION)
+
+    // Accessibility
+    switchToScreen(containerToShow);
+
+    const heading = containerToShow.querySelector('h3');
+    if (heading) {
+        announceScreenChange(heading.textContent);
+    }
 
 
-
-const moveForwardSignIn = (
-    addThisHideClass,
-    removeThisShowClass,
-    removeNextHideClass,
-    addNextShowClass,
-    containerToHide,
-    containerToShow
-
-) => {
-    console.log('moving forward')
-    containerToHide.classList.remove(removeThisShowClass)
-    containerToHide.classList.add(addThisHideClass)
-
-    containerToShow.classList.remove(removeNextHideClass)
-    containerToShow.classList.add(addNextShowClass)
 }
 
 
-const moveBackwardSignIn = (
-    removeThisClass,
-    addThisClass,
-    removeNextClass,
-    addNextClass,
-    containerToHide,
-    containerToShow
-) => {
+function newMoveBackwardSignIn(nameOfContainerToHide, nameOfContainerToShow) {
 
-    console.log('moving backward')
-    containerToHide.classList.remove(removeThisClass)
-    containerToHide.classList.add(addThisClass)
-    containerToShow.classList.remove(removeNextClass)
-    containerToShow.classList.add(addNextClass)
+    const containerToHide = document.querySelector(nameOfContainerToHide);
+    const containerToShow = document.querySelector(nameOfContainerToShow);
+
+    // Remove hidden attribute First (gives it width)
+    containerToShow.removeAttribute('hidden');
+    containerToShow.classList.remove('hide_container');
+    containerToShow.classList.add('show_container');
+    containerToShow.setAttribute('aria-hidden', 'false');
+
+    // Force reflow to calculate dimentions
+    containerToHide.style.visibility = 'hidden'
+    containerToHide.classList.add('slide_out_right');
+    containerToShow.classList.add('slide_in_left');
+
+    // clean up after animation completes
+    setTimeout(() => {
+        containerToHide.classList.remove('show_container', 'slide_out_right');
+        containerToHide.classList.add('hide_container');
+        containerToHide.setAttribute('hidden', '');
+        containerToHide.setAttribute('aria-hidden', 'true');
+
+        // Must Clear inline styles
+        containerToHide.style.display = '';
+        containerToHide.style.visibility = '';
+
+        containerToShow.classList.remove('slide_in_left');
+
+        // Clear inline styles on shown container too
+        containerToShow.style.display = '';
+        containerToShow.style.visibility = '';
+
+    }, ANIMATION_DURATION);
+
+    // Accessibility
+    switchToScreen(containerToShow);
+    const heading = containerToShow.querySelector('h3');
+    if (heading) {
+        announceScreenChange('Back to ' + heading.textContent)
+    }
+
 }
 
+// Update aria-labelledby when screen changes
+function switchToScreen(screenElement) {
+    const h3Heading = screenElement.querySelector('h3');
+    if (h3Heading && h3Heading.id) {
+        signUpModal.setAttribute('aria-labelledby', h3Heading.id);
 
-const moveBackwardSignInButton = (
-    removeThisClass,
-    addThisClass,
-    removeNextClass,
-    addNextClass,
-    nameOfContainerToHide,
-    nameOfContainerToShow
-) => {
-    console.log('moveBackwardSignInButton moving backward')
-    const containerToHide = document.querySelector(nameOfContainerToHide)
-    const containerToShow = document.querySelector(nameOfContainerToShow)
-
-    containerToHide.classList.remove(removeThisClass)
-    containerToHide.classList.add(addThisClass)
-    containerToShow.classList.remove(removeNextClass)
-    containerToShow.classList.add(addNextClass)
+        // Focus on first input or heading
+        const firstInput = screenElement.querySelector('input, button');
+        if (firstInput) {
+            firstInput.focus();
+        }
+    }
 }
+
+// Announce Screen Change
+function announceScreenChange(message) {
+    const announcer = document.getElementById('modalAnnouncer');
+    announcer.textContent = message;
+
+    // Clear after announcement
+    setTimeout(() => {
+        announcer.textContent = '';
+    }, 1000);
+}
+
+// Usage
+function showRegistrationForm() {
+    // Show the form
+    announceScreenChange('Create account form loaded')
+}
+
 
 
 
@@ -727,7 +952,7 @@ function updateNavigationWithUserData(userData) {
             dashboardLink = `
                 <li class="nav-link">
                     <a href="/pop_accounts/dashboard-admin/">
-                        <i class='bx bxs-user-detail icon'></i>
+                        <i class='bx bxs-user-detail icon' aria-hidden="trueß"></i>
                         <span class="text nav-text">Dashboard</span>
                     </a>
                 </li>
@@ -765,7 +990,7 @@ function updateNavigationWithUserData(userData) {
         const logoutForm = `
                     <li class="nav-link">
                         <button type="submit" onclick="performLogout(event)">
-                            <i class='bx bx-log-out icon'></i>
+                            <i class='bx bx-log-out icon' aria-hidden="true"></i>
                             <span class="text nav-text">Log out</span>
                         </button>
                     </li>
@@ -784,7 +1009,6 @@ function updateNavigationWithUserData(userData) {
 
 
     // Close login modal
-
     if (signUpModal) {
         signUpModal.style.display = 'none';
         // Remove any modal backdrop if it exists
@@ -831,7 +1055,6 @@ function getCSRFToken() {
 
 async function performLogout(event) {
     event.preventDefault();
-    console.log('performLogout called')
     try {
         const csrfToken = getCSRFToken();
 

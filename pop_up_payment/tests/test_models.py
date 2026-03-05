@@ -33,7 +33,7 @@ def create_test_address(customer, first_name, last_name, address_line, address_l
     )
     
 
-class PopUpPaymentModelTestCase(TestCase):
+class TestPopUpPaymentModel(TestCase):
     """Test suite for PopUpPayment model"""
     
     def setUp(self):

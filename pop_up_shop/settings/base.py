@@ -124,7 +124,6 @@ MIDDLEWARE = [
 
 AUTHENTICATION_BACKENDS = [
     'pop_accounts.backends.EmailBackend',
-    # 'accounts.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
     'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.google.GoogleOAuth2',
@@ -139,21 +138,50 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY=os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET=os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
 SOCIAL_AUTH_PIPELINE = (
+    # Get the information we can about the user and return it in a simple
+    # format to create the user instance later. In some cases, the details are
+    # already part of the auth response from the provider, but sometimes this
+    # could hit a provider API.
     'social_core.pipeline.social_auth.social_details',
+    
+    # Get the social uid from whichever service we're authing thru.
     'social_core.pipeline.social_auth.social_uid',
+    
+    # Verifies that the current auth process is valid within the current
+    # project, raises an exception otherwise.
     'social_core.pipeline.social_auth.auth_allowed',
+    
+    # NEW: Check if we have required fields BEFORE attempting to find/create user
+    'pop_accounts.pipeline.check_required_fields_before_creation',
+    
+    # Checks if the current social-account is already associated in the site.
     'social_core.pipeline.social_auth.social_user',
+    
+    # Make up a username for this person, appends a random string at the end if
+    # there's any collision.
     'social_core.pipeline.user.get_username',
-    'social_core.pipeline.user.create_user',
-    'pop_accounts.pipeline.save_social_profile', 
-    # 'accounts.pipeline.save_social_profile',  
+    
+    # Create user with our custom logic (replaces create_user)
+    'pop_accounts.pipeline.create_user_with_social_data',
+    
+    # Associate the social account with the user account.
     'social_core.pipeline.social_auth.associate_user',
+    
+    # Populate the extra_data field in the social record with the values
+    # specified by settings (and the default ones like access_token, etc).
     'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
-    # 'accounts.pipeline.ensure_user_login',  # Added this to get data from Google sign-in!
-    # 'accounts.pipeline.require_profile_completion',
-    'pop_accounts.pipeline.ensure_user_login', 
+    
+    # Check if existing user needs profile completion
     'pop_accounts.pipeline.require_profile_completion',
+    
+    # Save additional profile data from provider
+    'pop_accounts.pipeline.save_social_profile',
+    
+    # Ensure user is logged in
+    'pop_accounts.pipeline.ensure_user_login',
+    
+    # Update the user record with any changed info from the auth service.
+    'social_core.pipeline.user.user_details',
 )
 
 
@@ -190,8 +218,6 @@ TEMPLATES = [
                 'pop_up_auction.context_processors.categories',
                 'pop_accounts.context_processors.auth_forms',
                 'pop_accounts.context_processors.admin_status',
-                # 'accounts.context_processors.auth_forms',
-                # 'accounts.context_processors.admin_status',
                 'pop_up_cart.context_processors.cart',
                 'pop_up_home.context_processors.footer_links',
             ],

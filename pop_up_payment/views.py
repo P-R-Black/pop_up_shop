@@ -77,7 +77,7 @@ class OptionalLoginMixin(AccessMixin):
 
 class ProductBuyView(OptionalLoginMixin, View):
     # 🟢 View Test Completed
-    # 🔴 Model Test Completed
+    # 🟢 Model Test Completed
     # 🔴 NEEDED -> Mobile / Tablet Media Query Completed
     template_name = 'payment/payment_home.html'
     
@@ -320,7 +320,7 @@ class ProductBuyView(OptionalLoginMixin, View):
 
 def buy_now_add_to_cart(request, slug):
     # 🟢 View Test Completed
-    # 🔴 Model Test Completed
+    # 🟢 Model Test Completed
     product = get_object_or_404(PopUpProduct, slug=slug, is_active=True)
     
     # check if already sold/reserved | CREATE A PAGE FOR THIS - > ITEM HAS BEEN PURCHASED OR IN THE PROCESS OF BEING PURCHASED
@@ -346,7 +346,7 @@ def buy_now_add_to_cart(request, slug):
 
 class ShippingAddressView(LoginRequiredMixin, View):
     # 🟢 View Test Completed
-    # 🔴 Model Test Completed
+    # 🟢 Model Test Completed
     # 🔴 NEEDED -> Mobile / Tablet Media Query Completed
     template_name = "payment/shipping_address.html"
 
@@ -429,7 +429,7 @@ class ShippingAddressView(LoginRequiredMixin, View):
 
 class BillingAddressView(LoginRequiredMixin, View):
     # 🟢 View Test Completed
-    # 🔴 Model Test Completed
+    # 🟢 Model Test Completed
     # 🔴 NEEDED -> Mobile / Tablet Media Query Completed
     template_name = "payment/billing_address.html"
 
@@ -537,6 +537,8 @@ def set_billling_address(request):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class CreatePaymentIntentView(View):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
     def post(self, request, *args, **kwargs):
         user = request.user
         profile = request.user.popupcustomerprofile
@@ -577,6 +579,7 @@ class CreatePaymentIntentView(View):
             return JsonResponse({'error': str(e)}, status=400)
 
 
+# Not currently in use
 @csrf_exempt
 def stripe_webhook_view(request):
     print('stripe_webhook_view called')
@@ -680,6 +683,8 @@ def stripe_webhook_view(request):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProcessVenmoPaymentView(View):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -1094,8 +1099,10 @@ def generate_client_token(request):
 #         return context
 
 
-
+@login_required
 def placed_order(request):
+    # 🟢 View Test Completed
+    # 🟢 Model Test Completed
     user = request.user
     cart = Cart(request)
     cart.clear()
@@ -1103,7 +1110,6 @@ def placed_order(request):
     order_id = None
     if order:
         order_id = order.id
-    print('order_id', order_id)
     base_queryset = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
     return render(request, 'payment/placed_order.html', {'user': user, 'order_id':order_id, 'product': base_queryset})
 

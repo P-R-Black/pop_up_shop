@@ -9,9 +9,6 @@ from pop_up_shipping.pop_shipping_copy.pop_up_shipping_copy import ADMIN_SHIPPIN
 from pop_up_order.utils.utils import admin_shipments, admin_orders
 
 # Create your views here.
-
-
-
 def generate_shipping_label(request, order_id):
     order = get_object_or_404(PopUpCustomerOrder, id=order_id)
     admin_shipping = ADMIN_SHIPPING

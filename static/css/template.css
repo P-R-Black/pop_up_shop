@@ -565,10 +565,11 @@ text font: inter
 
 .sign_up_pic_form_container {
     display: flex;
-
+    min-height: 400px;
     overflow: hidden;
     width: 100%;
     position: relative;
+
 
 }
 
@@ -591,18 +592,144 @@ text font: inter
 }
 
 .interntal_sign_up_container {
-    display: flex;
+
     overflow: hidden;
-    width: 100%;
+    margin: 0 auto;
+    max-width: 600px;
+
+
     position: relative;
+    width: 100%;
 
 }
 
 /* ===== end sign_up_pic_form_container ===== */
 
 
+
+/* ======== State of Classes (Visibility) ======== */
+
+.show_container {
+    display: block;
+    /* z-index: 2; */
+
+    visibility: visible;
+}
+
+.hide_container {
+    display: none;
+    /* z-index: 1; */
+
+    visibility: hidden;
+}
+
+
+/* ======== Animationn of Classes (Transitions) ======== */
+.slide_in_right {
+    animation: slideInRight 0.3s ease-out forwards;
+    /* z-index: 3; */
+}
+
+.slide_out_left {
+    animation: slideOutLeft 0.3s ease-out forwards;
+    /* z-index: 2; */
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0%);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutLeft {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+/*
+
+.sign_up_email_confirm_container, */
+.forgot_password_email_check_container,
+.register_by_email_complete_container,
+.restore_deleted_account_container,
+.register_by_email_container,
+.forgot_password_container,
+.email_login_container,
+.sign_up_title_options_container,
+.email_verification_container {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    /* backface-visibility: hidden; */
+    /* transition: transform 0.5s ease-in-out; */
+}
+
+.modal_screen_inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    width: 100%;
+
+}
+
+/* Back Navigation */
+.slide_in_left {
+    animation: slideInLeft 0.3s ease-out forwards;
+    /* z-index: 3; */
+}
+
+.slide_out_right {
+    animation: slideOutRight 0.3s ease-out forwards;
+    /* z-index: 2; */
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+
+/* End Optional: Back navigation */
+
 /* ====== sign_up_title_options_container ====== */
 
+/*
 .email_login_container,
 .sign_up_title_options_container,
 .email_verification_container,
@@ -610,10 +737,12 @@ text font: inter
 .sign_up_email_confirm_container,
 .register_by_email_complete_container,
 .forgot_password_container,
-.forgot_password_email_check_container {
+.forgot_password_email_check_container,
+.restore_deleted_account_container {
     display: none;
 }
 
+
 .sign_up_title_options_container,
 .email_verification_container,
 .register_by_email_container,
@@ -621,12 +750,14 @@ text font: inter
 .sign_up_email_confirm_container,
 .register_by_email_complete_container,
 .forgot_password_container,
-.forgot_password_email_check_container {
+.forgot_password_email_check_container,
+.restore_deleted_account_container {
     position: absolute;
     width: 50%;
     top: 0;
     transition: transform 0.5s ease-in-out;
 }
+
 
 .sign_up_title_options_container {
     right: 0%;
@@ -640,10 +771,19 @@ text font: inter
 }
 
 
-.sign_up_title_options_container.hide_container {
+
+.sign_up_title_options_container.hide_sign_up_title_options_container {
     transform: translateX(-200%);
 }
+  
+ */
 
+
+.sign_up_title_options_container.show_container {
+    height: 100%;
+    width: 100%;
+    /* border: 2px solid orange; */
+}
 
 
 .sign_up_modal_title {
@@ -692,7 +832,6 @@ text font: inter
     display: inline-flex;
     justify-content: space-around;
     height: 2.5rem;
-    /* max-height: 3.5rem; */
     padding: 0px;
     position: relative;
     width: 90%;
@@ -723,32 +862,32 @@ text font: inter
     text-align: center;
 }
 
+
+button.back_button {
+    background-color: transparent;
+    margin-right: .5rem;
+}
+
+
+button.toggle-password {
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-left: .5rem;
+}
+
+
 /* ==== end sign_up_title_options_container ==== */
 
 
 /* ===== email_verification_container ====*/
+
+
 .email_verification_container {
-    left: 100%;
-    transform: translateX(0%);
-    width: 100%;
-
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
     height: 100%;
+    padding-top: .5rem;
+    width: 100%;
 }
-
-.email_verification_container.show_email_verification_container {
-    transform: translateX(-100%);
-
-}
-
-
-.email_verification_container.shift_left {
-    transform: translateX(-200%);
-}
-
 
 
 .sign_up_modal_title {
@@ -758,11 +897,14 @@ text font: inter
 }
 
 
+
 .sign_up_modal_title p {
     text-align: center;
     margin-bottom: 1rem;
     width: 90%;
 }
+
+
 
 .email_sign_up_modal_title {
     display: flex;
@@ -794,8 +936,6 @@ text font: inter
     cursor: pointer;
     margin-bottom: .30rem;
     text-align: left;
-
-
 }
 
 
@@ -809,7 +949,6 @@ text font: inter
     display: flex;
     flex-direction: column;
     margin-top: 1rem;
-
 }
 
 
@@ -818,6 +957,7 @@ text font: inter
     flex-direction: column;
     margin-top: 1rem;
 }
+
 
 
 form.sign_up_options_form input,
@@ -838,14 +978,15 @@ form.password_reset_sign_up_options_form input {
 #id_email {
     width: 100%;
     height: 2rem;
-
 }
+
+
 
 /* ===== end email_verification_container ==== */
 
 
 /* ===== start social_registration_container ==== */
-.social_registration_container {
+/* .social_registration_container {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -863,7 +1004,7 @@ form.password_reset_sign_up_options_form input {
 
 .social_registration_container.shift_left {
     transform: translateX(-200%);
-}
+} */
 
 /* ===== end social_registration_container ==== */
 
@@ -875,20 +1016,9 @@ form.password_reset_sign_up_options_form input {
     flex-direction: column;
     height: 100%;
     justify-content: space-between;
-    left: 200%;
-    transform: translateX(0%);
+    height: 100%;
+    padding-top: .5rem;
     width: 100%;
-}
-
-
-.email_login_container.show_email_login_container {
-    transform: translateX(-200%);
-
-
-}
-
-.email_login_container.hide_email_login_container_to_left {
-    transform: translateX(-300%);
 
 }
 
@@ -906,26 +1036,9 @@ p.email_provided_signin_popup {
 
 /* ========= enter 6-digit pin sign_up_email_confirm_container ========= */
 .sign_up_email_confirm_container {
-    left: 200%;
-    transform: translateX(0%);
-    width: 100%;
-
-    align-items: center;
-    display: flex;
-    flex-direction: column;
     height: 100%;
-    justify-content: space-between;
-}
-
-
-.sign_up_email_confirm_container.show_sign_up_email_confirm_container {
-    transform: translateX(-200%);
-
-}
-
-
-.sign_up_email_confirm_container.shift_left_again {
-    transform: translateX(-300%);
+    padding-top: .5rem;
+    width: 100%;
 }
 
 
@@ -1003,6 +1116,7 @@ p.email_provided_signin_popup {
     width: 2rem;
 }
 
+
 /* ===== end of enter 6-digit pin sign_up_email_confirm_container ===== */
 
 
@@ -1010,32 +1124,13 @@ p.email_provided_signin_popup {
 
 
 .register_by_email_container {
-    right: 200%;
-    transform: translateX(0%);
-    width: 100%;
 
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     height: 100%;
+    padding-top: .5rem;
+    width: 100%;
+    border: 2px solid green;
 }
 
-
-.register_by_email_container.show_register_by_email_container {
-    transform: translateX(200%);
-
-
-}
-
-.register_by_email_container.hide_register_by_email_container {
-    transform: translateX(300%);
-
-}
-
-.register_by_email_container.register_by_email_container_shift_left {
-    transform: translateX(-200%);
-}
 
 /* ===== end of start email_registration_container | displayed if email not on file ===== */
 
@@ -1043,43 +1138,24 @@ p.email_provided_signin_popup {
 
 
 .register_by_email_complete_container {
-    align-items: center;
-    display: flex;
-    flex-direction: column;
+    /* align-items: center; */
+    /* display: flex; */
+    /* flex-direction: column; */
     height: 100%;
-    justify-content: space-between;
-    right: 200%;
-    transform: translateX(0%);
+    /* justify-content: space-between; */
     width: 100%;
 }
 
 
-.register_by_email_complete_container.show_register_by_email_complete_container {
-    transform: translateX(200%);
-
-
-}
-
-.register_by_email_complete_container.hide_register_by_email_complete_container {
-    transform: translateX(300%);
-
-}
-
-/* .register_by_email_container.register_by_email_container_shift_left {
-    transform: translateX(-200%);
-
-
-} */
 
 
 .registration_notice_container {
-
     align-items: center;
     display: flex;
     flex-direction: column;
     gap: 2rem;
     justify-content: center;
-    width: 70%;
+    width: 100%;
 
 }
 
@@ -1104,27 +1180,18 @@ p.email_provided_signin_popup {
     align-items: center;
     display: flex;
     flex-direction: column;
-    height: 100%;
     justify-content: space-between;
-    right: 200%;
-    transform: translateX(0%);
-    width: 100%;
-}
-
-
-.forgot_password_container.show_forgot_password_container {
-    transform: translateX(200%);
-
+    padding-top: .5rem;
 
 }
 
-.forgot_password_container.hide_forgot_password_container {
-    transform: translateX(300%);
 
-}
-
-.forgot_password_container.forgot_password_container_shift_left {
-    transform: translateX(-200%);
+.forgot_password_options_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
 
 }
 
@@ -1136,37 +1203,61 @@ p.email_provided_signin_popup {
 
 
 .forgot_password_email_check_container {
-    align-items: center;
-    display: flex;
-    flex-direction: column;
+
     height: 100%;
-    justify-content: space-between;
-    right: 200%;
-    transform: translateX(0%);
+    padding-top: .5rem;
     width: 100%;
 }
 
 
-.forgot_password_email_check_container.show_forgot_password_email_check_container {
-    transform: translateX(200%);
-
-
-}
-
-.forgot_password_email_check_container.hide_forgot_password_email_check_container {
-    transform: translateX(300%);
-
-}
-
-/* .forgot_password_email_check_container.register_by_email_container_shift_left {
-    transform: translateX(-200%);
-
-
-} */
-
-
 
 /* ===== end forgot_password_email_check_container | displayed after user enters email address for forgotten password ===== */
+
+
+
+/* ======== start restore_deleted_account_container | displayed account previously deleted but email still on file ======== */
+.restore_deleted_account_container {
+
+    height: 100%;
+    width: 100%;
+}
+
+.inactive_found_notice {
+    color: var(--text-color);
+    text-align: center;
+}
+
+.restore_deleted_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    height: 100%;
+}
+
+.restore_deleted_options_container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: .50rem;
+
+}
+
+
+/* ===== end of start restore_deleted_account_container | displayed account previously deleted but email still on file ===== */
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    color: var(--body-fg);
+    background-color: var(--body-bg);
+}
 
 
 /* ====== End of Sign Up ====== */

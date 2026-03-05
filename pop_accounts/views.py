@@ -41,6 +41,7 @@ from .forms import (PopUpRegistrationForm, PopUpUserLoginForm, PopUpUserEditForm
 from pop_up_shipping.forms import ThePopUpShippingForm
 from django.core.mail import send_mail
 import secrets
+import time
 from django.utils import timezone
 from datetime import datetime, timedelta, date
 from django.contrib.auth.tokens import default_token_generator
@@ -50,7 +51,8 @@ from django.contrib.auth import logout
 from django.views import View
 from .utils.pop_accounts_utils import (validate_email_address, get_client_ip, add_specs_to_products, is_disposable_email,
                           increment_rate_limit, calculate_auction_progress, handle_password_reset_request, 
-                          send_verification_email, check_rate_limit, get_email_provider, log_registration_with_geo)
+                          send_verification_email, check_rate_limit, get_email_provider, log_registration_with_geo,
+                          validate_password_strength)
 from django.conf import settings
 import json
 from typing import Any, Dict, Optional
@@ -77,6 +79,61 @@ User = get_user_model()
 
 
 logger  = logging.getLogger('security')
+"""
+All Views
+
+ // User Views
+ 1. UserLogOutView
+ 2. UserDashboardView
+ 3. UserInterestedInView
+ 4. MarkProductInterestedView
+ 5. UserOnNoticeView
+ 6. MarkProductOnNoticeView
+ 7. PersonalInfoView
+ 8. GetAddressView
+ 9. DeleteAddressView
+10. SetDefaultAddressView
+11. DeleteAccountView
+12. AccountDeletedView
+13. OpenBidsView
+14. PastBidView
+15. PastPurchaseView
+16. ShippingTrackingView
+17. UserOrderPager
+
+// Admin views
+18. AdminDashboardView
+19. AdminInventoryView
+20. EnRouteView
+21. SalesView
+22. MostOnNotice
+23. MostInterested
+24. TotalOpenBidsView
+25. TotalAccountsView
+26. AccountSizesView
+27. PendingOkayToShipView
+28. PendingOrderShippingDetailView
+29. UpdateShippingView
+30. GetOrderShippingDetail
+31. UpdateShippingPostView
+32. ViewShipmentsView
+33. UpdateProductView
+34. AddProductsView
+35. AddProductsGetView
+
+// Registration / Login Views
+36. EmailCheckView
+37. RegisterView
+38. Login2FAView
+39. Verify2FACodeView
+40. Resend2FACodeView
+41. SendPasswordResetLink
+42. UserPasswordResetConfirmView
+43. VerifyEmailView
+44. CompleteProfileView
+45. SocialLoginCompleteView
+46. RestoreAccountView
+"""
 
 # 🟢 View Test Completed
 # ⚪️ Model Test Completed
@@ -84,28 +141,6 @@ logger  = logging.getLogger('security')
 
 
 # Create your views here.
-# class UserLoginAfterPasswordResetView(FormView):
-#     """
-#     Simple Login Form
-#     """
-#     template_name = 'pop_accounts/login/login.html'
-#     form_class = PopUpUserLoginForm
-#     success_url = '/dashboard/'  # Change to wherever you want to redirect on success
-
-#     def form_valid(self, form):
-#         email = form.cleaned_data['email']
-#         password = form.cleaned_data['password']
-
-#         user = authenticate(self.request, username=email, password=password)
-#         if user is not None:
-#             login(self.request, user)
-#             return redirect(self.get_success_url())
-#         else:
-#             form.add_error(None, 'Invalid email or password')
-#             return self.form_invalid(form)
-        
-
-
 class UserLogOutView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         logout(request)
@@ -115,68 +150,6 @@ class UserLogOutView(LoginRequiredMixin, View):
         logout(request)
         return redirect('/')
     
-
-class UserPasswordResetConfirmView(View):
-    # 🟢 View Test Completed
-    # 🔴 No Model Test Needed, Since Models will be tested in later view
-    # ✅ Mobile / Tablet Media Query Completed
-    """
-    Handles user password reset confirmation via a password reset link.
-
-    - GET: Verify the reset link validity and renders the rest form
-    - POST: Validate and updates the user's password
-    """
-    template_name = "pop_accounts/login/password_reset_confirm.html"
-    user_password_reset_page = USER_PASSWORD_RESET_PAGE
-
-    def _get_user_form_uid(self, uidb64):
-        """
-        Decode UID and fetch the user. Returns None if invalid
-        """
-        try:
-            uid = urlsafe_base64_decode(uidb64).decode()
-            return User.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
-            return None
-    
-    def get(self, request, uidb64, token, *args, **kwargs):
-        """
-        Validate the password reset token and render the form
-        """
-        user = self._get_user_form_uid(uidb64)
-
-        if user is not None and default_token_generator.check_token(user, token):
-            context = {"validlink": True, "uidb64": uidb64, "token": token, 'user_password_reset_page': self.user_password_reset_page}
-        else:
-            context = {"validlink": False, 'user_password_reset_page': self.user_password_reset_page}
-
-        return render(request, self.template_name, context)
-    
-
-    def post(self, request, uidb64, token, *args, **kwargs):
-        """
-        Process the password reset form submission
-        """
-        user = self._get_user_form_uid(uidb64)
-        if user is None:
-            return JsonResponse({'success': False, 'error': 'Invalid reset link.'})
-        
-        new_password = request.POST.get('password')
-        confirm_password = request.POST.get('password2')
-
-
-        if not new_password or not confirm_password:
-            return JsonResponse({'success': False, 'error': 'All fields are required.'})
-        
-        if new_password != confirm_password:
-            return JsonResponse({'success': False, 'error': 'Passwords do not match.'})
-        
-
-        user.set_password(new_password)
-        user.save()
-
-        return JsonResponse({'success': True, 'message': 'Password reset successful.'})
-
 
 
 class UserDashboardView(LoginRequiredMixin, View):
@@ -2641,7 +2614,6 @@ class EmailCheckView(View):
     """
     def post(self, request):
         email = request.POST.get('email', '').strip().lower()
-        print("DEBUG EMAILCHECK email", email)
         
         # Validate email
         if not email or not validate_email_address(email):
@@ -2759,9 +2731,10 @@ class RegisterView(View):
         5. Upon verification, user account becomes active and usable.
     """
     def post(self, request):
-        email = request.session.get('auth_email') or request.POST.get('email')
+        email = request.POST.get('email')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
+
 
         # Step 1: Validate required fields First
         if not (email and password and password2):
@@ -3149,40 +3122,161 @@ class SendPasswordResetLink(View):
     # 🟢 View Test Completed
     # 🔴 No Model Test Needed, Since Models will be tested pop_up_orders
     """
-    Handles password reset link requests submitted via AJAX.
+    Handles AJAX requests to initiate the password reset process.
 
-    This view receives an email address from the client, validates it, and passes
-    the request to `handle_password_reset_request` to process the password reset
-    workflow. That function is responsible for checking whether the email exists,
-    generating a secure password reset token, and sending the reset link to the
-    user's email if appropriate.
+        This view receives an email address from the client and delegates the
+        password reset workflow to the `handle_password_reset_request` utility
+        function. The utility performs validation, rate limiting, token generation,
+        and email delivery.
 
-    Expected POST data:
-        - email (str): The email address of the user requesting a password reset.
+        --- POST Request ---
+        Initiates a password reset request:
 
-    Behavior:
-        - If the email is associated with an existing account:
-            → A password reset link is sent to the user's email.
-            → A JSON response confirming the action is returned.
-        - If the email does not exist:
-            → A JSON error response is returned (typically with status 400).
-        - If the email is missing or invalid:
-            → A JSON error response is returned (status 400).
+            1. Extracts the `email` value from the submitted POST data.
+            2. Normalizes the email (trimmed and lowercased).
+            3. Passes the request and email to `handle_password_reset_request`,
+            which handles the remainder of the password reset logic.
 
-    Returns:
-        JsonResponse: A JSON response indicating success or failure of the
-        reset request, as generated by `handle_password_reset_request`.
+        The utility function performs the following:
 
-    Example Usage:
-        POST /password-reset-link/
-        Data: {'email': 'user@example.com'}
-        Response: {'success': True, 'message': 'Password reset link sent'}
+            • Validates that an email was provided and is properly formatted.
+            • Applies IP-based rate limiting to prevent abuse.
+            • Checks whether an active user exists with the provided email.
+            • Enforces user-level cooldowns for repeated reset requests.
+            • Generates a secure password reset token using Django's
+            `default_token_generator`.
+            • Sends an email containing the reset link if appropriate.
+
+        Security Considerations:
+            - The response message is intentionally the same whether the email
+            exists or not to prevent account enumeration.
+            - Timing delays are applied to mitigate timing-based attacks.
+
+        Expected Behavior:
+            • Users submit their email address to request a password reset.
+            • If eligible, the system emails a secure password reset link.
+            • The API always returns a generic success message to protect
+            account privacy.
+
+        Example:
+            POST /password-reset-link/
+            Body:
+            {
+                "email": "user@example.com"
+            }
+
+        Response:
+            {
+                "success": true,
+                "message": "If this email is registered, you will receive a password reset link shortly."
+            }
     """
     def post(self, request):
         email = request.POST.get('email', '').strip().lower()
         return handle_password_reset_request(request, email)
+        
 
+
+class UserPasswordResetConfirmView(View):
+    # 🟢 View Test Completed
+    # 🔴 No Model Test Needed, Since Models will be tested in later view
+    # ✅ Mobile / Tablet Media Query Completed
+    """
+    Handles user password reset confirmation via a password reset link.
+
+    - GET: Verify the reset link validity and renders the rest form
+    - POST: Validate and updates the user's password
+    """
+    template_name = "pop_accounts/login/password_reset_confirm.html"
+    user_password_reset_page = USER_PASSWORD_RESET_PAGE
+
+    def _get_user_form_uid(self, uidb64):
+        """
+        Decode UID and fetch the user. Returns None if invalid
+        """
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            return User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
+            return None
     
+    def _validate_reset_token(self, user, token):
+        """
+        Validate the password reset token. Returns True if valid, False otherwise
+        """
+        if user is None:
+            return False
+        return default_token_generator.check_token(user, token)
+
+    def get(self, request, uidb64, token, *args, **kwargs):
+        """
+        Validate the password reset token and render the form
+        """
+        user = self._get_user_form_uid(uidb64)
+        validlink = self._validate_reset_token(user, token)
+
+        context = {
+            "validlink": validlink, 
+            "uidb64": uidb64, 
+            "token": token, 
+            "user_password_reset_page": self.user_password_reset_page
+        }
+
+
+        return render(request, self.template_name, context)
+    
+
+    def post(self, request, uidb64, token, *args, **kwargs):
+        """
+        Process the password reset form submission
+        Security: Token is validated again to prevent replay attacks
+        """
+
+        # validate user exists
+        user = self._get_user_form_uid(uidb64)
+        if user is None:
+            return JsonResponse({'success': False, 'error': 'Invalid reset link.'}, status=400)
+        
+        # validate token again
+        if not self._validate_reset_token(user, token):
+            return JsonResponse({
+                "success": False,
+                "error": "This reset link has expired or is invalid. Please request a new one."
+            }, status=400)
+        
+        # Validate passwords
+        new_password = request.POST.get('password')
+        confirm_password = request.POST.get('password2')
+
+
+        if not new_password or not confirm_password:
+            return JsonResponse({'success': False, 'error': 'All fields are required.'})
+        
+        if new_password != confirm_password:
+            return JsonResponse({'success': False, 'error': 'Passwords do not match.'})
+        
+        try:
+            validate_password_strength(new_password)
+        except ValidationError as e:
+            error_message = ' '.join(e.message) if hasattr(e, 'messages') else str(e)
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
+        
+        user.set_password(new_password)
+        user.last_password_reset = now()
+        user.save(update_fields=['password', 'last_password_reset'])
+
+        # Log the password reset
+        ip = get_client_ip(request)
+        logger.info(f"Password reseet successful: user={user.email}, ip={ip}")
+
+        # Invalidate all sessions for this user
+        # This forces logout from all devices after password change
+        # from django.contrib.sessions.models import Session
+        # Session.objects.filter(
+        #     session_key__in=user.session_set.values_list('session_key', flat=True)
+        # ).delete()
+
+        return JsonResponse({'success': True, 'message': 'Password reset successful.'})
     
 class VerifyEmailView(View):
     # 🟢 View Test Completed
@@ -3369,53 +3463,85 @@ class CompleteProfileView(UpdateView):
     template_name = 'pop_accounts/registration/complete_profile.html'
 
     def get_object(self, queryset=None):
-        # Already authenticated? Use that instance
+        # Already authenticated? Update that user
         if self.request.user.is_authenticated:
             return self.request.user
 
-        # Otherwise, get pending social user from session
+        # Check if there's a pending user (post-creation)
         user_id = self.request.session.get('social_profile_user_id')
-        if not user_id:
-            raise Http404("No social profile pending completion.")
-        try:
-            return User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            raise Http404("Pending social user not found.")
+        if user_id:
+            try:
+                return User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                pass
+        
+        # Pre-creation case: No user exists yet
+        # Return None - we'll create user in form_valid
+        return None
+    
+    def get_form_kwargs(self):
+        """Pass initial data from social provider."""
+        kwargs = super().get_form_kwargs()
+        
+        # If no user exists yet (pre-creation), remove 'instance'
+        if kwargs.get('instance') is None:
+            kwargs.pop('instance', None)
+        
+        # Pre-fill with data from social provider
+        partial_data = self.request.session.get('social_partial_data', {})
+        if partial_data and not kwargs.get('initial'):
+            kwargs['initial'] = partial_data
+        
+        return kwargs
 
     def form_valid(self, form):
-        # Save form updates
+        user = self.object
         
-        user = form.save()
+        # PRE-CREATION CASE: Create user now
+        if user is None:
+            email = form.cleaned_data.get('email')
+            first_name = form.cleaned_data.get('first_name')
+            last_name = form.cleaned_data.get('last_name', '')
+            
+            # Create user
+            user = User.objects.create_user(
+                email=email,
+                first_name=first_name,
+                last_name=last_name
+            )
+            user.is_active = True
+            user.save()
+        else:
+            # POST-CREATION CASE: Update existing user
+            user = form.save()
+            if not user.is_active:
+                user.is_active = True
+                user.save(update_fields=['is_active'])
 
-        # Log in user immediately so they appear authenticated
-        if not user.is_active:
-            user.is_active = True  # mark as active
-            user.save(update_fields=['is_active'])
-
-        # Try to resume the social-auth pipeline (if any)
+        # Resume pipeline
         strategy = load_strategy(self.request)
         partial = strategy.session_get('partial_pipeline')
+        
         if partial:
             backend_name = partial.get('backend')
             if backend_name:
                 backend = load_backend(strategy, backend_name, redirect_uri=None)
-
-                # Remove our temp session key so it doesn’t loop
+                
+                # Clean up session
                 self.request.session.pop('social_profile_user_id', None)
-
-                # Continue pipeline; may return HttpResponse (redirect)
+                self.request.session.pop('social_partial_data', None)
+                
+                # Continue pipeline
                 result = backend.continue_pipeline(partial)
                 if result:
-                    # If social-auth returns a redirect, use it
-                    # But we still log in the user afterward
                     login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
                     return result
 
-        # Fallback: if pipeline wasn’t present or didn’t redirect
+        # Fallback
         login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
 
-        # Get response to incorporate into sign-in registration modal
-        if self.request.headers.get("x-request-with") == "XMLHttpRequest":
+        # AJAX response
+        if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({
                 "success": True,
                 "next": "dashboard",
@@ -3429,13 +3555,81 @@ class CompleteProfileView(UpdateView):
         return redirect(self.get_success_url())
     
     def form_invalid(self, form):
-        # If modal, send bck errors as JSON
         if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
         return super().form_invalid(form)
 
     def get_success_url(self):
         return reverse("pop_accounts:dashboard")
+
+    # def get_object(self, queryset=None):
+    #     # Already authenticated? Use that instance
+    #     if self.request.user.is_authenticated:
+    #         return self.request.user
+
+    #     # Otherwise, get pending social user from session
+    #     user_id = self.request.session.get('social_profile_user_id')
+    #     if not user_id:
+    #         raise Http404("No social profile pending completion.")
+    #     try:
+    #         return User.objects.get(pk=user_id)
+    #     except User.DoesNotExist:
+    #         raise Http404("Pending social user not found.")
+
+    # def form_valid(self, form):
+    #     # Save form updates
+        
+    #     user = form.save()
+
+    #     # Log in user immediately so they appear authenticated
+    #     if not user.is_active:
+    #         user.is_active = True  # mark as active
+    #         user.save(update_fields=['is_active'])
+
+    #     # Try to resume the social-auth pipeline (if any)
+    #     strategy = load_strategy(self.request)
+    #     partial = strategy.session_get('partial_pipeline')
+    #     if partial:
+    #         backend_name = partial.get('backend')
+    #         if backend_name:
+    #             backend = load_backend(strategy, backend_name, redirect_uri=None)
+
+    #             # Remove our temp session key so it doesn’t loop
+    #             self.request.session.pop('social_profile_user_id', None)
+
+    #             # Continue pipeline; may return HttpResponse (redirect)
+    #             result = backend.continue_pipeline(partial)
+    #             if result:
+    #                 # If social-auth returns a redirect, use it
+    #                 # But we still log in the user afterward
+    #                 login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+    #                 return result
+
+    #     # Fallback: if pipeline wasn’t present or didn’t redirect
+    #     login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+    #     # Get response to incorporate into sign-in registration modal
+    #     if self.request.headers.get("x-request-with") == "XMLHttpRequest":
+    #         return JsonResponse({
+    #             "success": True,
+    #             "next": "dashboard",
+    #             "user": {
+    #                 "id": user.id,
+    #                 "first_name": user.first_name,
+    #                 "email": user.email,
+    #             }
+    #         })
+        
+    #     return redirect(self.get_success_url())
+    
+    # def form_invalid(self, form):
+    #     # If modal, send bck errors as JSON
+    #     if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
+    #         return JsonResponse({"success": False, "errors": form.errors}, status=400)
+    #     return super().form_invalid(form)
+
+    # def get_success_url(self):
+    #     return reverse("pop_accounts:dashboard")
 
 
 
@@ -3554,26 +3748,6 @@ class RestoreAccountView(View):
 
         return JsonResponse({"status": True})
     
-# def restore_account(request):    
-#     data = json.loads(request.body)
-#     email = data.get("email")
-
-
-#     user = User.all_objects.filter(email__iexact=email, deleted_at__isnull=False).first()
-
-#     if not user:
-#         return JsonResponse({"status": False})
-
-#     # Move from Deleted → Unverified
-#     user.deleted_at = None
-#     user.is_active = False
-#     user.save()
-
-#     send_verification_email(request, user)
-
-#     return JsonResponse({"status": True})
-
-
 
 def get_user_info(request):
     if request.user.is_authenticated:

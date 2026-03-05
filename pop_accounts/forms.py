@@ -10,6 +10,21 @@ User = get_user_model()
 
 # from django_countries.data import COUNTRIES
 
+"""
+Forms By Name
+ 1. ThePopUpUserAddressForm
+ 2. PopUpUserLoginForm
+ 3. PopUpEmailOnlyForm
+ 4. PopUpPasswordOnlyForm
+ 5. PopUpRegistrationForm
+ 6. PopUpEmailPasswordResetForm
+ 7. PopUpPasswordResetForm
+ 8. PopUpUserEditForm
+ 9. PopUpUpdateShippingInformationForm
+10. SocialProfileCompletionForm
+
+"""
+
 """The Pop Up"""
 SHOE_SIZE_CHOICES = [
     ('', 'Select size'),
@@ -313,7 +328,15 @@ class PopUpEmailOnlyForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update(
-            {'class': 'sign_up_options_form_email', 'type': 'email', 'placeholder': 'Email', 'name': 'email', 'id': 'id_email_check'})
+            {
+                'class': 'sign_up_options_form_email', 
+                'type': 'email', 
+                'placeholder': 'Email', 
+                'name': 'email', 
+                'id': 'id_email_check',
+                'aria-describedby': 'email-error',
+                'aria-invalid': 'false'
+            })
 
 
 class PopUpPasswordOnlyForm(forms.ModelForm):
@@ -322,7 +345,7 @@ class PopUpPasswordOnlyForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={
             'class': 'sign_up_options_form_password',
             'placeholder': 'Password',
-            'id': '', #id_password
+            'id': 'id_password_only',
             'type': 'password',
             'name': 'password'
         }
@@ -355,11 +378,23 @@ class PopUpRegistrationForm(forms.ModelForm):
     
     password = forms.CharField(
         label='Password', 
-        widget=forms.PasswordInput)
+        widget=forms.PasswordInput(attrs={
+            'class': '',
+            'placeholder': 'Password',
+            'id': 'id_reg_password',
+            'type': 'password',
+            'name': 'password'
+        }))
     
     password2 = forms.CharField(
         label='Confirm Password', 
-        widget=forms.PasswordInput)
+        widget=forms.PasswordInput(attrs={
+            'class': '',
+            'placeholder': 'Confirm Password',
+            'id': 'id_reg_conf_password',
+            'type': 'password',
+            'name': 'confirm_password'
+        }))
 
     class Meta:
         model = User
@@ -368,10 +403,6 @@ class PopUpRegistrationForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data['email']
-        # if PopUpCustomer.objects.filter(email=email).exists():
-        #     raise forms.ValidationError(
-        #         "Please use another Email, the email you've entered has already been taken"
-        #     )
         return email
     
     
@@ -418,7 +449,14 @@ class PopUpRegistrationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update(
-            {'class': 'sign_up_options_form_email', 'placeholder': 'Email', 'name': 'email', 'id': 'id_reg_email'})
+            {
+                'class': 'sign_up_options_form_email', 
+                'placeholder': 'Email', 
+                'name': 'email', 
+                'id': 'id_reg_email', 
+                'aria-describedby': 'email-error',
+                'aria-invalid': 'false'
+            })
         
         self.fields['first_name'].widget.attrs.update(
             {'class': 'sign_up_options_form_email', 'placeholder': 'First Name', 'name': 'name', 'id': 'id_reg_name'})
@@ -437,12 +475,14 @@ class PopUpEmailPasswordResetForm(forms.ModelForm):
         max_length=100, 
         help_text='Required',
         error_messages={'required': 'Sorry, you will need an email'},
-         widget=forms.TextInput(attrs={
+        widget=forms.TextInput(attrs={
             'class': 'email_password_reset_form',
             'placeholder': 'Email',
             'id': '',
             'type': 'email',
-            'name': 'email_reset'
+            'name': 'email_reset',
+            'aria-describedby': 'email-error',
+            'aria-invalid': 'false'
         }
     ))
 
@@ -613,11 +653,6 @@ class PopUpUserEditForm(forms.Form):
             'id': 'mobile_notification'
         })  
     )
-
-    # class Meta:
-    #     model = PopUpCustomerProfile
-    #     fields = ('first_name', 'last_name', 'middle_mane', 'shoe_size', 'size_gender', 'favorite_brand', 'mobile_notification')
-    
 
 
 
@@ -804,9 +839,23 @@ class SocialProfileCompletionForm(forms.ModelForm):
         # )
 
         self.fields['email'].widget.attrs.update(
-            {'placeholder': 'Email'}
-        )
+            {
+                'class': 'social_profile_email', 
+                'placeholder': 'Email', 
+                'name': 'email', 
+                'id': 'social_profile_email', 
+                'aria-describedby': 'email-error',
+                'aria-invalid': 'false'
+            })
+        
         self.fields['first_name'].widget.attrs.update(
-            {'placeholder': 'First Name'}
-        )
+            {
+                'class': 'social_profile_first_name', 
+                'placeholder': 'First Name', 
+                'name': 'name', 
+                'id': 'social_profile_first_name',
+                'aria-invalid': 'false'
+            })
     
+
+        

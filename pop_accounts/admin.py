@@ -6,6 +6,7 @@ from .models import (
     )
 
 
+
 # Register your models here.
 @admin.register(PopUpCustomerAddress)
 class PopUpCustomerAddressAdmin(admin.ModelAdmin):
@@ -73,7 +74,7 @@ class PopUpCustomerProfileAdmin(admin.ModelAdmin):
         'get_first_name', 
         'get_last_name', 
         # 'is_active', 
-        # 'is_deleted'
+        'is_deleted'
     )
     
     readonly_fields = ('get_email',)
@@ -112,6 +113,16 @@ class PopUpCustomerProfileAdmin(admin.ModelAdmin):
     def hard_delete_customers(self, request, queryset):
         for profile in queryset:
             profile.user.hard_delete()
+
+
+    def delete_model(self, request, obj):
+        obj.user.soft_delete()
+
+    def delete_queryset(self, request, queryset):
+        for profile in queryset:
+            profile.user.soft_delete()
+
+
 
 
 # @admin.register(PopUpCustomerProfile)

@@ -588,6 +588,23 @@ body.dark .sub-menu a:hover {
     opacity: 0;
 }
 
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #000;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+
+
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {

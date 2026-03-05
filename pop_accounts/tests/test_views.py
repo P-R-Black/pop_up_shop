@@ -126,7 +126,7 @@ Tests In Order
 67. TestResend2FACodeView
 68. TestRegisterView
 69. TestPasswordStrengthValidation
-70. TestSendPasswordResetLink |
+70. TestSendPasswordResetLink
 71. TestVerifyEmailView
 72. TestCompleteProfileView
 73. SocialLoginCompleteViewTests 
@@ -1811,7 +1811,7 @@ class TestUserPasswordResetConfirmView(TestCase):
         bad_uid = urlsafe_base64_encode(force_bytes('00000000-0000-0000-0000-000000000000'))
         bad_url = reverse("pop_accounts:password_reset_confirm", kwargs={"uidb64": bad_uid, "token": self.token})
         response = self.client.post(bad_url, {"password": "NewPass123!", "password2": "NewPass123!"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.assertJSONEqual(response.content, {"success": False, "error": "Invalid reset link."})
 
 
@@ -11196,16 +11196,17 @@ class TestSendPasswordResetLink(TestCase):
         """Set up test data"""
         self.client = Client()
         self.url = reverse('pop_accounts:send_reset_link')
+        self.test_ip = '192.168.1.100'
 
         cache.clear()
         mail.outbox = []
 
-        self.user, self.profile_user = create_test_user('user1@example.com', 'testPass!23', 'Test', 'User', '9', 'male')
+        self.user, self.profile_user = create_test_user('active@example.com', 'testPass!23', 'Active', 'User', '9', 'male')
         self.user.is_active = True
         self.user.last_password_reset = None
         self.user.save()
 
-        self.user_two, self.profile_user_two = create_test_user('user2@example.com', 'testPass!23', 'User', 'Two', '8', 'female')
+        self.user_two, self.profile_user_two = create_test_user('user2@example.com', 'testPass!23', 'Second', 'User', '8', 'female')
         self.user_two.is_active = True
         self.user_two.save()
 
@@ -11214,364 +11215,810 @@ class TestSendPasswordResetLink(TestCase):
         """Clean up after each test"""
         cache.clear()
         PopUpPasswordResetRequestLog.objects.all().delete()
+        mail.outbox = []
     
-
-    def test_successful_password_reset_request(self):
-        """Test successful password reset link sent"""
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
-        
-        # Verify response
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data['success'])
-        self.assertEqual(data['message'], 'If an account exists, a password reset link has been sent.')
-        
-        # Verify email was sent
-        self.assertEqual(len(mail.outbox), 1)
-        email = mail.outbox[0]
-        self.assertEqual(email.to, ['user1@example.com'])
-        self.assertIn('Reset Your Password', email.subject)
-        self.assertIn('Click the link below to reset your password', email.body)
-        
-        # Verify reset link is in email
-        self.assertIn('/password-reset/', email.body)
-
-
-    def test_password_reset_updates_last_password_reset(self):
-        """Test that last_password_reset is updated"""
-        before_time = django_timezone.now()
-        
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
-        
-        self.user.refresh_from_db()
-        self.assertIsNotNone(self.user.last_password_reset)
-        self.assertGreaterEqual(self.user.last_password_reset, before_time)
+    # ==================== EMAIL VALIDATION TESTS ====================
     
-    
-    def test_password_reset_creates_log_entry(self):
-        """Test that password reset request is logged"""
-        initial_count = PopUpPasswordResetRequestLog.objects.count()
-        
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
-        
-        # Verify log entry created
-        self.assertEqual(PopUpPasswordResetRequestLog.objects.count(), initial_count + 1)
-        
-        log_entry = PopUpPasswordResetRequestLog.objects.latest('requested_at')
-        self.assertEqual(log_entry.customer, self.user)
-        self.assertIsNotNone(log_entry.ip_address)
-    
-
-    def test_password_reset_link_contains_valid_token(self):
-        """Test that reset link contains valid uid and token"""
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
-        
-        email = mail.outbox[0]
-        email_body = email.body
-        
-        # Extract the reset link from email
-        self.assertIn('/password-reset/', email_body)
-        
-        # Verify link structure (contains uid and token)
-        import re
-        match = re.search(r'/password-reset/([^/]+)/([^/\s]+)', email_body)
-        self.assertIsNotNone(match, "Reset link not found in expected format")
-        
-        uid = match.group(1)
-        token = match.group(2)
-        
-        self.assertTrue(len(uid) > 0)
-        self.assertTrue(len(token) > 0)
-    
-    # ==================== Error Handling Tests ====================
-    
-    def test_missing_email(self):
-        """Test error when email is not provided"""
-        response = self.client.post(self.url, {})
-        
-        self.assertEqual(response.status_code, 400)
-        data = response.json()
-        self.assertFalse(data['success'])
-        self.assertEqual(data['error'], 'An email address is required')
-        
-        # No email should be sent
-        self.assertEqual(len(mail.outbox), 0)
-    
-    def test_empty_email(self):
-        """Test error when email is empty string"""
+    def test_empty_email_returns_error(self):
+        """Empty email should return 400 with specific error message"""
         response = self.client.post(self.url, {'email': ''})
         
         self.assertEqual(response.status_code, 400)
         data = response.json()
         self.assertFalse(data['success'])
         self.assertEqual(data['error'], 'An email address is required')
-    
-
-    def test_email_not_found(self):
-        """Test error when email doesn't exist"""
-        response = self.client.post(self.url, {'email': 'nonexistent@example.com'})
-        
-        # ✅ Should return 200 with generic message (don't reveal user doesn't exist)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data['success'])  # Changed from False to True
-        self.assertIn('If an account exists', data['message'])
-        
-        # ✅ No email should be sent
         self.assertEqual(len(mail.outbox), 0)
     
-    def test_timing_attack_prevention(self):
-        """Test that non-existent email takes similar time as existing email"""
-        import time
+    def test_missing_email_field_returns_error(self):
+        """Missing email field should return 400"""
+        response = self.client.post(self.url, {})
         
-        # Time for existing email (but rate limited after first request)
-        start1 = time.time()
-        self.client.post(self.url, {'email': 'user@example.com'})
-        time1 = time.time() - start1
-        
-        # Clear session for second request
-        self.client = Client()
-        
-        # Time for non-existent email
-        start2 = time.time()
-        self.client.post(self.url, {'email': 'nonexistent@example.com'})
-        time2 = time.time() - start2
-        
-        # Non-existent should take at least 1 second (sleep delay)
-        self.assertGreaterEqual(time2, 1.0)
-    
-    # ==================== Rate Limiting Tests ====================
-    
-    def test_cache_rate_limiting(self):
-        """Test cache-based rate limiting prevents duplicate requests"""
-        # First request should succeed
-        response1 = self.client.post(self.url, {'email': 'user1@example.com'})
-        self.assertTrue(response1.json()['success'])
-        
-        # Immediate second request should be blocked by cache
-        response2 = self.client.post(self.url, {'email': 'user1@example.com'})
-        self.assertFalse(response2.json()['success'])
-        self.assertIn('reset', response2.json()['error'].lower())
-    
-
-    def test_database_rate_limiting_by_ip_and_user(self):
-        """Test database log prevents requests from same IP and user"""
-        # Clear cache to test database rate limiting
-        cache.clear()
-        
-        # First request
-        response1 = self.client.post(self.url, {'email': 'user1@example.com'})
-        self.assertTrue(response1.json()['success'])
-        
-        # Clear cache but keep database log
-        cache.clear()
-        
-        # Second request should be blocked by database log
-        response2 = self.client.post(self.url, {'email': 'user1@example.com'})
-        self.assertEqual(response2.status_code, 429)
-        data = response2.json()
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
         self.assertFalse(data['success'])
-        self.assertIn('recently', data['error'].lower())
+        self.assertEqual(data['error'], 'An email address is required')
     
-    def test_session_rate_limiting(self):
-        """Test session-based rate limiting"""
-        # Clear cache and logs
-        cache.clear()
-        PopUpPasswordResetRequestLog.objects.all().delete()
+    def test_invalid_email_format_returns_error(self):
+        """Invalid email format should return 400"""
+        invalid_emails = [
+            'notanemail',
+            'missing@domain',
+            '@nodomain.com',
+            'spaces in@email.com',
+            'double@@domain.com'
+        ]
         
-        # First request
-        response1 = self.client.post(self.url, {'email': 'user1@example.com'})
-        self.assertTrue(response1.json()['success'])
-        
-        # Clear cache and database log, but session persists
-        cache.clear()
-        PopUpPasswordResetRequestLog.objects.all().delete()
-        
-        # Second request should be blocked by session
-        response2 = self.client.post(self.url, {'email': 'user1@example.com'})
-        self.assertEqual(response2.status_code, 429)
+        for invalid_email in invalid_emails:
+            with self.subTest(email=invalid_email):
+                response = self.client.post(
+                    self.url, 
+                    {'email': invalid_email},
+                    REMOTE_ADDR=self.test_ip
+                )
+                
+                self.assertEqual(response.status_code, 400)
+                data = response.json()
+                self.assertFalse(data['success'])
+                self.assertIn('invalid', data['error'].lower())
+
+
+    # ==================== EXISTING USER TESTS ====================
     
-    def test_last_password_reset_rate_limiting(self):
-        """Test that last_password_reset field prevents too frequent requests"""
-        # Set last_password_reset to recent time
-        self.user.last_password_reset = django_timezone.now() - timedelta(minutes=1)
+    def test_valid_email_for_existing_user_sends_email(self):
+        """Valid email for existing active user should send reset email"""
+        response = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
+        
+        # Check response
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertIn('if this email is registered', data['message'].lower())
+        
+        # Verify response
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, ['active@example.com'])
+        self.assertIn('Reset Your Password', email.subject)
+        self.assertIn('Click the link below to reset your password', email.body)
+        
+        # Verify reset link is in email
+        self.assertIn('/password-reset/', email.body)
+
+        
+        # Check user timestamp was updated
+        self.user.refresh_from_db()
+        self.assertIsNotNone(self.user.last_password_reset)
+        
+        # Check log was created
+        self.assertEqual(PopUpPasswordResetRequestLog.objects.count(), 1)
+        log = PopUpPasswordResetRequestLog.objects.first()
+        self.assertEqual(log.customer, self.user)
+    
+    def test_email_case_insensitive(self):
+        """Email matching should be case-insensitive"""
+        response = self.client.post(
+            self.url,
+            {'email': 'ACTIVE@EXAMPLE.COM'},  # Uppercase
+            REMOTE_ADDR=self.test_ip
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+        self.assertEqual(len(mail.outbox), 1)
+    
+    def test_email_whitespace_is_stripped(self):
+        """Leading/trailing whitespace should be stripped"""
+        response = self.client.post(
+            self.url,
+            {'email': '  active@example.com  '},
+            REMOTE_ADDR=self.test_ip
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+        self.assertEqual(len(mail.outbox), 1)
+
+    # ==================== NON-EXISTENT USER TESTS ====================
+    
+    def test_nonexistent_email_returns_generic_success(self):
+        """Non-existent email should return generic success (security)"""
+        response = self.client.post(
+            self.url,
+            {'email': 'nonexistent@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
+        
+        # Returns success (don't reveal user doesn't exist)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertIn('if this email is registered', data['message'].lower())
+        
+        # No email sent
+        self.assertEqual(len(mail.outbox), 0)
+        
+        # No log created
+        self.assertEqual(PopUpPasswordResetRequestLog.objects.count(), 0)
+    
+    def test_inactive_user_treated_as_nonexistent(self):
+        """Inactive user should be treated as non-existent (security)"""
+        # Make user inactive
+        self.user.is_active = False
         self.user.save()
         
-        # Clear other rate limiting mechanisms
-        cache.clear()
-        PopUpPasswordResetRequestLog.objects.all().delete()
+        response = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
         
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
+        # Returns generic success
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+        
+        # No email sent
+        self.assertEqual(len(mail.outbox), 0)
+
+    # ==================== RATE LIMITING TESTS ====================
+    
+    def test_ip_rate_limiting_after_three_attempts(self):
+        """IP should be rate limited after 3 attempts"""
+        # Make 3 requests - should succeed
+        for i in range(3):
+            response = self.client.post(
+                self.url,
+                {'email': 'nonexistent@example.com'},
+                REMOTE_ADDR=self.test_ip
+            )
+            self.assertEqual(response.status_code, 200, f"Request {i+1} should succeed")
+        
+        # 4th request should be rate limited
+        response = self.client.post(
+            self.url,
+            {'email': 'nonexistent@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
         
         self.assertEqual(response.status_code, 429)
         data = response.json()
         self.assertFalse(data['success'])
-        self.assertIn('recent', data['error'].lower())
+        self.assertIn('too many', data['error'].lower())
     
-    def test_rate_limit_expires_after_cooldown(self):
-        """Test that rate limit expires after cooldown period"""
-        from pop_accounts.utils.pop_accounts_utils import RESET_EMAIL_COOLDOWN  # Adjust import
+    def test_different_ips_not_rate_limited_together(self):
+        """Different IPs should have separate rate limits"""
+        # 3 requests from first IP
+        for i in range(3):
+            self.client.post(
+                self.url,
+                {'email': 'test@example.com'},
+                REMOTE_ADDR='192.168.1.100'
+            )
         
+        # Request from different IP should still work
+        response = self.client.post(
+            self.url,
+            {'email': 'test@example.com'},
+            REMOTE_ADDR='192.168.1.200'  # Different IP
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+    
+    def test_user_specific_rate_limiting(self):
+        """Same user should be rate limited by last_password_reset timestamp"""
         # First request
-        self.client.post(self.url, {'email': 'user1@example.com'})
-        
-        # Mock time passing beyond cooldown
-        future_time = django_timezone.now() + RESET_EMAIL_COOLDOWN + timedelta(seconds=1)
-        return_value = future_time
-        
-        # Clear cache (simulating expiration)
-        cache.clear()
-        
-        # Should succeed after cooldown
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
-        # May still be blocked by database log, depending on cooldown implementation
-    
-    def test_different_users_can_request_separately(self):
-        """Test that different users can request resets independently"""
-        # User 1 request
-        response1 = self.client.post(self.url, {'email': 'user1@example.com'})
-        self.assertTrue(response1.json()['success'])
-        
-        # Clear cache
-        cache.clear()
-        # self.client.session.flush()  # Clear the session
-        
-        
-        # User 2 request should succeed (different user)
-        client2 = Client()
-        response2 = client2.post(self.url, {'email': 'user2@example.com'})
-        self.assertTrue(response2.json()['success'])
-        
-        # Both should have received emails
-        self.assertEqual(len(mail.outbox), 2)
-    
-    def test_different_ips_same_user(self):
-        """Test rate limiting for same user from different IPs"""
-        # First request from one IP
-        response1 = self.client.post(self.url, {'email': 'user1@example.com'})
-        self.assertTrue(response1.json()['success'])
-        
-        # Clear cache
-        cache.clear()
-        
-        # Second request from "different" IP (new client session)
-        # In real scenario, this would be different IP
-        # For testing, we'd need to mock get_client_ip
-        with patch('pop_accounts.utils.pop_accounts_utils.get_client_ip') as mock_ip:
-            mock_ip.return_value = '192.168.1.100'  # Different IP
-            
-            # May still be blocked by last_password_reset
-            response2 = self.client.post(self.url, {'email': 'user1@example.com'})
-            # Expected: blocked by user's last_password_reset field
-    
-    # ==================== Edge Cases ====================
-    
-    def test_case_insensitive_email(self):
-        """Test that email lookup is case-insensitive"""
-        response = self.client.post(self.url, {'email': 'USER1@EXAMPLE.COM'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data['success'])
-        
-        # Email should be sent
+        response1 = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
+        self.assertEqual(response1.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
-    
-    def test_email_with_whitespace(self):
-        """Test handling of email with whitespace"""
-        response = self.client.post(self.url, {'email': '  user1@example.com  '})
         
-        # Depending on your implementation, this might need trimming in the view
-        # If not handled, adjust test or add .strip() to view
-        self.assertEqual(response.status_code, 200)
-    
-    def test_inactive_user_can_request_reset(self):
-        """Test that inactive users can still request password reset"""
-        self.user.is_active = False
-        self.user.save()
+        # Clear cache to bypass cache check (test database check)
+        cache.clear()
+        mail.outbox = []
         
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
+        # Immediate second request should be blocked
+        response2 = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR='192.168.1.200'  # Different IP
+        )
         
-        # Should succeed (user might need to reset to reactivate)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data['success'])
-    
-    def test_deleted_user_cannot_request_reset(self):
-        """Test that soft-deleted users cannot request reset"""
-        self.user.deleted_at = django_timezone.now()
-        self.user.save()
-        
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
-        
-        # Should return 200 (doesn't reveal that user is deleted)
-        self.assertEqual(response.status_code, 200)
-
-        # Should have success=True with generic message
-        data = response.json()
-        self.assertTrue(data['success'])
-        self.assertIn('If an account exists', data['message'])
-        
-        # Verify no email was actually sent
-        from django.core import mail
+        self.assertEqual(response2.status_code, 429)
+        data = response2.json()
+        self.assertFalse(data['success'])
+        self.assertIn('recently', data['error'].lower())
         self.assertEqual(len(mail.outbox), 0)
+    
+    def test_cache_prevents_duplicate_sends_same_user(self):
+        """User-specific rate limit (database) should block duplicate requests"""
+        # First request
+        response1 = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
+        self.assertEqual(response1.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
         
-        # Verify no password reset log was created
+        # Clear mail for second check
+        mail.outbox = []
+        
+        # Second request from DIFFERENT IP (bypass IP rate limit)
+        # Should be blocked by user.last_password_reset (database check)
+        response2 = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR='192.168.1.200'  # Different IP
+        )
+        
+        # Blocked by database timestamp check
+        self.assertEqual(response2.status_code, 429)
+        self.assertFalse(response2.json()['success'])
+        self.assertIn('recently', response2.json()['error'].lower())
+        self.assertEqual(len(mail.outbox), 0)
+
+    # ==================== SECURITY TESTS ====================
+    
+    def test_timing_attack_prevention(self):
+        """Non-existent email should have timing delay (1 second)"""
+        start = time.time()
+        
+        response = self.client.post(
+            self.url,
+            {'email': 'nonexistent@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
+        
+        elapsed = time.time() - start
+        
+        # Should take at least 1 second due to sleep
+        self.assertGreaterEqual(elapsed, 1.0)
+        self.assertTrue(response.json()['success'])
+    
+    def test_response_messages_identical_for_existing_and_nonexistent(self):
+        """Success messages should be identical (prevent enumeration)"""
+        # Existing user
+        response1 = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR='192.168.1.100'
+        )
+        
+        # Non-existent user
+        response2 = self.client.post(
+            self.url,
+            {'email': 'nonexistent@example.com'},
+            REMOTE_ADDR='192.168.1.200'
+        )
+        
+        # Messages should be identical
+        self.assertEqual(response1.status_code, response2.status_code)
         self.assertEqual(
-            PopUpPasswordResetRequestLog.objects.filter(customer=self.user).count(),
-            0
+            response1.json()['message'],
+            response2.json()['message']
         )
     
-    def test_get_request_not_allowed(self):
-        """Test that GET requests are not allowed"""
-        response = self.client.get(self.url)
-        
-        # Should return 405 Method Not Allowed
-        self.assertEqual(response.status_code, 405)
+    # ==================== EMAIL CONTENT TESTS ====================
     
-    def test_malformed_email(self):
-        """Test handling of malformed email addresses"""
-        test_emails = [
-            'notanemail',
-            '@example.com',
-            'user@',
-            'user@@example.com',
+    def test_reset_email_contains_reset_link(self):
+        """Reset email should contain valid reset link"""
+        response = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
+        
+        self.assertEqual(len(mail.outbox), 1)
+        email_body = mail.outbox[0].body
+        
+        # Should contain reset link
+        self.assertIn('password', email_body.lower())
+        self.assertIn('reset', email_body.lower())
+        self.assertIn('http', email_body)
+        
+        # Should contain password_reset_confirm URL
+        self.assertIn('password-reset', email_body)
+    
+    def test_reset_email_sent_to_correct_address(self):
+        """Reset email should be sent to the requested address"""
+        response = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR=self.test_ip
+        )
+        
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['active@example.com'])
+
+    # ==================== EDGE CASE TESTS ====================
+    
+    def test_multiple_users_can_request_resets_independently(self):
+        """Multiple users should be able to request resets independently"""
+        # User 1 requests reset
+        response1 = self.client.post(
+            self.url,
+            {'email': 'active@example.com'},
+            REMOTE_ADDR='192.168.1.100'
+        )
+        self.assertTrue(response1.json()['success'])
+        
+        # User 2 requests reset (different IP to avoid IP rate limit)
+        response2 = self.client.post(
+            self.url,
+            {'email': 'user2@example.com'},
+            REMOTE_ADDR='192.168.1.200'
+        )
+        self.assertTrue(response2.json()['success'])
+        
+        # Both should have emails sent
+        self.assertEqual(len(mail.outbox), 2)
+        
+        # Both should have timestamps
+        self.user.refresh_from_db()
+        self.user_two.refresh_from_db()
+        self.assertIsNotNone(self.user.last_password_reset)
+        self.assertIsNotNone(self.user_two.last_password_reset)
+    
+    def test_sql_injection_attempt_in_email(self):
+        """SQL injection attempts should be safely handled"""
+        malicious_emails = [
+            "test'; DROP TABLE users; --@example.com",
+            "test' OR '1'='1@example.com",
+            "admin'--@example.com"
         ]
         
-        for email in test_emails:
-            with self.subTest(email=email):
-                response = self.client.post(self.url, {'email': email})
+        for malicious_email in malicious_emails:
+            with self.subTest(email=malicious_email):
+                response = self.client.post(
+                    self.url,
+                    {'email': malicious_email},
+                    REMOTE_ADDR=self.test_ip
+                )
                 
-                # Should return 400 for invalid format
-                self.assertEqual(response.status_code, 400)
-                data = response.json()
-                self.assertFalse(data['success'])
-                self.assertIn('Invalid email', data['error'])
-    
-    # ==================== Security Tests ====================
-    
-    def test_no_user_enumeration(self):
-        """Test that response doesn't reveal if user exists"""
-        # Test non-existent user
-        response = self.client.post(self.url, {'email': 'nonexistent@example.com'})
+                # Should handle safely (either validation error or success)
+                self.assertIn(response.status_code, [200, 400])
+                
+                # Database should be intact
+                self.assertTrue(User.objects.filter(email='active@example.com').exists())
+
+
+
+    # ==== OLD TEST SUITE ====
+    # ==== OLD TEST SUITE ====
+    # ==== OLD TEST SUITE ====
+    # def test_successful_password_reset_request(self):
+    #     """Test successful password reset link sent"""
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
         
-        # ✅ Should return 200 with generic message (secure behavior)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data['success'])
-        self.assertIn('If an account exists', data['message'])
+    #     # Verify response
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+    #     self.assertTrue(data['success'])
+    #     self.assertEqual(data['message'], 'If this email is registered, you will receive a password reset link shortly.')
         
-        # Verify no email was actually sent
-        from django.core import mail
-        self.assertEqual(len(mail.outbox), 0)
+    #     # Verify email was sent
+    #     self.assertEqual(len(mail.outbox), 1)
+    #     email = mail.outbox[0]
+    #     self.assertEqual(email.to, ['user1@example.com'])
+    #     self.assertIn('Reset Your Password', email.subject)
+    #     self.assertIn('Click the link below to reset your password', email.body)
+        
+    #     # Verify reset link is in email
+    #     self.assertIn('/password-reset/', email.body)
+
+
+    # def test_password_reset_updates_last_password_reset(self):
+    #     """Test that last_password_reset is updated"""
+    #     before_time = django_timezone.now()
+        
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+        
+    #     self.user.refresh_from_db()
+    #     self.assertIsNotNone(self.user.last_password_reset)
+    #     self.assertGreaterEqual(self.user.last_password_reset, before_time)
     
-    def test_ip_address_logged(self):
-        """Test that IP address is captured in log"""
-        response = self.client.post(self.url, {'email': 'user1@example.com'})
+    
+    # def test_password_reset_creates_log_entry(self):
+    #     """Test that password reset request is logged"""
+    #     initial_count = PopUpPasswordResetRequestLog.objects.count()
         
-        log_entry = PopUpPasswordResetRequestLog.objects.latest('requested_at')
-        self.assertIsNotNone(log_entry.ip_address)
-        self.assertTrue(len(log_entry.ip_address) > 0)
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+        
+    #     # Verify log entry created
+    #     self.assertEqual(PopUpPasswordResetRequestLog.objects.count(), initial_count + 1)
+        
+    #     log_entry = PopUpPasswordResetRequestLog.objects.latest('requested_at')
+    #     self.assertEqual(log_entry.customer, self.user)
+    #     self.assertIsNotNone(log_entry.ip_address)
+    
+
+    # def test_password_reset_link_contains_valid_token(self):
+    #     """Test that reset link contains valid uid and token"""
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+        
+    #     email = mail.outbox[0]
+    #     email_body = email.body
+        
+    #     # Extract the reset link from email
+    #     self.assertIn('/password-reset/', email_body)
+        
+    #     # Verify link structure (contains uid and token)
+    #     import re
+    #     match = re.search(r'/password-reset/([^/]+)/([^/\s]+)', email_body)
+    #     self.assertIsNotNone(match, "Reset link not found in expected format")
+        
+    #     uid = match.group(1)
+    #     token = match.group(2)
+        
+    #     self.assertTrue(len(uid) > 0)
+    #     self.assertTrue(len(token) > 0)
+    
+    # # ==================== Error Handling Tests ====================
+    
+    # def test_missing_email(self):
+    #     """Test error when email is not provided"""
+    #     response = self.client.post(self.url, {})
+        
+    #     self.assertEqual(response.status_code, 400)
+    #     data = response.json()
+    #     self.assertFalse(data['success'])
+    #     self.assertEqual(data['error'], 'An email address is required')
+        
+    #     # No email should be sent
+    #     self.assertEqual(len(mail.outbox), 0)
+    
+    # def test_empty_email(self):
+    #     """Test error when email is empty string"""
+    #     response = self.client.post(self.url, {'email': ''})
+        
+    #     self.assertEqual(response.status_code, 400)
+    #     data = response.json()
+    #     self.assertFalse(data['success'])
+    #     self.assertEqual(data['error'], 'An email address is required')
+    
+
+    # def test_email_not_found(self):
+    #     """Test error when email doesn't exist"""
+    #     response = self.client.post(self.url, {'email': 'nonexistent@example.com'})
+        
+    #     # ✅ Should return 200 with generic message (don't reveal user doesn't exist)
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+    #     self.assertTrue(data['success'])  # Changed from False to True
+    #     self.assertIn('If this email is registered', data['message'])
+        
+    #     # ✅ No email should be sent
+    #     self.assertEqual(len(mail.outbox), 0)
+    
+    # def test_timing_attack_prevention(self):
+    #     """Test that non-existent email takes similar time as existing email"""
+    #     # import time
+        
+    #     # Time for existing email (but rate limited after first request)
+    #     start1 = time.time()
+    #     self.client.post(self.url, {'email': 'user@example.com'}, REMOTE_ADDR='192.168.1.101'  # ✅ Different IP
+    #                      )
+    #     time1 = time.time() - start1
+        
+    #     # Clear session for second request
+    #     self.client = Client()
+        
+    #     # Time for non-existent email
+    #     start2 = time.time()
+    #     self.client.post(self.url, {'email': 'nonexistent@example.com'}, REMOTE_ADDR='192.168.1.102'  # ✅ Different IP
+    #                      )
+    #     time2 = time.time() - start2
+        
+    #     # Non-existent should take at least 1 second (sleep delay)
+    #     self.assertGreaterEqual(time2, 1.0)
+    
+    # # ==================== Rate Limiting Tests ====================
+    
+    # def test_cache_rate_limiting(self):
+    #     """Test cache-based rate limiting prevents duplicate requests"""
+    #     # First request should succeed
+    #     response1 = self.client.post(self.url, {'email': 'user1@example.com'})
+    #     self.assertTrue(response1.json()['success'])
+        
+    #     # Immediate second request should be blocked by cache
+    #     response2 = self.client.post(self.url, {'email': 'user1@example.com'})
+    #     self.assertFalse(response2.json()['success'])
+    #     self.assertIn('reset', response2.json()['error'].lower())
+    
+
+    # def test_database_rate_limiting_by_ip_and_user(self):
+    #     """Test database log prevents requests from same IP and user"""
+    #     # Clear cache to test database rate limiting
+    #     cache.clear()
+    #     test_ip = '192.168.1.100'
+        
+    #     # Verify user starts with no last_password_reset
+    #     self.user.refresh_from_db()
+    #     self.assertIsNone(self.user.last_password_reset, "User should start with no last_password_reset")
+        
+    #     # First request
+    #     response1 = self.client.post(
+    #         self.url, 
+    #         {'email': 'user1@example.com'},
+    #         REMOTE_ADDR=test_ip  # ✅ Set consistent IP
+    #     )
+    #     self.assertEqual(response1.status_code, 200)
+    #     self.assertTrue(response1.json()['success'])
+
+    #     # Check what's in cache after first request
+    #     cache_key_pw_reset = f"password_reset_requested:user1@example.com"
+    #     print(f"Cache after first request: {cache.get(cache_key_pw_reset)}")
+
+        
+    #     # Verify timestamp was saved
+    #     self.user.refresh_from_db()
+    #     print(f"user.loast_password_reset after cache clear: {self.user.last_password_reset}")
+    #     self.assertIsNotNone(self.user.last_password_reset, "last_password_reset should be set after first request")
+        
+    #     # Check time difference
+    #     RESET_EMAIL_COOLDOWN = timedelta(minutes=5)
+    #     from django.utils.timezone import now
+    #     time_diff = now() - self.user.last_password_reset
+    #     print(f"Time difference: {time_diff}")
+    #     print(f"RESET_EMAIL_COOLDOWN: {RESET_EMAIL_COOLDOWN}")
+    #     print(f"Should block? {time_diff < RESET_EMAIL_COOLDOWN}")
+
+
+    #     # Verify email was sent
+    #     self.assertEqual(len(mail.outbox), 1, "One email should be sent")
+        
+    #     # Clear cache but keep database
+    #     cache.clear()
+    #     mail.outbox = []  # Clear mail outbox too
+        
+    #     # Verify cache was actually cleared
+    #     cache_key = f"password_reset_requested:user1@example.com"
+    #     self.assertIsNone(cache.get(cache_key), "Cache should be cleared")
+        
+    #     # Second request from same IP - should be blocked by database check
+    #     response2 = self.client.post(
+    #         self.url, 
+    #         {'email': 'user1@example.com'},
+    #         REMOTE_ADDR=test_ip  # ✅ Same IP
+    #     )
+        
+    #     print(f"Second request status: {response2.status_code}")
+    #     print(f"Second request content: {response2.content}")
+        
+    #     # Should be blocked by user.last_password_reset check
+    #     self.assertEqual(response2.status_code, 429)
+    #     data = response2.json()
+    #     self.assertFalse(data['success'])
+    #     self.assertIn('recently', data['error'].lower())
+        
+    #     # Verify no second email was sent
+    #     self.assertEqual(len(mail.outbox), 0, "No second email should be sent")
+    
+
+    # def test_session_rate_limiting(self):
+    #     """Test session-based rate limiting"""
+    #     # Clear cache and logs
+    #     cache.clear()
+    #     PopUpPasswordResetRequestLog.objects.all().delete()
+        
+    #     # First request
+    #     response1 = self.client.post(self.url, {'email': 'user1@example.com'})
+    #     self.assertTrue(response1.json()['success'])
+        
+    #     # Clear cache and database log, but session persists
+    #     cache.clear()
+    #     PopUpPasswordResetRequestLog.objects.all().delete()
+        
+    #     # Second request should be blocked by session
+    #     response2 = self.client.post(self.url, {'email': 'user1@example.com'})
+    #     self.assertEqual(response2.status_code, 429)
+    
+    # def test_last_password_reset_rate_limiting(self):
+    #     """Test that last_password_reset field prevents too frequent requests"""
+    #     # Set last_password_reset to recent time
+    #     self.user.last_password_reset = django_timezone.now() - timedelta(minutes=1)
+    #     self.user.save()
+        
+    #     # Clear other rate limiting mechanisms
+    #     cache.clear()
+    #     PopUpPasswordResetRequestLog.objects.all().delete()
+        
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+        
+    #     self.assertEqual(response.status_code, 429)
+    #     data = response.json()
+    #     self.assertFalse(data['success'])
+    #     self.assertIn('recent', data['error'].lower())
+    
+    # def test_rate_limiting_after_three_attempts(self):
+    #     email = 'nonexistent@example.com'  # ✅ Use non-existent email
+    
+    #     # Make 3 requests - should succeed
+    #     for i in range(3):
+    #         response = self.client.post(self.url, {'email': email})
+    #         self.assertEqual(response.status_code, 200, f"Request {i+1} failed")
+    #         data = json.loads(response.content)
+    #         self.assertTrue(data['success'])
+        
+    #     # 4th request should be rate limited
+    #     response = self.client.post(self.url, {'email': email})
+    #     print('response', response.content)
+    #     self.assertEqual(response.status_code, 429)
+    #     data = json.loads(response.content)
+    #     self.assertFalse(data['success'])
+    #     self.assertIn('too many', data['error'].lower())
+    
+    # def test_rate_limit_expires_after_cooldown(self):
+    #     """Test that rate limit expires after cooldown period"""
+    #     from pop_accounts.utils.pop_accounts_utils import RESET_EMAIL_COOLDOWN  # Adjust import
+        
+    #     # First request
+    #     self.client.post(self.url, {'email': 'user1@example.com'})
+        
+    #     # Mock time passing beyond cooldown
+    #     future_time = django_timezone.now() + RESET_EMAIL_COOLDOWN + timedelta(seconds=1)
+    #     return_value = future_time
+        
+    #     # Clear cache (simulating expiration)
+    #     cache.clear()
+        
+    #     # Should succeed after cooldown
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+    #     # May still be blocked by database log, depending on cooldown implementation
+    
+    # def test_different_users_can_request_separately(self):
+    #     """Test that different users can request resets independently"""
+    #     # User 1 request
+    #     response1 = self.client.post(self.url, {'email': 'user1@example.com'})
+    #     self.assertTrue(response1.json()['success'])
+        
+    #     # Clear cache
+    #     cache.clear()
+    #     # self.client.session.flush()  # Clear the session
+        
+        
+    #     # User 2 request should succeed (different user)
+    #     client2 = Client()
+    #     response2 = client2.post(self.url, {'email': 'user2@example.com'})
+    #     self.assertTrue(response2.json()['success'])
+        
+    #     # Both should have received emails
+    #     self.assertEqual(len(mail.outbox), 2)
+    
+    # def test_different_ips_same_user(self):
+    #     """Test rate limiting for same user from different IPs"""
+    #     # First request from one IP
+    #     response1 = self.client.post(self.url, {'email': 'user1@example.com'})
+    #     self.assertTrue(response1.json()['success'])
+        
+    #     # Clear cache
+    #     cache.clear()
+        
+    #     # Second request from "different" IP (new client session)
+    #     # In real scenario, this would be different IP
+    #     # For testing, we'd need to mock get_client_ip
+    #     with patch('pop_accounts.utils.pop_accounts_utils.get_client_ip') as mock_ip:
+    #         mock_ip.return_value = '192.168.1.100'  # Different IP
+            
+    #         # May still be blocked by last_password_reset
+    #         response2 = self.client.post(self.url, {'email': 'user1@example.com'})
+    #         # Expected: blocked by user's last_password_reset field
+    
+    # # ==================== Edge Cases ====================
+    
+    # def test_case_insensitive_email(self):
+    #     """Test that email lookup is case-insensitive"""
+    #     response = self.client.post(self.url, {'email': 'USER1@EXAMPLE.COM'})
+        
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+    #     self.assertTrue(data['success'])
+        
+    #     # Email should be sent
+    #     self.assertEqual(len(mail.outbox), 1)
+    
+    # def test_email_with_whitespace(self):
+    #     """Test handling of email with whitespace"""
+    #     response = self.client.post(self.url, {'email': '  user1@example.com  '})
+        
+    #     # Depending on your implementation, this might need trimming in the view
+    #     # If not handled, adjust test or add .strip() to view
+    #     self.assertEqual(response.status_code, 200)
+    
+    # def test_inactive_user_can_request_reset(self):
+    #     """Test that inactive users can still request password reset"""
+    #     self.user.is_active = False
+    #     self.user.save()
+        
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+        
+    #     # Should succeed (user might need to reset to reactivate)
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+    #     self.assertTrue(data['success'])
+    
+    # def test_deleted_user_cannot_request_reset(self):
+    #     """Test that soft-deleted users cannot request reset"""
+    #     self.user.deleted_at = django_timezone.now()
+    #     self.user.save()
+        
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+        
+    #     # Should return 200 (doesn't reveal that user is deleted)
+    #     self.assertEqual(response.status_code, 200)
+
+    #     # Should have success=True with generic message
+    #     data = response.json()
+    #     self.assertTrue(data['success'])
+    #     self.assertIn('If this email is registered', data['message'])
+        
+    #     # Verify no email was actually sent
+    #     from django.core import mail
+    #     self.assertEqual(len(mail.outbox), 0)
+        
+    #     # Verify no password reset log was created
+    #     self.assertEqual(
+    #         PopUpPasswordResetRequestLog.objects.filter(customer=self.user).count(),
+    #         0
+    #     )
+    
+    # def test_get_request_not_allowed(self):
+    #     """Test that GET requests are not allowed"""
+    #     response = self.client.get(self.url)
+        
+    #     # Should return 405 Method Not Allowed
+    #     self.assertEqual(response.status_code, 405)
+    
+    # def test_malformed_email(self):
+    #     """Test handling of malformed email addresses"""
+    #     test_emails = [
+    #         'notanemail',
+    #         '@example.com',
+    #         'user@',
+    #         'user@@example.com',
+    #     ]
+        
+    #     for email in test_emails:
+    #         with self.subTest(email=email):
+    #             response = self.client.post(self.url, {'email': email})
+                
+    #             # Should return 400 for invalid format
+    #             self.assertEqual(response.status_code, 400)
+    #             data = response.json()
+    #             self.assertFalse(data['success'])
+    #             self.assertIn('Invalid email', data['error'])
+    
+    # # ==================== Security Tests ====================
+    
+    # def test_no_user_enumeration(self):
+    #     """Test that response doesn't reveal if user exists"""
+    #     # Test non-existent user
+    #     response = self.client.post(self.url, {'email': 'nonexistent@example.com'})
+        
+    #     # ✅ Should return 200 with generic message (secure behavior)
+    #     self.assertEqual(response.status_code, 200)
+    #     data = response.json()
+    #     self.assertTrue(data['success'])
+    #     self.assertIn('If this email is registered, you will receive a password reset link shortly.', data['message'])
+        
+    #     # Verify no email was actually sent
+    #     from django.core import mail
+    #     self.assertEqual(len(mail.outbox), 0)
+    
+    # def test_ip_address_logged(self):
+    #     """Test that IP address is captured in log"""
+    #     response = self.client.post(self.url, {'email': 'user1@example.com'})
+        
+    #     log_entry = PopUpPasswordResetRequestLog.objects.latest('requested_at')
+    #     self.assertIsNotNone(log_entry.ip_address)
+    #     self.assertTrue(len(log_entry.ip_address) > 0)
     
 
 

@@ -10,7 +10,7 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     MostInterested, TotalOpenBidsView, TotalAccountsView, AccountSizesView, 
                     PendingOkayToShipView, PendingOrderShippingDetailView, UpdateShippingView, 
                     GetOrderShippingDetail, UpdateShippingPostView, ViewShipmentsView, AddProductsGetView,
-                    Resend2FACodeView, SendPasswordResetLink, SocialLoginCompleteView)
+                    Resend2FACodeView, SendPasswordResetLink, SocialLoginCompleteView, RestoreAccountView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -20,6 +20,7 @@ urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='register'),
     path('verify/<uidb64>/<token>/', VerifyEmailView.as_view(), name='verify_email'),
     path('auth/user-login/', Login2FAView.as_view(), name='user_login'),
+    path('restore-account/', RestoreAccountView.as_view(), name='restore_account'),
 
     # Social Auth / Social Login
     path('auth/complete-profile/', CompleteProfileView.as_view(), name='complete_profile'),
