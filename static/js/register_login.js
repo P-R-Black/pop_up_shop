@@ -885,7 +885,7 @@ function pollLoginStatus(socialPopup) {
             if (response.ok) {
                 const userData = await response.json();
 
-                console.log(`${checkCount}: ${userData}`)
+                console.log(`checkCount: ${checkCount}: userData: ${userData}`)
 
                 if (userData.authenticated && !loginProcessing) {
                     loginProcessing = true;

@@ -150,19 +150,35 @@ SOCIAL_AUTH_PIPELINE = (
     # Verifies that the current auth process is valid within the current
     # project, raises an exception otherwise.
     'social_core.pipeline.social_auth.auth_allowed',
-    
-    # NEW: Check if we have required fields BEFORE attempting to find/create user
-    'pop_accounts.pipeline.check_required_fields_before_creation',
-    
+
     # Checks if the current social-account is already associated in the site.
     'social_core.pipeline.social_auth.social_user',
-    
-    # Make up a username for this person, appends a random string at the end if
-    # there's any collision.
+
+    # NEW: Check if we have required fields BEFORE attempting to find/create user
+    'pop_accounts.pipeline.check_required_fields_before_creation',
+
+    # Make up a username for this person, appends a random string at the end if there's any collision.
     'social_core.pipeline.user.get_username',
-    
+
     # Create user with our custom logic (replaces create_user)
     'pop_accounts.pipeline.create_user_with_social_data',
+
+    # Debugging tool
+    'pop_accounts.pipeline.debug_associate_user',
+
+    # Save additional profile data from provider
+    'pop_accounts.pipeline.save_social_profile',
+
+    # Check if existing user needs profile completion
+    'pop_accounts.pipeline.require_profile_completion',
+
+    # Ensure user is logged in
+    'pop_accounts.pipeline.ensure_user_login',
+
+
+    # Clean up stale session data for existing users
+    'pop_accounts.pipeline.cleanup_stale_session_data',
+
     
     # Associate the social account with the user account.
     'social_core.pipeline.social_auth.associate_user',
@@ -171,14 +187,6 @@ SOCIAL_AUTH_PIPELINE = (
     # specified by settings (and the default ones like access_token, etc).
     'social_core.pipeline.social_auth.load_extra_data',
     
-    # Check if existing user needs profile completion
-    'pop_accounts.pipeline.require_profile_completion',
-    
-    # Save additional profile data from provider
-    'pop_accounts.pipeline.save_social_profile',
-    
-    # Ensure user is logged in
-    'pop_accounts.pipeline.ensure_user_login',
     
     # Update the user record with any changed info from the auth service.
     'social_core.pipeline.user.user_details',

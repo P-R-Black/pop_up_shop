@@ -3462,6 +3462,8 @@ class CompleteProfileView(UpdateView):
     form_class = SocialProfileCompletionForm
     template_name = 'pop_accounts/registration/complete_profile.html'
 
+    print(f"\n=== CompleteProfileView Hit!!! ===")
+
     def get_object(self, queryset=None):
         # Already authenticated? Update that user
         if self.request.user.is_authenticated:
@@ -3473,10 +3475,19 @@ class CompleteProfileView(UpdateView):
             try:
                 return User.objects.get(pk=user_id)
             except User.DoesNotExist:
-                pass
+                raise Http404('Invalid user session')
         
-        # Pre-creation case: No user exists yet
-        # Return None - we'll create user in form_valid
+        # No user_id in session - this is pre-creation case
+        # Check if we have paused pipeline data (legitimate pre-creation)
+        paused_data = self.request.session.get('paused_pipeline_data')
+        if paused_data:
+            # Legitimate pre-creation - return None
+            return None
+        
+        # No user_id AND no paused data - shouldn't be here
+        # This might be someone accessing the URL directly
+        raise Http404("No profile completion in progress")
+            # Return None - we'll create user in form_valid
         return None
     
     def get_form_kwargs(self):
@@ -3496,13 +3507,20 @@ class CompleteProfileView(UpdateView):
 
     def form_valid(self, form):
         user = self.object
-        
+
+        # DEBUG CODE START ---
+        # Create/update user code...
+        print(f"\n=== CompleteProfileView.form_valid ===")
+        print(f"User: {user.email if user else 'None'}")
+
         # PRE-CREATION CASE: Create user now
         if user is None:
             email = form.cleaned_data.get('email')
             first_name = form.cleaned_data.get('first_name')
             last_name = form.cleaned_data.get('last_name', '')
-            
+
+            print(f'creating new user: {email}')
+
             # Create user
             user = User.objects.create_user(
                 email=email,
@@ -3517,44 +3535,153 @@ class CompleteProfileView(UpdateView):
             if not user.is_active:
                 user.is_active = True
                 user.save(update_fields=['is_active'])
-
+        
+        # is_ajax = self.request.headers.get("x-requested-with") == "XMLHttpRequest"
+        # print(f"Is AJAX: {is_ajax}")
+        
         # Resume pipeline
         strategy = load_strategy(self.request)
-        partial = strategy.session_get('partial_pipeline')
+        paused_data = strategy.session_get('paused_pipeline_data')
+    
+        print(f"Paused pipeline data exists: {paused_data is not None}")
         
-        if partial:
-            backend_name = partial.get('backend')
-            if backend_name:
-                backend = load_backend(strategy, backend_name, redirect_uri=None)
+        if paused_data:
+            facebook_uid = paused_data.get('uid')
+            backend_name = paused_data.get('backend')
+            
+            print(f"Backend: {backend_name}, UID: {facebook_uid}")
+            
+            if facebook_uid and backend_name:
+                from social_django.models import UserSocialAuth
                 
-                # Clean up session
-                self.request.session.pop('social_profile_user_id', None)
-                self.request.session.pop('social_partial_data', None)
+                # Create UserSocialAuth if it doesn't exist
+                social_auth, created = UserSocialAuth.objects.get_or_create(
+                    user=user,
+                    provider='facebook',
+                    uid=facebook_uid,
+                    defaults={'extra_data': {}}
+                )
                 
-                # Continue pipeline
-                result = backend.continue_pipeline(partial)
-                if result:
-                    login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-                    return result
+                if created:
+                    print(f"✅ Created UserSocialAuth: facebook/{facebook_uid}")
+                else:
+                    print(f"UserSocialAuth already exists")
+            
+            # Clean up session
+            strategy.session_pop('paused_pipeline_data')
+            strategy.session_pop('social_partial_data')
+            strategy.session_pop('social_profile_user_id')
+            
+            partial = strategy.session_get('partial_pipeline')
+        
 
-        # Fallback
+        # Login user
         login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-
-        # AJAX response
-        if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
+        print(f"User logged in: {self.request.user.is_authenticated}")
+        
+        # Handle AJAX vs regular
+        is_ajax = self.request.headers.get("x-requested-with") == "XMLHttpRequest"
+        
+        if is_ajax:
             return JsonResponse({
                 "success": True,
                 "next": "dashboard",
                 "user": {
                     "id": user.id,
                     "first_name": user.first_name,
+                    "last_name": user.last_name,
                     "email": user.email,
                 }
             })
+            
+        return redirect(reverse('pop_accounts:social_login_complete')) 
+
+        # print(f"Partial pipeline exists: {partial is not None}")
+        # if not partial:
+        #     partial_token = strategy.session_get('partial_pipeline_token')
+        #     if partial_token:
+        #         print(f"Found partial_pipeline_token: {partial_token}")
+        #         from social_django.models import Partial
+        #         try:
+        #             partial_obj = Partial.objects.get(token=partial_token)
+        #             partial = strategy.partial_load(partial_token)
+        #             print(f'Loaded partial from token')
+        #         except:
+        #             print(f"Failed to load partial from token")
+        # else:
+        #     print("❌ NO PARTIAL PIPELINE IN SESSION!")
+        #     print(f"Session keys: {list(self.request.session.keys())}")
         
-        return redirect(self.get_success_url())
+        # if partial:
+        #     backend_name = partial.get('backend')
+        #     print(f"Backend name: {backend_name}")
+            
+        #     if backend_name:
+        #         backend = load_backend(strategy, backend_name, redirect_uri=None)
+                
+        #         # Clean up session
+        #         self.request.session.pop('social_profile_user_id', None)
+        #         self.request.session.pop('social_partial_data', None)
+                
+        #         # Continue pipeline
+        #         print(f"Calling backend.continue_pipeline()...")
+        #         result = backend.continue_pipeline(partial)
+        #         print(f"Pipeline result: {result}")
+        #         print(f"Result type: {type(result)}")
+            
+            # Debug Code End ---
+        
+        
+
+        # ✅ Clean up ALL session data before continuing pipeline
+        # session_keys_to_remove = [
+        #     'social_profile_user_id',
+        #     'social_partial_data',
+        #     'missing_fields',
+        #     'partial_pipeline_token',
+        # ]
+        
+        # for key in session_keys_to_remove:
+        #     self.request.session.pop(key, None)
+
+        # # Resume pipeline
+        # strategy = load_strategy(self.request)
+        # partial = strategy.session_get('partial_pipeline')
+        
+        # if partial:
+        #     backend_name = partial.get('backend')
+        #     if backend_name:
+        #         backend = load_backend(strategy, backend_name, redirect_uri=None)
+                
+        #         # Clean up session
+        #         self.request.session.pop('social_profile_user_id', None)
+        #         self.request.session.pop('social_partial_data', None)
+                
+        #         # Continue pipeline
+        #         result = backend.continue_pipeline(partial)
+        #         if result:
+        #             login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+        #             return result
+
+        # # Fallback
+        # login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+        # # AJAX response
+        # if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
+        #     return JsonResponse({
+        #         "success": True,
+        #         "next": "dashboard",
+        #         "user": {
+        #             "id": user.id,
+        #             "first_name": user.first_name,
+        #             "email": user.email,
+        #         }
+        #     })
+        
+        # return redirect(self.get_success_url())
     
     def form_invalid(self, form):
+        print('=== DEBUG Form is invalid ====')
         if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
         return super().form_invalid(form)
@@ -3643,22 +3770,27 @@ class SocialLoginCompleteView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET Requests - return JSON for AJAX, template otherwise"""
+        # print('DEBUG: socialLoginCompleteView get hit')
         if self.is_ajax_request():
             return self.get_ajax_response()
         return super().get(request, *args, **kwargs)
     
 
     def post(self, request, *args, **kwargs):
+        # print('DEBUG: socialLoginCompleteView post hit')
         if self.is_ajax_request():
             return self.get_ajax_response()
         return super().get(request, *args, **kwargs)
     
     def is_ajax_request(self):
+        # print('DEBUG: socialLoginCompleteView is_ajax_request hit')
         return self.request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
     def get_ajax_response(self):
         """Return JSON response with user auth status"""
+        # print('DEBUG: socialLoginCompleteView get_ajax_response hit')
         user = self.request.user
+        print('DEBUG: socialLoginCompleteView get_ajax_response user:', user)
         return JsonResponse({
             'authenticated': user.is_authenticated,
             'firstName': user.first_name if user.is_authenticated else '',

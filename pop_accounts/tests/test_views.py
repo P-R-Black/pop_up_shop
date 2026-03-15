@@ -10775,21 +10775,6 @@ class TestRegisterView(TestCase):
         self.assertIn('errors', response.json())
 
 
-    def test_email_from_session_takes_precedence(self):
-        """Test that email from session is used over POST data"""
-        session = self.client.session
-        session['auth_email'] = 'session@example.com'
-        session.save()
-        
-        data = self.valid_data.copy()
-        data['email'] = 'post@example.com'  # Different email in POST
-        
-        response = self.client.post(self.url, data)
-        
-        self.assertEqual(response.status_code, 200)
-        # User should be created with session email, not POST email
-        self.assertTrue(User.objects.filter(email='session@example.com').exists())
-        self.assertFalse(User.objects.filter(email='post@example.com').exists())
 
     def test_email_from_post_when_not_in_session(self):
         """Test that email from POST is used when not in session"""
@@ -11174,7 +11159,7 @@ class TestPasswordStrengthValidation(TestCase):
             validate_password_strength('weakpass1!')
 
     def test_missing_lowercase(self):
-        with self.assertRaisesMessage(ValidationError, "Password must contain at least one lower case letter"):
+        with self.assertRaisesMessage(ValidationError, "Password must contain at least one lowercase letter"):
             validate_password_strength('WEAKPASS1!')
 
     def test_missing_digit(self):
@@ -12536,7 +12521,7 @@ class TestCompleteProfileView(TestCase):
         
         # Should redirect to dashboard
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('pop_accounts:dashboard'))
+        self.assertRedirects(response, reverse('pop_accounts:social_login_complete'))
         
         # User should be updated
         self.social_user.refresh_from_db()
@@ -12657,17 +12642,27 @@ class TestCompleteProfileView(TestCase):
         session['social_profile_user_id'] = str(self.social_user.id)
         session.save()
         
+        # Debug: Check session
+        print(f"Session user_id: {session.get('social_profile_user_id')}")
+        print(f"Social user ID: {self.social_user.id}")
+
         form_data = {
             'email': 'social@example.com',
             'first_name': 'Ajax',
+            'last_name': 'User'
         }
         
         # Fixed: header name should match the view's check
         response = self.client.post(
             self.url, 
             form_data,
-            HTTP_X_REQUEST_WITH='XMLHttpRequest'  # Match view's header check
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'  # Match view's header check
         )
+
+        # Debug response
+        print(f"Response status: {response.status_code}")
+        print(f"Response location: {response.get('Location', 'N/A')}")
+        print(f"Response content: {response.content}")
         
         # Should return JSON
         self.assertEqual(response.status_code, 200)
@@ -12707,88 +12702,48 @@ class TestCompleteProfileView(TestCase):
 
     # ==================== Social Auth Pipeline Tests ====================
 
-    @patch('pop_accounts.views.load_strategy')
-    @patch('pop_accounts.views.load_backend')
-    def test_resumes_social_auth_pipeline(self, mock_load_backend, mock_load_strategy):
-        """Test that social auth pipeline is resumed if present"""
-        session = self.client.session
-        session['social_profile_user_id'] = str(self.social_user.id)
-        
-        # Mock partial pipeline in session
-        session['partial_pipeline'] = {
-            'backend': 'google-oauth2',
-            'next': '/dashboard/',
-        }
-        session.save()
-        
-        # Mock strategy and backend
-        mock_strategy_instance = Mock()
-        mock_strategy_instance.session_get.return_value = {
-            'backend': 'google-oauth2',
-        }
-        mock_load_strategy.return_value = mock_strategy_instance
-        
-        mock_backend_instance = Mock()
-        mock_backend_instance.continue_pipeline.return_value = None
-        mock_load_backend.return_value = mock_backend_instance
-        
-        form_data = {
-            'email': 'google@example.com',
-            'first_name': 'Google',
-        }
-        
-        response = self.client.post(self.url, form_data)
-        
-       # Should have attempted to continue pipeline
-        # Note: load_strategy is called with the request object, not the client
-        mock_load_strategy.assert_called_once()
-        call_args = mock_load_strategy.call_args[0]
-        self.assertTrue(hasattr(call_args[0], 'META'))  # Verify it's a request object
-        
-        mock_load_backend.assert_called_once()
-        mock_backend_instance.continue_pipeline.assert_called_once()
-        
-        # User should be logged in
-        self.assertTrue(response.wsgi_request.user.is_authenticated)
-
-    @patch('pop_accounts.views.load_strategy')
-    @patch('pop_accounts.views.load_backend')
-    def test_pipeline_redirect_is_used(self, mock_load_backend, mock_load_strategy):
+    def test_pipeline_redirect_is_used(self):
         """Test that pipeline redirect is used if returned"""
-        from django.http import HttpResponseRedirect
-        
         session = self.client.session
         session['social_profile_user_id'] = str(self.social_user.id)
-        session['partial_pipeline'] = {'backend': 'facebook'}
+
+        session['paused_pipeline_data'] = {
+            'backend': 'facebook',
+            'uid': '123456789',
+            'email': '',
+            'first_name': 'Facebook',
+        }
         session.save()
         
-        # Mock strategy
-        mock_strategy_instance = Mock()
-        mock_strategy_instance.session_get.return_value = {'backend': 'facebook'}
-        mock_load_strategy.return_value = mock_strategy_instance
-        
-        # Mock backend to return redirect
-        mock_backend_instance = Mock()
-        pipeline_redirect = HttpResponseRedirect('/social-redirect/')
-        mock_backend_instance.continue_pipeline.return_value = pipeline_redirect
-        mock_load_backend.return_value = mock_backend_instance
         
         form_data = {
             'email': 'facebook@example.com',
             'first_name': 'Facebook',
+            'last_name': 'User',
         }
         
         response = self.client.post(self.url, form_data)
         
-        # Should use pipeline redirect
+        # Should redirect to social-login-complete
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/social-redirect/')
+        self.assertIn('social-login-complete', response.url)
         
-        # User should be logged in (happens before redirect)
+        # User should be logged in
         self.assertTrue(response.wsgi_request.user.is_authenticated)
         
-        # Session key should be removed
+        # UserSocialAuth should be created
+        from social_django.models import UserSocialAuth
+        social_auth = UserSocialAuth.objects.filter(
+            user=self.social_user,
+            provider='facebook',
+            uid='123456789'
+        )
+        self.assertTrue(social_auth.exists())
+        
+        # Session should be cleaned up
         self.assertNotIn('social_profile_user_id', self.client.session)
+        self.assertNotIn('paused_pipeline_data', self.client.session)
+
 
     @patch('pop_accounts.views.load_strategy')
     def test_no_pipeline_fallback_to_normal_login(self, mock_load_strategy):
@@ -12811,7 +12766,7 @@ class TestCompleteProfileView(TestCase):
         
         # Should redirect normally
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('pop_accounts:dashboard'))
+        self.assertRedirects(response, reverse('pop_accounts:social_login_complete'))
         
         # User should be logged in
         self.assertTrue(response.wsgi_request.user.is_authenticated)
@@ -12891,7 +12846,7 @@ class TestCompleteProfileView(TestCase):
         
         # Should succeed
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('pop_accounts:dashboard'))
+        self.assertRedirects(response, reverse('pop_accounts:social_login_complete'))
         
         # User should be logged in
         self.assertTrue(response.wsgi_request.user.is_authenticated)

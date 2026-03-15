@@ -28,6 +28,24 @@ logger = logging.getLogger(__name__)
 RESET_EMAIL_COOLDOWN = timedelta(minutes=5)
 RATE_LIMIT_SECONDS = 120 # 2 minutes
 
+"""
+Utility Functions
+ 1. send_verification_email
+ 2. handle_password_reset_request
+ 3. validate_email_address
+ 4. validate_password_strength
+ 5. get_client_ip
+ 6. add_specs_to_products
+ 7. calculate_auction_progress
+ 8. get_stripe_payment_reference
+ 9. is_disposable_email
+10. check_rate_limit
+11. increment_rate_limit
+12. log_registration_with_geo
+13. get_email_provider
+"""
+
+
 
 def send_verification_email(request, user):
     """
@@ -58,9 +76,11 @@ def send_verification_email(request, user):
 def handle_password_reset_request(request, email: str):
     """Utility to handle sending a password reset link with rate limiting"""
     now_time = now()
+    print('DEBUG handle_password_reset_request called')
 
     # Validate email
     if not email:
+        print('not email')
         return JsonResponse({
             'success': False, 
             'error': 'An email address is required'
@@ -86,11 +106,13 @@ def handle_password_reset_request(request, email: str):
     # Check if user exists
     try:
         user = User.objects.get(email__iexact=email, is_active=True)
+        print('DEBUG try block user', user)
         user_exists = True
     except User.DoesNotExist:
         user_exists = False
         # ✅ Increment rate limit even for non-existent users
         increment_rate_limit(ip, 'password_reset')
+        
         # ✅ Timing attack mitigation
         time.sleep(1)
         logger.warning(f"Password reset attempted for non-existent email: {email}")
@@ -155,6 +177,7 @@ def handle_password_reset_request(request, email: str):
 
     # Send email
     try:
+        print('DEBUG trying to send email now')
         send_mail(
             subject="Reset Your Password",
             message=f"Click the link below to reset your password:\n\n{reset_link}\n\nThis link expires in 1 hour.",
@@ -191,7 +214,6 @@ def validate_email_address(email):
 
 
 def validate_password_strength(password):
-
         errors = []
 
         if len(password) < 8:
