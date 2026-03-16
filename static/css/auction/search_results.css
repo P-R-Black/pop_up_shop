@@ -1,0 +1,6 @@
+.in_inventory_search_container {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}

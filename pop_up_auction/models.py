@@ -226,6 +226,7 @@ class PopUpProduct(models.Model):
         verbose_name = _("PopUp Product")
         verbose_name_plural = _("PopUp Products")
         indexes = [
+            models.Index(fields=['product_title']),
             models.Index(fields=["auction_start_date"]),
             models.Index(fields=["auction_end_date"]),
         ]

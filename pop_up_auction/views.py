@@ -563,3 +563,20 @@ def past_bid_product_detail_by_product(request, product_id):
     }
     
     return render(request, 'auction/past_bid_detail.html', context)
+
+
+
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+
+def search_products(request):
+    query = request.GET.get('q', '')
+    if query:
+        search_vector = SearchVector('product_title', weight='A') + SearchVector('brand', weight='A') + SearchVector('description', weight='B') + SearchVector('product_type', weight='C')
+
+        search_query = SearchQuery(query)
+        products = PopUpProduct.objects.annotate(rank=SearchRank(search_vector, search_query)).filter(rank__gte=0.1).order_by('-rank')
+    else:
+        products = PopUpProduct.objects.none()
+    
+    return render(request, 'auction/search_results.html', {'products': products, 'query': query})
+        
