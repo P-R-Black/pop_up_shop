@@ -40,7 +40,7 @@ def get_customer_bid_history_context(customer_id):
     # PostgreSQL Version
     latest_bids_qs = (
         PopUpBid.objects
-        .filter(customer_id=customer_id)
+        .filter(customer_id=customer_id, is_active=True)
         .order_by('product_id', '-timestamp')
         .distinct('product_id')  # PostgreSQL - for other DBs, use the alternative below
         .select_related('product')

@@ -20,15 +20,7 @@
 /* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
 
 
-@media screen and (max-width: 640px) {
-
-
-    /* 
-    .page_title h2 {
-        text-align: center;
-    } */
-
-}
+@media screen and (max-width: 640px) {}
 
 
 /* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */

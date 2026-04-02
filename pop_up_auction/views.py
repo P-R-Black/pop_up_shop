@@ -23,6 +23,21 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='pop_up_auction.log', level=logging.DEBUG, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
+"""
+All Views
+ 1. AjaxLoginRequiredMixin
+ 2. AllAuctionView
+ 3. PlaceBidView
+ 4. ProductAuctionView
+ 5. ProductsView
+ 6. ComingSoonView
+ 7. FutureReleases
+ 8. ProductDetailView
+ 9. past_product_detail
+10. past_bid_product_detail_by_product
+11. search_products
+"""
+
 # Create your views here.
 class AjaxLoginRequiredMixin(AccessMixin):
     # 🟢 View Test Completed
@@ -69,7 +84,7 @@ class AllAuctionView(View):
             "in_auction": in_auction, "product_specifications": product_specifications, 
             "quick_bid_increments": quick_bid_increments, "user_zip":user_zip
         }
-        return  render(request, self.template_name, context)
+        return render(request, self.template_name, context)
     
     def post(self, request):
         return render(request, self.template_name)
@@ -136,7 +151,10 @@ class PlaceBidView(AjaxLoginRequiredMixin, View):
                                 status=400,
                                 )
         # 3. Create the bid
-        profile = request.user.popupcustomerprofile
+        try:
+            profile = request.user.popupcustomerprofile
+        except Exception as e:
+            print(f'Exception is e: {e}')
         bid = PopUpBid.objects.create(
             customer=profile, 
             product=product,
@@ -473,6 +491,33 @@ class ProductDetailView(DetailView):
                     * product has not already been purchased via Buy Now
             Returns a context dictionary used by the template.
     """
+    
+    # model = PopUpProduct
+    # template_name = 'auction/product_auction.html'
+    # context_object_name = 'product'
+    # slug_field = 'slug'
+    # slug_url_kwarg = 'slug'
+
+    # def get_object(self, queryset=None):
+    #     """Override to add the is_active filter"""
+        # return get_object_or_404(PopUpProduct.objects.prefetch_related(
+        #         'popupproductspecificationvalue_set__specification'
+        #     ), 
+        #     slug=self.kwargs['slug'], 
+        #     is_active=True)
+    
+    # def get_context_data(self, **kwargs):
+    #     """Add product specification to the context"""
+        # context = super().get_context_data(**kwargs)
+        
+        # # Apply the utility function to a single-item queryset
+        # products_with_specs = add_specs_to_products([self.object])
+        # context['product'] = products_with_specs[0]  # Get the single product back
+
+        # product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=self.object)}
+        # context['product_specifications'] = product_specifications
+        
+        # return context
 
     model = PopUpProduct
     template_name = "auction/product_detail.html"
@@ -483,27 +528,43 @@ class ProductDetailView(DetailView):
 
     def get_object(self, queryset=None):
         """Override to add the is_active filter"""
-        return get_object_or_404(PopUpProduct, slug=self.kwargs['slug'], is_active=True)
+        return get_object_or_404(PopUpProduct.objects.prefetch_related(
+        'popupproductspecificationvalue_set__specification'), slug=self.kwargs['slug'], is_active=True)
+    
+        # return get_object_or_404(PopUpProduct, slug=self.kwargs['slug'], is_active=True)
     
     def get_context_data(self, **kwargs):
         """Add product specification to the context"""
+        # context = super().get_context_data(**kwargs)
+        
+        # Apply the utility function to a single-item queryset
+        # products_with_specs = add_specs_to_products([self.object])
+        # context['product'] = products_with_specs[0]  # Get the single product back
+
+        # product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=self.object)}
+        # context['product_specifications'] = product_specifications
+        
+        # return context
+    
         context = super().get_context_data(**kwargs)
-        product = self.get_object()
+        # product = self.get_object()
+        products_with_specs = add_specs_to_products([self.object])
+        print('products_with_specs', products_with_specs)
 
         product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=self.object)}
         context['product_specifications'] = product_specifications
 
         # Buy Now Logic
         now_ = now()
-        buy_now_start = getattr(product, "buy_now_start", None)
+        buy_now_start = getattr(products_with_specs, "buy_now_start", None)
         
-        buy_now_end = getattr(product, "buy_now_end", None)
+        buy_now_end = getattr(products_with_specs, "buy_now_end", None)
         
 
         context['is_buy_now_available'] = (
             buy_now_start and buy_now_end and 
             buy_now_start <= now_ <= buy_now_end and not 
-            getattr(product, "bought_now", False)
+            getattr(products_with_specs, "bought_now", False)
         )
         return context
 
@@ -534,10 +595,11 @@ def past_bid_product_detail_by_product(request, product_id):
     """
     user = request.user
     user_id = user.id
+    profile = request.user.popupcustomerprofile
     product = get_object_or_404(PopUpProduct, id=product_id)
 
     # Verify the user has bid on this product
-    user_bids = PopUpBid.objects.filter(customer=request.user,product=product).order_by('-timestamp')
+    user_bids = PopUpBid.objects.filter(customer=profile, product=product).order_by('-timestamp')
 
     if not user_bids.exists():
         raise Http404("You haven't bid on this product")

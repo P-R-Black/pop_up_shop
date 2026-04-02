@@ -244,7 +244,8 @@ class PopUpBid(models.Model):
         # Early return - feature not yet implemented
         return
     
-
+        """
+        
         if round >= max_rounds:
             print(f"[Auto-bid] Max rounds ({max_rounds}) reached. Stopping auto-bids.")
             return
@@ -286,6 +287,7 @@ class PopUpBid(models.Model):
                     print(f"[Auto-bid] skipped at: {proposed_amount}")
             
                 break # Stop after first successful auto-bid to prevent mass bid pileups
+        """
 
     
     @classmethod

@@ -25,11 +25,17 @@
             {% endif %}
             <ul>
                 <li class="search-box">
-                    <i class='bx bx-search icon' aria-hidden="true"></i>
-                    <input type="text" placeholder="Search..." aria-label="search-box" autofocus>
+                    <form action="{% url 'pop_up_auction:search_results' %}" method="GET">
+
+                        <i class='bx bx-search icon' aria-hidden="true"></i>
+                        <input type="text" name='q' placeholder="Search..." aria-label="search-box" required>
+                        <button type="submit">Find</button>
+                    </form>
                 </li>
+                <button></button>
                 <li class="mobile-search-box hide-mobile-search-box">
                     <input type="text" placeholder="Search..." aria-label="search-box" autofocus>
+                    <button type="submit">Search</button>
                 </li>
             </ul>
             <ul class="menu-links" id="menu-links">

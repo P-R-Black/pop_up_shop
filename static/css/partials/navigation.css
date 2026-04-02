@@ -155,6 +155,30 @@ header .logo-text .header-text {
     width: 100%;
 }
 
+.search-box form {
+    display: flex;
+    align-items: center;
+}
+
+.search-box form button {
+    border: 1px solid var(--text-color);
+    color: var(--text-color);
+    max-width: 20%;
+    background-color: transparent !important;
+    padding-left: 8px;
+    margin-right: 8px;
+
+}
+
+.sidebar.close .search-box form button {
+    display: none !important;
+}
+
+
+.search-box form button:hover {
+    height: 1.2rem !important;
+}
+
 .menu-links .nav-link-mobile {
     display: none;
 }

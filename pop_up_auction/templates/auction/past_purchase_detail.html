@@ -4,88 +4,101 @@
 
 
 {% block title %}
-Auction
+Past Purchase Detail
 {% endblock %}
 
 {% block main %}
 
-<div class="section_container">
-    <div class="page_title">
-        <h2>{{ item.product_title }}</h2>
-        <h3>{{ item.secondary_product_title }}</h3>
-        <h4>{{ product.specs.model_year }}</h4>
-    </div>
-    <div class="product_details_container">
-        <div class="product_details_container_left">
-            <div class="pd_circle_image_container">
-                <div class="pd_background_circle"></div>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
+<main id="main-content">
 
-                {% for image in product.product_image.all %}
-                {% if image.is_feature %}
-                <img class="img_fluid_product_details" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}"
-                    alt="{{ image.image.alt_text}}" />
-                {% endif %}
-                {% endfor %}
-
+    <div class="section_container">
+        <div class="page_title">
+            <h1>Past Purchase Product Detail</h1>
+            <div class="past_bids_product_title_container" style="margin-top: 2rem;">
+                <h3 id="product-title">{{ item.product_title }}</h3>
+                <h4>{{ item.secondary_product_title }}</h4>
+                <h4>{{ product.specs.model_year }}</h4>
             </div>
         </div>
-    </div>
-    <div class="lower_auction_container">
-        <div class="prod_auct_desc_container">
-            <h3>Product Description</h3>
-            <p>
-                {{ product.description }}
-            </p>
-        </div>
+        <div class="product_details_container" aria-labelledby="product-title">
+            <div class="product_details_container_left">
+                <div class="pd_circle_image_container">
+                    <div class="pd_background_circle" aria-hidden="true"></div>
 
-        <div class="prod_auct_details_container">
 
-            <div class="auct_details_style_container">
+                    {% for image in product.product_image.all %}
+                    {% if image.is_feature %}
+                    <img class="img_fluid_product_details" alt="{{ image.alt_text }}" src="{{ image.get_image_url }}" />
+                    {% endif %}
+                    {% endfor %}
+                    <figcaption class="visually-hidden">
+                        Featured image of {{ product.product_title }}
+                    </figcaption>
 
-                <h4 class="prod_auct_details_title">Style</h4>
-                <p>{{ product.specs.style_number }}</p>
-            </div>
-            <div class="auct_details_colorway_container">
-                <h4 class="prod_auct_details_title">Colorway</h4>
-                <p>{{ product.specs.colorway }}</p>
-            </div>
-            <div class="auct_details_release_container">
-
-                <h4 class="prod_auct_details_title">Release Date</h4>
-                <p>{{ product.specs.release_date }}</p>
-            </div>
-            <div class="auct_details_retail_container">
-                <h4 class="prod_auct_details_title">Retail</h4>
-                <p>${{ product.retail_price }}</p>
-            </div>
-
-        </div>
-
-        <div class="verified_return_container">
-            <div class="databox_medium_dark">
-                <div class="databox_medium_dark_title_box">
-                    <i class='bx bx-award'></i>
-                    <h3>100% Guaranteed Authentic</h3>
                 </div>
-                <p>
-                    Always real. Really really real! If we don't use resellers. We buy it from the manufacturer and
-                    resell.
-                </p>
-                <a href="/">Learn More</a>
             </div>
-            <div class="databox_medium_dark">
-                <div class="databox_medium_dark_title_box">
-                    <i class="fa-solid fa-arrow-rotate-left"></i>
-                    <h3>Return Policy</h3>
-                </div>
+        </div>
+        <div class="lower_auction_container" role="region">
+            <div class="prod_auct_desc_container" aria-labelledby="description-title">
+                <h3 id="description-title">Product Description</h3>
                 <p>
-                    Learn more about our return policy by clicking on the link below.
+                    {{ product.description }}
                 </p>
-                <a href="/">Learn More</a>
+            </div>
+
+            <div class="prod_auct_details_container" aria-labelledby="details-title">
+                <h2 id="details-title" class="visually-hidden">Product Details</h2>
+                <div class="auct_details_style_container">
+
+                    <h4 class="prod_auct_details_title">Style</h4>
+                    <p>{{ product.specs.style_number }}</p>
+                </div>
+                <div class="auct_details_colorway_container">
+                    <h4 class="prod_auct_details_title">Colorway</h4>
+                    <p>{{ product.specs.colorway }}</p>
+                </div>
+                <div class="auct_details_release_container">
+
+                    <h4 class="prod_auct_details_title">Release Date</h4>
+                    <p>{{ product.specs.release_date }}</p>
+                </div>
+                <div class="auct_details_retail_container">
+                    <h4 class="prod_auct_details_title">Retail</h4>
+                    <p>${{ product.retail_price }}</p>
+                </div>
+
+            </div>
+
+            <div class="verified_return_container" aria-labelledby="policies-title">
+                <h3 class="visually-hidden" id="policies-title">Policies</h3>
+                <div class="databox_medium_dark">
+                    <div class="databox_medium_dark_title_box">
+                        <i class='bx bx-award' aria-hidden="true"></i>
+                        <h3>100% Guaranteed Authentic</h3>
+                    </div>
+                    <p>
+                        Always real. Really really real! If we don't use resellers. We buy it from the manufacturer and
+                        resell.
+                    </p>
+                    <a href="{% url 'pop_up_home:verification' %}"
+                        aria-label="Learn more about authenticity guarantee">Learn More</a>
+                </div>
+                <div class="databox_medium_dark">
+                    <div class="databox_medium_dark_title_box">
+                        <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+                        <h3>Return Policy</h3>
+                    </div>
+                    <p>
+                        Learn more about our return policy by clicking on the link below.
+                    </p>
+                    <a href="{% url 'pop_up_home:buying-help' %}" aria-label="Learn more about our return policy">Learn
+                        More</a>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</main>
 
 {% endblock %}

@@ -277,8 +277,31 @@ test_account_data = [
         "delivery_instructions": "",
         "is_active": True
     },
+    {
+        "id": "100011120304340",
+        "email": "ssummers@xmen.com",
+        "password": 'la5erbeamDre@m',
+        "first_name":"Scott",
+        "middle_name":"",
+        "last_name":"Summers",
+         "mobile_phone":"518-311-9011",
+        "mobile_notification":"True",
+        "shoe_size":"11",
+        "size_gender":"Male",
+        "favorite_brand":"New Balance",
+        "postcode": "10560",
+        "address_line": "1 Gifted Way",
+        "address_line2": "",
+        "apartment_suite_number": "",
+        "town_city": "Salem Center",
+        "state": "NY",
+        "delivery_instructions": "",
+        "is_active": True
+    },
 ]
 
 
 # mightymouse@acme.com 
 # 1BigMouse$$$
+
+# megaman

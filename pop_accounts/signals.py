@@ -22,6 +22,6 @@ def create_popup_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_customer_profile(sender, instance, **kwargs):
-    # Ensure profile always sstays in sync if needed
+    # Ensure profile always stays in sync if needed
     if hasattr(instance, "popupcustomerprofile"):
         instance.popupcustomerprofile.save()

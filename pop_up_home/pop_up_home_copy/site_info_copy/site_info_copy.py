@@ -65,6 +65,7 @@ HELP_CENTER_COPY = {
             {"label": "Auction Bid vs Buy Now", "url": "buying-help"},
             {"label": "Retracting a Bid", "url": "buying-help"},
             {"label": "Who Am I Buying From", "url": "buying-help"},
+            {"label": "Return Policy", "url": "buying-help"}
          ]}],
     "selling_options": [
         {"selling_option_title": "Know More About Selling", 
@@ -112,6 +113,7 @@ HELP_CENTER_PAGE_BUYING = {
         {"label": "Auction Bid vs Buy Now", "url": "#bidvbuy"},
         {"label": "Retracting a Bid", "url": "#retractBid"},
         {"label": "Who Am I Buying From", "url": "#mainSeller"},
+        {"label": "Returns", "url": "#productReturns"},
     ],
     "sections": [
         {"section_title": "Auction Bid vs Buy Now",  "id": "bidvbuy",
@@ -135,6 +137,12 @@ HELP_CENTER_PAGE_BUYING = {
             {"paragraph": "All products are being sold by \"The Pop Up.\" We want to ensure that everything sold is authentic, and the best weay to do that is by controlling what gets bought and sold. We only secure product from manufacturers and trusted retailers, and we keep the receipts to prove it. We believe that if you’re going to pay top dollar for your favorite pair kicks or clothing item, it shoud be the authentic product."},
          ]
          },
+         {"section_title": "Return Policy", "id": "productReturns",
+          "section_paragraph": [
+              {"paragraph": "At this time we do not accept returns." }
+          ]
+             
+         }
     ]
 }
 

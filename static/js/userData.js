@@ -64,6 +64,23 @@ function getCookieTwo(name) {
 }
 
 
+// if user not signed in and tries to get notified
+document.querySelectorAll('.notifyPrompt').forEach(btn => {
+    btn.addEventListener('click', () => {
+        alert("You must be registered and signed in to save notice");
+        signUpModal.style.display = 'block';
+    })
+})
+
+
+// if user not signed in and tries to mark a poduct as interested in
+document.querySelectorAll('.interestedPrompt').forEach(btn => {
+    btn.addEventListener('click', () => {
+        alert("You must be registered and signed in to register interest");
+        signUpModal.style.display = 'block';
+    })
+})
+
 // Adds Items to lists like Interested-In or On-Notice and Updates UI
 const addItemsToUserLists = (addToListBtn, fetchUrl, label, emoji = '❤️') => {
     addToListBtn.forEach(button => {

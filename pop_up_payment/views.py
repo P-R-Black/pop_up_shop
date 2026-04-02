@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from pop_up_auction.models import PopUpProduct, PopUpProductSpecificationValue, PopUpProductType
 from pop_accounts.models import  PopUpCustomerAddress, PopUpBid
 from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
+from pop_accounts.utils.pop_accounts_utils import  add_specs_to_products
 from pop_up_cart.models import PopUpCartItem
 from pop_up_payment.models import PopUpPayment
 from pop_up_order.models import PopUpCustomerOrder
@@ -574,6 +575,8 @@ class CreatePaymentIntentView(View):
                 automatic_payment_methods={"enabled": True},  # Enable Apple Pay, Google Pay, etc.
                 setup_future_usage="off_session"
             )
+            print('PaymentIntent Intent', intent)
+            print('PaymentIntent Intent.customer', intent.customer)
             return JsonResponse({'clientSecret': intent['client_secret']})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
@@ -1074,22 +1077,33 @@ def generate_client_token(request):
 #     model = PopUpProduct
 #     template_name = 'payment/placed-order.html'
 #     context_object_name = 'product'
+   
 
-#     def get_queryset(self):
+#     def get_queryset(self, request):
 #         """Filter items based on slug if selected"""
-#         base_queryset = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
+
+#         base_queryset = PopUpProduct.objects.prefetch_related(
+#             'popupproductspecificationvalue_set'
+#             ).filter(is_active=False, inventory_status="in_transit")
 #         slug = self.kwargs.get('slug')
 #         if slug:
-#             product_type = get_object_or_404(PopUpProduct, slug=slug)
+#             product_type = get_object_or_404(PopUpProductType, slug=slug)
 #             return base_queryset.filter(product_type=product_type)
 #         return base_queryset
 
+
 #     def get_context_data(self, **kwargs):
+#         """Add product type and product_types to context"""
 #         """Add product type and product_types to context"""
 #         context =  super().get_context_data(**kwargs)
 
-#         """Always include all product_types"""
-#         context['product_type'] = PopUpProductType.objects.all()
+#         # Apply add_specs_to_products utility function
+#         context['product'] = add_specs_to_products(context['product'])
+
+#         # Always include all product types
+#         context['product_types'] = PopUpProductType.objects.all()
+
+#         # Include the current product_type if slug is provided
 #         slug = self.kwargs.get('slug')
 #         if slug:
 #             context['product_type'] = get_object_or_404(PopUpProductType, slug=slug)
@@ -1097,6 +1111,8 @@ def generate_client_token(request):
 #             context['product_type'] = None
         
 #         return context
+    
+
 
 
 @login_required
@@ -1111,7 +1127,8 @@ def placed_order(request):
     if order:
         order_id = order.id
     base_queryset = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
-    return render(request, 'payment/placed_order.html', {'user': user, 'order_id':order_id, 'product': base_queryset})
+    product = add_specs_to_products(base_queryset)
+    return render(request, 'payment/placed_order.html', {'user': user, 'order_id':order_id, 'product': product})
 
 
 

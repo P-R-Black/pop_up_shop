@@ -98,6 +98,15 @@ body {
 }
 
 
+/* Modal focus trap - hide background content from screen readers */
+body.modal-open {
+    overflow: hidden;
+}
+
+body.modal-open>*:not(.modal) {
+    aria-hidden: true;
+}
+
 .sidebar.close~.container,
 .sidebar.close~.footer_container {
     left: 88px;
@@ -114,7 +123,7 @@ body {
     justify-content: center;
 }
 
-.page_title h2 {
+.page_title h1 {
     font-family: var(--text-font);
     font-size: clamp(2.5rem, 4rem, 10vw);
     font-weight: 900;
@@ -371,6 +380,16 @@ body {
 }
 
 
+/* Focus styles for keyboard navigation */
+button:focus,
+a:focus,
+input:focus {
+    outline: 3px solid #4A90E2;
+    outline-offset: 2px;
+}
+
+
+
 .payment_option_buttons,
 .payment_option_buttons_two {
     align-items: center;
@@ -483,6 +502,22 @@ body {
     padding: 0px;
     position: relative;
     width: 80%;
+}
+
+
+
+.status_tag_medium {
+    align-items: center;
+    background: var(--text-color);
+    border: 1px solid black;
+    border-radius: 5px;
+    color: var(--primary-color-light);
+    display: flex;
+    font-size: clamp(.85rem, 1rem, 2vw);
+    height: 2rem;
+    justify-content: center;
+    /* width: 20rem; */
+    width: clamp(8rem, 10rem, 25vw);
 }
 
 

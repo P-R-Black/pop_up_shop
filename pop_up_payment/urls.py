@@ -11,6 +11,7 @@ urlpatterns = [
     path('', ProductBuyView.as_view(), name='payment_home'),
     path('shipping-address/', ShippingAddressView.as_view(), name='shipping_address'),
     path('billing-address/', BillingAddressView.as_view(), name='billing_address'),
+    # path('placed-order/', PlacedOrderView.as_view(), name='placed_order'),
     path('placed-order/', views.placed_order, name='placed_order'),
     # path('error/', views.Error.as_view(), name='error'),
     path('create-payment-intent/', CreatePaymentIntentView.as_view(), name='create_payment'),

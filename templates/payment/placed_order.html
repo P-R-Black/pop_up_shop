@@ -8,64 +8,84 @@ Order Placed
 
 {% block main %}
 
-<div class="login_section_container">
-    <div class="page_title">
-        <h2>Order Placed</h2>
-    </div>
-    <div class="order_placed_container">
-        <div class="order_placed_status_contaner">
-            <h3>Thanks {{ user.first_name }}!</h3>
-            <p>We've received your order and are confirming your payment.</p>
-            <p>You will receive an email shortly confirming your order</p>
-            <p>Order #{{ order_id }}</p>
-        </div>
-    </div>
-    <div class="order_placed_container">
-        <div class="order_placed_status_contaner">
-            <h3>Get Notified When These Items Available</h3>
-            <p>Just Press "Notify Me"</p>
-        </div>
-    </div>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <div class="cs_container">
-        {% if product %}
-        {% for prod in product %}
-        <div class="cs_display_container">
-            <div class="rectangle_image_container">
-                <div class="background_rectangle"></div>
-                {% for image in prod.product_image.all %}
-                {% if image.is_feature %}
-                <img class="img_fluid_cs" alt="{{ image.alt_text }}" src="{{ image.image }}"
-                    alt="{{ image.image.alt_text}}" />
-                {% endif %}
-                {% endfor %}
-            </div>
+<main id="main-content">
 
-            <div class="cs_desc_container">
-                {% for spec in prod.popupproductspecificationvalue_set.all|slice:"2:3" %}
-                <h3>{{ spec }}</h3>
-                {% endfor %}
-                <h3>{{ prod.product_title }}</h3>
-                <h3>{{ prod.secondary_product_title}}</h3>
-            </div>
-            <div class="cs_button_container">
-                {% if user.is_authenticated and prod in user.prods_on_notice_for.all %}
-                <button class="button_medium notify-me-button" data-product-id="{{ prod.id }}" data-interested="true">On
-                    Notice ❤️</button>
-                {% else %}
-                <button class="button_medium notify-me-button" data-product-id="{{ prod.id }}"
-                    data-interested="false">Notify
-                    Me
-                </button>
-                {% endif %}
+    <div class="login_section_container">
+        <div class="page_title">
+            <h1>Order Placed</h1>
+        </div>
+        <div class="order_placed_container">
+            <div class="order_placed_status_contaner">
+                <h3>Thanks {{ user.first_name }}!</h3>
+                <p>We've received your order and are confirming your payment.</p>
+                <p>You will receive an email shortly confirming your order</p>
+                <p><strong>Order #{{ order_id }}</strong></p>
             </div>
         </div>
-        {% endfor %}
-        {% else %}
-        <h4>Nothing to display</h4>
-        {% endif %}
+        <div class="order_placed_container">
+            <div class="order_placed_status_contaner">
+                <h3>Get Notified When These Items Become Available</h3>
+                <p>Just Press "Notify Me"</p>
+            </div>
+        </div>
+
+        <div class="cs_container" role="region"
+            aria-label="{% if product_type %} {{ product_type.name|capfirst }} products {% else %} All products {% endif %} coming soon">
+            {% if product %}
+            {% for prod in product %}
+            <div class="cs_display_container">
+                <div class="rectangle_image_container">
+                    <div class="background_rectangle"></div>
+                    {% for image in prod.product_image.all %}
+                    {% if image.is_feature %}
+                    <img class="img_fluid_cs" alt="{{ image.alt_text }}"
+                        src="{% if image.get_image_url  %} {{ image.get_image_url  }} {% else %} {{ image.image }}{% endif %}"
+                        alt="{{ image.image.alt_text}}" loading="lazy" />
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="cs_desc_container" aria-labelledby="product-title-{{ prod.id }}">
+                    <h2 class="visually-hidden" id="product-title-{{ product.id }}">
+                        {{ prod.specs.model_year }} {{ prod.product_title }} {{ prod.secondary_product_title }}
+                    </h2>
+                    <h3><span class="visually-hidden">Year: </span>{{ prod.specs.model_year }}</h3>
+                    <h3>{{ prod.product_title }}</h3>
+                    <h3>{{ prod.secondary_product_title}}</h3>
+                </div>
+                <div class="cs_button_container">
+                    {% if user.is_authenticated %}
+                    {% if prod in user.prods_on_notice_for.all %}
+                    <button class="button_medium notify-me-button" data-product-id="{{ prod.id }}"
+                        data-interested="true" aria-pressed="true"
+                        aria-label="Remove notification for {{ prod.product_title }} {{ prod.secondary_product_title}}">
+                        <span aria-hidden="true">On Notice ❤️</span>
+                    </button>
+                    {% else %}
+                    <button class="button_medium notify-me-button" data-product-id="{{ prod.id }}"
+                        data-interested="false" aria-pressed="false"
+                        aria-label="Get notified when {{ prod.product_title }} {{ prod.secondary_product_title }} is available">Notify
+                        Me
+                    </button>
+                    {% endif %}
+                    {% else %}
+                    <button class="button_medium notifyPrompt"
+                        aria-label="Sign in to get notified about {{ prod.product_title }} {{ prod.secondary_product_title }} is available">Notify
+                        Me
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <h4>Nothing to display</h4>
+            {% endif %}
+        </div>
     </div>
-</div>
+</main>
+
 <script>
     var STRIPE_PUBLIC_KEY = '{{ STRIPE_PUBLIC_KEY }}'
     var CSRF_TOKEN = '{{ csrf_token }}';

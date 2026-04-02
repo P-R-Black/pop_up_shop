@@ -1,14 +1,15 @@
 from celery import shared_task
-from django.utils.timezone import now
 from .models import PopUpProduct
 from datetime import timedelta
 from pop_up_cart.cart import Cart
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.utils.timezone import now
 from pop_up_auction.models import WinnerReservation
 from pop_up_cart.models import PopUpCartItem
+from pop_accounts.models import PopUpCustomerProfile
 from django.core.mail import mail_admins
 from pop_up_email.utils import (
     send_auction_winner_email, send_24_hour_reminder_email, send_1_hour_reminder_email,
@@ -16,6 +17,9 @@ from pop_up_email.utils import (
     )
 import logging
 logger = logging.getLogger(__name__)
+
+User = get_user_model()
+
 
 # auction.tasks.check_auctions_and_finalize
 @shared_task
@@ -34,19 +38,16 @@ def check_auctions_and_finalize():
         is_active=True
     )
 
-    print('ended_auctions', ended_auctions)
+    
 
     for product in ended_auctions:
         highest_bid = product.bids.order_by('-amount', '-timestamp').first()
         print('check_auctions_and_finalize highest_bid:', highest_bid)
 
         if highest_bid:
-            
-            print('Hey!')
-            print('product', product)        
+               
   
-            winner = highest_bid.customer
-            
+            winner = highest_bid.customer.user            
             product.winner = winner
             product.current_highest_bid = highest_bid.amount
             product.auction_finalized = True
@@ -59,9 +60,7 @@ def check_auctions_and_finalize():
                     user=winner, 
                     product=product, 
                     defaults={'quantity': 1, 'auction_locked': True, 'buy_now': False}
-                    )
-                
-                print('added to cart', winner, product)
+                    )                
             except Exception as e:
                 print('e', e)
 

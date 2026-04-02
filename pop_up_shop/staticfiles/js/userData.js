@@ -64,6 +64,9 @@ function getCookieTwo(name) {
 }
 
 
+
+
+
 // Adds Items to lists like Interested-In or On-Notice and Updates UI
 const addItemsToUserLists = (addToListBtn, fetchUrl, label, emoji = '❤️') => {
     addToListBtn.forEach(button => {
@@ -95,7 +98,7 @@ const addItemsToUserLists = (addToListBtn, fetchUrl, label, emoji = '❤️') =>
                 })
                 .catch(err => {
                     console.log('Request failed', err);
-                    alert("Network error occurred");
+                    alert("Network error occurred"); // Update to must be signed in
                 })
         })
     })

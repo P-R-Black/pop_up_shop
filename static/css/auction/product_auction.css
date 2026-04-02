@@ -351,7 +351,9 @@ h4.prod_auct_details_title {
 
 .bid_modal_input_container label span {
     background: #fff;
-    margin: 0 15px;
+    margin: 15px 15px;
+
+
 }
 
 label:before,

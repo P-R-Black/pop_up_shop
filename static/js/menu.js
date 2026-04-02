@@ -130,12 +130,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Bid Modal
     // Get the modal, button, and close span
-
     const bidButton = document.querySelectorAll('.bidButtonClass')
     if (bidButton) {
         bidButton.forEach((btn) => {
             btn.addEventListener('click', function () {
-                console.log("I've been clicked the bidButton")
                 const productId = this.dataset.productId;
                 const modal = document.getElementById(`bidModal-${productId}`);
                 if (modal) {
@@ -212,6 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(async (r) => {
                     const resp = form.nextElementSibling;
                     const data = await r.json();
+                    console.log('r', r)
 
 
                     if (!r.ok) {
@@ -222,14 +221,25 @@ document.addEventListener('DOMContentLoaded', function () {
                     resp.style.color = "green";
                     resp.textContent = `Bid placed! New high $${data.new_highest}, bids: ${data.bid_count}`;
 
+
                     // Update the DOM with the new highest bid and bid count
                     const productId = form.dataset.productId;
+                    const productTitle = form.dataset.productTitle;
+                    const secondaryTitle = form.dataset.secondaryTitle;
+
+                    // Create full product name
+                    const fullProductName = secondaryTitle
+                        ? `${productTitle} ${secondaryTitle}`
+                        : productTitle;
+
 
                     // Update highest bid
                     const bidDisplay = document.querySelector(`.current_bid_display[data-product-id="${productId}`)
                     if (bidDisplay) {
                         bidDisplay.innerHTML = `$${data.new_highest}`;
+                        announceBidUpdate(fullProductName, data.new_highest);
                     }
+
 
 
                     // Update bid count
@@ -506,12 +516,70 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 
+    // Focus trap and keyboard navigation for modals
+    const modals = document.querySelectorAll('[role="dialog"]');
 
+    modals.forEach(modal => {
+        const closeBtn = modal.querySelector('.closeModal');
+        const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        const lastFocusable = focusableElements[focusableElements.length - 1]
 
+        // Store the element that opened the modal
+        let triggerElement;
+
+        // When modal opens
+        modal.addEventListener('shown.bs.modal', function (e) {
+            triggerElement = e.retlatedTarget || document.activeElement;
+            modal.removeAttribute('hiddien');
+            modal.setAttribute('aria-hidden', 'false');
+            firstFocusable.focus();
+            document.body.classList.add('modal-open')
+        });
+
+        // When modal closes
+        modal.addEventListener('hidden.bs.modal', function () {
+            modal.setAttribute('hidden', '');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            if (triggerElement) {
+                triggerElement.focus();
+            }
+        });
+
+        // Trap focus within modal
+        modal.addEventListener('keydown', function (e) {
+            if (e.key == 'Tab') {
+                if (e.shiftKey) {
+                    if (document.activeElement === firstFocusable) {
+                        lastFocusable.focus();
+                        e.preventDefault()
+                    }
+                } else {
+                    if (document.activeElement === lastFocusable) {
+                        firstFocusable.focus();
+                        e.preventDefault()
+                    }
+                }
+            }
+
+            // Close on Escape
+            if (e.key === 'Escape') {
+                closeBtn.click();
+            }
+        });
+    });
 
 
 })
 
+
+
+const announcer = document.getElementById('auction-announcer');
+function announceBidUpdate(productTitle, newBid) {
+    announcer.textContent = `New highest bid for ${productTitle}: $${newBid}`
+    console.log('announceBidUpdate hit', `New highest bid for ${productTitle}: $${newBid}`)
+}
 
 
 

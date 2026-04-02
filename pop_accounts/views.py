@@ -238,6 +238,7 @@ class UserDashboardView(LoginRequiredMixin, View):
 
         # past bids
         bid_data = get_customer_bid_history_context(user.id)
+        print('bid_data', bid_data)
     
        
 

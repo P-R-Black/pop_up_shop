@@ -114,7 +114,7 @@ body {
     justify-content: center;
 }
 
-.page_title h2 {
+.page_title h1 {
     font-family: var(--text-font);
     font-size: clamp(2.5rem, 4rem, 10vw);
     font-weight: 900;
