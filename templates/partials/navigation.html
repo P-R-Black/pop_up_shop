@@ -50,12 +50,12 @@
                 </li>
                 {% if request.user.is_authenticated and request.user.is_staff %}
                 <li class="dash-nav-link" id="dashboard-nav">
-                    <button type="button" aria-expanded="false" aria-controls="dashboard-submenu" aria-haspopup="true"
+                    <a aria-expanded="false" aria-controls="dashboard-submenu" aria-haspopup="true"
                         href="{% url 'pop_accounts:dashboard_admin' %}" class="dashboard_link">
                         <i class='bx bxs-user-detail icon' aria-hidden="true"></i>
                         <span class="text nav-text">Dashboard</span>
                         <i class='bx bxs-chevron-down dashboard_expand' id="dashboard_expand" aria-hidden="true"></i>
-                    </button>
+                    </a>
 
 
                     <!-- Nested Menu -->

@@ -2838,7 +2838,7 @@ class TestPlacedOrderView(TestCase):
         
         response = self.client.get(self.url)
         
-        self.assertContains(response, 'Get Notified When These Items Available')
+        self.assertContains(response, 'Get Notified When These Items Become Available')
     
     # ─── Notify Me State (already notified) ───────────────────────
     

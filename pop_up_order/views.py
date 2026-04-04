@@ -193,7 +193,7 @@ class CreateOrderAfterPaymentView(View):
                 discount=data.get('discount', 0)
             )
 
-            # 2. Create payment object with "pending" status (will be updated by webhook)
+            # 2. Create payment object with "pending" status (Payment status will be updated by webhook)
             try:
                 PopUpPayment.objects.create(
                     order=order,

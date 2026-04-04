@@ -960,6 +960,7 @@ class PastBidView(LoginRequiredMixin, View):
         user = request.user
         user_id = user.id
         bid_data = get_customer_bid_history_context(user_id)
+        print('DEBUG bid_data', bid_data)
         context= {'bid_history': bid_data['bid_history'], 'statistics': bid_data['statistics'], 
                   'user_past_bids_copy':self.user_past_bids_copy}
         
@@ -2059,7 +2060,9 @@ class GetOrderShippingDetail(UserPassesTestMixin, DetailView):
         shipment = get_object_or_404(PopUpShipment, pk=shipment_id)
         context['shipment'] = shipment
         context['order_item'] = PopUpOrderItem.objects.filter(order=shipment.order)
+        print("DEBUG context['order_item']", context['order_item'])
         context['form'] = ThePopUpShippingForm(instance=shipment)
+        print("DEBUG context['form']", context['order_item'])
 
         return context
 

@@ -491,33 +491,6 @@ class ProductDetailView(DetailView):
                     * product has not already been purchased via Buy Now
             Returns a context dictionary used by the template.
     """
-    
-    # model = PopUpProduct
-    # template_name = 'auction/product_auction.html'
-    # context_object_name = 'product'
-    # slug_field = 'slug'
-    # slug_url_kwarg = 'slug'
-
-    # def get_object(self, queryset=None):
-    #     """Override to add the is_active filter"""
-        # return get_object_or_404(PopUpProduct.objects.prefetch_related(
-        #         'popupproductspecificationvalue_set__specification'
-        #     ), 
-        #     slug=self.kwargs['slug'], 
-        #     is_active=True)
-    
-    # def get_context_data(self, **kwargs):
-    #     """Add product specification to the context"""
-        # context = super().get_context_data(**kwargs)
-        
-        # # Apply the utility function to a single-item queryset
-        # products_with_specs = add_specs_to_products([self.object])
-        # context['product'] = products_with_specs[0]  # Get the single product back
-
-        # product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=self.object)}
-        # context['product_specifications'] = product_specifications
-        
-        # return context
 
     model = PopUpProduct
     template_name = "auction/product_detail.html"
@@ -528,45 +501,37 @@ class ProductDetailView(DetailView):
 
     def get_object(self, queryset=None):
         """Override to add the is_active filter"""
-        return get_object_or_404(PopUpProduct.objects.prefetch_related(
-        'popupproductspecificationvalue_set__specification'), slug=self.kwargs['slug'], is_active=True)
+        # return get_object_or_404(PopUpProduct.objects.prefetch_related(
+        # 'popupproductspecificationvalue_set__specification'), slug=self.kwargs['slug'], is_active=True)
     
-        # return get_object_or_404(PopUpProduct, slug=self.kwargs['slug'], is_active=True)
+        return get_object_or_404(PopUpProduct, slug=self.kwargs['slug'], is_active=True)
     
     def get_context_data(self, **kwargs):
         """Add product specification to the context"""
-        # context = super().get_context_data(**kwargs)
-        
-        # Apply the utility function to a single-item queryset
-        # products_with_specs = add_specs_to_products([self.object])
-        # context['product'] = products_with_specs[0]  # Get the single product back
-
-        # product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=self.object)}
-        # context['product_specifications'] = product_specifications
-        
-        # return context
-    
         context = super().get_context_data(**kwargs)
-        # product = self.get_object()
+        product = self.get_object()
         products_with_specs = add_specs_to_products([self.object])
-        print('products_with_specs', products_with_specs)
 
         product_specifications = { spec.specification.name: spec.value for spec in PopUpProductSpecificationValue.objects.filter(product=self.object)}
         context['product_specifications'] = product_specifications
 
         # Buy Now Logic
         now_ = now()
-        buy_now_start = getattr(products_with_specs, "buy_now_start", None)
         
-        buy_now_end = getattr(products_with_specs, "buy_now_end", None)
+        # Get the product from the list
+        product_obj = products_with_specs[0] if products_with_specs else self.object
         
+        buy_now_start = getattr(product_obj, "buy_now_start", None)
+        buy_now_end = getattr(product_obj, "buy_now_end", None)
 
         context['is_buy_now_available'] = (
             buy_now_start and buy_now_end and 
             buy_now_start <= now_ <= buy_now_end and not 
-            getattr(products_with_specs, "bought_now", False)
+            getattr(product_obj, "bought_now", False)
         )
         return context
+    
+
 
 
 def past_product_detail(request, item_id):

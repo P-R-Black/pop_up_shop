@@ -74,7 +74,7 @@ Auction
                         aria-label="I'm interested in {{ prod.product_title }} {{ prod.secondary_product_title }}">Interested</button>
                     {% endif %}
                     {% else %}
-                    <button class="button_medium interestedPrompt"
+                    <button class="button_medium interestedPrompt interested_btn" data-product-id="{{ prod.id }}"
                         aria-label="Sign in if you're interested in {{ prod.product_title }} {{ prod.secondary_product_title }}">Interested
                     </button>
                     {% endif %}

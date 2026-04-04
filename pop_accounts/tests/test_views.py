@@ -2347,7 +2347,7 @@ class TestPastBidsView(TestCase):
             customer=self.user_profile,
             product=self.test_prod_one,
             amount=Decimal('100.00'),
-            is_active=False
+            is_active=True
         )
         
         self.client.force_login(self.user)

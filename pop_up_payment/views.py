@@ -576,7 +576,6 @@ class CreatePaymentIntentView(View):
                 setup_future_usage="off_session"
             )
             print('PaymentIntent Intent', intent)
-            print('PaymentIntent Intent.customer', intent.customer)
             return JsonResponse({'clientSecret': intent['client_secret']})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
@@ -597,7 +596,7 @@ def stripe_webhook_view(request):
     
     # Reject test events in live mode
     if getattr(settings, "STRIPE_LIVE_MODE", False) and not event.get('livemode', False):
-        logger.warning("⚠️ Received test webhook in live mode — rejecting")
+        logger.warning("Received test webhook in live mode — rejecting")
         return HttpResponse(status=400)
 
     # Handle successful payment

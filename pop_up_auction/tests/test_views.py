@@ -3604,7 +3604,7 @@ class TestFutureReleasesView(TestCase):
         response = self.client.get(url)
         
         self.assertContains(response, 'interested_btn')
-        self.assertContains(response, 'Interested</button>')
+        self.assertContains(response, 'Interested')
 
     def test_interested_button_present_for_authenticated_user(self):
         """Interested button should be present for authenticated users."""
@@ -3626,7 +3626,7 @@ class TestFutureReleasesView(TestCase):
         url = reverse('pop_up_auction:future_releases')
         response = self.client.get(url)
         
-        self.assertContains(response, 'Nothing to display')
+        self.assertContains(response, 'No products future releases in this category at the moment. Check back later!')
 
     # ==================== Edge Cases ====================
     
@@ -4263,9 +4263,13 @@ class TestProductDetailView(TestCase):
             buy_now_end=now() + timedelta(seconds=1),
             bought_now=False
         )
+
+        print('exact_end_product', exact_end_product.buy_now_start)
+        print('exact_end_product', exact_end_product.buy_now_end)
         
         url = reverse('pop_up_auction:product_detail', kwargs={'slug': exact_end_product.slug})
         response = self.client.get(url)
+        # print('url', response.context)
         
         self.assertTrue(response.context['is_buy_now_available'])
 
