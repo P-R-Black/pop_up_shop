@@ -70,8 +70,9 @@ Products
                 <div class="products_button_container">
                     {% if request.user.is_authenticated %}
                     <a class="button_medium" href="{% url 'pop_up_payment:buy_now' p.slug %}"
-                        aria-label="Purchase {{ p.product_title }} {{ p.secondary_product_title }} while supplies last">Buy
-                        Now</a>
+                        aria-label="Purchase {{ p.product_title }} {{ p.secondary_product_title }} while supplies last">
+                        Buy Now
+                    </a>
                     {% else %}
                     <button class="button_medium signUpModalBtn" aria-label="Log in to buy now">
                         Log In To Buy Now
