@@ -10,7 +10,7 @@ from pop_up_email.utils import send_okay_to_ship_email
 def notify_admin_okay_to_ship():
     now = timezone.now()
     due_payments = PopUpPayment.objects.filter(
-        status='paid', suspicious_flagged=False, notified_ready_to_ship=False
+        status='pending', suspicious_flagged=False, notified_ready_to_ship=False
         ).select_related('order').only('created_at', 'notified_ready_to_ship', 'status')
     
     print('due_payment', due_payments)

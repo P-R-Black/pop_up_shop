@@ -56,11 +56,14 @@
                     <!-- Message -->
                     <tr>
                         <td style="padding: 30px">
-                            <h2 style="color: #CB3A60">🎉 Congratulations, {{ user.first_name }}</h2>
-                            <p style="color: #CB3A60;">You've won the auction for the <strong>
+                            <h1 style="color: #CB3A60; text-align: center;">Congratulations, {{ user.first_name }}</h1>
+                            <p style="color: #CB3A60;  text-align: center;">You've won the auction for the <strong>
                                     {{ product.product_title }} {{ product.secondary_product_title }}</strong>!</p>
-                            <p style="color: #CB3A60">You have until
-                                <strong>{{ deadlines|date:"F j, Y, g:i A" }}</strong>
+                            <p style="color: #CB3A60;  text-align: center;">You have until
+                                <strong>
+                                    <time datetime="{{ deadliens|date:'F j, Y, g:i A'}}"></time>
+                                    {{ deadlines|date:"F j, Y, g:i A" }}
+                                </strong>
                                 to complete your purchase.
                             </p>
                             <!-- Product section -->
@@ -69,8 +72,9 @@
                                     <td width="120">
                                         {% for image in product.product_image.all %}
                                         {% if image.is_feature %}
-                                        <img src="{{ image.image }}" alt="{{ image.alt_text|default:'Product Image' }}"
-                                            width="100" style="border-radius: 4px;">
+                                        <img src="{% if image.get_image_url  %} {{ image.get_image_url  }} {% else %} {{ image.image }}{% endif %}"
+                                            alt="Photo of {{ image.alt_text|default:'Product Image' }}" width="100"
+                                            style="border-radius: 4px;" loading="lazy">
                                         {% endif %}
                                         {% endfor %}
                                     </td>
@@ -86,6 +90,7 @@
                             <!-- Button -->
                             <div style="text-align: center; margin-top: 30px;">
                                 <a href="{% url 'pop_up_payment:payment_home' %}"
+                                    title="Go to complete your auction purchase"
                                     style="background-color: #000; color: #CB3A60; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
                                     Complete Purchase
                                 </a>
@@ -96,9 +101,18 @@
                     <tr>
                         <td align="center"
                             style="background-color: #f9f9f9; padding: 20px; font-size: 12px; color: #999;">
-                            You're receiving this email because you participated in an auction at <a
-                                href="https://thepopup.com" style="color: #999">The Pop Up</a>.<br>
-                            If you didn't win this time, check thepopup.com for more auctions.
+                            <p style="margin: 0 0 10px 0;">
+                                You're receiving this email because you participated in an auction at
+                                <a href="https://thepopup.com" style="color: #999">The Pop Up</a>.
+                            </p>
+                            <p style="margin: 0;">
+                                If you didn't win this time, visit
+                                <a href="https://thepopup.com"
+                                    style="color: #CB3A60; text-decoration: underline;">thepopup.com</a>
+                                for more auctions.
+                            </p>
+                            <br>
+
                         </td>
                     </tr>
                 </table>

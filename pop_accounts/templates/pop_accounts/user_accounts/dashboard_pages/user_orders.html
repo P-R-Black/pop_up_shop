@@ -9,7 +9,7 @@
 <div class="section_container">
     <div class="page_title">
         {% for t in user_order_details_page %}
-        <h2>{{ t.page_title }}</h2>
+        <h1>{{ t.page_title }}</h1>
         {% endfor %}
     </div>
     <div class="the_dashboard_container">
@@ -28,7 +28,9 @@
                     <div class="order_dets_image_container">
                         {% for image in item.product.product_image.all %}
                         {% if image.is_feature %}
-                        <img class="order_dets_min_img_fluid" src="{{ image.image }}" alt="{{ image.alt_text }}">
+                        <img class="order_dets_min_img_fluid"
+                            src="{% if image.get_image_url  %} {{ image.get_image_url  }} {% else %} {{ image.image }}{% endif %}"
+                            alt="{{ image.alt_text }}" loading="lazy">
                         {% endif %}
                         {% endfor %}
                     </div>

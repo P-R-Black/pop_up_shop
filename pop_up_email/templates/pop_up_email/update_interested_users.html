@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Friend Invite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Alert - The Pop Up</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
 
@@ -12,23 +13,6 @@
             color: #CB3A60;
             font-size: 3.5rem;
             font-weight: 500;
-        }
-
-        .button_long {
-            align-items: center;
-            background: #CB3A60;
-            border: 1px solid #ffffff;
-            border-radius: 8px;
-            color: #F6F5FF;
-            cursor: pointer;
-            display: flex;
-            font-size: clamp(.70rem, .95rem, 2vw);
-            height: 2.25rem;
-            justify-content: center;
-            padding: 0 .5rem 0 .5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            width: clamp(7rem, 12rem, 15vw)
         }
 
         /* Mobile Styles */
@@ -57,83 +41,168 @@
             <td align="center" style="padding: 20px">
                 <table class="container" role="presentation" width="700" cellpadding="0" cellspacing="0" border="0"
                     bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 700px; max-width: 700px">
-                    <!--Header-->
-                    <tr border="0" width="600" style="width: 600px; max-width: 600px">
-                        <td align="center" width="600" style="background-color: #000; padding:20px;">
+
+                    <!-- Header -->
+                    <tr border="0" width="700" style="width: 700px; max-width: 700px">
+                        <td align="center" width="700" style="background-color: #000; padding: 20px;">
                             <div class="image-text">
                                 <span class="image">
                                     <div class="logo-font"
-                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60; margin: 0;">
                                         The Pop Up
                                     </div>
                                 </span>
                             </div>
                         </td>
                     </tr>
-                    <!-- Message -->
-                    <tr align="left">
-                        <td style="padding: 20px 30px 0 30px;">
-                            <p style="color: #000; font-size: 20px;">Hello {{ user.first_name|default:"there" }},</p>
+
+                    <!-- Main Message -->
+                    <tr>
+                        <td style="padding: 30px 30px 0 30px;">
+                            <h1 style="color: #333; font-size: 28px; margin: 0 0 15px 0;">
+                                Good News, {{ user.first_name|default:"there" }}!
+                            </h1>
+
+                            {% if buy_now_start_date and not auction_start_date %}
+                            <!-- Buy Now Alert -->
+                            <p style="color: #555; font-size: 16px; margin: 0 0 15px 0; line-height: 1.6;">
+                                The <strong>{{ product.product_title }}{% if product.secondary_product_title %} {{
+                                    product.secondary_product_title }}{% endif %}</strong>
+                                you were interested in is now available for purchase!
+                            </p>
+
+                            <div
+                                style="background-color: #fff3cd; border-left: 4px solid #CB3A60; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                                <p style="color: #333; margin: 0; font-weight: bold;">
+                                    Available Starting:
+                                </p>
+                                <p style="color: #555; margin: 8px 0 0 0; font-size: 16px;">
+                                    <time datetime="{{ buy_now_start_date|date:'Y-m-d\TH:i:s' }}">
+                                        {{ buy_now_start_date|date:"F j, Y \a\t g:i A" }}
+                                    </time>
+                                </p>
+                                <p style="color: #CB3A60; margin: 8px 0 0 0; font-size: 13px; font-weight: bold;">
+                                    <span aria-hidden="true">⚡</span> Supplies are limited
+                                </p>
+                            </div>
+
+                            {% elif auction_start_date %}
+                            <!-- Auction Alert -->
+                            <p style="color: #555; font-size: 16px; margin: 0 0 15px 0; line-height: 1.6;">
+                                The <strong>{{ product.product_title }}{% if product.secondary_product_title %} {{
+                                    product.secondary_product_title }}{% endif %}</strong>
+                                you were interested in is heading to auction!
+                            </p>
+
+                            <div
+                                style="background-color: #fff3cd; border-left: 4px solid #CB3A60; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                                <p style="color: #333; margin: 0; font-weight: bold;">
+                                    Auction Starts:
+                                </p>
+                                <p style="color: #555; margin: 8px 0 0 0; font-size: 16px;">
+                                    <time datetime="{{ auction_start_date|date:'Y-m-d\TH:i:s' }}">
+                                        {{ auction_start_date|date:"F j, Y \a\t g:i A" }}
+                                    </time>
+                                </p>
+                            </div>
+                            {% endif %}
                         </td>
                     </tr>
-                    <tr align="left">
-                        <td style="padding: 0px 30px 0 30px;">
-                            {% if buy_now_start_date %}
-                            <p style="font-size: 20px; color: #000;"><strong>Good news!</strong></p>
-                            <p style="font-size: 20px; color: #000; padding-right: 16px; line-height: 1.25;">The
-                                {{ product.product_title }}
-                                {% if product.secondary_product_title %}
-                                {{ product.secondary_product_title }}
-                                {% endif %} you were interested in will be available
-                                for purchase on <strong>{{ buy_now_start_date|date:"F j, Y \\a\\t g:i A" }}</strong>,
-                                but supplies are limited.
-                            </p>
-                            {% endif %}
 
-                            {% if auction_start_date %}
-                            <p style="font-size: 20px; color: #000;"><strong>Good news!</strong></p>
-                            <p style="font-size: 20px; color: #000; padding-right: 16px; line-height: 1.25;">The
-                                {{ product.product_title }}
-                                {% if product.secondary_product_title %}
-                                {{ product.secondary_product_title }}
-                                {% endif %} you were interested in is going to auction.
-                                The auction starts on <strong>
-                                    {{ auction_start_date|date:"F j, Y \\a\\t g:i A" }}.
-                                </strong>
-                            </p>
-                            {% endif %}
-                            <table role="presentation" width="100%" cellpadding="10" cellspacing="0">
+                    <!-- Product Details -->
+                    <tr>
+                        <td style="padding: 20px 30px;">
+                            <h2 style="color: #333; font-size: 20px; margin: 0 0 15px 0;">
+                                Product Details
+                            </h2>
+
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+                                style="background-color: #f9f9f9; border-radius: 4px;">
                                 <tr>
-                                    <td width="120">
-                                        <p style="margin: 0; color: #cb3a61ef; font-size: 24px; font-weight: 300;">
-                                            🔥 {{ product.product_title }}
-                                            {{ product.secondary_product_title }}
-                                        </p>
-
+                                    <td valign="top" align="center" style="padding: 15px;">
                                         {% for image in product.product_image.all %}
                                         {% if image.is_feature %}
-                                        <img src="{{ image.image }}" alt="{{ image.alt_text|default:'Product Image' }}"
-                                            width="300" style="margin-top: 20px;">
+                                        <figure style="margin: 0;">
+                                            <img src="{{ image.image }}"
+                                                alt="Photo of {{ product.product_title }}{% if product.secondary_product_title %} {{ product.secondary_product_title }}{% endif %}"
+                                                width="300"
+                                                style="border-radius: 4px; display: block; max-width: 100%;">
+                                            <figcaption
+                                                style="color: #666; font-size: 12px; margin-top: 8px; text-align: center;">
+                                                {{ product.product_title }}{% if product.secondary_product_title %} {{
+                                                product.secondary_product_title }}{% endif %}
+                                            </figcaption>
+                                        </figure>
                                         {% endif %}
                                         {% endfor %}
                                     </td>
-
                                 </tr>
                             </table>
                         </td>
                     </tr>
-                    <tr align="center">
-                        <td align="center">
-                            <a style="margin: 32px 0; text-decoration: none;" class="button_long"
-                                href="{% url 'pop_up_home:home' %}">
-                                Go to The Pop Up</a>
+
+                    <!-- Call to Action -->
+                    <tr>
+                        <td style="padding: 20px 30px; text-align: center;">
+                            <a href="{% url 'pop_up_home:home' %}"
+                                style="background-color: #CB3A60; color: white; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; border: 2px solid #CB3A60; font-size: 16px;"
+                                title="Visit The Pop Up to view this product">
+                                View This Product
+                            </a>
                         </td>
                     </tr>
+
+                    <!-- Alternative Text Link -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px; text-align: center;">
+                            <p style="color: #666; font-size: 12px; margin: 0;">
+                                Or visit:
+                                <a href="{% url 'pop_up_home:home' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    thepopup.com
+                                </a>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Why This Email -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <h2 style="color: #333; font-size: 16px; margin: 0 0 10px 0;">
+                                Why Are You Receiving This?
+                            </h2>
+                            <p style="color: #666; font-size: 13px; margin: 0; line-height: 1.5;">
+                                You marked this product as a favorite, so we're letting you know when it becomes
+                                available.
+                                You can manage your alerts anytime in your account settings.
+                            </p>
+                        </td>
+                    </tr>
+
                     <!-- Footer -->
                     <tr>
-                        <td align="center"
-                            style="margin: 0; background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #999;">
-                            You're receiving this email because showed interest in this product.
+                        <td
+                            style="background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #666; text-align: center;">
+                            <p style="margin: 0 0 10px 0;">
+                                You're receiving this email because you showed interest in this product at
+                                <a href="{% url 'pop_up_home:home' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    The Pop Up
+                                </a>.
+                            </p>
+                            <p style="margin: 0 0 10px 0;">
+                                <a href="{% url 'pop_up_home:home' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    View Product
+                                </a> |
+                                <a href="{% url 'pop_accounts:dashboard' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    Manage Alerts
+                                </a>
+                            </p>
+                            <p style="margin: 0;">
+                                &copy; {% now "Y" %} The Pop Up. All rights reserved.
+                            </p>
                         </td>
                     </tr>
                 </table>

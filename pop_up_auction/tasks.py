@@ -38,15 +38,12 @@ def check_auctions_and_finalize():
         is_active=True
     )
 
-    
 
     for product in ended_auctions:
         highest_bid = product.bids.order_by('-amount', '-timestamp').first()
-        print('check_auctions_and_finalize highest_bid:', highest_bid)
 
         if highest_bid:
                
-  
             winner = highest_bid.customer.user            
             product.winner = winner
             product.current_highest_bid = highest_bid.amount
@@ -89,7 +86,8 @@ def check_auctions_and_finalize():
 @shared_task
 def mark_expired_reservations():
     """
-    Marks all WinnerReservations as expired if their deadline has passed and they are not paid.
+    Marks all WinnerReservations as expired if the 48-hour payment deadline has passed 
+    and the item has not been paid for.
     """
     now_time = now()
     expired = WinnerReservation.objects.filter(
@@ -123,14 +121,18 @@ def mark_expired_reservations():
                         )
                     )
 
-   
-
     updated_count = expired.updated(is_expired=True)
     return f"{updated_count} reservations marked as expired"
 
 
 @shared_task
 def transition_expired_buy_now_to_auction():
+    """
+    For items not purchased during the "buy now" period, this tasks removes "buy now" status
+    and allows for auction to start.
+    - Email sent to users who have marked item as "interested in"
+    """
+    print('transition_expired_buy_now_to_auction triggered')
     current_time = now()
     products = PopUpProduct.objects.filter(
         buy_now_end__lt=current_time,
@@ -139,7 +141,6 @@ def transition_expired_buy_now_to_auction():
         auction_end_date__isnull=False,
         is_active=True
     )
-
 
     for product in products:
         # if buy now expired and it wasn't purchased, it's ready for auction
@@ -160,7 +161,7 @@ def send_reservation_reminders():
     reservations = WinnerReservation.objects.filter(is_paid=False, is_expired=False)
 
     for res in reservations:
-        time_left = res.exipres_at - now_time
+        time_left = res.expires_at - now_time
 
         if timedelta(hours=23, minutes=30) <= time_left <= timedelta(hours=24, minutes=30) and not res.reminder_24hr_sent:
             # send 24 hour reminder

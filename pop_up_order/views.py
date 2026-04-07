@@ -87,7 +87,6 @@ class CreateOrderAfterPaymentView(View):
                 }, status=400)
 
             payment_data_id = data.get('payment_data_id')
-            print('DEBUG payment_data_id', payment_data_id)
 
             payment_method = data.get('payment_method')
             # print('payment_method', payment_method)

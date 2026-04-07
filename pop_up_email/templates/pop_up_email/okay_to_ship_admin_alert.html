@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Auction Winner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Alert: Order Ready to Ship</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
 
@@ -40,28 +41,227 @@
             <td align="center" style="padding: 20px">
                 <table class="container" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
                     bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 600px; max-width: 600px">
-                    <!--Header-->
+
+                    <!-- Header -->
                     <tr border="0" width="600" style="width: 600px; max-width: 600px">
-                        <td align="center" width="600" style="background-color: #000; padding:20px;">
+                        <td align="center" width="600" style="background-color: #000; padding: 20px;">
                             <div class="image-text">
                                 <span class="image">
                                     <div class="logo-font"
-                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60; margin: 0;">
                                         The Pop Up
                                     </div>
                                 </span>
                             </div>
                         </td>
                     </tr>
-                    <!-- Message -->
-                    <h1>Okay To Ship Admin Alert</h1>
+
+                    <!-- Alert Banner -->
+                    <tr>
+                        <td style="background-color: #4CAF50; padding: 15px 30px; text-align: center;">
+                            <p style="color: white; margin: 0; font-size: 16px; font-weight: bold;">
+                                <span aria-hidden="true">✓</span> Order Ready to Ship
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 30px 30px 0 30px;">
+                            <h1 style="color: #333; font-size: 24px; margin: 0 0 15px 0;">
+                                Order #{{ order.id }} - Approved for Shipment
+                            </h1>
+
+                            <p style="color: #555; font-size: 14px; margin: 0 0 20px 0; line-height: 1.6;">
+                                Payment verification period has passed. This order has been cleared for shipment.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Order Summary Box -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <div style="background-color: #f9f9f9; border-radius: 4px; padding: 20px;">
+                                <h2
+                                    style="color: #333; font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #ddd; padding-bottom: 10px;">
+                                    Order Details
+                                </h2>
+
+                                <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
+                                    <tr>
+                                        <td style="padding: 8px 0; color: #666; font-size: 13px;">
+                                            <strong>Order Number:</strong>
+                                        </td>
+                                        <td align="right" style="padding: 8px 0; color: #333; font-size: 13px;">
+                                            #{{ order.id }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding: 8px 0; color: #666; font-size: 13px;">
+                                            <strong>Customer:</strong>
+                                        </td>
+                                        <td align="right" style="padding: 8px 0; color: #333; font-size: 13px;">
+                                            {{ order.user.first_name }} {{ order.user.last_name }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding: 8px 0; color: #666; font-size: 13px;">
+                                            <strong>Customer Email:</strong>
+                                        </td>
+                                        <td align="right" style="padding: 8px 0; color: #333; font-size: 13px;">
+                                            <a href="mailto:{{ order.user.email }}"
+                                                style="color: #CB3A60; text-decoration: underline;">
+                                                {{ order.user.email }}
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding: 8px 0; color: #666; font-size: 13px;">
+                                            <strong>Order Status:</strong>
+                                        </td>
+                                        <td align="right"
+                                            style="padding: 8px 0; color: #4CAF50; font-size: 13px; font-weight: bold;">
+                                            Approved for Shipment
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding: 8px 0; color: #666; font-size: 13px;">
+                                            <strong>Order Total:</strong>
+                                        </td>
+                                        <td align="right"
+                                            style="padding: 8px 0; color: #333; font-size: 13px; font-weight: bold;">
+                                            ${{ order.total_paid }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding: 8px 0; color: #666; font-size: 13px;">
+                                            <strong>Order Date:</strong>
+                                        </td>
+                                        <td align="right" style="padding: 8px 0; color: #333; font-size: 13px;">
+                                            <time datetime="{{ order.created_at|date:'Y-m-d\TH:i:s' }}">
+                                                {{ order.created_at|date:"F j, Y \a\t g:i A" }}
+                                            </time>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Items Section -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <h2 style="color: #333; font-size: 16px; margin: 0 0 15px 0;">
+                                Items to Ship
+                            </h2>
+
+                            {% if order.items.all %}
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+                                style="border-collapse: collapse;">
+                                {% for item in order.items.all %}
+                                <tr>
+                                    <td
+                                        style="padding: 10px; border-bottom: 1px solid #ddd; background-color: #f9f9f9;">
+                                        <p style="margin: 0 0 4px 0; color: #333; font-size: 13px; font-weight: bold;">
+                                            {{ item.product_title }}
+                                        </p>
+                                        {% if item.secondary_product_title %}
+                                        <p style="margin: 0 0 4px 0; color: #666; font-size: 12px;">
+                                            {{ item.secondary_product_title }}
+                                        </p>
+                                        {% endif %}
+                                        <p style="margin: 0; color: #666; font-size: 12px;">
+                                            <strong>Quantity:</strong> {{ item.quantity }}
+                                            {% if item.size %}<strong style="margin-left: 12px;">Size:</strong> {{
+                                            item.size }}{% endif %}
+                                        </p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                            {% else %}
+                            <p style="color: #666; font-size: 13px; margin: 0;">
+                                No items found for this order.
+                            </p>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <!-- Admin Action -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <div style="text-align: center;">
+                                <a href="{% url 'pop_accounts:pending_okay_to_ship' %}"
+                                    style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; border: 2px solid #4CAF50; font-size: 14px;"
+                                    title="Click to view and manage this order in the admin panel">
+                                    View Order in Admin
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Verification Info -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <div
+                                style="background-color: #e8f5e9; border-left: 4px solid #4CAF50; padding: 15px; border-radius: 4px;">
+                                <h3 style="color: #333; margin: 0 0 10px 0; font-size: 14px;">
+                                    Payment Verification Complete
+                                </h3>
+                                <p style="color: #555; margin: 0; font-size: 12px; line-height: 1.5;">
+                                    This order has passed the payment verification period without any disputes or fraud
+                                    flags.
+                                    It is safe to proceed with shipment.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Shipping Address -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <h2 style="color: #333; font-size: 16px; margin: 0 0 10px 0;">
+                                Shipping Address
+                            </h2>
+
+                            <address
+                                style="color: #666; font-size: 12px; margin: 0; line-height: 1.6; font-style: normal;">
+                                {% if order.shipping_address %}
+                                {{ order.shipping_address.street_address }}<br>
+                                {% if order.shipping_address.street_address_2 %}
+                                {{ order.shipping_address.street_address_2 }}<br>
+                                {% endif %}
+                                {{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{
+                                order.shipping_address.zip_code }}<br>
+                                {{ order.shipping_address.country }}
+                                {% else %}
+                                <span style="color: #CB3A60; font-weight: bold;">No shipping address on file</span>
+                                {% endif %}
+                            </address>
+                        </td>
+                    </tr>
+
                     <!-- Footer -->
                     <tr>
-                        <td align="center"
-                            style="background-color: #f9f9f9; padding: 20px; font-size: 12px; color: #999;">
-                            You're receiving this email because you participated in an auction at <a
-                                href="https://thepopup.com" style="color: #999">The Pop Up</a>.<br>
-                            If you didn't win this time, check thepopup.com for more auctions.
+                        <td
+                            style="background-color: #f9f9f9; padding: 20px; font-size: 11px; color: #666; text-align: center;">
+                            <p style="margin: 0 0 8px 0;">
+                                This is an internal admin notification. Do not forward this email to customers.
+                            </p>
+                            <p style="margin: 0 0 8px 0;">
+                                <a href="{% url 'pop_accounts:dashboard' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    Return to Admin Panel
+                                </a>
+                            </p>
+                            <p style="margin: 0;">
+                                &copy; {% now "Y" %} The Pop Up. All rights reserved.
+                            </p>
                         </td>
                     </tr>
                 </table>

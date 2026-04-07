@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.conf import settings
 from pop_accounts.models import PopUpCustomerProfile
-from pop_up_auction.models import PopUpProduct
+from pop_up_auction.models import PopUpProduct, WinnerReservation
 from django.db.models import Q
 
 
@@ -44,10 +44,18 @@ def send_24_hour_reminder_email(user, product):
     """
     now_time = now()
     subject = "24 Hours Left to Purchase Your Auction Item"
+
+    # Get the reservation to pass expires_at to template
+    reservation = WinnerReservation.objects.get(user=user, product=product)
+
+
     html_message = render_to_string('pop_up_email/twenty_four_hour_reminder.html', {
         "user": user,
         "product": product,
+        'reservation': reservation
     })
+
+
 
     send_mail(
         subject =subject,
@@ -68,9 +76,13 @@ def send_1_hour_reminder_email(user, product):
     now_time = now()
     subject = "1 Hours Left to Purchase Your Auction Item"
 
+    # Get the reservation to pass expires_at to template
+    reservation = WinnerReservation.objects.get(user=user, product=product)
+
     html_message = render_to_string('pop_up_email/one_hour_reminder.html', {
         "user": user,
         "product": product,
+        "reservation": reservation
     })
 
     send_mail(
@@ -112,10 +124,35 @@ def send_okay_to_ship_email(order):
     Notifies admin after a waiting period that item is okay to ship.
     Item is "okay to ship" if no payment disputes within waiting period.
     """
-    subject = f"✅ OK to Ship Order #{order.id}"
-    message = render_to_string('pop_up_email/okay_to_ship_admin_alert.html', {"order": order})
+    subject = f"Order #{order.id} - Approved for Shipment"
+    
+    html_message = render_to_string('pop_up_email/okay_to_ship_admin_alert.html', {
+        "order": order
+    })
+    
+    plain_text_message = f"Order #{order.id} has been approved for shipment. Payment verification period has passed without disputes."
+    
     recipients = [a.email for a in get_admin_users()]
-    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipients)
+    
+    try:
+        send_mail(
+            subject=subject,
+            message=plain_text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=recipients,
+            html_message=html_message,
+            fail_silently=False
+        )
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to send okay_to_ship email for order {order.id}: {str(e)}")
+
+
+    # subject = f"✅ OK to Ship Order #{order.id}"
+    # message = render_to_string('pop_up_email/okay_to_ship_admin_alert.html', {"order": order})
+    # recipients = [a.email for a in get_admin_users()]
+    # send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipients)
 
 
 def send_dispute_alert_to_customer(order):
@@ -215,11 +252,12 @@ def send_interested_in_and_coming_soon_product_update_to_users(
     """
     Emails Users who have marked a product "interested in" of udpate with product
     """
-    
+    print('email triggered for interested')
     users = PopUpCustomerProfile.objects.filter(
         Q(prods_interested_in=product) | Q(prods_on_notice_for=product)
         ).select_related('user').distinct()
     
+    print('users interested', users)
     if not users.exists():
         return
     
@@ -251,3 +289,42 @@ def send_interested_in_and_coming_soon_product_update_to_users(
             html_message=html_message,
             fail_silently=False
         )
+
+
+
+def send_2fa_code_email(user, code):
+    """
+    Sends a 2FA verification code to the user's email.
+    
+    Args:
+        user: User object with email and first_name
+        code: 6-digit verification code string
+        
+    Returns:
+        bool: True if email sent successfully, False otherwise
+    """
+    subject = "Your Verification Code - The Pop Up"
+    
+    html_message = render_to_string('pop_up_email/two_factor.html', {
+        "user": user,
+        "code": code,
+    })
+    
+    plain_text_message = f"Your Pop Up verification code is: {code}. This code expires in 10 minutes. Never share this code with anyone."
+    
+    try:
+        send_mail(
+            subject=subject,
+            message=plain_text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            html_message=html_message,
+            fail_silently=False
+        )
+        return True
+    except Exception as e:
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to send 2FA email to {user.email}: {str(e)}")
+        return False

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Authorization Code</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Verification Code</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
 
@@ -14,6 +15,19 @@
             font-weight: 500;
         }
 
+        .code-box {
+            background-color: #000;
+            color: #CB3A60;
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
         /* Mobile Styles */
         @media only screen and (max-width: 600px) {
             .container {
@@ -21,13 +35,9 @@
                 padding: 0 10px !important;
             }
 
-            .stack {
-                display: block !important;
-                width: 100% !important;
-            }
-
-            .mobile-center {
-                text-align: center !important;
+            .code-box {
+                font-size: 24px;
+                letter-spacing: 4px;
             }
 
         }
@@ -37,47 +47,129 @@
 <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f4">
         <tr>
-            <td align="center" style="padding: 100px">
-                <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0"
+            <td align="center" style="padding: 20px">
+                <table class="container" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
                     bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 600px; max-width: 600px">
+
+                    <!-- Header -->
                     <tr border="0" width="600" style="width: 600px; max-width: 600px">
-                        <td align="center" width="600" style="background-color: #000; padding:20px;">
+                        <td align="center" width="600" style="background-color: #000; padding: 20px;">
                             <div class="image-text">
                                 <span class="image">
                                     <div class="logo-font"
-                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60; margin: 0;">
                                         The Pop Up
                                     </div>
                                 </span>
                             </div>
                         </td>
                     </tr>
+
+                    <!-- Message -->
                     <tr>
-                        <td style="padding: 15px; text-align: center;">
-                            <h4 style="color: #CB3A60; font-size: 16px;">Verification Code</h4>
-                            <div
-                                style="width: 150px;  padding:1px; margin: 0 210px; background-color: #000; border-radius: 20px;">
-                                <p style="color: #CB3A60; font-size: 22px; font-weight: 800; letter-spacing: 1px;">
-                                    {{ code }}
-                                </p>
-                            </div>
-                            <p style="color: #CB3A60; font-size: 16px;">
-                                This code expires in 15 minutes.
+                        <td style="padding: 30px 30px 0 30px;">
+                            <h1 style="color: #333; font-size: 28px; margin: 0 0 15px 0;">
+                                Verify Your Identity
+                            </h1>
+
+                            <p style="color: #555; font-size: 16px; margin: 0 0 20px 0; line-height: 1.5;">
+                                Hi {{ user.first_name }},
                             </p>
-                            <p style="color: #CB3A60; font-size: 16px;">
-                                Enter this code to enter The Pop Up.
+
+                            <p style="color: #555; font-size: 16px; margin: 0 0 20px 0; line-height: 1.5;">
+                                We received a login request for your Pop Up account. Enter the code below to complete
+                                your login.
                             </p>
                         </td>
                     </tr>
+
+                    <!-- Code Box -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <div class="code-box" role="region" aria-label="Your verification code">
+                                {{ code }}
+                            </div>
+                            <p style="color: #666; font-size: 13px; text-align: center; margin: 0;">
+                                This code expires in <strong>5 minutes</strong>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Instructions -->
+                    <tr>
+                        <td style="padding: 20px 30px;">
+                            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0;">
+                                How to Use This Code
+                            </h2>
+
+                            <ol style="color: #666; padding-left: 20px; line-height: 1.8; margin: 0;">
+                                <li style="margin-bottom: 10px;">
+                                    Return to the login pop up
+                                </li>
+                                <li style="margin-bottom: 10px;">
+                                    Enter your verification code when prompted
+                                </li>
+                                <li>
+                                    Complete your login
+                                </li>
+                            </ol>
+                        </td>
+                    </tr>
+
+                    <!-- Security Warning -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <div
+                                style="background-color: #e8f5e9; border-left: 4px solid #4CAF50; padding: 15px; border-radius: 4px;">
+                                <h3 style="color: #333; margin: 0 0 10px 0; font-size: 14px;">
+                                    Security Reminder
+                                </h3>
+                                <p style="color: #666; margin: 0; font-size: 13px; line-height: 1.5;">
+                                    <strong>Never share this code with anyone.</strong> The Pop Up support team will
+                                    never ask for your verification code.
+                                    If you didn't request this code, you can safely ignore this email.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Troubleshooting -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0;">
+                                Trouble Logging In?
+                            </h2>
+                            <p style="color: #666; margin: 0; line-height: 1.5;">
+                                If you didn't request this code or need help,
+                                <a href="{% url 'pop_up_home:contact' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    contact our support team
+                                </a>.
+                            </p>
+                        </td>
+                    </tr>
+
                     <!-- Footer -->
                     <tr>
-                        <td align="center"
-                            style="background-color: #f9f9f9; padding: 20px; font-size: 12px; color: #999; font-size: 12px">
-                            &copy {{ year }} The Pop Up
+                        <td
+                            style="background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #666; text-align: center;">
+                            <p style="margin: 0 0 10px 0;">
+                                This is a security message from
+                                <a href="{% url 'pop_up_home:home' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    The Pop Up
+                                </a>.
+                            </p>
+                            <p style="margin: 0 0 10px 0;">
+                                <strong>For your security:</strong> Never share this code with anyone, including Pop Up
+                                support staff.
+                            </p>
+                            <p style="margin: 0;">
+                                &copy; {% now "Y" %} The Pop Up. All rights reserved.
+                            </p>
                         </td>
                     </tr>
                 </table>
-
             </td>
         </tr>
     </table>

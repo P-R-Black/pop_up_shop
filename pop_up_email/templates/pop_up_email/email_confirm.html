@@ -54,17 +54,31 @@
                     </tr>
                     <tr>
                         <td style="padding: 30px">
-                            <h2 style="color: #CB3A60; font-size: 32px;">Welcome {{ user.first_name }}!</h2>
-                            <p style="color: #CB3A60; font-size: 20px;">Thanks for joining us! Please confirm your email
-                                to continue.</p>
+                            <h1 style="color: #CB3A60; font-size: 32px;">Welcome {{ user.first_name }}!</h1>
+                            <p style="color: #CB3A60; font-size: 16px; margin: 0 0 20px 0; line-height: 1.5;">
+                                Thanks for joining us! Please confirm your email to complete your account setup.
+                            </p>
 
                             <!-- Button -->
                             <div style="text-align: left; margin-top: 30px;">
-                                <a href="{% url 'pop_up_payment:payment_home' %}"
-                                    style="background-color: #000; color: #CB3A60; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                                <a href="{% url 'pop_accounts:dashboard' %}"
+                                    title="Click here to confirm your email address"
+                                    style="background-color: #000; color: #CB3A60; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; border: 2px solid #CB3A60;">
                                     Confirm Email
                                 </a>
                             </div>
+
+                            {% comment %}
+                            <!-- Alternative Text Link (for clients that don't render the button) -->
+                            <p style="color: #CB3A60; font-size: 14px; margin-top: 20px;">
+                                Or copy and paste this link in your browser:<br>
+                                <a href="{% url 'pop_accounts:dashboard' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    {% url 'pop_accounts:dashboard' %}
+                                </a>
+                            </p>
+                            {% endcomment %}
+
                         </td>
                     </tr>
                     <!-- Footer -->

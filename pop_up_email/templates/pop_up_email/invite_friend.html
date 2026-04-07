@@ -46,7 +46,7 @@
                             <div class="image-text">
                                 <span class="image">
                                     <div class="logo-font"
-                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60; margin: 0;">
                                         The Pop Up
                                     </div>
                                 </span>
@@ -54,48 +54,78 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>
-                            <h4 style="color: #CB3A60; text-align: center; font-weight: 300; font-style: italic">There
-                                is no surer
-                                foundation for a
-                                beautiful friendship than
-                                a mutual taste in style. - Anonymous
-                            </h4>
+                        <td style="padding: 20px 30px;">
+                            <blockquote
+                                style="color: #CB3A60; text-align: center; font-weight: 300; font-style: italic; margin: 0; padding: 0; border-left: 4px solid #CB3A60; padding-left: 15px;">
+                                <p style="margin: 0;">
+                                    There
+                                    is no surer
+                                    foundation for a
+                                    beautiful friendship than
+                                    a mutual taste in style.
+                                </p>
+                                <p style="margin: 10px 0 0 0; font-size: 12px;"> - Anonymous</p>
+                            </blockquote>
                         </td>
                     </tr>
                     <!-- Message -->
                     <tr align="center">
                         <td style="padding: 20px 30px 0 30px;">
-                            <h2 style="color: #333;">Congrats {{ friend_name }} 🎉</h2>
-                            <h3>You've got a real day one in {{ user }}.</h3>
-                            <h3 style="font-size: 20px; font-weight: 200;">
+                            <h1 style="color: #333; font-size: 28px; margin: 0 0 15px 0;">
+                                Congrats {{ friend_name }}
+                            </h1>
+                            <h2 style="color: #555; font-size: 20px; font-weight: normal; margin: 0 0 15px 0;">
+                                You've got a real day one in {{ user }}.
+                            </h2>
+                            <p
+                                style="font-size: 18px; font-weight: 200; color: #555; margin: 0 0 15px 0; line-height: 1.5;">
                                 {{ user }} thought you’d love
-                                <strong style="font-family: 'Birthstone', cursive; font-size: 28px; color: #CB3A60;">
+                                <span style="font-family: 'Birthstone', cursive; font-size: 28px; color: #CB3A60;">
                                     The Pop Up
-                                </strong>, and we agree.
-                            </h3>
+                                </span>, and we agree.
+                            </p>
                         </td>
                     </tr>
                     <tr align="center">
                         <td style="padding: 20px 30px 0 30px;">
-                            <p style="font-size: 16px; color: #555;">
+                            <h3 style="font-size: 16px; color: #555; margin: 0 0 20px 0;">
                                 Join now to explore:
-                            </p>
-                            <ul style="padding-left: 20px;">
-                                <li style="list-style: none;">🛍️ Authentic products</li>
-                                <li style="list-style: none;">🤝 A growing community</li>
-                                <li style="list-style: none;">💰 Low fees</li>
+                            </h3>
+                            <ul style="padding: 0; margin: 0 0 30px 0; list-style: none; text-align: center;">
+                                <li style="font-size: 14px; color: #555; margin: 0 0 10px 0;">
+                                    <span aria-hidden="true">🛍️</span> Authentic products
+                                </li>
+                                <li style="font-size: 14px; color: #555; margin: 0 0 10px 0;">
+                                    <span aria-hidden="true">🤝</span> A growing community
+                                </li>
+                                <li style="font-size: 14px; color: #555; margin: 0;">
+                                    <span aria-hidden="true">💰</span>Low fees
+                                </li>
                             </ul>
 
                             <div style="margin: 30px 0;">
                                 <a href="{{ invite_link }}"
+                                    title="Click here to accept the invitation and join The Pop Up"
                                     style="padding: 12px 24px; background-color: #CB3A60;; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
                                     Accept Invite
                                 </a>
                             </div>
 
-                            <p style="font-size: 14px; color: #888; text-align: center;">
-                                Already have an account? Just log in with your email.
+                            <!-- Alternative Text Link -->
+                            <p style="font-size: 12px; color: #666; text-align: center; margin-top: 20px;">
+                                Or copy and paste this link in your browser:<br>
+                                <a href="{{ invite_link }}"
+                                    style="color: #CB3A60; text-decoration: underline; word-break: break-all;">
+                                    {{ invite_link }}
+                                </a>
+                            </p>
+
+                            <!-- Existing Account Note -->
+                            <p style="font-size: 14px; color: #666; text-align: center; margin-top: 20px;">
+                                Already have an account?
+                                <a href="https://mysite.com:8000/" style="color: #CB3A60; text-decoration: underline;">
+                                    Log in with your email
+                                </a>.
                             </p>
 
                         </td>

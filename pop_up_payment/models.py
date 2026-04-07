@@ -94,7 +94,7 @@ class PopUpPayment(models.Model):
         """
         Tells admin that order is ready to ship
         If payment made Mon - Wed before 4PM, then a 48 hour wait for any charge disuptes
-        If payment made Mon - Wed after 4PM, then 1 60 hour wait for any charge disuptes
+        If payment made Mon - Wed after 4PM, then a 60 hour wait for any charge disuptes
         If payment made Thursday before 4PM, then 72 hour hour wait for any charge disuptes
         If payment made Thurday after 4PM or Friday through Sunday, then 2 business day wait for any charge disuptes
         """

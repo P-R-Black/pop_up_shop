@@ -1,3 +1,256 @@
-<body>
-    <h1>Hey! You've got 24 hours to pay for the product you won in The Pop Up auction.</h1>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Purchase - 24 Hours Left</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
+
+        .logo-font {
+            font-family: 'Birthstone', cursive;
+            color: #CB3A60;
+            font-size: 3.5rem;
+            font-weight: 500;
+        }
+
+        /* Mobile Styles */
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+                padding: 0 10px !important;
+            }
+
+            .stack {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            .mobile-center {
+                text-align: center !important;
+            }
+
+        }
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f4">
+        <tr>
+            <td align="center" style="padding: 20px">
+                <table class="container" role="presentation" width="700" cellpadding="0" cellspacing="0" border="0"
+                    bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 700px; max-width: 700px">
+
+                    <!-- Header -->
+                    <tr border="0" width="700" style="width: 700px; max-width: 700px">
+                        <td align="center" width="700" style="background-color: #000; padding: 20px;">
+                            <div class="image-text">
+                                <span class="image">
+                                    <div class="logo-font"
+                                        style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60; margin: 0;">
+                                        The Pop Up
+                                    </div>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Urgent Banner -->
+                    <tr>
+                        <td style="background-color: #CB3A60; padding: 15px 30px; text-align: center;">
+                            <p style="color: white; margin: 0; font-size: 16px; font-weight: bold;">
+                                <span aria-hidden="true">⏰</span> 24 Hours Left to Complete Your Purchase
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Message -->
+                    <tr>
+                        <td style="padding: 30px 30px 0 30px;">
+                            <h1 style="color: #333; font-size: 28px; margin: 0 0 15px 0;">
+                                Don't Miss Out!
+                            </h1>
+
+                            <p style="color: #555; font-size: 16px; margin: 0 0 15px 0; line-height: 1.5;">
+                                Hi {{ user.first_name }},
+                            </p>
+
+                            <p style="color: #555; font-size: 16px; margin: 0 0 15px 0; line-height: 1.5;">
+                                Your auction win for the
+                                <strong>{{ product.product_title }} {{ product.secondary_product_title }}</strong>
+                                expires in <strong>24 hours</strong>. Complete your purchase now to secure your item.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Product Details -->
+                    <tr>
+                        <td style="padding: 20px 30px;">
+                            <h2 style="color: #333; font-size: 20px; margin: 0 0 15px 0;">
+                                Your Winning Bid
+                            </h2>
+
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+                                style="background-color: #f9f9f9; border-radius: 4px;">
+                                <tr>
+                                    <td width="120" valign="top" align="center" style="padding: 15px;">
+                                        {% for image in product.product_image.all %}
+                                        {% if image.is_feature %}
+                                        <img src="{% if image.get_image_url  %} {{ image.get_image_url  }} {% else %} {{ image.image }}{% endif %}"
+                                            alt="Photo of {{ product.product_title }} {{ product.secondary_product_title }}"
+                                            width="100" style="border-radius: 4px; display: block;" loading="lazy">
+                                        {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td valign="top" style="padding: 15px;">
+                                        <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">
+                                            {{ product.product_title }}
+                                        </h3>
+                                        <p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">
+                                            {{ product.secondary_product_title }}
+                                        </p>
+
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                            role="presentation" style="margin-top: 10px;">
+                                            <tr>
+                                                <td style="padding: 4px 0; color: #666; font-size: 13px;">
+                                                    <strong>Your Winning Bid:</strong>
+                                                </td>
+                                                <td align="right"
+                                                    style="padding: 4px 0; color: #CB3A60; font-weight: bold; font-size: 16px;">
+                                                    ${{ product.current_highest_bid }}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Deadline Section -->
+                    <tr>
+                        <td style="padding: 20px 30px;">
+                            <div
+                                style="background-color: #fff3cd; border-left: 4px solid #CB3A60; padding: 15px; border-radius: 4px;">
+                                <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">
+                                    Purchase Deadline
+                                </h3>
+                                <p style="color: #555; margin: 0; font-size: 16px; line-height: 1.5;">
+                                    <strong>Expires:</strong>
+                                    <time datetime="{{ reservation.expires_at|date:'Y-m-d\TH:i:s' }}">
+                                        {{ reservation.expires_at|date:"F j, Y \a\t g:i A" }}
+                                    </time>
+                                </p>
+                                <p style="color: #666; margin: 10px 0 0 0; font-size: 13px;">
+                                    If you don't complete your purchase by this time, your item will be released and
+                                    your auction win will be forfeited.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style="padding: 20px 30px;">
+                            <div style="text-align: center;">
+                                <a href="{% url 'pop_up_payment:payment_home' %}"
+                                    style="background-color: #CB3A60; color: white; padding: 16px 40px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; border: 2px solid #CB3A60; font-size: 16px;"
+                                    title="Click here to complete your purchase now">
+                                    Complete Purchase Now
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Alternative Text Link -->
+
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px; text-align: center;">
+                            {% comment %}
+                            <p style="color: #666; font-size: 12px; margin: 0;">
+                                Or copy and paste this link in your browser:<br>
+                                <a href="{% url 'pop_up_payment:payment_home' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    {% url 'pop_up_payment:payment_home' %}
+                                </a>
+                            </p>
+                            {% endcomment %}
+                        </td>
+                    </tr>
+
+                    <!-- What Happens Next -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0;">
+                                What Happens Next?
+                            </h2>
+
+                            <ol style="color: #666; padding-left: 20px; line-height: 1.8; margin: 0;">
+                                <li style="margin-bottom: 10px;">
+                                    <strong>Complete Payment:</strong> Click the button above to pay for your winning
+                                    bid
+                                </li>
+                                <li style="margin-bottom: 10px;">
+                                    <strong>Order Confirmed:</strong> You'll receive an order confirmation email
+                                    immediately
+                                </li>
+                                <li>
+                                    <strong>Item Ships:</strong> We'll prepare your item for shipment and send you
+                                    tracking details
+                                </li>
+                            </ol>
+                        </td>
+                    </tr>
+
+                    <!-- Questions Section -->
+                    <tr>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0;">
+                                Questions?
+                            </h2>
+                            <p style="color: #666; margin: 0; line-height: 1.5;">
+                                If you need help or have questions about your purchase,
+                                <a href="{% url 'pop_up_home:help-center' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    visit our help center
+                                </a>
+                                or contact our support team.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td
+                            style="background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #666; text-align: center;">
+                            <p style="margin: 0 0 10px 0;">
+                                This is a reminder that you have won an auction at
+                                <a href="{% url 'pop_up_home:home' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    The Pop Up
+                                </a>.
+                            </p>
+                            <p style="margin: 0 0 10px 0;">
+                                <a href="{% url 'pop_up_payment:payment_home' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    Complete Your Purchase
+                                </a> |
+                                <a href="{% url 'pop_up_home:help-center' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    Need Help?
+                                </a>
+                            </p>
+                            <p style="margin: 0;">
+                                &copy; {% now "Y" %} The Pop Up. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
+
+</html>

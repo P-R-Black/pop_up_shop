@@ -53,12 +53,11 @@
 }
 
 .order_dets_shipping_dets_container {
-    align-items: center;
     display: flex;
     flex-direction: column;
     gap: .25rem;
-
 }
+
 
 .order_dets_date_create_container {
     margin-top: 1rem;

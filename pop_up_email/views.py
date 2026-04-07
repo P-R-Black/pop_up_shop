@@ -69,26 +69,25 @@ def preview_order_confirmation(request):
     from pop_up_order.models import PopUpOrderItem, PopUpCustomerOrder
     user = request.user
     order = PopUpCustomerOrder.objects.filter(user=user).last()
-    # items = PopUpOrderItem.objects.filter(order=order)
-    items =[
-        {"Product id": "53", "product_title": "Jordan 1 Retro High OG SP", 
-         "secondary_product_title":"Union LA Chicago Shadow",
-           "size":"9", "product_sex": "Male"},  {"Product id": "42", "product_title": "Jordan 11 Retro", 
-         "secondary_product_title": "Gamma Blue",
-           "size":"9", "product_sex": "Male"} ]
+    items = PopUpOrderItem.objects.filter(order=order)
+    # items =[
+    #     {"Product id": "53", "product_title": "Jordan 1 Retro High OG SP", 
+    #      "secondary_product_title":"Union LA Chicago Shadow",
+    #        "size":"9", "product_sex": "Male"},  {"Product id": "42", "product_title": "Jordan 11 Retro", 
+    #      "secondary_product_title": "Gamma Blue",
+    #        "size":"9", "product_sex": "Male"} ]
 
-    print('items', items)
 
-    order_id = "54f8f292-fd25-47dd-a7aa-a9a81b4a1c6a"
-    total_paid =  "724.73"
-    payment_status = "pending"
+    # order_id = "54f8f292-fd25-47dd-a7aa-a9a81b4a1c6a"
+    # total_paid =  "724.73"
+    # payment_status = "pending"
     html = render_to_string('pop_up_email/order_confirmation.html', {
         'user': user,
-        'order_id': order.id,
+        'order': order,
         'items': items,
-        'order_id': order_id,
-        'total_paid':total_paid,
-        'payment_status': payment_status
+        'order_id': order.id,
+        'total_paid':order.total_paid,
+        'payment_status': "Pending"
     })
    
     
@@ -96,32 +95,37 @@ def preview_order_confirmation(request):
 
 
 def preview_send_customer_shipping_details(request):
+    from pop_up_order.models import PopUpOrderItem, PopUpCustomerOrder
+    from pop_up_shipping.models import PopUpShipment
 
     user = request.user
-    user_email = request.user.email  
+    order = PopUpCustomerOrder.objects.filter(user=user).last()
+    items = PopUpOrderItem.objects.filter(order=order)
+    shipment = PopUpShipment.objects.filter(order=order).last()
+   
 
-    order = "b62171e6-cb4b-48f6-be14-20d971393059"
-    carrier = "UPS"
-    tracking_no = "6547382910"
-    shipped_at = datetime(2025, 7, 11)
-    estimated_deliv = datetime(2025, 7, 15)
-    status = 'Shipped'
+    order_id = order.id
+    carrier = shipment.carrier.upper()
+    tracking_no = shipment.tracking_number
+    shipped_at = shipment.shipped_at
+    estimated_deliv = shipment.estimated_delivery
+    status = shipment.status
 
     links_to_track_shipment = {
             "USPS": "https://tools.usps.com/go/TrackConfirmAction_input?_gl=1*ctcvbi*_ga*MjA2NDExMTY3Ni4xNzUxNTA0NzI3*_ga_QM3XHZ2B95*czE3NTI3MDA0MzkkbzExJGcxJHQxNzUyNzAwNTM0JGo2MCRsMCRoMA..",
             "UPS": "https://www.ups.com/us/en/home",
             "FedEx": "https://www.fedex.com/en-us/tracking.html"
     }
-
+    
   
     html = render_to_string('pop_up_email/send_customer_shipping_details.html', {
         'user': user,
-        'order_id': order_id,
-        'carrier': carrier,
+        'order': order_id,
+        'carrier': shipment.carrier,
         'tracking_no': tracking_no,
-        'shipped_at':shipped_at,
+        'shipped_at': shipped_at,
         'estimated_deliv': estimated_deliv,
-        'status':status,
+        'status': status,
         'tracker_link': links_to_track_shipment[carrier]
     })
 
@@ -139,8 +143,9 @@ def preview_invite_friend_email(request):
     })
     return HttpResponse(html)
 
+
 def preview_send_interested_in_and_coming_soon_product_update_to_users_email(request):
-    product = PopUpProduct.objects.get(id=5)
+    # product = PopUpProduct.objects.get(id=1)
     user = request.user
     product_id = 5
     buy_now_start_date = ""
@@ -150,7 +155,7 @@ def preview_send_interested_in_and_coming_soon_product_update_to_users_email(req
 
     html = render_to_string('pop_up_email/update_interested_users.html', {
        'user': user,
-        'product': product, 
+        # 'product': product, 
         'buy_now_start_date': buy_now_start_date if buy_now_start_date else "", 
         'auction_start_date': auction_start_date if auction_start_date else "", 
     
@@ -183,3 +188,63 @@ class InviteFriendView(LoginRequiredMixin, View):
         # Render success HTML page
         return redirect(reverse('pop_up_home:invite_success'))
         
+
+
+def preview_twenty_four_hour_reminder_email(request):
+    from pop_up_auction.models import WinnerReservation
+    user = request.user
+    print('user', user)
+    reservations = WinnerReservation.objects.filter(is_paid=False, is_expired=False)
+    print('reservations', reservations)
+
+    # html = render_to_string('pop_up_email/twenty_four_hour_reminder.html', {
+    #     'user': user,
+    # })
+    html = render_to_string('pop_up_email/twenty_four_hour_reminder.html', {
+       'user': user,
+       'product': "reservations.product",
+    
+    })
+    return HttpResponse(html)
+
+def preview_one_hour_reminder_email(request):
+    from pop_up_auction.models import WinnerReservation
+    user = request.user
+    print('user', user)
+    reservations = WinnerReservation.objects.filter(is_paid=False, is_expired=False)
+    print('reservations', reservations)
+
+    # html = render_to_string('pop_up_email/twenty_four_hour_reminder.html', {
+    #     'user': user,
+    # })
+    html = render_to_string('pop_up_email/one_hour_reminder.html', {
+       'user': user,
+       'product': "reservations.product",
+    
+    })
+    return HttpResponse(html)
+
+
+def preview_two_factor_auth_email(request):
+    user = request.user
+    print('user', user)
+   
+    html = render_to_string('pop_up_email/two_factor.html', {
+    'user': user,
+    'code': "442703",
+    
+    })
+    return HttpResponse(html)
+
+
+
+def preview_okay_to_ship_admin_alert(request):
+
+    user = request.user
+
+
+    html = render_to_string('pop_up_email/okay_to_ship_admin_alert.html', {
+    'user': user,
+    
+    })
+    return HttpResponse(html)

@@ -25,7 +25,8 @@ from pop_up_shipping.models import PopUpShipment
 from pop_up_finance.utils import (get_yearly_revenue_aggregated, get_monthly_revenue, get_last_20_days_sales, 
                                   get_last_12_months_sales, get_last_5_years_sales, get_yoy_day_sales, 
                                   get_year_over_year_comparison, get_month_over_month_comparison, get_weekly_revenue)
-from pop_up_email.utils import (send_customer_shipping_details, send_interested_in_and_coming_soon_product_update_to_users)
+from pop_up_email.utils import (send_customer_shipping_details, 
+                                send_interested_in_and_coming_soon_product_update_to_users, send_2fa_code_email)
 
 from .utils.add_products_util import  handle_simple_form_submission, handle_full_product_save
 from .utils.edit_products_util import save_existing_specifications, save_custom_specifications
@@ -2915,13 +2916,14 @@ class Login2FAView(View):
             request.session['2fa_code'] = code
             request.session['2fa_code_created_at'] = now_time.isoformat()
 
-            send_mail(
-                subject = "Your Verification Code",
-                message = f"Your code is {code}.",
-                from_email = "no-reply@thepopup.com",
-                recipient_list = [ email],
-                fail_silently = False
-            )
+            send_2fa_code_email(user, code)
+            # send_mail(
+            #     subject = "Your Verification Code",
+            #     message = f"Your code is {code}.",
+            #     from_email = "no-reply@thepopup.com",
+            #     recipient_list = [ email],
+            #     fail_silently = False
+            # )
 
             return JsonResponse({'authenticated': True, '2fa_required': True})
         

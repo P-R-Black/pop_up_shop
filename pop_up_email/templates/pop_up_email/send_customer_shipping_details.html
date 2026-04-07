@@ -56,35 +56,162 @@
                     <!-- Message -->
                     <tr>
                         <td style="padding: 20px 30px 0 30px;">
-                            <h4 style="color: #CB3A60">Hello {{ user.first_name }},</h4>
-                            <p style="color: #CB3A60">Your order, order #<a
-                                    href="{% url 'pop_accounts:customer_order' order %}">{{ order }}</a>,
-                                has shipped.
+                            <h1 style="color: #333; font-size: 28px; margin: 0 0 15px 0;">
+                                Your Order Has Shipped
+                            </h1>
+                            <p style="color: #555; font-size: 16px; margin: 0 0 15px 0; line-height: 1.5;">
+                                Hello {{ user.first_name }},
                             </p>
-                            <p style="color: #CB3A60"><strong>Status:</strong> <span>{{ status }}</span></p>
-                            <p style="color: #CB3A60"><strong>Shipping Date:</strong>
-                                <span>{{ shipped_at|date:"F j, Y" }}</span>
-                            </p>
-                            <p style="color: #CB3A60"><strong>Estimated Delivery Date:</strong> <span>
-                                    {{ estimated_deliv|date:"F j, Y" }}</span></p>
-                            <p style="color: #CB3A60"><strong>Carrier:</strong> <span>{{ carrier }}</span></p>
-                            <p style="color: #CB3A60"><strong>Tracking No.:</strong> <span>
-                                    <a href="{{ tracker_link }}">{{ tracking_no }}</a></span>
+                            <p style="color: #555; font-size: 16px; margin: 0 0 20px 0; line-height: 1.5;">
+                                Your order <strong>#{{ order }}</strong> has shipped! <br>
+                                <a href="{% url 'pop_accounts:customer_order' order %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    View your order details
+                                </a>
                             </p>
                         </td>
                     </tr>
+                    <!-- Shipping Details -->
                     <tr>
-                        <td align="center" style="padding: 12px 30px 24px 30px;">
-                            <hr style="border: 0; height: 1px; background: #ddd;">
-                            <h2 style="color: #CB3A60; margin: 16px 0 0 0">Enjoy your purchase!</h2>
+                        <td style="padding: 0 30px 20px 30px;">
+                            <h2 style="color: #333; font-size: 20px; margin: 0 0 15px 0;">
+                                Shipping Details
+                            </h2>
+
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"
+                                style="background-color: #f9f9f9; border-radius: 4px;">
+                                <tr>
+                                    <td style="padding: 15px; vertical-align: top;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                            role="presentation">
+                                            <!-- Status -->
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #666;">
+                                                    <strong>Status:</strong>
+                                                </td>
+                                                <td
+                                                    style="padding: 8px 0; color: #CB3A60; font-weight: bold; text-align: right;">
+                                                    {{ status|title }}
+                                                </td>
+                                            </tr>
+
+                                            <!-- Shipped Date -->
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #666;">
+                                                    <strong>Shipped:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; color: #333; text-align: right;">
+                                                    <time datetime="{{ shipped_at|date:'Y-m-d' }}">
+                                                        {{ shipped_at|date:"F j, Y" }}
+                                                    </time>
+                                                </td>
+                                            </tr>
+
+                                            <!-- Estimated Delivery -->
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #666;">
+                                                    <strong>Estimated Delivery:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; color: #333; text-align: right;">
+                                                    <time datetime="{{ estimated_deliv|date:'Y-m-d' }}">
+                                                        {{ estimated_deliv|date:"F j, Y" }}
+                                                    </time>
+                                                </td>
+                                            </tr>
+
+                                            <!-- Carrier -->
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #666;">
+                                                    <strong>Carrier:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; color: #333; text-align: right;">
+                                                    {{ carrier }}
+                                                </td>
+                                            </tr>
+
+                                            <!-- Tracking Number -->
+                                            <tr>
+                                                <td style="padding: 8px 0; color: #666;">
+                                                    <strong>Tracking Number:</strong>
+                                                </td>
+                                                <td style="padding: 8px 0; color: #333; text-align: right;">
+                                                    <a href="{{ tracker_link }}"
+                                                        style="color: #CB3A60; text-decoration: underline;">
+                                                        {{ tracking_no }}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Tracking CTA -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="text-align: center; margin-top: 20px;">
+                                <a href="{{ tracker_link }}"
+                                    style="background-color: #CB3A60; color: white; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; border: 2px solid #CB3A60;"
+                                    title="Track your package with {{ carrier }}">
+                                    Track Your Package
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- What to Expect -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0;">
+                                What to Expect
+                            </h2>
+
+                            <ul style="color: #666; padding-left: 20px; line-height: 1.8; margin: 0;">
+                                <li style="margin-bottom: 10px;">Your package is on its way to you</li>
+                                <li style="margin-bottom: 10px;">Track your package using the link above or your
+                                    tracking number</li>
+                                <li style="margin-bottom: 10px;">Expected delivery is
+                                    {{ estimated_deliv|date:"F j, Y" }}
+                                </li>
+                                <li>If you have questions about your delivery, contact {{ carrier|upper }}</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <!-- Closing Message -->
+                    <tr>
+                        <td style="padding: 20px 30px;">
+                            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0;">
+                                Enjoy Your Purchase!
+                            </h2>
+                            <p style="color: #666; margin: 0; line-height: 1.5;">
+                                Thank you for shopping at The Pop Up. We hope you love your item!
+                                If you have any questions, please don't hesitate to reach out.
+                            </p>
                         </td>
                     </tr>
                     <!-- Footer -->
                     <tr>
-                        <td align="center"
-                            style="margin: 0; background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #999;">
-                            You're receiving this email because you made a purchase at <a href="https://thepopup.com"
-                                style="color: #999">The Pop Up</a>.<br>
+                        <td
+                            style="background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #666; text-align: center;">
+                            <p style="margin: 0 0 10px 0;">
+                                You're receiving this email because you made a purchase at
+                                <a href="https://thepopup.com" style="color: #CB3A60; text-decoration: underline;">
+                                    The Pop Up
+                                </a>.
+                            </p>
+                            <p style="margin: 0 0 10px 0;">
+                                <a href="{% url 'pop_accounts:customer_order' order %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    View your order
+                                </a> |
+                                <a href="{% url 'pop_up_home:help-center' %}"
+                                    style="color: #CB3A60; text-decoration: underline;">
+                                    Need help?
+                                </a>
+                            </p>
+                            <p style="margin: 0;">
+                                &copy; {{ year }} The Pop Up. All rights reserved.
+                            </p>
                         </td>
                     </tr>
                 </table>
