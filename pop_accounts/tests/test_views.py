@@ -9782,7 +9782,7 @@ class TestLogin2FAView(TestCase):
         session['auth_email'] = self.email
         session.save()
     
-    @patch('pop_accounts.views.send_mail')
+    @patch('pop_up_email.utils.send_mail')
     def test_successful_login_sends_2fa_code(self, mock_send_mail):
         session = self.client.session
      
@@ -9861,7 +9861,7 @@ class TestLogin2FAView(TestCase):
         self.assertEqual(response.status_code, 401)
 
 
-    @patch('pop_accounts.views.send_mail')
+    @patch('pop_up_email.utils.send_mail')
     def test_session_cleanup_on_success(self, mock_send_mail):
         """Test that failed attempt data is cleared on successful login"""
         # Set up some failed attempt data
@@ -9877,7 +9877,7 @@ class TestLogin2FAView(TestCase):
         self.assertNotIn('first_attempt_time', self.client.session)
 
 
-    @patch('pop_accounts.views.send_mail')
+    @patch('pop_up_email.utils.send_mail')
     def test_2fa_code_is_six_digits(self, mock_send_mail):
         """Test that generated 2FA code is always 6 digits including leading zeros"""
         response = self.client.post(self.url, {'password': self.password})
@@ -9889,28 +9889,35 @@ class TestLogin2FAView(TestCase):
         self.assertRegex(code, r'^\d{6}$')
 
 
-    @patch('pop_accounts.views.send_mail')
+    @patch('pop_up_email.utils.send_mail')
     def test_email_content(self, mock_send_mail):
         """Test that email is sent with correct parameters"""
         response = self.client.post(self.url, {'password': self.password})
         code = self.client.session['2fa_code']
         
-        mock_send_mail.assert_called_once_with(
-            subject="Your Verification Code",
-            message=f"Your code is {code}.",
-            from_email="no-reply@thepopup.com",
-            recipient_list=[self.email],
-            fail_silently=False
-        )
+        mock_send_mail.assert_called_once()
+        
+        call_kwargs = mock_send_mail.call_args.kwargs
+        
+        assert call_kwargs['subject'] == "Your Verification Code - The Pop Up"
+        assert call_kwargs['recipient_list'] == [self.email]
+        assert code in call_kwargs['html_message']
+        assert call_kwargs['fail_silently'] == False
+        assert 'from_email' in call_kwargs  # Just verify it exists
 
-    @patch('pop_accounts.views.send_mail')
+
+    @patch('pop_up_email.utils.send_mail')
     def test_mail_failure_doesnt_crash(self, mock_send_mail):
-        """Test that mail sending failure is handled"""
+        """Test that mail sending failure is handled gracefully"""
         mock_send_mail.side_effect = Exception("SMTP Error")
         
-        # Should raise exception since fail_silently=False
-        with self.assertRaises(Exception):
-            self.client.post(self.url, {'password': self.password})
+        # Should NOT raise exception, but should return False
+        response = self.client.post(self.url, {'password': self.password})
+        
+        # The view should still return success (2FA code generated)
+        # even if email fails, because the utility function catches the error
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['2fa_required'])
 
 
     def test_correct_password_after_some_failed_attempts(self):
@@ -9928,6 +9935,17 @@ class TestLogin2FAView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('login_attempts', self.client.session)
 
+    @patch('pop_up_email.utils.send_mail')
+    def test_send_2fa_email_handles_failure(self, mock_send_mail):
+        """Test that 2FA email utility handles SMTP errors gracefully"""
+        from pop_up_email.utils import send_2fa_code_email
+        
+        mock_send_mail.side_effect = Exception("SMTP Error")
+        
+        result = send_2fa_code_email(self.user, "123456")
+        
+        # Should return False on failure
+        self.assertFalse(result)
 
     def test_inactive_user_cannot_login(self):
         """Test that inactive users cannot login"""

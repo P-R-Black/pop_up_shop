@@ -12,6 +12,51 @@ from django.db.models import Q
 
 
 
+""" 
+- List of Email Utility Functions 
+
+1. send_2fa_code_email
+
+"""
+
+
+def send_2fa_code_email(user, code):
+    """
+    Sends a 2FA verification code to the user's email.
+    
+    Args:
+        user: User object with email and first_name
+        code: 6-digit verification code string
+        
+    Returns:
+        bool: True if email sent successfully, False otherwise
+    """
+    subject = "Your Verification Code - The Pop Up"
+    
+    html_message = render_to_string('pop_up_email/two_factor.html', {
+        "user": user,
+        "code": code,
+    })
+    
+    plain_text_message = f"Your Pop Up verification code is: {code}. This code expires in 5 minutes. Never share this code with anyone."
+    
+    try:
+        send_mail(
+            subject=subject,
+            message=plain_text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            html_message=html_message,
+            fail_silently=False
+        )
+        return True
+    except Exception as e:
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to send 2FA email to {user.email}: {str(e)}")
+        return False
+    
 
 def send_auction_winner_email(user, product):
     """
@@ -55,8 +100,6 @@ def send_24_hour_reminder_email(user, product):
         'reservation': reservation
     })
 
-
-
     send_mail(
         subject =subject,
         message=f"Hey {user.first_name}, you have 24 hours left to purchase {product.product_title}.",
@@ -73,6 +116,7 @@ def send_1_hour_reminder_email(user, product):
     """
     Notifies auction winner that they have 1 hour remaining to pay for item.
     """
+
     now_time = now()
     subject = "1 Hours Left to Purchase Your Auction Item"
 
@@ -124,14 +168,12 @@ def send_okay_to_ship_email(order):
     Notifies admin after a waiting period that item is okay to ship.
     Item is "okay to ship" if no payment disputes within waiting period.
     """
-    subject = f"Order #{order.id} - Approved for Shipment"
-    
+    subject = f"Order #{order.id} - Approved for Shipment"    
     html_message = render_to_string('pop_up_email/okay_to_ship_admin_alert.html', {
-        "order": order
+        "order": order.id
     })
     
-    plain_text_message = f"Order #{order.id} has been approved for shipment. Payment verification period has passed without disputes."
-    
+    plain_text_message = f"Order #{order.id} has been approved for shipment. Payment verification period has passed without disputes."    
     recipients = [a.email for a in get_admin_users()]
     
     try:
@@ -289,42 +331,3 @@ def send_interested_in_and_coming_soon_product_update_to_users(
             html_message=html_message,
             fail_silently=False
         )
-
-
-
-def send_2fa_code_email(user, code):
-    """
-    Sends a 2FA verification code to the user's email.
-    
-    Args:
-        user: User object with email and first_name
-        code: 6-digit verification code string
-        
-    Returns:
-        bool: True if email sent successfully, False otherwise
-    """
-    subject = "Your Verification Code - The Pop Up"
-    
-    html_message = render_to_string('pop_up_email/two_factor.html', {
-        "user": user,
-        "code": code,
-    })
-    
-    plain_text_message = f"Your Pop Up verification code is: {code}. This code expires in 10 minutes. Never share this code with anyone."
-    
-    try:
-        send_mail(
-            subject=subject,
-            message=plain_text_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            html_message=html_message,
-            fail_silently=False
-        )
-        return True
-    except Exception as e:
-        # Log the error for debugging
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Failed to send 2FA email to {user.email}: {str(e)}")
-        return False

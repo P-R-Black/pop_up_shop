@@ -3,6 +3,7 @@ from django.core import mail
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 from datetime import timedelta
+from django.utils import timezone as django_timezone
 from unittest.mock import patch, MagicMock
 from decimal import Decimal, ROUND_HALF_UP
 from pop_up_email.utils import (
@@ -22,9 +23,9 @@ from pop_up_auction.tests.conftest import (
     create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
     create_product_type, create_category, create_brand, create_test_staff_user)
 
-from pop_accounts.models import PopUpCustomerProfile
-from pop_up_auction.models import PopUpProduct, PopUpCategory, PopUpProductType, PopUpBrand
-
+from pop_accounts.models import PopUpCustomerProfile, PopUpBid
+from pop_up_auction.models import PopUpProduct, PopUpCategory, PopUpProductType, PopUpBrand, WinnerReservation
+from pop_up_cart.models import PopUpCartItem
 
 User = get_user_model()
 
@@ -76,6 +77,34 @@ class AuctionEmailTestCase(TestCase):
             is_active=True
         )
 
+        now = django_timezone.now()
+
+
+        self.auctioned_product = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 3 Retro',
+            secondary_product_title='OG Rare Air',
+            slug='air-jordan-3-og-rare-air',
+            buy_now_price=Decimal('215.00'),
+            retail_price=Decimal('215.00'),
+            reserve_price=Decimal('185.00'), 
+            inventory_status='in_inventory',
+            current_highest_bid=Decimal('350.00'), 
+            auction_start_date=now - timedelta(days=5),  
+            auction_end_date=now - timedelta(days=1), #django_timezone.now() + timedelta(days=2, hours=3), 
+            bid_count=5, 
+            is_active=True
+        )
+
+        PopUpBid.objects.create(
+            customer=self.user_profile,
+            product=self.auctioned_product,
+            amount=Decimal('350.00'),
+            timestamp=now - timedelta(days=1)
+        )
+
     def test_send_auction_winner_email(self):
         """Test auction winner notification email"""
         html_message = send_auction_winner_email(self.user, self.product1)
@@ -98,7 +127,56 @@ class AuctionEmailTestCase(TestCase):
 
     def test_send_24_hour_reminder_email(self):
         """Test 24-hour reminder email"""
-        html_message = send_24_hour_reminder_email(self.user, self.product1)
+        ended_auctions = PopUpProduct.objects.filter(
+        auction_end_date__lte=now(),
+        auction_finalized=False,
+        is_active=True
+        )
+
+
+        for product in ended_auctions:
+            highest_bid = product.bids.order_by('-amount', '-timestamp').first()
+            print('highest_bid', highest_bid)
+
+            if highest_bid:
+                
+                winner = highest_bid.customer.user
+                print('winner', winner)
+                product.winner = winner
+                product.current_highest_bid = highest_bid.amount
+                product.auction_finalized = True
+                product.inventory_status = "sold_out"
+                product.save()
+
+                # Lock product in winner's cart
+                try:
+                    PopUpCartItem.objects.update_or_create(
+                        user=winner, 
+                        product=product, 
+                        defaults={'quantity': 1, 'auction_locked': True, 'buy_now': False}
+                        )                
+                except Exception as e:
+                    print('e', e)
+
+                # Add WinnerReservation
+                try:
+                    reservation = WinnerReservation.objects.create(
+                        user=winner,
+                        product=product,
+                        expires_at=now() + timedelta(hours=48),
+                        is_paid=False,
+                        is_expired=False,
+                        notification_sent=True,
+                        reminder_24hr_sent=False,
+                        reminder_1hr_sent=False
+                    )
+                except Exception as e:
+                    print('e', e)
+            else:
+                product.auction_finalized = True
+                product.save()
+
+        html_message = send_24_hour_reminder_email(self.user, self.auctioned_product)
         
         self.assertEqual(len(mail.outbox), 1)
         
@@ -106,14 +184,65 @@ class AuctionEmailTestCase(TestCase):
         self.assertEqual(email.subject, '24 Hours Left to Purchase Your Auction Item')
         self.assertEqual(email.to, ['test@example.com'])
         self.assertIn('Test', email.body)
-        self.assertIn('Air Jordan 4', email.body)
+        self.assertIn('Air Jordan 3 Retro', email.body)
         
         # Verify HTML message was returned
         self.assertIsNotNone(html_message)
 
     def test_send_1_hour_reminder_email(self):
         """Test 1-hour reminder email"""
-        html_message = send_1_hour_reminder_email(self.user, self.product1)
+
+        ended_auctions = PopUpProduct.objects.filter(
+        auction_end_date__lte=now(),
+        auction_finalized=False,
+        is_active=True
+        )
+
+
+        for product in ended_auctions:
+            highest_bid = product.bids.order_by('-amount', '-timestamp').first()
+            print('highest_bid', highest_bid)
+
+            if highest_bid:
+                
+                winner = highest_bid.customer.user
+                print('winner', winner)
+                product.winner = winner
+                product.current_highest_bid = highest_bid.amount
+                product.auction_finalized = True
+                product.inventory_status = "sold_out"
+                product.save()
+
+                # Lock product in winner's cart
+                try:
+                    PopUpCartItem.objects.update_or_create(
+                        user=winner, 
+                        product=product, 
+                        defaults={'quantity': 1, 'auction_locked': True, 'buy_now': False}
+                        )                
+                except Exception as e:
+                    print('e', e)
+
+                # Add WinnerReservation
+                try:
+                    reservation = WinnerReservation.objects.create(
+                        user=winner,
+                        product=product,
+                        expires_at=now() + timedelta(hours=48),
+                        is_paid=False,
+                        is_expired=False,
+                        notification_sent=True,
+                        reminder_24hr_sent=False,
+                        reminder_1hr_sent=False
+                    )
+                except Exception as e:
+                    print('e', e)
+            else:
+                product.auction_finalized = True
+                product.save()
+
+
+        html_message = send_1_hour_reminder_email(self.user, self.auctioned_product)
         
         self.assertEqual(len(mail.outbox), 1)
         
@@ -121,7 +250,7 @@ class AuctionEmailTestCase(TestCase):
         self.assertEqual(email.subject, '1 Hours Left to Purchase Your Auction Item')
         self.assertEqual(email.to, ['test@example.com'])
         self.assertIn('Test', email.body)
-        self.assertIn('Air Jordan 4', email.body)
+        self.assertIn('Air Jordan 3 Retro', email.body)
         
         # Verify HTML message was returned
         self.assertIsNotNone(html_message)
@@ -193,14 +322,13 @@ class OrderEmailTestCase(TestCase):
         # Create mock order
         mock_order = MagicMock()
         mock_order.id = 123
-        print('mock_order', mock_order)
         
         send_okay_to_ship_email(mock_order)
         
         self.assertEqual(len(mail.outbox), 1)
         
         email = mail.outbox[0]
-        self.assertEqual(email.subject, '✅ OK to Ship Order #123')
+        self.assertEqual(email.subject, f'Order #{mock_order.id} - Approved for Shipment')
         self.assertIn('admin1@example.com', email.to)
         self.assertIn('admin2@example.com', email.to)
 
