@@ -65,7 +65,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<title>About Us</title>', html)
 
         # quick test of the copy
-        self.assertIn('<h2>About The Pop Up</h2>', html)
+        self.assertIn('<h1>About The Pop Up</h1>', html)
 
 
     def test_how_it_works_html(self):
@@ -76,7 +76,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<title>How it Works</title>', html)
 
         # quick test of the copy
-        self.assertIn('<h2>How it Works</h2>', html)
+        self.assertIn('<h1>How it Works</h1>', html)
 
 
     def test_verification_html(self):
@@ -87,7 +87,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<title>Verification</title>', html)
 
         # quick test of the copy
-        self.assertIn('<h2>Verification</h2>', html)
+        self.assertIn('<h1>Verification</h1>', html)
     
 
     def test_contact_us_html(self):
@@ -98,7 +98,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<title>Contact Us</title>', html)
 
         # quick test of the copy
-        self.assertIn('<h2>Contact Us</h2>', html)
+        self.assertIn('<h1>Contact Us</h1>', html)
     
 
     def test_help_center_html(self):
@@ -109,7 +109,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<title>Help Center</title>', html)
 
         # quick test of the copy
-        self.assertIn('<h2>Help Center</h2>', html)
+        self.assertIn('<h1>Help Center</h1>', html)
 
 
     def test_terms_and_conditions_html(self):
@@ -120,7 +120,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<title>Terms and Conditions</title>', html)
 
         # quick test of the copy
-        self.assertIn('<h2>Terms and Conditions</h2>', html)
+        self.assertIn('<h1>Terms and Conditions</h1>', html)
     
 
     def test_privacy_policy_html(self):
@@ -131,7 +131,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<title>Privacy Policy</title>', html)
 
         # quick test of the copy
-        self.assertIn('<h2>The Pop Up Privacy Policy</h2>', html)
+        self.assertIn('<h1>The Pop Up Privacy Policy</h1>', html)
     
 
     def test_privacy_choices_html(self):
@@ -142,7 +142,7 @@ class TestPopUpHomeViewResponses(TestCase):
         self.assertIn('<title>Privacy Choices</title>', html)
 
         # quick test of the copy
-        self.assertIn('<h2>Your Privacy Choices</h2>', html)
+        self.assertIn('<h1>Your Privacy Choices</h1>', html)
     
 
     def test_buying_help_html(self):
