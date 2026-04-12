@@ -6,20 +6,38 @@
 
 {% block main %}
 
-<div class="terms_and_container">
-    <div class="footer_links_title">
-        <h2>{{ terms_and_condition_copy.page_title }}</h2>
-    </div>
-    <div class="the_auction_container">
-        <div class="t_and_c_container">
-            <p>{{ terms_and_condition_copy.page_update_title}}: {{ terms_and_condition_copy.page_update_date }}</p>
-            {% for text in terms_and_condition_copy.sections %}
-            {% for para in text.section_paragraph %}
-            <p class="{{para.class }}">{{ para.paragraph }}</p>
-            {% endfor %}
-            {% endfor %}
-        </div>
-    </div>
-    </section>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
-    {% endblock %}
+<main id="main-content">
+    <section>
+        <div class="terms_and_container">
+            <header class="footer_links_title">
+                <h1>{{ terms_and_condition_copy.page_title }}</h1>
+            </header>
+            <div class="the_auction_container">
+                <article class="t_and_c_container">
+                    <div style="margin-bottom: 2rem; padding: 1rem; background-color: #f9f9f9; border-radius: 4px;">
+                        <p style="margin: 0; color: #666;">
+                            <strong>{{ terms_and_condition_copy.page_update_title }}:</strong>
+                            <time datetime="{{ privacy_policy_copy.page_update_date|date:'Y-m-d' }}">
+                                {{ terms_and_condition_copy.page_update_date }}
+                            </time>
+                        </p>
+                    </div>
+
+                    <section aria-labelledby="terms_and_condition_statement">
+                        <h2 id="terms_and_condition_statement" class="visually-hidden">Terms and Conditions Statement
+                        </h2>
+                        </p>
+                        {% for text in terms_and_condition_copy.sections %}
+                        {% for para in text.section_paragraph %}
+                        <p class="{{ para.class }}">{{ para.paragraph }}</p>
+                        {% endfor %}
+                        {% endfor %}
+                    </section>
+                </article>
+            </div>
+    </section>
+</main>
+
+{% endblock %}

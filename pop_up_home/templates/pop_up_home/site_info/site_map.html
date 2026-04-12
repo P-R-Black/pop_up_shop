@@ -5,45 +5,59 @@
 {% block title %}Site Map{% endblock %}
 
 {% block main %}
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
-<div class="terms_and_container">
-    <div class="footer_links_title">
-        <h2>{{ site_map_copy.page_title }}</h2>
-    </div>
-    <div class="the_auction_container">
-        <div class="site_map_container">
-            <p>{{ site_map_copy.page_update_title}}: {{ site_map_copy.page_update_date }}</p>
-            {% for text in site_map_copy.pages %}
-            {% for para in text.page_section %}
-            <ul>
-                <li>
-                    <a class="how_it_works_links" href="{% url para.full_url %}">{{ para.title }}</a>
-                </li>
-                {% if para.sub_page %}
-                <ol class="indented">
-                    {% for sub in para.sub_page %}
-                    <li>
-                        <a class="how_it_works_links" href="{% url sub.full_url %}">{{ sub.sub_page_title }}</a>
-                    </li>
-                    {% if sub.sub_categories %}
-                    <ol class="indented">
-                        {% for sub_cat in sub.sub_categories %}
+<main id="main-content">
+
+    <div class="terms_and_container">
+        <header class="footer_links_title">
+            <h1>{{ site_map_copy.page_title }}</h1>
+        </header>
+        <div class="the_auction_container">
+            <article class="site_map_container">
+                <div style="margin-bottom: 2rem; padding: 1rem; background-color: #f9f9f9; border-radius: 4px;">
+                    <p style="margin: 0; color: #666;">
+                        <strong>{{ site_map_copy.page_update_title }}:</strong>
+                        <time datetime="{{ privacy_policy_copy.page_update_date|date:'Y-m-d' }}">
+                            {{ site_map_copy.page_update_date }}
+                        </time>
+                    </p>
+                </div>
+                <section aria-labelledby="site-map-links">
+                    <h2 id="site-map-links" class="visually-hidden">Site Map Links</h2>
+
+                    {% for text in site_map_copy.pages %}
+                    {% for para in text.page_section %}
+                    <ul>
                         <li>
-                            <a class="how_it_works_links" href="{% url sub_cat.sub_category_url %}">
-                                {{ sub_cat.sub_page_title }}</a>
+                            <a class="how_it_works_links" href="{% url para.full_url %}">{{ para.title }}</a>
                         </li>
-                        {% endfor %}
-                    </ol>
-                    {% endif %}
-                    {% endfor %}
-                </ol>
-                {% endif %}
-            </ul>
+                        {% if para.sub_page %}
+                        <ol class="indented">
+                            {% for sub in para.sub_page %}
+                            <li>
+                                <a class="how_it_works_links" href="{% url sub.full_url %}">{{ sub.sub_page_title }}</a>
+                            </li>
+                            {% if sub.sub_categories %}
+                            <ol class="indented">
+                                {% for sub_cat in sub.sub_categories %}
+                                <li>
+                                    <a class="how_it_works_links" href="{% url sub_cat.sub_category_url %}">
+                                        {{ sub_cat.sub_page_title }}</a>
+                                </li>
+                                {% endfor %}
+                            </ol>
+                            {% endif %}
+                            {% endfor %}
+                        </ol>
+                        {% endif %}
+                    </ul>
 
-            {% endfor %}
-            {% endfor %}
+                    {% endfor %}
+                    {% endfor %}
+                </section>
+            </article>
         </div>
     </div>
-    </section>
-
-    {% endblock %}
+</main>
+{% endblock %}

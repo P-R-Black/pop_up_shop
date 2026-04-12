@@ -39,7 +39,7 @@ recaptcha_private_key=os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
 class ContactForm(forms.Form):
     email_address = forms.EmailField(
-        max_length=150, required=True, label='email', help_text='Required',
+        max_length=150, required=True, label='email', help_text='Email required',
         error_messages={'required': 'An email address is required', 
                         'invalid': 'Enter a valid email address.'},
         widget=forms.EmailInput(attrs={
@@ -51,7 +51,7 @@ class ContactForm(forms.Form):
         }))
 
     subject = forms.CharField(
-        max_length=150, required=True, label='subject', help_text='Required',
+        max_length=150, required=True, label='subject', help_text='What can we help you with?',
         error_messages={'required': 'What can we help you with'},
         widget=forms.TextInput(attrs={
             'class': 'modal_subject_contact_input',
@@ -62,7 +62,7 @@ class ContactForm(forms.Form):
         )
     
     message = forms.CharField(
-        label='Delivery Instructions', max_length=200, required=True, help_text='Required',
+        label='Delivery Instructions', max_length=200, required=True, help_text='Let us know how we can help',
         error_messages={'required': 'Please describe how we can help.'},
         widget=forms.Textarea(attrs={
             'class': 'modal_message_contact_input',

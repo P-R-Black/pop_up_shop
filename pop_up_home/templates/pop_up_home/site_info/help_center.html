@@ -6,111 +6,136 @@
 
 {% block main %}
 
-<div class="terms_and_container">
-    <div class="footer_links_title">
-        <h2>{{ help_center_copy.page_title }}</h2>
-    </div>
-    <div class="the_auction_container">
-        <div class="t_and_c_container">
-            <div class="help_center_container">
-                <div class="help_center_buttons_container_top">
-                    {% for i in help_center_copy.help_center_options_top %}
-                    <button class="help_center_box" id="{{ i.id }}">{{ i.option }}</button>
-                    {% endfor %}
-                </div>
-                <div class="help_center_display_container hide">
-                    <div class="help_center_details_container_buy hide" id="buying_display" aria-live="assertive">
-                        {% for t in help_center_copy.buying_options %}
-                        <h3>{{ t.buying_option_title }}</h3>
-                        {% endfor %}
-                        <ul>
-                            {% for opts in help_center_copy.buying_options %}
-                            {% for opt in opts.buying_option %}
-                            <li>
-                                <a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a>
-                            </li>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+
+<main id="main-content">
+    <div class="terms_and_container">
+        <header class="footer_links_title">
+            <h1>{{ help_center_copy.page_title }}</h1>
+        </header>
+        <div class="the_auction_container">
+            <div class="t_and_c_container">
+                <div class="help_center_container">
+                    <section aria-labelledby="help-top-section">
+                        <h2 id="help-top-section" class="visually-hidden">Help Topics</h2>
+                        <div class="help_center_buttons_container_top">
+                            {% for i in help_center_copy.help_center_options_top %}
+                            <button class="help_center_box" id="{{ i.id }}" aria-expanded="false"
+                                aria-controls="{{ i.id}}_display" aria-label="Show helo topics for {{ i.option }}">
+                                {{ i.option }}
+                            </button>
                             {% endfor %}
+                        </div>
+
+                        <div class="help_center_display_container hide">
+                            <div class="help_center_details_container_buy hide" id="buying_display" aria-live="polite"
+                                role="region" aria-labelledby="buying_heading">
+                                {% for t in help_center_copy.buying_options %}
+                                <h3 id="buying_heading">{{ t.buying_option_title }}</h3>
+                                {% endfor %}
+                                <ul>
+                                    {% for opts in help_center_copy.buying_options %}
+                                    {% for opt in opts.buying_option %}
+                                    <li>
+                                        <a href="{% url 'pop_up_home:'|add:opt.url %}" tabindex="-1">{{ opt.label }}</a>
+                                    </li>
+                                    {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="help_center_details_container_sell hide" id="selling_display" aria-live="polite"
+                                role="region" aria-labelledby="selling_heading">
+                                {% for t in help_center_copy.selling_options %}
+                                <h3 id="selling_heading">{{ t.selling_option_title }}</h3>
+                                {% endfor %}
+                                <ul>
+                                    {% for opts in help_center_copy.selling_options %}
+                                    {% for opt in opts.selling_option %}
+                                    <li>
+                                        <a href="{% url 'pop_up_home:'|add:opt.url %}" tabindex="-1">{{ opt.label }}</a>
+                                    </li>
+                                    {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="help_center_details_container_account hide" id="my_account_display"
+                                aria-live="polite" aria-labelledby="account_heading" role="region">
+                                {% for t in help_center_copy.account_options %}
+                                <h3 id="my_account_display">{{ t.account_option_title }}</h3>
+                                {% endfor %}
+                                <ul>
+                                    {% for opts in help_center_copy.account_options %}
+                                    {% for opt in opts.account_option %}
+                                    <li>
+                                        <a href="{% url 'pop_up_home:'|add:opt.url %}" tabindex="-1">{{ opt.label }}</a>
+                                    </li>
+                                    {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+                    <section aria-labelledby="help-bottom-section">
+                        <h2 id="help-bottom-section" class="visually-hidden">Additional Help Topics</h2>
+                        <div class="help_center_buttons_container_top" role="group" aria-label="Additional help topics">
+                            {% for i in help_center_copy.help_center_options_bottom %}
+                            <button class="help_center_box" id="{{ i.id }}" aria-expanded="false"
+                                aria-controls="{{ i.id }}_display" aria-label="Show help topics for {{ i.option }}">
+                                {{ i.option }}
+                            </button>
                             {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="help_center_details_container_sell hide" id="selling_display" aria-live="assertive">
-                        {% for t in help_center_copy.selling_options %}
-                        <h3>{{ t.selling_option_title }}</h3>
-                        {% endfor %}
-                        <ul>
-                            {% for opts in help_center_copy.selling_options %}
-                            {% for opt in opts.selling_option %}
-                            <li>
-                                <a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a>
-                            </li>
+                        </div>
+
+                    </section>
+                    <div class="help_center_display_container_bottom hide">
+                        <div class="help_center_details_container_shipping hide" id="shipping_display"
+                            aria-live="polite" role="region" aria-labelledby="shipping_heading">
+                            {% for t in help_center_copy.ship_track_options %}
+                            <h3 id="shipping_heading">{{ t.ship_track_option_title }}</h3>
                             {% endfor %}
+                            <ul>
+                                {% for opts in help_center_copy.ship_track_options %}
+                                {% for opt in opts.ship_track_option %}
+                                <li><a href="{% url 'pop_up_home:'|add:opt.url %}" tabindex="-1">{{ opt.label }}</a>
+                                </li>
+                                {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_payment hide" id="payment_opt_display"
+                            aria-live="polite" aria-labelledby="payment_heading" role="region">
+                            {% for t in help_center_copy.payment_options %}
+                            <h3 id="payment_heading">{{ t.payment_option_title }}</h3>
                             {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="help_center_details_container_account hide" id="my_account_display"
-                        aria-live="assertive">
-                        {% for t in help_center_copy.account_options %}
-                        <h3>{{ t.account_option_title }}</h3>
-                        {% endfor %}
-                        <ul>
-                            {% for opts in help_center_copy.account_options %}
-                            {% for opt in opts.account_option %}
-                            <li>
-                                <a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a>
-                            </li>
+                            <ul>
+                                {% for opts in help_center_copy.payment_options %}
+                                {% for opt in opts.payment_option %}
+                                <li><a href="{% url 'pop_up_home:'|add:opt.url %}" tabindex="-1">{{ opt.label }}</a>
+                                </li>
+                                {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="help_center_details_container_fee hide" id="fees_display" aria-live="polite"
+                            aria-labelledby="fees_heading" role="region">
+                            {% for t in help_center_copy.fee_options %}
+                            <h3 id="fees_heading">{{ t.fee_option_title }}</h3>
                             {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-                <div class="help_center_buttons_container_top">
-                    {% for i in help_center_copy.help_center_options_bottom %}
-                    <button class="help_center_box" id="{{ i.id }}">{{ i.option }}</button>
-                    {% endfor %}
-                </div>
-                <div class="help_center_display_container_bottom hide">
-                    <div class="help_center_details_container_shipping hide" id="shipping_display"
-                        aria-live="assertive">
-                        {% for t in help_center_copy.ship_track_options %}
-                        <h3>{{ t.ship_track_option_title }}</h3>
-                        {% endfor %}
-                        <ul>
-                            {% for opts in help_center_copy.ship_track_options %}
-                            {% for opt in opts.ship_track_option %}
-                            <li><a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a></li>
-                            {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="help_center_details_container_payment hide" id="payment_opt_display"
-                        aria-live="assertive">
-                        {% for t in help_center_copy.payment_options %}
-                        <h3>{{ t.payment_option_title }}</h3>
-                        {% endfor %}
-                        <ul>
-                            {% for opts in help_center_copy.payment_options %}
-                            {% for opt in opts.payment_option %}
-                            <li><a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a></li>
-                            {% endfor %}
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="help_center_details_container_fee hide" id="fees_display" aria-live="assertive">
-                        {% for t in help_center_copy.fee_options %}
-                        <h3>{{ t.fee_option_title }}</h3>
-                        {% endfor %}
-                        <ul>
-                            {% for opts in help_center_copy.fee_options %}
-                            {% for opt in opts.fee_option %}
-                            <li><a href="{% url 'pop_up_home:'|add:opt.url %}">{{ opt.label }}</a></li>
-                            {% endfor %}
-                            {% endfor %}
-                        </ul>
+                            <ul>
+                                {% for opts in help_center_copy.fee_options %}
+                                {% for opt in opts.fee_option %}
+                                <li><a href="{% url 'pop_up_home:'|add:opt.url %}" tabindex="-1">{{ opt.label }}</a>
+                                </li>
+                                {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</main>
 
 {% endblock %}

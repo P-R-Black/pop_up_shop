@@ -49,7 +49,9 @@ VERIFICATION_COPY = {
 
 CONTACT_US_COPY = {
     "page_title": "Contact Us",
-    "section_paragraph": "Your concerns are important to us, and we’ll get back to you within 24 hours of receiving your message. "
+    "section_paragraph": "Your concerns are important to us, and we’ll get back to you within 24 hours of receiving your message. ",
+    "email": "pblackdevdemo@gmail.com",
+    "phone": "561-729-5000"
 }
 
 HELP_CENTER_COPY = {
@@ -310,10 +312,10 @@ SITE_MAP_COPY = {
                     ]
                  },
                 {"title": "Products", "full_url":"pop_up_auction:products"},
-                {"title": "Auction", "full_url":"pop_up_home:home"},
-                {"title": "Coming Soon", "full_url":"pop_up_home:home"},
-                {"title": "Future Releases", "full_url":"pop_up_home:home"},
-                {"title": "Cart", "full_url":"pop_up_home:home"}
+                {"title": "Auction", "full_url":"pop_up_auction:auction"},
+                {"title": "Coming Soon", "full_url":"pop_up_auction:coming_soon"},
+                {"title": "Future Releases", "full_url":"pop_up_auction:future_releases"},
+                {"title": "Cart", "full_url":"pop_up_payment:payment_home"}
             ]
         }
     ]
@@ -490,6 +492,7 @@ PRIVACY_POLICY_COPY = {
 PRIVACY_CHOICES_COPY = {
     "page_title": "Your Privacy Choices",
     "section_title" :"Send Opt-Out Email",
+    "email_link": "pblackdevdemo@gmail.com",
     "sections": [
         { "section_paragraph": [
             {"paragraph": "Under applicable U.S. state privacy laws (e.g., California, Colorado, etc.), residents have the right to opt-out of \"sales\" and \"shares\" of personal information, \"targeted advertising,\" and certain use/disclosure of \"sensitive\" personal information. For more information, see our Privacy Policy."},

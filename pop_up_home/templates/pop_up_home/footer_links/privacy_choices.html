@@ -6,29 +6,40 @@
 
 {% block main %}
 
-<div class="terms_and_container">
-    <div class="footer_links_title">
-        <h2>{{ privacy_choices.page_title }}</h2>
-    </div>
-    <div class="the_auction_container">
-        <div class="t_and_c_container">
-            {% for text in privacy_choices.sections %}
-            {% for para in text.section_paragraph %}
-            <p class="{{para.class }}">{{ para.paragraph }}</p>
-            {% endfor %}
-            {% endfor %}
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
-            <div class="user_opt_out_container">
-                <h4 class="bold section_title">{{ privacy_choices.section_title}}</h4>
-                {% for text in privacy_choices.buttons %}
-                {% for btn in text.section_button %}
-                <buttton class="{{ btn.class }}">{{ btn.button }}</buttton>
-                {% endfor %}
-                {% endfor %}
-            </div>
+<main id="main-content">
+    <div class="terms_and_container">
+        <header class="footer_links_title">
+            <h1>{{ privacy_choices.page_title }}</h1>
+        </header>
+        <div class="the_auction_container">
+            <article class="t_and_c_container">
+                <section aria-labelledby="privacy-info-heading">
+                    {% for text in privacy_choices.sections %}
+                    {% for para in text.section_paragraph %}
+                    <p class="{{para.class }}">{{ para.paragraph }}</p>
+                    {% endfor %}
+                    {% endfor %}
+                </section>
 
+                <section class="user_opt_out_container" aria-labelledby="privacy-choices-heading">
+                    <div class="user_opt_out_container">
+                        <h4 class="bold section_title">{{ privacy_choices.section_title}}</h4>
+                        {% for text in privacy_choices.buttons %}
+                        {% for btn in text.section_button %}
+                        <buttton
+                            aria-label="{% if 'Accept' in btn.button %}Accept cookies for targeted advertising{% elif 'Opt Out' in btn.button %}Opt out of cookies for targeted advertising{% else %}{{ btn.button }}{% endif %}"
+                            class="{{ btn.class }}">
+                            {{ btn.button }}
+                        </buttton>
+                        {% endfor %}
+                        {% endfor %}
+                    </div>
+                </section>
+            </article>
         </div>
     </div>
-</div>
+</main>
 
 {% endblock %}

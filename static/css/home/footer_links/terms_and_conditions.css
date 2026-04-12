@@ -3,7 +3,7 @@
 }
 
 
-.footer_links_title h2 {
+.footer_links_title h1 {
     border-bottom: 2px solid var(--chevron-color);
     color: var(--chevron-color);
     font-family: "Inter", sans-serif;
@@ -76,4 +76,9 @@
 
 .t_and_c_container p span {
     font-weight: 300;
+}
+
+
+section h2.section_title {
+    margin-bottom: .5rem;
 }

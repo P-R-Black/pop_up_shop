@@ -5,30 +5,47 @@
 {% block title %}How it Works{% endblock %}
 
 {% block main %}
-<div class="terms_and_container">
-    <div class="footer_links_title">
-        <h2>{{ how_it_works_copy.page_title }}</h2>
-    </div>
-    <div class="the_auction_container">
-        <div class="t_and_c_container">
-            {% for i in how_it_works_copy.instructions %}
-            <h4 class="bold section_title">{{ i.instruction_level }}</h4>
-            <ol>
-                {% for j in i.instruction %}
-                <li>{{ j.instruct }}
-                    {% if j.url %}
-                    <span>
-                        <a class="how_it_works_links" href="{% url 'pop_up_auction:'|add:j.url %}">{{ j.label }}
-                        </a>
-                    </span>
-                </li>
-                {% endif %}
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<main id="main-content">
+    <div class="terms_and_container">
+        <header class="footer_links_title">
+            <h1>{{ how_it_works_copy.page_title }}</h1>
+        </header>
+        <div class="the_auction_container">
+            <article class="t_and_c_container">
+                <section aria-labelledby="how_intro">
+                    <p id="how-intro" class="visually-hidden">
+                        Follow these simple steps to start bidding on exclusive items at The Pop Up. Whether you're a
+                        new user or an experienced bidder, we've made it easy to find and purchase the products you
+                        love.
+                    </p>
+                </section>
+                {% for i in how_it_works_copy.instructions %}
+                <section aria-labelledby="how-it-works-{{ i.instruction_level|lower }}">
+                    <h2 id="how-it-works-{{ i.instruction_level }}" class="bold section_title">{{ i.instruction_level }}
+                    </h2>
+                    <ol>
+                        {% for j in i.instruction %}
+                        <li>{{ j.instruct }}
+                            {% if j.url %}
+                            <span>
+                                <a class="how_it_works_links" href="{% url 'pop_up_auction:'|add:j.url %}"
+                                    aria-label="Learn more about {{ j.label|lower }}">
+                                    {{ j.label }}
+                                </a>
+                            </span>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ol>
+                </section>
                 {% endfor %}
-            </ol>
-            {% endfor %}
+            </article>
         </div>
     </div>
-</div>
+</main>
 
 
 {% endblock %}

@@ -6,17 +6,24 @@
 
 {% block main %}
 
-<div class="terms_and_container">
-    <div class="footer_links_title">
-        <h2>{{ about_us_copy.page_title }}</h2>
-    </div>
-    <div class="the_auction_container">
-        <div class="t_and_c_container">
-            <h4 class="bold section_title">{{ about_us_copy.paragraph_title }}</h4>
-            <p>
-                {{ about_us_copy.paragraph }}
-            </p>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<main id="main-content">
+    <div class="terms_and_container">
+        <header class="footer_links_title">
+            <h1>{{ about_us_copy.page_title }}</h1>
+        </header>
+        <div class="the_auction_container">
+            <article class="t_and_c_container">
+                <section aria-labelledby="all-about-us">
+                    <h2 id="all-about-us" class="bold section_title">{{ about_us_copy.paragraph_title }}</h2>
+                    <p>
+                        {{ about_us_copy.paragraph }}
+                    </p>
+                </section>
+            </article>
         </div>
     </div>
-</div>
+</main>
+
 {% endblock %}

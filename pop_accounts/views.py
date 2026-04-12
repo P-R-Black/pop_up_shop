@@ -3468,8 +3468,6 @@ class CompleteProfileView(UpdateView):
     form_class = SocialProfileCompletionForm
     template_name = 'pop_accounts/registration/complete_profile.html'
 
-    print(f"\n=== CompleteProfileView Hit!!! ===")
-
     def get_object(self, queryset=None):
         # Already authenticated? Update that user
         if self.request.user.is_authenticated:
@@ -3513,11 +3511,6 @@ class CompleteProfileView(UpdateView):
 
     def form_valid(self, form):
         user = self.object
-
-        # DEBUG CODE START ---
-        # Create/update user code...
-        print(f"\n=== CompleteProfileView.form_valid ===")
-        print(f"User: {user.email if user else 'None'}")
 
         # PRE-CREATION CASE: Create user now
         if user is None:

@@ -8,23 +8,36 @@
 
 {% block main %}
 
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
-<div class="the_auction_container">
-    <div class="success_friend_invite">
-        {% if messages %}
-        {% for message in messages %}
+<main id="main-content">
+    <div class="the_auction_container">
+        <div class="success_friend_invite" role="region" aria-live="polite" aria-label="Invitation sent confirmation">
+            {% if messages %}
+            {% for message in messages %}
 
-        <h2 class="friend_message_success">{{ message }}</h2>
-        <p>Thanks for spreading the word</p>
+            <h2 class="friend_message_success">{{ message }}</h2>
+            <p>Thanks for spreading the word</p>
+
+            <p class="visually-hidden" aria-live="assertive">
+                A celebratory animation is playingon this page.
+            </p>
 
 
-        {% endfor %}
-        {% endif %}
+            {% endfor %}
+            {% endif %}
+        </div>
     </div>
-</div>
+</main>
+
 
 <script>
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.addEventListener('DOMContentLoaded', () => {
+        if (prefersReducedMotion) {
+            console.log('Confetti animation skipped due to prefers-reduced-motion');
+            return;
+        }
         const duration = 3 * 1000; // 3 seconds
         const end = Date.now() + duration;
 

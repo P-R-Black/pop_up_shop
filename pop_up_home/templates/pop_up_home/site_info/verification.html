@@ -7,18 +7,20 @@
 {% block main %}
 
 <div class="terms_and_container">
-    <div class="footer_links_title">
-        <h2>{{ verification_copy.page_title }}</h2>
-    </div>
+    <header class="footer_links_title">
+        <h1>{{ verification_copy.page_title }}</h1>
+    </header>
     <div class="the_auction_container">
-        <div class="t_and_c_container">
+        <article class="t_and_c_container">
             {% for s in verification_copy.sections %}
-            <h4 class="bold section_title">{{ s.section_title }}</h4>
-            {% for sp in s.section_paragraph %}
-            <p>{{ sp.paragraph }}</p>
+            <section aria-labelledby="verification-{{ s.section_title }}">
+                <h2 class="bold section_title">{{ s.section_title }}</h2>
+                {% for sp in s.section_paragraph %}
+                <p>{{ sp.paragraph }}</p>
+            </section>
             {% endfor %}
             {% endfor %}
-        </div>
+        </article>
     </div>
 </div>
 

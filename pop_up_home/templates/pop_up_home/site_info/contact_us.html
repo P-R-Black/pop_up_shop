@@ -6,64 +6,120 @@
 
 {% block main %}
 
-<div class="terms_and_container">
-    <div class="footer_links_title">
-        <h2>{{ contact_us_copy.page_title }}</h2>
-    </div>
-    <div class="the_auction_container">
-        <div class="site_contact_container">
-            <h4 class="bold section_title">
-                {{ contact_us_copy.section_paragraph }}
-            </h4>
-            <form id="contact-form" action="{% url 'pop_up_home:contact' %}" method="post" class="contact_us_form">
-                {% csrf_token %}
-                <div class="form-group">
-                    {{ form.email_address }}
-                    {% if form.email_address.errors %}
-                    <div class="error-message" role="'alert" aria-live="assertive">
-                        {% for error in form.email_address.errors %}
-                        <p class="error-message-p">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
-                <div class="form-group">
-                    {{ form.subject }}
-                    {% if form.subject.errors %}
-                    <div class="error-message" role="'alert" aria-live="assertive">
-                        {% for error in form.subject.errors %}
-                        <p class="error-message-p">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
+<main id="main-content">
+    <div class="terms_and_container">
+        <header class="footer_links_title">
+            <h1>{{ contact_us_copy.page_title }}</h1>
+        </header>
+        <div class="the_auction_container">
+            <article class="site_contact_container">
+                <section id="contact-intro" aria-labelledby="contact-intro">
+                    <p style="font-size: 1.1rem; line-height: 1.6; margin-bottom: 1rem; color: #555;">
+                        {{ contact_us_copy.section_paragraph }}
+                    </p>
+                </section>
+                <section aria-labelledby="contact-form-heading">
+                    <h2 id="contact-form-heading" class="bold section_title"
+                        style="font-size: 1.5rem; margin-bottom: 1rem;">
+                        Send us a Message
+                    </h2>
 
-                <div class="form-group">
-                    {{ form.message }}
-                    {% if form.message.errors %}
-                    <div class="error-message" role="'alert" aria-live="assertive">
-                        {% for error in form.message.errors %}
-                        <p class="error-message-p">{{ error }}</p>
-                        {% endfor %}
+                </section>
+                <form id="contact-form" action="{% url 'pop_up_home:contact' %}" method="post" class="contact_us_form"
+                    novalidate>
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="{{ form.email_address.id_for_label }}" class="visually-hidden">
+                            {{ form.email_address.label }}
+                            <span aria-label="required">*</span>
+                        </label>
+                        {{ form.email_address }}
+
+                        {% if form.email_address.errors %}
+                        <div class="error-message" role="'alert" aria-live="assertive" aria-atoic="true"
+                            id="email-error">
+                            {% for error in form.email_address.errors %}
+                            <p class="error-message-p">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if form.email_address.help_text %}
+                        <p class="help-text" id="email-help"
+                            style="font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                            {{ form.email_address.help_text|safe }}
+                        </p>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                </div>
-                <div class="form-group">
-                    <div class="recaptcha-wrapper">
-                        {{ form.captcha }}
+
+                    <div class="form-group">
+                        <label for="{{ form.subject.id_for_label }}" class="visually-hidden">
+                            {{ form.subject.label }}
+                            <span aria-label="required">*</span>
+                        </label>
+                        {{ form.subject }}
+
+                        {% if form.subject.errors %}
+                        <div class="error-message" role="'alert" aria-live="assertive" aria-atomic="true"
+                            id="subject-error">
+                            {% for error in form.subject.errors %}
+                            <p class="error-message-p">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if form.subject.help_text %}
+                        <p class="help-text" id="subject-help"
+                            style="font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                            {{ form.subject.help_text|safe }}
+                        </p>
+                        {% endif %}
                     </div>
-                    {% if form.captcha.errors %}
-                    <div class="error-message" role="alert" aria-live="assertive">
-                        {% for error in form.captcha.errors %}
-                        <p>{{ error }}</p>
-                        {% endfor %}
+
+                    <div class="form-group">
+                        <label for="{{ form.message.id_for_label }}" class="visually-hidden">
+                            {{ form.message.label }}
+                            <span aria-label="required">*</span>
+                        </label>
+                        {{ form.message }}
+                        {% if form.message.errors %}
+                        <div class="error-message" role="'alert" aria-live="assertive" aria-atomic="true"
+                            id="message-error">
+                            {% for error in form.message.errors %}
+                            <p class="error-message-p">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if form.message.help_text %}
+                        <p class="help-text" id="message-help"
+                            style="font-size: 0.875rem; color: #666; margin-top: 0.25rem;">
+                            {{ form.message.help_text|safe }}
+                        </p>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                </div>
-                <button type="submit" class="button_long">Send</button>
-            </form>
+
+                    <div class="form-group">
+                        <div class="recaptcha-wrapper">
+                            {{ form.captcha }}
+                        </div>
+                        {% if form.captcha.errors %}
+                        <div class="error-message" role="alert" aria-live="assertive" aria-atomic="true"
+                            id="captcha-error">
+                            {% for error in form.captcha.errors %}
+                            <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                    </div>
+                    <button type="submit" class="button_long" aria-label="Send your contact form">Send</button>
+
+                    <div id="form-status" role="status" aria-live="polite" aira-atomic="true"
+                        style="margin-top: 1.5rem; display: none;"></div>
+                </form>
+            </article>
         </div>
     </div>
-</div>
+</main>
+
 {% endblock %}
