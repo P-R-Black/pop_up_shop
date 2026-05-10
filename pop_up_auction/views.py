@@ -135,7 +135,6 @@ class PlaceBidView(AjaxLoginRequiredMixin, View):
     
         # 2. Enforce that bid is strictly higher than current_highest_bid
         current = product.current_highest_bid or 0
-        print(f'current: {current}')
         retail_price = product.retail_price
         print(f'retail_price: {retail_price}')
         floor_price = product.reserve_price

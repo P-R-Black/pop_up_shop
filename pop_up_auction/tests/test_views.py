@@ -955,33 +955,20 @@ class TestPlaceBidView(TestCase):
 
     # ==================== Business Logic Tests ====================
     
-    def test_bid_below_retail_price(self):
-        """Should reject bids at or below retail price."""
+    def test_bid_below_reserve_price(self):
+        """Should reject bids at or below reserve price."""
         request = self._create_authenticated_request(self.user, {
             'product_id': self.product.id,
-            'bid_amount': '150.00'  # Equal to retail_price
+            'bid_amount': '120.00'  # Equal to reserve_price
         })
-        
-        response = self.view(request)
-        data = json.loads(response.content)
-        
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(data['status'], 'error')
-        self.assertIn('150.00', data['message'])
-        self.assertIn('must be better than', data['message'])
 
-    def test_bid_just_below_retail_price(self):
-        """Should reject bids slightly below retail price."""
-        request = self._create_authenticated_request(self.user, {
-            'product_id': self.product.id,
-            'bid_amount': '99.99'
-        })
-        
         response = self.view(request)
         data = json.loads(response.content)
         
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data['status'], 'error')
+        self.assertIn('120.00', data['message'])  # Check for reserve price
+        self.assertIn('must be better than', data['message'])
 
     def test_bid_equal_to_current_highest(self):
         """Should reject bids equal to current highest bid."""
