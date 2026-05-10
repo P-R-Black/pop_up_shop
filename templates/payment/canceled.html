@@ -7,16 +7,220 @@ Payment
 {% endblock %}
 
 {% block main %}
-<section class="product_buy_section container">
-    {% if user.is_authenticated %}
-    <div class="section_container">
-        <div class="page_title">
-            <h2>Payment Not Successful</h2>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<main id="main-content">
+    <section class="product_buy_section">
+        {% if user.is_authenticated %}
+        <div class="section_container">
+            <header class="page_title">
+                <h1>Payment Not Successful</h1>
+            </header>
+
+            {% comment %}Error Alert Section{% endcomment %}
+            <section aria-labelledby="payment-error-heading" role="alert" aria-live="assertive" aria-atomic="true"
+                style="margin: 2rem 0; padding: 1.5rem; background-color: #ffebee; border-left: 4px solid #d32f2f; border-radius: 4px;">
+
+                <h2 id="payment-error-heading" style="color: #d32f2f; margin-top: 0; font-size: 1.25rem;">
+                    <span aria-hidden="true">✕</span> Your payment could not be processed
+                </h2>
+
+                <p style="color: #555; line-height: 1.6; margin: 1rem 0;">
+                    We were unable to complete your payment. This could be due to several reasons:
+                </p>
+
+                <ul style="color: #555; line-height: 1.8; padding-left: 1.5rem;">
+                    <li>Insufficient funds in your account</li>
+                    <li>Expired or invalid payment method</li>
+                    <li>Incorrect card or billing information</li>
+                    <li>Card declined by your bank</li>
+                    <li>Temporary payment processing issue</li>
+                </ul>
+            </section>
+
+            {% comment %}<!-- Next Steps Section -->{% endcomment %}
+            <section aria-labelledby="next-steps-heading"
+                style="margin: 2rem 0; padding: 1.5rem; background-color: #f9f9f9; border-radius: 4px;">
+                <h2 id="next-steps-heading" style="color: #333; margin-top: 0; font-size: 1.25rem;">
+                    What You Can Do
+                </h2>
+
+                <ol style="color: #555; line-height: 1.8; padding-left: 1.5rem;">
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Try Again:</strong>
+                        <a href="{% url 'pop_up_payment:payment_home' %}"
+                            style="color: #CB3A60; text-decoration: underline;">
+                            Return to checkout
+                        </a>
+                        and verify your payment information is correct.
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Check Your Account:</strong>
+                        Make sure you have sufficient funds and that your card or account is active.
+                    </li>
+                    <li style="margin-bottom: 1rem;">
+                        <strong>Contact Your Bank:</strong>
+                        Your bank may have declined the transaction for security reasons. Contact them to verify.
+                    </li>
+                    <li>
+                        <strong>Get Support:</strong>
+                        <a href="{% url 'pop_up_home:contact' %}" style="color: #CB3A60; text-decoration: underline;">
+                            Contact our support team
+                        </a>
+                        if you need additional help.
+                    </li>
+                </ol>
+            </section>
+
+            <!-- Important Information Section -->
+            <section aria-labelledby="important-info-heading"
+                style="margin: 2rem 0; padding: 1.5rem; background-color: #e8f5e9; border-left: 4px solid #4CAF50; border-radius: 4px;">
+                <h2 id="important-info-heading" style="color: #333; margin-top: 0; font-size: 1.25rem;">
+                    Important Information
+                </h2>
+
+                <ul style="color: #555; line-height: 1.8; padding-left: 1.5rem;">
+                    <li>
+                        <strong>Your items are still reserved:</strong>
+                        Your auction-winning items have been held for you. You have 24 hours to complete your purchase.
+                    </li>
+                    <li>
+                        <strong>No charge applied:</strong>
+                        Since the payment was unsuccessful, no funds were deducted from your account.
+                    </li>
+                    <li>
+                        <strong>Privacy:</strong>
+                        Your personal and payment information is secure. Learn more about our
+                        <a href="{% url 'pop_up_home:privacy' %}" style="color: #CB3A60; text-decoration: underline;">
+                            privacy policy
+                        </a>.
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Action Buttons -->
+            <section aria-labelledby="action-buttons" style="margin: 2rem 0;">
+                <h2 id="action-buttons" class="visually-hidden">Payment recovery options</h2>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="{% url 'pop_up_payment:payment_home' %}"
+                        style="background-color: #CB3A60; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; border: 2px solid #CB3A60;"
+                        aria-label="Return to checkout to retry payment">
+                        Try Payment Again
+                    </a>
+
+                    <a href="{% url 'pop_up_home:home' %}"
+                        style="background-color: white; color: #CB3A60; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; border: 2px solid #CB3A60;"
+                        aria-label="Return to home page">
+                        Return Home
+                    </a>
+
+                    <a href="{% url 'pop_up_home:contact' %}"
+                        style="background-color: #f0f0f0; color: #333; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; border: 2px solid #ddd;"
+                        aria-label="Contact customer support for help">
+                        Contact Support
+                    </a>
+                </div>
+            </section>
+
+            <!-- FAQ Section -->
+            <section aria-labelledby="faq-heading"
+                style="margin: 3rem 0; padding: 1.5rem; background-color: #f9f9f9; border-radius: 4px;">
+                <h2 id="faq-heading" style="color: #333; margin-top: 0; font-size: 1.25rem;">
+                    Frequently Asked Questions
+                </h2>
+
+                <details style="margin-bottom: 1rem; cursor: pointer;">
+                    <summary style="font-weight: bold; color: #333; padding: 0.5rem 0; outline: none;">
+                        Why was my payment declined?
+                    </summary>
+                    <p style="color: #666; line-height: 1.6; margin: 1rem 0 0 0; padding-left: 1rem;">
+                        Payments can be declined for various reasons including insufficient funds, expired card,
+                        incorrect information, or bank security restrictions. Contact your bank to find out the specific
+                        reason.
+                    </p>
+                </details>
+
+                <details style="margin-bottom: 1rem; cursor: pointer;">
+                    <summary style="font-weight: bold; color: #333; padding: 0.5rem 0; outline: none;">
+                        Will I be charged if my payment fails?
+                    </summary>
+                    <p style="color: #666; line-height: 1.6; margin: 1rem 0 0 0; padding-left: 1rem;">
+                        No. If your payment was unsuccessful, no charges were applied to your account. Your payment
+                        information is secure and encrypted.
+                    </p>
+                </details>
+
+                <details style="margin-bottom: 1rem; cursor: pointer;">
+                    <summary style="font-weight: bold; color: #333; padding: 0.5rem 0; outline: none;">
+                        How long do I have to retry my payment?
+                    </summary>
+                    <p style="color: #666; line-height: 1.6; margin: 1rem 0 0 0; padding-left: 1rem;">
+                        You have 24 hours from the time you won the auction to complete your payment. After 24 hours,
+                        your items will be released and made available to other buyers.
+                    </p>
+                </details>
+
+                <details style="margin-bottom: 1rem; cursor: pointer;">
+                    <summary style="font-weight: bold; color: #333; padding: 0.5rem 0; outline: none;">
+                        What payment methods do you accept?
+                    </summary>
+                    <p style="color: #666; line-height: 1.6; margin: 1rem 0 0 0; padding-left: 1rem;">
+                        We accept all major credit and debit cards processed through PayPal. Ensure your card is active
+                        and has sufficient funds.
+                    </p>
+                </details>
+            </section>
+
+            <!-- Contact Information -->
+            <section aria-labelledby="contact-heading"
+                style="margin: 2rem 0; padding: 1.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                <h2 id="contact-heading" style="color: #333; margin-top: 0; font-size: 1.25rem;">
+                    Still Need Help?
+                </h2>
+
+                <p style="color: #555; margin-bottom: 1rem;">
+                    Our customer support team is here to help. You can reach us:
+                </p>
+
+                <ul style="list-style: none; padding: 0; color: #555; line-height: 1.8;">
+                    <li style="margin-bottom: 0.5rem;">
+                        <strong>Email:</strong>
+                        <a href="mailto:support@thepopup.com" style="color: #CB3A60; text-decoration: underline;">
+                            support@thepopup.com
+                        </a>
+                    </li>
+                    <li>
+                        <strong>Help Center:</strong>
+                        <a href="{% url 'pop_up_home:help-center' %}"
+                            style="color: #CB3A60; text-decoration: underline;">
+                            Browse our Help Center
+                        </a>
+                    </li>
+                </ul>
+            </section>
         </div>
+        {% else %}
+        <!-- Unauthenticated User Message -->
+        <div class="section_container">
+            <header class="page_title">
+                <h1>Payment Error</h1>
+            </header>
 
-    </div>
-    {% endif %}
-
-</section>
+            <section role="alert" aria-live="polite"
+                style="margin: 2rem 0; padding: 1.5rem; background-color: #ffebee; border-left: 4px solid #d32f2f; border-radius: 4px;">
+                <p style="color: #555; line-height: 1.6;">
+                    You must be logged in to complete a payment. Please
+                    <a href="{% url 'pop_accounts:user_login' %}" style="color: #CB3A60; text-decoration: underline;">
+                        log in to your account
+                    </a>
+                    to retry your payment.
+                </p>
+            </section>
+        </div>
+        {% endif %}
+    </section>
+</main>
 
 {% endblock %}

@@ -662,7 +662,7 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
         label='Prefix',
         choices=[("", "Select Prefix")] + PopUpCustomerAddress.PREFIX_CHOICES, required=False,
         widget=forms.Select(attrs={
-            'class': '',
+            'class': 'update_shipping_prefix',
             'id': 'prefix',
             'name': 'prefix',
         })
@@ -702,7 +702,7 @@ class PopUpUpdateShippingInformationForm(forms.ModelForm):
         label='Suffix',
         choices=[("", "Select Suffix")] + PopUpCustomerAddress.SUFFIX_CHOICES, required=False,
         widget=forms.Select(attrs={
-            'class': '',
+            'class': 'update_shipping_suffix',
             'id': 'suffix',
             'name': 'suffix',
         })

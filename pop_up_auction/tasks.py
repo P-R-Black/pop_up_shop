@@ -38,13 +38,12 @@ def check_auctions_and_finalize():
         is_active=True
     )
 
-
     for product in ended_auctions:
         highest_bid = product.bids.order_by('-amount', '-timestamp').first()
 
         if highest_bid:
                
-            winner = highest_bid.customer.user            
+            winner = highest_bid.customer.user      
             product.winner = winner
             product.current_highest_bid = highest_bid.amount
             product.auction_finalized = True
@@ -97,35 +96,46 @@ def mark_expired_reservations():
     )
 
     for reservation in expired:
-        reservation.is_expired = True
-        reservation.save()
+        try:
+            reservation.is_expired = True
+            reservation.save()
 
-        # Re-list product
-        product = reservation.product
-        product.inventory_status = "in_inventory"
-        product.winner = None
-        product.save()
+            # Re-list product
+            product = reservation.product
+            product.inventory_status = "in_inventory"
+            product.winner = None
+            product.save()
 
-        # Remove from winner's cart
-        Cart.objects.filter(
-            user=reservation.user,
-            product=product,
-            auction_locked=True
-        ).delete()
-        
-        mail_admins(subject=f"Auction Reservation Expired: {reservation.product.product_title}",
-                message=(
-                    f"The reservation for '{reservation.product.product_title}' by user "
-                    f"{reservation.user.email} has expired and was not paid.\n\n"
-                    f"Reservation expired at: {reservation.expires_at}"
-                        )
-                    )
+            try:
+                # Remove from winner's cart
+                PopUpCartItem.objects.filter(  # ← Change from Cart to PopUpCartItem
+                    user=reservation.user,
+                    product=product,
+                    auction_locked=True
+                ).delete()
+            except Exception as e:
+                logger.error(f"Failed to delete cart items: {e}")
 
-    updated_count = expired.updated(is_expired=True)
+            try:
+                mail_admins(subject=f"Auction Reservation Expired: {reservation.product.product_title}",
+                        message=(
+                            f"The reservation for '{reservation.product.product_title}' by user "
+                            f"{reservation.user.email} has expired and was not paid.\n\n"
+                            f"Reservation expired at: {reservation.expires_at}"
+                                )
+                            )
+            except Exception as e:
+                logger.error(f"Failed to send admin email: {e}")
+
+        except Exception as e:
+            logger.error(f"Error processing reservation {reservation.id}: {e}", exc_info=True)
+
+
+    updated_count = expired.update(is_expired=True)
     return f"{updated_count} reservations marked as expired"
 
 
-@shared_task
+@shared_task(max_retries=3)
 def transition_expired_buy_now_to_auction():
     """
     For items not purchased during the "buy now" period, this tasks removes "buy now" status
@@ -133,44 +143,94 @@ def transition_expired_buy_now_to_auction():
     - Email sent to users who have marked item as "interested in"
     """
     print('transition_expired_buy_now_to_auction triggered')
-    current_time = now()
-    products = PopUpProduct.objects.filter(
-        buy_now_end__lt=current_time,
-        bought_now=False,
-        auction_start_date__isnull=False,
-        auction_end_date__isnull=False,
-        is_active=True
-    )
+    logger.info("transition_expired_buy_now_to_auction started")
 
-    for product in products:
-        # if buy now expired and it wasn't purchased, it's ready for auction
-        product.buy_now_start = None
-        product.buy_now_end = None
-        product.save()
-
-        # notifiy users who checked "notify me" or "interested in" on product
-        send_interested_in_and_coming_soon_product_update_to_users(
-            product,
-            auction_start_date = product.auction_start_date
+    try:
+        current_time = now()
+        products = PopUpProduct.objects.filter(
+            buy_now_end__lt=current_time,
+            bought_now=False,
+            auction_start_date__isnull=False,
+            auction_end_date__isnull=False,
+            is_active=True
         )
+
+        processed_count = 0
+        error_count = 0
+        
+        for product in products:
+            try:
+                # if buy now expired and it wasn't purchased, it's ready for auction
+                product.buy_now_start = None
+                product.buy_now_end = None
+                product.save()
+                logger.info(f"Product {product.id} transitiond to auction, buy_now dates cleared")
+
+                try:
+                    
+                    # notifiy users who checked "notify me" or "interested in" on product
+                    send_interested_in_and_coming_soon_product_update_to_users(
+                        product,
+                        auction_start_date = product.auction_start_date
+
+                        )
+                    logger.info(f"Intereted users notified for product {product.id}")
+                except Exception as e:
+                    logger.error(f"Failed to send notifications for product {product.id}: {e}", exc_info=True)
+                
+                processed_count += 1
+            except Exception as e:
+                logger.error(f"Unexpected error processing product {product.id}: {e}", exc_info=True)
+                error_count += 1
+            
+        
+        result_message = f"{processed_count} products transitioned to auction"
+        if error_count > 0:
+            result_message += f"({error_count} errors)"
+        
+        logger.info(f"transition_expred_buy_now_to_auction completed: {result_message}")
+        return result_message
+    except Exception as e:
+        logger.error(f"transition_expired_buy_now_to_auction failed: {e}", exc_info=True)
+        raise 
+
 
 
 @shared_task
 def send_reservation_reminders():
     now_time = now()
     reservations = WinnerReservation.objects.filter(is_paid=False, is_expired=False)
+    print('reservations', reservations)
 
     for res in reservations:
-        time_left = res.expires_at - now_time
+        try:
+            print('DEBUG res.expires_at', res.expires_at)
+            time_left = res.expires_at - now_time
+            print('DEBUG time_left', time_left)
 
-        if timedelta(hours=23, minutes=30) <= time_left <= timedelta(hours=24, minutes=30) and not res.reminder_24hr_sent:
-            # send 24 hour reminder
-            send_24_hour_reminder_email(res.user, res.product)
-            res.reminder_24hr_sent = True
-            res.save()
-
-        elif timedelta(minutes=30) <= time_left <= timedelta(hours=1, minutes=30) and not res.reminder_1hr_sent:
-            # send 1 hour reminder
-            send_1_hour_reminder_email(res.user, res.product)
-            res.reminder_1hr_sent = True
-            res.save()
+            if timedelta(hours=23, minutes=30) <= time_left <= timedelta(hours=24, minutes=30) and not res.reminder_24hr_sent:
+                try:
+                    # send 24 hour reminder
+                    send_24_hour_reminder_email(res.user, res.product)
+                    print('DEBUG 24 hour email sent', res.user, res.product)
+                    res.reminder_24hr_sent = True
+                    res.save()
+                    logger.info(f"24-hour reminder sent for reservation {res.id}")
+                except Exception as e:
+                    logger.error(f"Failed to send 24-hour reminder {res.id}: {e}", exc_info=True)
+                    # don't block other reminders
+        
+            elif timedelta(minutes=30) <= time_left <= timedelta(hours=1, minutes=30) and not res.reminder_1hr_sent:
+                try:
+                    # send 1 hour reminder
+                    send_1_hour_reminder_email(res.user, res.product)
+                    print('DEBUG 1 hour email sent', res.user, res.product)
+                    res.reminder_1hr_sent = True
+                    res.save()
+                    logger.info(f"1-hour reminder sent for reservation {res.id}")
+                except Exception as e:
+                    logger.error(f"Failed to send 1-hour reminder for reservation {res.id}: {e}", exc_info=True)
+                    # don't block other reminders
+        except Exception as e:
+            logger.error(f"Unexpected error processing reservation {res.id}: {e}", exc_info=True)
+            # Contine processingg other reservations

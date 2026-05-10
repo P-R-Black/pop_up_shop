@@ -24,7 +24,8 @@
                 </section>
                 {% for i in how_it_works_copy.instructions %}
                 <section aria-labelledby="how-it-works-{{ i.instruction_level|lower }}">
-                    <h2 id="how-it-works-{{ i.instruction_level }}" class="bold section_title">{{ i.instruction_level }}
+                    <h2 id="how-it-works-{{ i.instruction_level }}" class="bold section_title">
+                        {{ i.instruction_level }}
                     </h2>
                     <ol>
                         {% for j in i.instruction %}

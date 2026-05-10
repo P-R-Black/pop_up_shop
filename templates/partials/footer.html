@@ -1,5 +1,5 @@
 {% load static %}
-<footer>
+<footer class="site-footer" role="contentinfo" aria-label="Site footer">
     <div class="footer_container container">
         <div class="top_footer">
             <div class="footer_logo_social_container">
@@ -8,22 +8,44 @@
                         <div class="logo-text" alt="logo">The Pop Up</div>
                     </span>
                 </div>
-                <div class="footer_social_container">
+                <div class="footer_social_container" aria-label="Social media links">
                     <ul>
-                        <li><a href=""><i class="fa-brands fa-x-twitter"></i></a></li>
-                        <li><a href=""><i class="fa-brands fa-facebook-f"></i></a></li>
-                        <li><a href=""><i class="fa-brands fa-square-instagram"></i></a></li>
-                        <li><a href=""><i class="fa-brands fa-tiktok"></i></a></li>
+                        <li>
+                            <a href="htps://twitter.com/thepopup" target="_blank" rel="noopener noreferrer"
+                                aria-label="Visit the Pop Up on Twitter">
+                                <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://facebook.com/thepopup" target="_blank" rel="noopener noreferrer"
+                                aria-label="Visit the Pop Up on Facebook">
+                                <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://instagram.com/thepopup" target="_blank" rel="noopener noreferrer"
+                                aria-label="Vist The Pop Up on Instagram">
+                                <i class="fa-brands fa-square-instagram" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://tiktok.com/@thepopup" target="_blank" rel="noopener noreferrer"
+                                aria-label="Visit the Pop Up on TikTok">
+                                <i class="fa-brands fa-tiktok" aria-hidden="true"></i>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
 
-            <div class="footer_links_container">
+            <nav class="footer_links_container" aria-label="Footer navigation">
                 <div class="footer_about_container">
                     <div class="footer_about_title">
-                        <h3>{{ footer_column_about.footer_column_title }}</h3>
+                        <h3 class="footer_about_title" id="footer-about-heading">
+                            {{ footer_column_about.footer_column_title }}
+                        </h3>
                     </div>
-                    <ul class="footer_about_options">
+                    <ul class="footer_about_options" aria-labelledby="footer-about-heading">
                         {% for l in footer_column_about.footer_bottom_links %}
                         <li>
                             <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
@@ -33,9 +55,11 @@
                 </div>
                 <div class="footer_about_container">
                     <div class="footer_about_title">
-                        <h3>{{ footer_column_help.footer_column_title }}</h3>
+                        <h3 class="footer_about_title" id="footer-help-heading">
+                            {{ footer_column_help.footer_column_title }}
+                        </h3>
                     </div>
-                    <ul class="footer_about_options">
+                    <ul class="footer_about_options" aria-labelledby="footer-help-heading">
                         {% for l in footer_column_help.footer_bottom_links %}
                         <li>
                             <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
@@ -45,15 +69,19 @@
                 </div>
                 <div class="footer_about_container">
                     <div class="footer_about_title">
-                        <h3>{{ footer_column_register.footer_column_title }}</h3>
+                        <h3 class="footer_about_title" id="footer-account-heading">
+                            {{ footer_column_register.footer_column_title }}
+                        </h3>
                     </div>
-                    <ul class="footer_about_options">
+                    <ul class="footer_about_options" aria-labelledby="footer-account-heading">
                         {% if request.user.is_authenticated %}
                         <form action="{% url 'pop_accounts:logout' %}" method="POST">
                             {% csrf_token %}
                             {% for l in footer_column_register.footer_authenicated_link %}
                             <li>
-                                <input type="submit" class="" value="{{ l.label }}">
+                                <button type="submit" aria-label="{{ l.label }}">
+                                    {{ l.label }}
+                                </button>
                             </li>
                             {% endfor %}
                         </form>
@@ -71,13 +99,15 @@
                         {% endfor %}
                     </ul>
                 </div>
-            </div>
+            </nav>
             <div class="footer_invite_payment_container">
-                <button class="button_long inviteFriendBtn">Invite Friend</button>
-                <div class="footer_payment_options">
-                    <img src="{% static 'img/paypal_card_icon.png' %}" class='footer_paypal-logo' />
-                    <img src="{% static 'img/visa_icon.png' %}" class='footer_visa-logo' />
-                    <img src="{% static 'img/mastercard_icon.png' %}" class='footer_mc-logo' />
+                <button class="button_long inviteFriendBtn" aria-label="Invite a friend to The Pop Up">
+                    Invite Friend
+                </button>
+                <div class="footer_payment_options" aria-label="Accepted payment methods">
+                    <img src="{% static 'img/paypal_card_icon.png' %}" alt="PayPal" class='footer_paypal-logo' />
+                    <img src="{% static 'img/visa_icon.png' %}" alt="Visa" class='footer_visa-logo' />
+                    <img src="{% static 'img/mastercard_icon.png' %}" alt="Mastercard" class='footer_mc-logo' />
                     <img src="{% static 'img/discover_icon.png' %}" class='footer_disc-logo' />
                     <img src="{% static 'img/dia-logo.png' %}" class='footer_dai-logo' />
                     <img src="{% static 'img/usdc-logo.png' %}" class='footer_usdc-logo' />
@@ -87,15 +117,17 @@
             </div>
         </div>
         <div class="bottom_footer">
-            <div class="footer_terms_container">
+            <nav class="footer_terms_container" aria-label="Legal and terms navigation">
                 <ul>
                     {% for l in bottom_footer_links.footer_bottom_links %}
-                    <li><a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a></li>
+                    <li>
+                        <a href="{% url 'pop_up_home:'|add:l.url %}">{{ l.label }}</a>
+                    </li>
                     {% endfor %}
-                    <li>©2025 The Pop Up</li>
+                    <li>©{{ curr_year }} The Pop Up</li>
                     <li>All Rights Reserved</li>
                 </ul>
-            </div>
+            </nav>
         </div>
     </div>
 </footer>

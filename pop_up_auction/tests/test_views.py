@@ -4286,6 +4286,9 @@ class TestProductDetailView(TestCase):
         url = reverse('pop_up_auction:product_detail', kwargs={'slug': self.active_product.slug})
         response = self.client.get(url)
         product = response.context['product']
+        print('DEBUG Product TestProductDetailView,buy_now_start', product.buy_now_start)
+        print('DEBUG Product TestProductDetailView.buy_now_end', product.buy_now_end)
+        print('DEBUG Product TestProductDetailView.bought_now', product.bought_now)
         
         # Verify all conditions
         self.assertIsNotNone(product.buy_now_start)

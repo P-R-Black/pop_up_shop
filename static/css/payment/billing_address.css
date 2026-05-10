@@ -17,6 +17,14 @@
     width: 100%;
 }
 
+.billing_address_buttons div {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+    gap: 4rem;
+    width: 100%;
+}
+
 .billing_address_button {
     align-items: center;
     background: var(--text-color);
@@ -66,7 +74,7 @@
     height: 3rem;
     padding: .25rem .5rem;
     resize: none;
-    width: 56%;
+    width: 60%;
 
 }
 
@@ -100,4 +108,72 @@
     display: flex;
     gap: 1rem;
     margin-bottom: 1rem;
+}
+
+
+
+
+
+
+/* =============== MEDIA QUERIES (EXTRA LARGE DEVICES) =============== */
+@media screen and (max-width: 1350px) {}
+
+/* =============== MEDIA QUERIES (LARGE DEVICES) =============== */
+@media screen and (max-width: 1245px) {
+
+    .update_shipping_prefix,
+    .update_shipping_suffix {
+        min-width: 20%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (MEDIUM DEVICES) =============== */
+@media screen and (max-width: 1000px) {
+
+    .update_shipping_prefix,
+    .update_shipping_suffix {
+        min-width: 25%;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMEDIUM DEVICES) =============== */
+@media screen and (max-width: 800px) {
+
+    .update_shipping_prefix,
+    .update_shipping_suffix {
+        min-width: 40%;
+    }
+
+    .billing_address_delivery_instructions textarea {
+        width: 100%;
+
+    }
+
+    .billing_address_buttons div {
+        display: flex;
+        flex-direction: column;
+        margin: 0 0;
+        gap: 1rem;
+    }
+}
+
+
+/* =============== MEDIA QUERIES (SMALL DEVICES) =============== */
+@media screen and (max-width: 640px) {}
+
+
+/* =============== MEDIA QUERIES (EXTRA-SMALL DEVICES) =============== */
+@media screen and (max-width: 450px) {
+
+    .update_shipping_prefix,
+    .update_shipping_suffix {
+        min-width: 55%;
+    }
+
+    .billing_address_buttons button {
+        width: 60%;
+
+    }
 }

@@ -11,6 +11,11 @@
         width: 15%;
     }
 
+    .personal_info_names_container {
+        display: flex;
+        flex-direction: column;
+    }
+
 
 
     .personal_info_first_name_container,
@@ -19,7 +24,8 @@
     }
 
     .personal_info_middle_name_container {
-        width: 45%;
+        width: 40%;
+
     }
 
     .shoe_sizes_container,
@@ -45,6 +51,20 @@
     .card_name_input {
         width: 50%;
 
+    }
+
+
+    .personal_info_add_small input {
+        width: 70%
+    }
+
+
+    .personal_info_add_long input {
+        width: 100%
+    }
+
+    .personal_info_add_small input {
+        width: 100%
     }
 
 }

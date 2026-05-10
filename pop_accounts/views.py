@@ -1778,12 +1778,12 @@ class TotalAccountsView(UserPassesTestMixin, TemplateView):
         today_end = timezone.make_aware(timezone.datetime.combine(today, timezone.datetime.max.time()))
 
         # Total active accounts
-        context['total_active_accounts'] = PopUpCustomerProfile.objects.filter(
+        context['total_active_accounts'] = User.objects.filter(
             is_active=True
         ).count()
         
         # New accounts created today
-        context['new_accounts_today'] = PopUpCustomerProfile.objects.filter(
+        context['new_accounts_today'] = User.objects.filter(
             created__gte=today_start,
             created__lte=today_end
         ).count()
@@ -1797,7 +1797,7 @@ class TotalAccountsView(UserPassesTestMixin, TemplateView):
         # ).values('user').distinct().count()
         
         # Option 2: If you track via User.last_login
-        context['site_visitors_today'] = PopUpCustomerProfile.objects.filter(
+        context['site_visitors_today'] = User.objects.filter(
             last_login__gte=today_start,
             last_login__lte=today_end
         ).count()

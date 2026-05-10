@@ -61,11 +61,12 @@
                                     {{ product.product_title }} {{ product.secondary_product_title }}</strong>!</p>
                             <p style="color: #CB3A60;  text-align: center;">You have until
                                 <strong>
-                                    <time datetime="{{ deadliens|date:'F j, Y, g:i A'}}"></time>
-                                    {{ deadlines|date:"F j, Y, g:i A" }}
+                                    <time datetime="{{ deadline|date:'F j, Y, g:i A'}}"></time>
+                                    {{ deadline|date:"F j, Y, g:i A" }}
                                 </strong>
                                 to complete your purchase.
                             </p>
+
                             <!-- Product section -->
                             <table role="presentation" width="100%" cellpadding="10" cellspacing="0">
                                 <tr>

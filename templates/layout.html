@@ -61,7 +61,18 @@
     <!-- Google Recaptcha-->
 
     <script src="https://www.google.com/recaptcha/enterprise.js?render={{ RECAPTCHA_PUBLIC_KEY }}"></script>
-    <!-- Your code -->
+
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ GOOGLE_TRACKING_ID }}"></script>
+
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', "{{ GOOGLE_TRACKING_ID }}");
+    </script>
 
 
     <!--Google Font -->
@@ -70,6 +81,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Birthstone&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
         rel="stylesheet">
+
 
 
     <!-- CSS Files -->

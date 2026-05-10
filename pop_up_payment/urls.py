@@ -25,4 +25,5 @@ urlpatterns = [
     path('nowpayments-webhook/', views.nowpayments_webhook, name='nowpayments_webhook'),
     path('test-nowpayments/', views.test_nowpayments_connection, name='test_nowpayments_connection'),
     path('buy-now/<slug:slug>/', views.buy_now_add_to_cart, name='buy_now'),
+
 ]

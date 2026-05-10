@@ -80,5 +80,6 @@
 
 
 section h2.section_title {
+    color: var(--chevron-color);
     margin-bottom: .5rem;
 }

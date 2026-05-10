@@ -15,8 +15,18 @@ from django.db.models import Q
 """ 
 - List of Email Utility Functions 
 
-1. send_2fa_code_email
-
+ 1. send_2fa_code_email
+ 2. send_auction_winner_email
+ 3. send_24_hour_reminder_email
+ 4. send_1_hour_reminder_email
+ 5. send_order_confirmation_email
+ 6. send_okay_to_ship_email
+ 7. send_dispute_alert_to_customer
+ 8. send_customer_shipping_details
+ 9. send_friend_invite_email
+10. get_admin_users
+11. interested_in_products_update_and_notify_me_products_update
+12. send_interested_in_and_coming_soon_product_update_to_users
 """
 
 
@@ -65,6 +75,7 @@ def send_auction_winner_email(user, product):
     """
 
     deadline = now() + timedelta(hours=48)
+
     subject = "🎉 You Won the Auction!"
     html_message = render_to_string("pop_up_email/auction_winner.html", {
         "user": user,
@@ -90,6 +101,7 @@ def send_24_hour_reminder_email(user, product):
     now_time = now()
     subject = "24 Hours Left to Purchase Your Auction Item"
 
+    print('DEBUG send_24_hour_remainer', subject)
     # Get the reservation to pass expires_at to template
     reservation = WinnerReservation.objects.get(user=user, product=product)
 

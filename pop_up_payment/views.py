@@ -30,11 +30,33 @@ from datetime import timedelta
 from dateutil.parser import parse as parse_datetime
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
 from pop_up_payment.utils.address_form_handler import(handle_new_address, handle_selected_address, handle_update_address)
+from .pop_up_payment_copy.payment_copy import (BILLING_ADDRESS_HTML_COPY, SHIPPING_ADDRESS_HTML_COPY)
 import braintree
 import logging
 import requests
 import hmac
 import hashlib
+
+
+"""
+List of Payment Views 
+ 1. AjaxLoginRequiredMixin
+ 2. OptionalLoginMixin
+ 3. ProductBuyView
+ 4. buy_now_add_to_cart
+ 5. ShippingAddressView
+ 6. BillingAddressView
+ 7. CreatePaymentIntentView
+ 8. stripe_webhook_view
+ 9. ProcessVenmoPaymentView
+10. NowPaymentsService
+11. create_nowpayments_payment
+12. finalize_nowpayments_payment
+13. check_nowpayments_status
+14. nowpayments_webhook
+15. test_nowpayments_connection
+16. placed_order
+"""
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +141,6 @@ class ProductBuyView(OptionalLoginMixin, View):
             
             # 4 Item quantity in cart
             cart_length = len(cart)
-            print('cart_length', cart_length)
 
             # 5. Shipping Standard
             standard_shipping = 1499
@@ -348,8 +369,9 @@ def buy_now_add_to_cart(request, slug):
 class ShippingAddressView(LoginRequiredMixin, View):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🔴 NEEDED -> Mobile / Tablet Media Query Completed
+    # 🟢 Mobile / Tablet Media Query Completed
     template_name = "payment/shipping_address.html"
+    shipping_address_html_copy = SHIPPING_ADDRESS_HTML_COPY
 
     def post(self, request):
         user = request.user
@@ -408,6 +430,7 @@ class ShippingAddressView(LoginRequiredMixin, View):
             "address_form": address_form,
             "saved_addresses": saved_addresses,
             "selected_address": selected_address,
+            "shipping_address_html_copy": self.shipping_address_html_copy
         }
         return render(request, self.template_name, context)
 
@@ -421,7 +444,8 @@ class ShippingAddressView(LoginRequiredMixin, View):
         context = {
             "saved_addresses": saved_addresses,
             "address_form": address_form,
-            "edit_address_form": edit_address_form
+            "edit_address_form": edit_address_form,
+            "shipping_address_html_copy": self.shipping_address_html_copy
         }
 
         return render(request, self.template_name, context)
@@ -431,18 +455,17 @@ class ShippingAddressView(LoginRequiredMixin, View):
 class BillingAddressView(LoginRequiredMixin, View):
     # 🟢 View Test Completed
     # 🟢 Model Test Completed
-    # 🔴 NEEDED -> Mobile / Tablet Media Query Completed
+    # 🟢 Mobile / Tablet Media Query Completed
     template_name = "payment/billing_address.html"
+    billing_address_html_copy = BILLING_ADDRESS_HTML_COPY
 
     def post(self, request):
-        print('DEBUG Post hit')
         user = request.user
         address_instance = None
         address_id = request.POST.get('address_id')
         selected_address_id = request.POST.get('selected_address') 
         saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
         selected_address = saved_addresses.first()
-        print('DEBUG selected_address', selected_address)
         if selected_address_id:
             handle_selected_address(
                 request, 
@@ -462,10 +485,8 @@ class BillingAddressView(LoginRequiredMixin, View):
                 'selected_billing_address_id',
                 'Shipping address updated successfully.'
             )
-            print('DEBUG updated_address:', updated_address)
 
             if updated_address:
-                print('DEBUG updated_address 2:', updated_address)
                 return redirect('pop_up_payment:payment_home')
         else:
             new_address, form = handle_new_address(
@@ -490,7 +511,6 @@ class BillingAddressView(LoginRequiredMixin, View):
         # If the form isn't valid, re-render the page with the forms filled in
         cart = Cart(request)
         saved_addresses = PopUpCustomerAddress.objects.filter(customer=user) 
-        print('saved_addresses', saved_addresses)       
         address_form = PopUpUpdateShippingInformationForm(instance=address_instance)
         edit_address_form = PopUpUpdateShippingInformationForm()
 
@@ -500,7 +520,8 @@ class BillingAddressView(LoginRequiredMixin, View):
             "address_form": address_form,
             "saved_addresses": saved_addresses,
             "selected_address": selected_address,
-            "use_billing_as_shipping": use_billing_as_shipping
+            "use_billing_as_shipping": use_billing_as_shipping,
+            "billing_address_html_copy": self.billing_address_html_copy,
         }
         return render(request, self.template_name, context)
 
@@ -517,22 +538,24 @@ class BillingAddressView(LoginRequiredMixin, View):
         context = {
             "saved_addresses": saved_addresses,
             "address_form": address_form,
-            "edit_address_form": edit_address_form
+            "edit_address_form": edit_address_form,
+            "billing_address_html_copy": self.billing_address_html_copy,
+        
         }
 
         return render(request, self.template_name, context)
 
 
 
-@require_POST
-@login_required
-def set_billling_address(request):
-    data = json.load(request.body)
-    address_id = data.get('address_id')
-    address = get_object_or_404(PopUpCustomerAddress, id=address_id, user=request.user)
-    request.uer.default = address
-    request.user.save()
-    return JsonResponse({"status": 'ok'})
+# @require_POST
+# @login_required
+# def set_billling_address(request):
+#     data = json.load(request.body)
+#     address_id = data.get('address_id')
+#     address = get_object_or_404(PopUpCustomerAddress, id=address_id, user=request.user)
+#     request.uer.default = address
+#     request.user.save()
+#     return JsonResponse({"status": 'ok'})
 
         
 
@@ -1128,6 +1151,5 @@ def placed_order(request):
     base_queryset = PopUpProduct.objects.prefetch_related('popupproductspecificationvalue_set').filter(is_active=False, inventory_status="in_transit")
     product = add_specs_to_products(base_queryset)
     return render(request, 'payment/placed_order.html', {'user': user, 'order_id':order_id, 'product': product})
-
 
 

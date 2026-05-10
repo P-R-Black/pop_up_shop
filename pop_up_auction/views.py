@@ -135,12 +135,15 @@ class PlaceBidView(AjaxLoginRequiredMixin, View):
     
         # 2. Enforce that bid is strictly higher than current_highest_bid
         current = product.current_highest_bid or 0
+        print(f'current: {current}')
         retail_price = product.retail_price
+        print(f'retail_price: {retail_price}')
         floor_price = product.reserve_price
+        print(f'floor_price: {floor_price}')
     
 
-        if bid_amount <= float(retail_price):
-            return JsonResponse({'status': 'error', 'message': f'Your bid must be better than ${retail_price:.2f}.',
+        if bid_amount <= float(floor_price):
+            return JsonResponse({'status': 'error', 'message': f'Your bid must be better than ${floor_price:.2f}.',
                                 },
                                 status=400,
                                 )

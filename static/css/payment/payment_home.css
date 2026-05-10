@@ -1,6 +1,8 @@
 .product_buy_section {
     background: var(--body-color);
     min-height: 100vh;
+
+    border: 2px solid pink;
 }
 
 
@@ -27,7 +29,7 @@
 }
 
 
-.checkbout_container_title h3 {
+.checkbout_container_title h2 {
     color: var(--text-color);
     font-size: 1.5rem;
     text-align: center;
@@ -165,6 +167,12 @@
     padding: 1rem 1rem;
 }
 
+.checkout_shipping_container p span {
+    font-size: 1.10rem;
+    font-weight: 600;
+    margin-bottom: .25rem;
+}
+
 
 .shipping_name_container {
     align-items: center;
@@ -172,25 +180,37 @@
 
 }
 
-.checkout_shipping_container h3,
-.checkout_shipping_options_container h3 {
+.shipping_name_container p {
+    font-size: 1.10rem;
+    font-weight: 600;
+    margin-bottom: .25rem;
+}
+
+.checkout_shipping_container h2,
+.checkout_shipping_options_container h2 {
     border-bottom: 2px solid var(--text-color);
     font-size: 1.25rem;
     margin-bottom: 1rem;
     text-align: center;
-
 }
+
 
 .checkout_shipping_container h4 {
     font-size: 1.10rem;
     margin-bottom: .25rem;
+
+    border: 2px solid red;
 
 }
 
 .shipping_city_state_zip_container {
     align-items: center;
     display: flex;
+}
 
+.shipping_city_state_zip_container span {
+    font-size: 1.10rem;
+    font-weight: 600;
 }
 
 
@@ -685,7 +705,7 @@ select#suffix {
     padding: 1rem 1rem;
 }
 
-.checkout_billing_container h3 {
+.checkout_billing_container h2 {
     border-bottom: 2px solid var(--text-color);
     font-size: 1.25rem;
     margin-bottom: 1rem;
@@ -693,8 +713,9 @@ select#suffix {
 
 }
 
-.checkout_billing_container h4 {
+.checkout_billing_container p {
     font-size: 1.10rem;
+    font-weight: 600;
     margin-bottom: .25rem;
 
 }
