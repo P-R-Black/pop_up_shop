@@ -84,3 +84,4 @@ whitenoise>=6.0
 yarl==1.22.0
 zopfli==0.2.3.post1
 playwright==1.59.0
+pytest-asyncio==1.2.0
