@@ -1,0 +1,917 @@
+from django.db import models
+from django.contrib.auth.models import User
+from django.conf import settings
+from pop_up_auction.models import PopUpProduct, PopUpBrand, PopUpCategory
+import uuid
+from django.utils.timezone import now
+from typing import Dict, List, Optional
+from datetime import timedelta, datetime
+
+class CookieModel(models.Model):
+    """
+    Django model to store cookies persistently in the database.
+    
+    Allows bots to maintain logged-in state, shopping cart state, etc.
+    across multiple executions.
+    """
+    
+    id = models.BigAutoField(primary_key=True)
+    site_name = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text="Site identifier (e.g., 'nike', 'footlocker')"
+    )
+    name = models.CharField(
+        max_length=255,
+        help_text="Cookie name"
+    )
+    value = models.TextField(
+        help_text="Cookie value"
+    )
+    domain = models.CharField(
+        max_length=255,
+        help_text="Cookie domain (e.g., '.nike.com')"
+    )
+    path = models.CharField(
+        max_length=255,
+        default='/',
+        help_text="Cookie path"
+    )
+    expires = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Cookie expiration time"
+    )
+    http_only = models.BooleanField(
+        default=False,
+        help_text="Cookie httpOnly flag"
+    )
+    secure = models.BooleanField(
+        default=False,
+        help_text="Cookie secure flag (HTTPS only)"
+    )
+    same_site = models.CharField(
+        max_length=10,
+        choices=[
+            ('Lax', 'Lax'),
+            ('Strict', 'Strict'),
+            ('None', 'None'),
+        ],
+        default='Lax',
+        help_text="Cookie SameSite flag"
+    )
+    saved_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When this cookie was saved"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="When this cookie was last updated"
+    )
+    
+    class Meta:
+        db_table = 'pop_up_bot_cookies'
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['site_name', 'name']),
+            models.Index(fields=['site_name', '-updated_at']),
+            models.Index(fields=['expires']),
+        ]
+        verbose_name = 'Bot Cookie'
+        verbose_name_plural = 'Bot Cookies'
+        # Unique constraint: one cookie per site+domain+name
+        constraints = [
+            models.UniqueConstraint(
+                fields=['site_name', 'domain', 'name'],
+                name='unique_site_domain_cookie_name'
+            )
+        ]
+    
+    def __str__(self):
+        return f"{self.site_name} - {self.name} ({self.domain})"
+    
+    @property
+    def is_expired(self) -> bool:
+        """Check if cookie is expired"""
+        if self.expires is None:
+            return False
+        from django.utils import timezone
+        return timezone.now() > self.expires
+    
+    def to_playwright_dict(self) -> Dict:
+        """Convert to Playwright cookie format"""
+        cookie_dict = {
+            'name': self.name,
+            'value': self.value,
+            'domain': self.domain,
+            'path': self.path,
+            'httpOnly': self.http_only,
+            'secure': self.secure,
+            'sameSite': self.same_site,
+        }
+        
+        if self.expires:
+            # Playwright expects Unix timestamp
+            cookie_dict['expires'] = self.expires.timestamp()
+        
+        return cookie_dict
+    
+class ProcurementRequest(models.Model):
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('active', 'Active'),
+        ('fulfilled', 'Fulfilled'),
+        ('cancelled', 'Cancelled'),
+        ('expired', 'Expired'),
+    ]
+
+    PROCUREMENT_TYPE_CHOICES = [
+        ('inventory', 'Inventory Procurement'),
+        ('concierge', 'Concierge Procurement'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='procurement_requests'
+    )
+
+    product = models.ForeignKey(
+        PopUpProduct,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    brand = models.ForeignKey(
+        PopUpBrand,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    product_name = models.CharField(max_length=255)
+
+    target_size = models.CharField(max_length=50)
+
+    target_color = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    max_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+    procurement_type = models.CharField(
+        max_length=20,
+        choices=PROCUREMENT_TYPE_CHOICES,
+        default='inventory'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+
+    priority_score = models.IntegerField(default=0)
+
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    fulfilled_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    @property
+    def is_expired(self):
+        """Check if request has expired"""
+        if self.expires_at:
+            return now() > self.expires_at
+        return False
+
+    @property
+    def execution_count(self):
+        """How many execution attempts?"""
+        return self.executions.count()
+
+    @property
+    def execution_success_count(self):
+        """How many successful executions?"""
+        return self.executions.filter(status='success').count()
+
+    # 2. Add these to ProcurementExecution for convenience
+    @property
+    def duration_seconds(self):
+        """Calculate execution duration"""
+        if self.completed_at and self.started_at:
+            return (self.completed_at - self.started_at).total_seconds()
+        return None
+
+    @property
+    def was_successful(self):
+        """Quick check if execution succeeded"""
+        return self.status == 'success' and self.order_id is not None
+
+    # 3. Add these to SiteAttempt for convenience
+    @property
+    def duration_seconds(self):
+        """Calculate attempt duration"""
+        if self.completed_at and self.started_at:
+            return (self.completed_at - self.started_at).total_seconds()
+        return None
+
+    @property
+    def was_successful(self):
+        """Quick check if site attempt succeeded"""
+        return self.status == 'success'
+
+class ProcurementExecution(models.Model):
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    STRATEGY_CHOICES = [
+        ('sequential', 'Sequential'),
+        ('parallel', 'Parallel'),
+        ('priority', 'Priority'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    procurement_request = models.ForeignKey(
+        ProcurementRequest,
+        on_delete=models.CASCADE,
+        related_name='executions'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+
+    strategy_used = models.CharField(
+        max_length=20,
+        choices=STRATEGY_CHOICES,
+        default='sequential'
+    )
+
+    winning_site = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    order_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    item_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    idempotency_key = models.UUIDField(
+        default=uuid.uuid4
+    )
+
+    started_at = models.DateTimeField()
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    error_message = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    task_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+
+class ExternalProductReference(models.Model):
+
+    SITE_CHOICES = [
+        ('nike', 'Nike'),
+        ('footlocker', 'Footlocker'),
+        ('adidas', 'Adidas'),
+        ('new_balance', 'New Balance'),
+        ('supreme', 'Supreme'),
+    ]
+
+    product = models.ForeignKey(
+        PopUpProduct,
+        on_delete=models.CASCADE,
+        related_name='external_references'
+    )
+
+    site_name = models.CharField(
+        max_length=50,
+        choices=SITE_CHOICES
+    )
+
+    external_sku = models.CharField(max_length=255)
+
+    external_url = models.URLField()
+
+    last_verified_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+
+class InventoryLock(models.Model):
+    """
+    Distributed lock to prevent race conditions and duplicate purchases.
+    
+    Prevents:
+    - Two executions buying the same item simultaneously
+    - Race conditions in parallel procurement strategies
+    - Double-charging users
+    
+    Example:
+    - Execution A: Tries to lock Nike SB Dunk Low Size 10
+    - Execution B: Tries to lock Nike SB Dunk Low Size 10 (at same time)
+    - Only ONE gets the lock, other aborts
+    """
+
+    
+    LOCK_STATUS_CHOICES = [
+        ('acquired', 'Acquired'),
+        ('released', 'Released'),
+        ('expired', 'Expired'),
+        ('failed', 'Failed'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # What are we locking?
+    product_identifier = models.CharField(
+        max_length=255,
+        help_text="External SKU or product identifier (e.g., Nike: 'DA1971-104')"
+    )
+    size = models.CharField(max_length=20)
+    
+    # Who holds the lock?
+    execution = models.ForeignKey(
+        ProcurementExecution,
+        on_delete=models.CASCADE,
+        related_name='inventory_locks'
+    )
+    
+    site_name = models.CharField(
+        max_length=50,
+        help_text="Which site this lock is for (e.g., 'nike', 'footlocker')"
+    )
+    
+    # Lock lifecycle
+    status = models.CharField(
+        max_length=20,
+        choices=LOCK_STATUS_CHOICES,
+        default='acquired'
+    )
+    locked_until = models.DateTimeField(
+        help_text="Lock automatically expires at this time (prevents deadlocks)"
+    )
+    acquired_at = models.DateTimeField(auto_now_add=True)
+    released_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-acquired_at']
+        indexes = [
+            models.Index(fields=['product_identifier', 'size', 'status']),
+            models.Index(fields=['execution']),
+            models.Index(fields=['locked_until']),
+        ]
+        # Prevent multiple active locks on same product+size
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product_identifier', 'size'],
+                condition=models.Q(status='acquired'),
+                name='unique_active_lock_per_product_size'
+            )
+        ]
+    
+    def __str__(self):
+        return f"{self.product_identifier} (Size {self.size}) - {self.status}"
+    
+    @property
+    def is_active(self):
+        """Check if lock is still active"""
+        if self.status != 'acquired':
+            return False
+        return now() < self.locked_until
+    
+    @property
+    def is_expired(self):
+        """Check if lock has expired (prevents deadlocks)"""
+        return self.status == 'acquired' and now() > self.locked_until
+    
+    @classmethod
+    def try_acquire_lock(cls, product_identifier, size, site_name, execution, ttl_seconds=60):
+        """
+        Attempt to acquire a lock for a product.
+        
+        Args:
+            product_identifier: External SKU
+            size: Product size
+            site_name: Which site
+            execution: ProcurementExecution instance
+            ttl_seconds: Lock timeout (default 60 seconds)
+        
+        Returns:
+            (lock_instance, acquired: bool)
+            
+        Example:
+            lock, acquired = InventoryLock.try_acquire_lock(
+                product_identifier='DA1971-104',
+                size='10',
+                site_name='nike',
+                execution=execution,
+                ttl_seconds=60
+            )
+            
+            if acquired:
+                # Proceed to checkout
+                proceed_to_checkout()
+                lock.release()
+            else:
+                # Another execution won the race
+                abort_execution()
+        """
+        from django.db import IntegrityError
+        
+        try:
+            lock = cls.objects.create(
+                product_identifier=product_identifier,
+                size=size,
+                site_name=site_name,
+                execution=execution,
+                locked_until=now() + timedelta(seconds=ttl_seconds),
+                status='acquired'
+            )
+            return lock, True
+        except IntegrityError:
+            # Another execution already has the lock
+            return None, False
+    
+    def release(self):
+        """Release the lock after successful purchase"""
+        self.status = 'released'
+        self.released_at = now()
+        self.save()
+    
+    def mark_failed(self):
+        """Mark lock as failed if something went wrong"""
+        self.status = 'failed'
+        self.released_at = now()
+        self.save()
+    
+    def mark_expired(self):
+        """Mark lock as expired (TTL exceeded)"""
+        self.status = 'expired'
+        self.released_at = now()
+        self.save()
+
+
+
+class ProcurementEvent(models.Model):
+    """
+    Event log for complete auditability and debugging
+    Enables:
+    - Full event replay/debugging
+    - Analytics on where bots fail most
+    - Complete audit trail
+    - State machine reconstruction
+    """
+    EVENT_CHOICES = [
+        ('INITIALIZED', 'Initialized'),
+        ('STRATEGY_SELECTED', 'Strategy Selected'),
+        ('SITE_SELECTED', 'Site Selected'),
+        ('PRODUCT_FOUND', 'Product Found'),
+        ('SIZE_SELECTED', 'Size Selected'),
+        ('CART_SUCCESS', 'Added to Cart'),
+        ('LOCK_ACQUIRED', 'Lock Acquired'),
+        ('LOCK_FAILED', 'Lock Failed'),
+        ('CHECKOUT_STARTED', 'Checkout Started'),
+        ('PAYMENT_SUBMITTED', 'Payment Submitted'),
+        ('ORDER_CONFIRMED', 'Order Confirmed'),
+        ('FAILED', 'Failed'),
+        ('ABANDONED', 'Abandoned'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    bot_execution = models.ForeignKey(ProcurementExecution, on_delete=models.CASCADE, related_name='events')
+    event_type = models.CharField(max_length=50, choices=EVENT_CHOICES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    site_name = models.CharField(max_length=50, null=True, blank=True)
+    metadata = models.JSONField(default=dict)
+    
+    class Meta:
+        ordering = ['timestamp']
+        indexes = [
+            models.Index(fields=['bot_execution', 'timestamp']),
+            models.Index(fields=['event_type']),
+        ]
+    
+    def __str__(self):
+        return f"{self.bot_execution.id} - {self.event_type}"
+
+
+class BotLog(models.Model):
+    """
+    Detailed logging of bot operations
+    Different from ProcurementEvent (which are state transitions)
+    BotLog captures operational messages and warnings
+    """
+    LOG_LEVEL_CHOICES = [
+        ('debug', 'Debug'),
+        ('info', 'Info'),
+        ('warning', 'Warning'),
+        ('error', 'Error'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    bot_execution = models.ForeignKey(ProcurementExecution, on_delete=models.CASCADE, related_name='logs')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    level = models.CharField(max_length=20, choices=LOG_LEVEL_CHOICES)
+    message = models.TextField()
+    context = models.JSONField(default=dict)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['bot_execution', 'timestamp']),
+            models.Index(fields=['level']),
+        ]
+    
+    def __str__(self):
+        return f"[{self.level.upper()}] {self.message[:50]}"
+    
+
+class SiteAttempt(models.Model):
+
+    STATUS_CHOICES = [
+        ('started', 'Started'),
+        ('product_found', 'Product Found'),
+        ('carted', 'Carted'),
+        ('checkout_started', 'Checkout Started'),
+        ('payment_submitted', 'Payment Submitted'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('oos', 'Out Of Stock'),
+        ('blocked', 'Blocked'),
+    ]
+
+    FAILURE_CHOICES = [
+        ('oos', 'Out Of Stock'),
+        ('payment_declined', 'Payment Declined'),
+        ('captcha', 'Captcha'),
+        ('site_timeout', 'Site Timeout'),
+        ('blocked', 'Blocked'),
+        ('selector_failure', 'Selector Failure'),
+        ('network_error', 'Network Error'),
+        ('unknown', 'Unknown'),
+    ]
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+
+    execution = models.ForeignKey(
+        ProcurementExecution,
+        on_delete=models.CASCADE,
+        related_name='site_attempts',
+        null=True, 
+        blank=True 
+    )
+
+    site_name = models.CharField(max_length=50)
+
+    status = models.CharField(
+        max_length=50,
+        choices=STATUS_CHOICES,
+        default='started'
+    )
+
+    failure_reason = models.CharField(
+        max_length=50,
+        choices=FAILURE_CHOICES,
+        null=True,
+        blank=True
+    )
+
+    retry_count = models.PositiveIntegerField(default=0)
+
+    product_url = models.URLField(
+        null=True,
+        blank=True
+    )
+
+    external_sku = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    error_message = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    screenshot = models.ImageField(
+        upload_to='bot_failures/',
+        null=True,
+        blank=True
+    )
+
+    started_at = models.DateTimeField()
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+
+
+# class Procuremen
+# tRequest(models.Model):
+#     STATUS_CHOICES = [
+#         ('pending', 'Pending'),
+#         ('active', 'Active'),
+#         ('fulfilled', 'Fulfilled'),
+#         ('cancelled', 'Cancelled'),
+#         ('expired', 'Expired'),
+#     ]
+
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+#     user = models.ForeignKey(
+#         settings.AUTH_USER_MODEL,
+#         on_delete=models.CASCADE,
+#         related_name='procurement_requests'
+#     )
+
+#     product = models.ForeignKey(
+#         PopUpProduct,
+#         null=True,
+#         blank=True,
+#         on_delete=models.SET_NULL
+#     )
+
+#     product_name = models.CharField(max_length=255)
+
+#     target_size = models.CharField(max_length=50)
+
+#     max_price = models.DecimalField(
+#         max_digits=10,
+#         decimal_places=2
+#     )
+
+#     status = models.CharField(
+#         max_length=20,
+#         choices=STATUS_CHOICES,
+#         default='pending'
+#     )
+
+#     expires_at = models.DateTimeField(null=True, blank=True)
+
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     updated_at = models.DateTimeField(auto_now=True)
+
+# class BotExecution(models.Model):
+#     """
+#     Track each bot run attempt
+#     """
+#     STATUS_CHOICES = [
+#         ('pending', 'Pending'),
+#         ('running', 'Running'),
+#         ('success', 'Success'),
+#         ('failed', 'Failed'),
+#         ('abandoned', 'Abandoned'),
+#     ]
+    
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='bot_executions')
+    
+#     # Link to product (optional - for tracking which product was procured)
+#     product = models.ForeignKey(PopUpProduct, null=True, blank=True, on_delete=models.SET_NULL, related_name='bot_executions')
+#     brand = models.ForeignKey(PopUpBrand, null=True, blank=True, on_delete=models.SET_NULL, related_name='bot_executions')
+    
+#     # Search parameters
+#     product_name = models.CharField(max_length=255)
+#     target_size = models.CharField(max_length=50)
+#     target_color = models.CharField(max_length=100, null=True, blank=True)
+#     price_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=None)
+    
+#     # Execution details
+#     strategy_used = models.CharField(max_length=50, default='sequential')
+#     sites_attempted = models.JSONField(default=list)  # ["nike", "footlocker"]
+#     winning_site = models.CharField(max_length=50, null=True, blank=True)
+    
+#     # Order details
+#     order_id = models.CharField(max_length=100, null=True, blank=True, unique=True)
+#     item_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+#     reservation_fee_paid = models.BooleanField(default=False)
+
+#     # added by gpt
+#     procurement_request = models.ForeignKey(
+#         ProcurementRequest,
+#         null=True,
+#         blank=True,
+#         on_delete=models.CASCADE,
+#         related_name='executions'
+#     )
+
+    # added by gpt
+    # reservation_fee_transaction = models.ForeignKey(
+    #     'pop_up_payments.PaymentTransaction',
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.SET_NULL,
+    #     related_name='reservation_fee_executions'
+    # )
+
+    # added by gpt
+    # final_payment_transaction = models.ForeignKey(
+    #     'pop_up_payments.PaymentTransaction',
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.SET_NULL,
+    #     related_name='final_payment_executions'
+    # )
+
+    # payment_method_type = models.CharField(
+    #     max_length=50, 
+    #     null=True, 
+    #     blank=True,
+    #     choices=[
+    #         ('credit_card', 'Credit Card'),
+    #         ('gift_card', 'Gift Card'),
+    #     ]
+    # )
+    
+    # # Status
+    # status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    # error_message = models.TextField(null=True, blank=True)
+    
+    # # Concierge mode
+    # concierge_mode = models.BooleanField(default=False)
+    
+    # # Timestamps
+    # started_at = models.DateTimeField()
+    # completed_at = models.DateTimeField(null=True, blank=True)
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
+    
+    # class Meta:
+    #     ordering = ['-created_at']
+    #     indexes = [
+    #         models.Index(fields=['user', '-created_at']),
+    #         models.Index(fields=['status']),
+    #         models.Index(fields=['winning_site']),
+    #         models.Index(fields=['order_id']),
+    #     ]
+    
+    # def __str__(self):
+    #     return f"{self.product_name} - {self.status} ({self.id})"
+    
+    # @property
+    # def duration_seconds(self):
+    #     """Calculate execution duration"""
+    #     if self.completed_at and self.started_at:
+    #         return (self.completed_at - self.started_at).total_seconds()
+    #     return None
+    
+    # @property
+    # def was_successful(self):
+    #     """Quick check if bot succeeded"""
+    #     return self.status == 'success' and self.order_id is not None
+
+
+
+
+
+# class SiteAttempt(models.Model):
+#     """
+#     Track individual site attempt within a bot execution
+#     """
+#     ATTEMPT_STATUS_CHOICES = [
+#         ('in_progress', 'In Progress'),
+#         ('item_found', 'Item Found'),
+#         ('added_to_cart', 'Added to Cart'),
+#         ('checkout_started', 'Checkout Started'),
+#         ('payment_failed', 'Payment Failed'),
+#         ('order_confirmed', 'Order Confirmed'),
+#         ('stock_out', 'Out of Stock'),
+#         ('not_available', 'Not Available'),
+#         ('error', 'Error'),
+#     ]
+    
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     bot_execution = models.ForeignKey(BotExecution, on_delete=models.CASCADE, related_name='site_attempts')
+#     site_name = models.CharField(max_length=50)
+#     attempt_number = models.PositiveIntegerField()
+#     status = models.CharField(max_length=50, choices=ATTEMPT_STATUS_CHOICES)
+#     product_url = models.URLField(null=True, blank=True)
+#     product_sku = models.CharField(max_length=100, null=True, blank=True, help_text="Site's product SKU/ID")
+#     error_message = models.TextField(null=True, blank=True)
+#     screenshot = models.FileField(null=True, blank=True)
+#     started_at = models.DateTimeField()
+#     completed_at = models.DateTimeField(null=True, blank=True)
+    
+#     class Meta:
+#         ordering = ['started_at']
+#         indexes = [
+#             models.Index(fields=['bot_execution', 'site_name']),
+#             models.Index(fields=['status']),
+#         ]
+    
+#     def __str__(self):
+#         return f"{self.bot_execution.id} - {self.site_name}"
+    
+#     @property
+#     def duration_seconds(self):
+#         """Calculate attempt duration"""
+#         if self.completed_at and self.started_at:
+#             return (self.completed_at - self.started_at).total_seconds()
+#         return None
+
+
+# class PaymentMethod(models.Model):
+#     """
+#     Store encrypted payment credentials
+#     Associated with user (for future concierge mode)
+#     """
+#     PAYMENT_CHOICES = [
+#         ('credit_card', 'Credit Card'),
+#         ('gift_card', 'Gift Card'),
+#     ]
+    
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name='payment_methods')
+#     method_type = models.CharField(max_length=50, choices=PAYMENT_CHOICES)
+    
+#     # Encrypted fields (never display unencrypted)
+#     encrypted_number = models.BinaryField(help_text="AES-256 encrypted card/gift card number")
+#     encrypted_csv = models.BinaryField(help_text="AES-256 encrypted CVV/CSV")
+#     encrypted_expiry = models.BinaryField(help_text="AES-256 encrypted expiration date")
+#     encrypted_pin = models.BinaryField(null=True, blank=True, help_text="AES-256 encrypted PIN (gift cards only)")
+    
+#     # Metadata (safe to display)
+#     last_four = models.CharField(max_length=4, help_text="Last 4 digits for display")
+#     card_holder_name = models.CharField(max_length=255, null=True, blank=True)
+#     is_active = models.BooleanField(default=True)
+    
+#     # Tracking
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     last_used_at = models.DateTimeField(null=True, blank=True)
+    
+#     class Meta:
+#         ordering = ['-created_at']
+#         indexes = [
+#             models.Index(fields=['user', 'is_active']),
+#         ]
+    
+#     def __str__(self):
+#         return f"{self.get_method_type_display()} ending in {self.last_four}"
+
+

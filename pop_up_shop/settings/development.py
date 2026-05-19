@@ -27,6 +27,16 @@ ALLOWED_HOSTS = [
     ]
 
 
+# Use in-memory database for tests
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',  # In-memory database - no cleanup needed
+        'ATOMIC_REQUESTS': True,  # Ensure test isolation
+        }
+    }
+
 # Database
 # Add PostgreSQL config
 DATABASES = {
@@ -39,6 +49,7 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
 
 
 

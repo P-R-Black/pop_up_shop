@@ -63,6 +63,15 @@ DATABASE_ROUTERS = [
   
 ]
 
+
+# Use in-memory database for tests recently added to speed up tests and avoid cleanup issues. PostgreSQL is still available for local development and can be used in CI if needed.
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': ':memory:',  # In-memory database - no cleanup needed
+    }
+
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

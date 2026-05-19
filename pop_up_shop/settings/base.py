@@ -52,8 +52,8 @@ SECRET_KEY=os.environ.get('SECRET_KEY', 'ci-insecure-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG=True 
-
 # DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+
 
 
 
@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     'pop_up_cart.apps.PopUpCartConfig',
     'pop_up_coupon.apps.PopUpCouponConfig',
     'pop_up_reward.apps.PopUpRewardConfig',
+    'pop_up_bot.apps.PopUpBotConfig',
     'social_django',
     'django_extensions',
     'django_recaptcha',

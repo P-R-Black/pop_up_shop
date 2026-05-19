@@ -15,6 +15,7 @@ media
 todo.txt
 account_test.py
 auction_dummy_data.py
+BOT_SYSTEM_DESIGN.md
 
 
 .coverage

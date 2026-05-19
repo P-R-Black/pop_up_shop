@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch
 import unittest
 from django.core.cache import cache
 from django.utils.timezone import now, make_aware
-from datetime import timedelta, datetime
 from django.utils import timezone as django_timezone
 from datetime import timezone as dt_timezone, datetime
 from datetime import timedelta, datetime, date 
