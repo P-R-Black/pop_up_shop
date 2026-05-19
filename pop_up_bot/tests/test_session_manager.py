@@ -300,18 +300,19 @@ class TestStats(TestCase):
         assert sm.get_context_count('nike') == 5
 
 
-# ============================================================================
-# Integration Tests
-# ============================================================================
+    # ============================================================================
+    # Integration Tests
+    # ============================================================================
 
-@pytest.mark.asyncio
-async def test_full_workflow():
-    """Integration test: full workflow"""
-    sm = SessionManager()
-    
-    with patch.object(sm, '_create_browser', new_callable=AsyncMock) as mock_create:
-        with patch.object(sm, '_is_browser_alive', new_callable=AsyncMock, return_value=True):
-            with patch.object(sm, '_close_browser_instance', new_callable=AsyncMock):
+    @pytest.mark.asyncio
+    @pytest.mark.django_db
+    async def test_full_workflow(self):
+        """Integration test: full workflow"""
+        sm = SessionManager()
+        
+        with patch.object(sm, '_create_browser', new_callable=AsyncMock) as mock_create:
+            with patch.object(sm, '_is_browser_alive', new_callable=AsyncMock, return_value=True):
+                # Don't mock _close_browser_instance - let it work
                 mock_browser = AsyncMock()
                 mock_context = AsyncMock()
                 mock_page = AsyncMock()
@@ -320,7 +321,8 @@ async def test_full_workflow():
                 mock_browser.new_context.return_value = mock_context
                 mock_context.new_page.return_value = mock_page
                 
-                await sm.initialize()
+                # Mock playwright
+                sm.playwright = AsyncMock()
                 
                 # Get page (creates browser)
                 page1 = await sm.get_page('nike')
