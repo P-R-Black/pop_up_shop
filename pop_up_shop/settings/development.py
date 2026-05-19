@@ -28,15 +28,16 @@ ALLOWED_HOSTS = [
 
 
 # Use in-memory database for tests
-if 'test' in sys.argv:
-    DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',  # In-memory database - no cleanup needed
-        'ATOMIC_REQUESTS': True,  # Ensure test isolation
-        }
-    }
+# if 'test' in sys.argv:
+#     DATABASES = {
+#         'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': ':memory:',  # In-memory database - no cleanup needed
+#         'ATOMIC_REQUESTS': True,  # Ensure test isolation
+#         }
+#     }
 
+# else:
 # Database
 # Add PostgreSQL config
 DATABASES = {
