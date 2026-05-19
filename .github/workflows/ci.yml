@@ -52,6 +52,10 @@ jobs:
           pip install -r requirements.txt
           # pip install -e shared_app
       
+      - name: Install Playwright browsers  # ← ADD THIS
+        run: |
+          playwright install chromium  # Install only chromium (faster)
+
       - name: Clean Python cache
         run: |
           find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
