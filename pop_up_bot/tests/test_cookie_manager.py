@@ -500,27 +500,6 @@ class TestCookieManagerDuplicate(TestCase):
         nike_eu_count = await async_filter_count(site_name='nike.eu')
         assert nike_eu_count == 2
 
-
-# class TestCookieManagerDjango(TestCase):
-#     """Test CookieManagerDjango synchronous wrapper"""
-    
-#     # @pytest.mark.django_db
-#     def test_save_cookies_sync(self):
-#         """Test synchronous save_cookies"""
-#         manager = CookieManagerDjango()
-        
-#         cookies = [
-#             {
-#                 'name': 'session_id',
-#                 'value': 'abc123',
-#                 'domain': '.nike.com',
-#             }
-#         ]
-        
-#         count = manager.save_cookies('nike', cookies)
-        
-#         assert count == 1
-#         assert CookieModel.objects.count() == 1
     
     
 
