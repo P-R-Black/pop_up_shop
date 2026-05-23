@@ -12,6 +12,16 @@ jobs:
    
 
     services:
+      redis: # This is new 5/21/2026
+          image: redis:7
+          ports:
+            - 6379:6379
+          options: >-
+            --health-cmd "redis-cli ping"
+            --health-interval 10s
+            --health-timeout 5s
+            --health-retries 5
+
       postgres:
         image: postgres:15
         env:
@@ -30,6 +40,7 @@ jobs:
       DJANGO_SETTINGS_MODULE: pop_up_shop.settings.ci
       DJANGO_SECRET_KEY: "github-actions-ci-secret"
       SHARED_APPS_DIR: ${{ github.workspace }}/shared_app_accounts
+      REDIS_URL: redis://localhost:6379/0 # This is new 5/21/2026
 
     steps:
       - name: Checkout pop_up_shop
