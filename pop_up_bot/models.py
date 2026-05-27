@@ -1,11 +1,14 @@
+# pop_up_bot/models.py
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
 from pop_up_auction.models import PopUpProduct, PopUpBrand, PopUpCategory
 import uuid
 from django.utils.timezone import now
+from django.utils import timezone as django_timezone
+from datetime import timezone as dt_timezone, datetime, timedelta
 from typing import Dict, List, Optional
-from datetime import timedelta, datetime
 
 class CookieModel(models.Model):
     """
@@ -79,7 +82,6 @@ class CookieModel(models.Model):
         ]
         verbose_name = 'Bot Cookie'
         verbose_name_plural = 'Bot Cookies'
-        # Unique constraint: one cookie per site+domain+name
         constraints = [
             models.UniqueConstraint(
                 fields=['site_name', 'domain', 'name'],
@@ -115,8 +117,15 @@ class CookieModel(models.Model):
             cookie_dict['expires'] = self.expires.timestamp()
         
         return cookie_dict
-    
+
+
 class ProcurementRequest(models.Model):
+    """
+    User request to procure an item from external sites.
+    
+    Represents a procurement task (find this shoe in this size).
+    Can have multiple ProcurementExecution attempts if first ones fail.
+    """
 
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -155,19 +164,27 @@ class ProcurementRequest(models.Model):
         on_delete=models.SET_NULL
     )
 
-    product_name = models.CharField(max_length=255)
+    product_name = models.CharField(
+        max_length=255,
+        help_text="Name of product to find (e.g., 'Air Jordan 1')"
+    )
 
-    target_size = models.CharField(max_length=50)
+    target_size = models.CharField(
+        max_length=50,
+        help_text="Size to find (e.g., 'US 10')"
+    )
 
     target_color = models.CharField(
         max_length=100,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Optional color preference"
     )
 
     max_price = models.DecimalField(
         max_digits=10,
-        decimal_places=2
+        decimal_places=2,
+        help_text="Maximum price willing to pay"
     )
 
     procurement_type = models.CharField(
@@ -182,22 +199,38 @@ class ProcurementRequest(models.Model):
         default='pending'
     )
 
-    priority_score = models.IntegerField(default=0)
+    priority_score = models.IntegerField(
+        default=0,
+        help_text="Higher = more urgent"
+    )
 
     expires_at = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="Procurement request expires at this time"
     )
 
     fulfilled_at = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="When the item was successfully procured"
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-
+    created_at = models.DateTimeField(default=django_timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['status']),
+            models.Index(fields=['expires_at']),
+        ]
+        verbose_name = 'Procurement Request'
+        verbose_name_plural = 'Procurement Requests'
+
+    def __str__(self):
+        return f"{self.product_name} (Size: {self.target_size}) - {self.status}"
 
     @property
     def is_expired(self):
@@ -216,39 +249,21 @@ class ProcurementRequest(models.Model):
         """How many successful executions?"""
         return self.executions.filter(status='success').count()
 
-    # 2. Add these to ProcurementExecution for convenience
-    @property
-    def duration_seconds(self):
-        """Calculate execution duration"""
-        if self.completed_at and self.started_at:
-            return (self.completed_at - self.started_at).total_seconds()
-        return None
-
-    @property
-    def was_successful(self):
-        """Quick check if execution succeeded"""
-        return self.status == 'success' and self.order_id is not None
-
-    # 3. Add these to SiteAttempt for convenience
-    @property
-    def duration_seconds(self):
-        """Calculate attempt duration"""
-        if self.completed_at and self.started_at:
-            return (self.completed_at - self.started_at).total_seconds()
-        return None
-
-    @property
-    def was_successful(self):
-        """Quick check if site attempt succeeded"""
-        return self.status == 'success'
 
 class ProcurementExecution(models.Model):
+    """
+    Single execution attempt to procure an item.
+    
+    One ProcurementRequest can have multiple ProcurementExecutions if the first
+    ones fail. Tracks which strategy was used, which site won, order ID, etc.
+    """
 
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('running', 'Running'),
         ('success', 'Success'),
         ('failed', 'Failed'),
+        ('abandoned', 'Abandoned'),
         ('cancelled', 'Cancelled'),
     ]
 
@@ -256,6 +271,9 @@ class ProcurementExecution(models.Model):
         ('sequential', 'Sequential'),
         ('parallel', 'Parallel'),
         ('priority', 'Priority'),
+        ('fastest', 'Fastest'),
+        ('cheapest', 'Cheapest'),
+        ('retail_only', 'Retail Only'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -263,67 +281,115 @@ class ProcurementExecution(models.Model):
     procurement_request = models.ForeignKey(
         ProcurementRequest,
         on_delete=models.CASCADE,
-        related_name='executions'
+        related_name='executions',
+        help_text="The request this execution is fulfilling"
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='pending'
+        default='pending',
+        db_index=True,
     )
 
     strategy_used = models.CharField(
         max_length=20,
         choices=STRATEGY_CHOICES,
-        default='sequential'
+        default='sequential',
+        help_text="Which procurement strategy was used"
     )
 
     winning_site = models.CharField(
         max_length=50,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Which site successfully procured the item"
     )
 
     order_id = models.CharField(
         max_length=255,
         null=True,
-        blank=True
+        blank=True,
+        unique=True,
+        help_text="Order ID from the site"
     )
 
     item_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Price paid for the item"
     )
 
     idempotency_key = models.UUIDField(
-        default=uuid.uuid4
+        default=uuid.uuid4,
+        help_text="Prevents duplicate execution"
     )
 
-    started_at = models.DateTimeField()
+    started_at = models.DateTimeField(
+        help_text="When execution started"
+    )
 
     completed_at = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="When execution completed (success or failure)"
     )
 
     error_message = models.TextField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="Error message if execution failed"
     )
 
     task_id = models.CharField(
         max_length=255,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Celery task ID if running asynchronously"
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=django_timezone.now)
 
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['procurement_request', 'status']),
+            models.Index(fields=['status']),
+            models.Index(fields=['winning_site']),
+            models.Index(fields=['order_id']),
+        ]
+        verbose_name = 'Procurement Execution'
+        verbose_name_plural = 'Procurement Executions'
+
+    def __str__(self):
+        return f"{self.procurement_request.product_name} - {self.status}"
+
+    @property
+    def duration_seconds(self) -> Optional[float]:
+        """Calculate execution duration"""
+        if self.completed_at and self.started_at:
+            return (self.completed_at - self.started_at).total_seconds()
+        return None
+
+    @property
+    def was_successful(self) -> bool:
+        """Quick check if execution succeeded"""
+        return self.status == 'success' and self.order_id is not None
+
+    @property
+    def is_running(self) -> bool:
+        """Check if execution is still running"""
+        return self.status == 'running'
 
 
 class ExternalProductReference(models.Model):
+    """
+    Map between our PopUpProduct and external site SKUs.
+    
+    Helps identify products on external sites and track pricing.
+    """
 
     SITE_CHOICES = [
         ('nike', 'Nike'),
@@ -331,7 +397,11 @@ class ExternalProductReference(models.Model):
         ('adidas', 'Adidas'),
         ('new_balance', 'New Balance'),
         ('supreme', 'Supreme'),
+        ('grailed', 'Grailed'),
+        ('stockx', 'StockX'),
     ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     product = models.ForeignKey(
         PopUpProduct,
@@ -341,17 +411,47 @@ class ExternalProductReference(models.Model):
 
     site_name = models.CharField(
         max_length=50,
-        choices=SITE_CHOICES
+        choices=SITE_CHOICES,
+        db_index=True,
     )
 
-    external_sku = models.CharField(max_length=255)
+    external_sku = models.CharField(
+        max_length=255,
+        help_text="SKU on the external site"
+    )
 
-    external_url = models.URLField()
+    external_url = models.URLField(
+        help_text="Direct link to product on external site"
+    )
 
     last_verified_at = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="Last time we verified this product exists"
     )
+
+    last_price_check = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    last_known_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(default=django_timezone.now)
+
+    class Meta:
+        unique_together = ('site_name', 'external_sku')
+        indexes = [
+            models.Index(fields=['site_name', 'external_sku']),
+        ]
+
+    def __str__(self):
+        return f"{self.site_name} - {self.external_sku}"
 
 
 class InventoryLock(models.Model):
@@ -362,14 +462,8 @@ class InventoryLock(models.Model):
     - Two executions buying the same item simultaneously
     - Race conditions in parallel procurement strategies
     - Double-charging users
-    
-    Example:
-    - Execution A: Tries to lock Nike SB Dunk Low Size 10
-    - Execution B: Tries to lock Nike SB Dunk Low Size 10 (at same time)
-    - Only ONE gets the lock, other aborts
     """
 
-    
     LOCK_STATUS_CHOICES = [
         ('acquired', 'Acquired'),
         ('released', 'Released'),
@@ -382,19 +476,30 @@ class InventoryLock(models.Model):
     # What are we locking?
     product_identifier = models.CharField(
         max_length=255,
+        db_index=True,
         help_text="External SKU or product identifier (e.g., Nike: 'DA1971-104')"
     )
-    size = models.CharField(max_length=20)
+    size = models.CharField(max_length=20, db_index=True)
     
     # Who holds the lock?
     execution = models.ForeignKey(
         ProcurementExecution,
         on_delete=models.CASCADE,
-        related_name='inventory_locks'
+        related_name='inventory_locks',
+        null=True,
+        blank=True,
+        help_text="Which execution this attempt is part of"
     )
+    
+    # execution = models.ForeignKey(
+    #     ProcurementExecution,
+    #     on_delete=models.CASCADE,
+    #     related_name='inventory_locks'
+    # )
     
     site_name = models.CharField(
         max_length=50,
+        db_index=True,
         help_text="Which site this lock is for (e.g., 'nike', 'footlocker')"
     )
     
@@ -402,7 +507,8 @@ class InventoryLock(models.Model):
     status = models.CharField(
         max_length=20,
         choices=LOCK_STATUS_CHOICES,
-        default='acquired'
+        default='acquired',
+        db_index=True,
     )
     locked_until = models.DateTimeField(
         help_text="Lock automatically expires at this time (prevents deadlocks)"
@@ -417,7 +523,6 @@ class InventoryLock(models.Model):
             models.Index(fields=['execution']),
             models.Index(fields=['locked_until']),
         ]
-        # Prevent multiple active locks on same product+size
         constraints = [
             models.UniqueConstraint(
                 fields=['product_identifier', 'size'],
@@ -508,10 +613,10 @@ class InventoryLock(models.Model):
         self.save()
 
 
-
 class ProcurementEvent(models.Model):
     """
-    Event log for complete auditability and debugging
+    Event log for complete auditability and debugging.
+    
     Enables:
     - Full event replay/debugging
     - Analytics on where bots fail most
@@ -535,11 +640,32 @@ class ProcurementEvent(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    bot_execution = models.ForeignKey(ProcurementExecution, on_delete=models.CASCADE, related_name='events')
-    event_type = models.CharField(max_length=50, choices=EVENT_CHOICES)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    site_name = models.CharField(max_length=50, null=True, blank=True)
-    metadata = models.JSONField(default=dict)
+    
+    bot_execution = models.ForeignKey(
+        ProcurementExecution,
+        on_delete=models.CASCADE,
+        related_name='events'
+    )
+    
+    event_type = models.CharField(
+        max_length=50,
+        choices=EVENT_CHOICES,
+        db_index=True,
+    )
+    
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    
+    site_name = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Which site this event relates to (if applicable)"
+    )
+    
+    metadata = models.JSONField(
+        default=dict,
+        help_text="Additional event data (JSON)"
+    )
     
     class Meta:
         ordering = ['timestamp']
@@ -547,16 +673,19 @@ class ProcurementEvent(models.Model):
             models.Index(fields=['bot_execution', 'timestamp']),
             models.Index(fields=['event_type']),
         ]
+        verbose_name = 'Procurement Event'
+        verbose_name_plural = 'Procurement Events'
     
     def __str__(self):
-        return f"{self.bot_execution.id} - {self.event_type}"
+        return f"{self.event_type} - {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
 
 
 class BotLog(models.Model):
     """
-    Detailed logging of bot operations
-    Different from ProcurementEvent (which are state transitions)
-    BotLog captures operational messages and warnings
+    Detailed logging of bot operations.
+    
+    Different from ProcurementEvent (which are state transitions).
+    BotLog captures operational messages and warnings.
     """
     LOG_LEVEL_CHOICES = [
         ('debug', 'Debug'),
@@ -566,11 +695,27 @@ class BotLog(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    bot_execution = models.ForeignKey(ProcurementExecution, on_delete=models.CASCADE, related_name='logs')
-    timestamp = models.DateTimeField(auto_now_add=True)
-    level = models.CharField(max_length=20, choices=LOG_LEVEL_CHOICES)
+    
+    bot_execution = models.ForeignKey(
+        ProcurementExecution,
+        on_delete=models.CASCADE,
+        related_name='logs'
+    )
+    
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    
+    level = models.CharField(
+        max_length=20,
+        choices=LOG_LEVEL_CHOICES,
+        db_index=True,
+    )
+    
     message = models.TextField()
-    context = models.JSONField(default=dict)
+    
+    context = models.JSONField(
+        default=dict,
+        help_text="Additional context (JSON)"
+    )
     
     class Meta:
         ordering = ['-timestamp']
@@ -578,12 +723,20 @@ class BotLog(models.Model):
             models.Index(fields=['bot_execution', 'timestamp']),
             models.Index(fields=['level']),
         ]
+        verbose_name = 'Bot Log'
+        verbose_name_plural = 'Bot Logs'
     
     def __str__(self):
         return f"[{self.level.upper()}] {self.message[:50]}"
-    
+
 
 class SiteAttempt(models.Model):
+    """
+    Detailed record of a single site procurement attempt.
+    
+    Tracks what happened on a specific site during execution.
+    Helps debug and understand bot failures.
+    """
 
     STATUS_CHOICES = [
         ('started', 'Started'),
@@ -618,59 +771,99 @@ class SiteAttempt(models.Model):
         ProcurementExecution,
         on_delete=models.CASCADE,
         related_name='site_attempts',
-        null=True, 
-        blank=True 
+        help_text="Which execution this attempt is part of"
     )
 
-    site_name = models.CharField(max_length=50)
+    site_name = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text="Which site this attempt targeted"
+    )
 
     status = models.CharField(
         max_length=50,
         choices=STATUS_CHOICES,
-        default='started'
+        default='started',
+        db_index=True,
     )
 
     failure_reason = models.CharField(
         max_length=50,
         choices=FAILURE_CHOICES,
         null=True,
-        blank=True
+        blank=True,
+        help_text="Reason for failure (if failed)"
     )
 
-    retry_count = models.PositiveIntegerField(default=0)
+    retry_count = models.PositiveIntegerField(
+        default=0,
+        help_text="How many times was this attempt retried"
+    )
 
     product_url = models.URLField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="URL of product found on site"
     )
 
     external_sku = models.CharField(
         max_length=255,
         null=True,
-        blank=True
+        blank=True,
+        help_text="SKU from the site"
     )
 
     error_message = models.TextField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="Error message if attempt failed"
     )
 
     screenshot = models.ImageField(
         upload_to='bot_failures/',
         null=True,
-        blank=True
+        blank=True,
+        help_text="Screenshot for debugging"
     )
 
-    started_at = models.DateTimeField()
+    started_at = models.DateTimeField(
+        help_text="When this site attempt started"
+    )
 
     completed_at = models.DateTimeField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="When this site attempt completed"
     )
 
+    class Meta:
+        ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['execution', 'site_name']),
+            models.Index(fields=['status']),
+        ]
+        verbose_name = 'Site Attempt'
+        verbose_name_plural = 'Site Attempts'
+
+    def __str__(self):
+        return f"{self.site_name} - {self.status}"
+
+    @property
+    def duration_seconds(self) -> Optional[float]:
+        """Calculate attempt duration"""
+        if self.completed_at and self.started_at:
+            return (self.completed_at - self.started_at).total_seconds()
+        return None
+
+    @property
+    def was_successful(self) -> bool:
+        """Quick check if site attempt succeeded"""
+        return self.status == 'success'
 
 
-# class Procuremen
+
+
+# class Procurement
 # tRequest(models.Model):
 #     STATUS_CHOICES = [
 #         ('pending', 'Pending'),
