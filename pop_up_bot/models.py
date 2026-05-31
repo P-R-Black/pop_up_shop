@@ -445,9 +445,14 @@ class ExternalProductReference(models.Model):
     created_at = models.DateTimeField(default=django_timezone.now)
 
     class Meta:
-        unique_together = ('site_name', 'external_sku')
         indexes = [
-            models.Index(fields=['site_name', 'external_sku']),
+        models.Index(fields=['site_name', 'external_sku']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['site_name', 'external_sku'],
+                name='unique_site_external_sku'
+            )
         ]
 
     def __str__(self):
@@ -862,6 +867,502 @@ class SiteAttempt(models.Model):
 
 
 
+class ScheduledRelease(models.Model):
+    """
+    Represents a scheduled Nike release.
+    
+    Admin creates this when they've decided to attempt procurement for a product.
+    
+    Example:
+    - Product: LeBron NXXT Gen By JuJu "Silver Lining"
+    - SKU: IQ8495-002
+    - Release: June 2, 2026 at 10:00 AM EST
+    - Direct URL: https://www.nike.com/t/lebron-nxxt-gen-by-juju.../IQ8495-002
+    
+    Admin checks:
+    - product.interested_users.count() = 15 users interested
+    - Decides: "Worth attempting to secure"
+    - Creates ScheduledRelease
+    """
+    
+    SEARCH_METHOD_CHOICES = [
+        ('direct_url', 'Direct URL - Go straight to product page'),
+        ('sku_search', 'SKU Search - Search Nike by SKU'),
+        ('product_name', 'Product Name - Search by name'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('scheduled', 'Scheduled - Waiting for release time'),
+        ('active', 'Active - Release time has arrived, bot running'),
+        ('completed', 'Completed - Release window closed'),
+        ('cancelled', 'Cancelled - Admin cancelled'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # What product?
+    product = models.ForeignKey(
+        PopUpProduct,
+        on_delete=models.CASCADE,
+        related_name='scheduled_releases',
+        help_text="The PopUpProduct being released"
+    )
+    
+    # Nike identifiers
+    sku = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text="Nike SKU (e.g., IQ8495-002)"
+    )
+    
+    # When does it release?
+    release_date = models.DateTimeField(
+        db_index=True,
+        help_text="Exact time product becomes available on Nike"
+    )
+    
+    # How long to keep trying after release?
+    procurement_window_minutes = models.PositiveIntegerField(
+        default=30,
+        help_text="How many minutes after release time to keep attempting to buy (default 30)"
+    )
+    
+    # How to find it on Nike?
+    search_method = models.CharField(
+        max_length=20,
+        choices=SEARCH_METHOD_CHOICES,
+        default='direct_url',
+        help_text="How the bot should find this product on Nike"
+    )
+    
+    # Direct URL (preferred method)
+    product_url = models.URLField(
+        null=True,
+        blank=True,
+        help_text="Direct Nike product URL (e.g., https://www.nike.com/t/...)"
+    )
+    
+    # Search fallback (if URL doesn't work)
+    search_query = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Product name to search for if direct URL fails"
+    )
+    
+    # Status
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='scheduled',
+        db_index=True,
+    )
+    
+    # Celery task tracking
+    celery_task_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Celery task ID for scheduled release"
+    )
+    
+    # Metadata
+    nike_product_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Exact product name from Nike (if already ran once)"
+    )
+    
+    retail_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Expected retail price"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['release_date']
+        indexes = [
+            models.Index(fields=['sku', 'release_date']),
+            models.Index(fields=['status', 'release_date']),
+        ]
+        verbose_name = 'Scheduled Release'
+        verbose_name_plural = 'Scheduled Releases'
+    
+    def __str__(self):
+        return f"{self.product.product_title} - {self.sku} ({self.release_date.strftime('%Y-%m-%d %H:%M')})"
+    
+    @property
+    def is_upcoming(self) -> bool:
+        """Release hasn't happened yet"""
+        return django_timezone.now() < self.release_date
+    
+    @property
+    def is_active(self) -> bool:
+        """We're currently within the procurement window"""
+        now = django_timezone.now()
+        window_end = self.release_date + timedelta(minutes=self.procurement_window_minutes)
+        return self.release_date <= now <= window_end
+    
+    @property
+    def minutes_until_release(self) -> int:
+        """How many minutes until release?"""
+        delta = self.release_date - django_timezone.now()
+        return int(delta.total_seconds() / 60)
+    
+    @property
+    def interested_user_count(self) -> int:
+        """How many users are interested in this product? (from PopUpCustomerProfile)"""
+        return self.product.interested_users.count()
+    
+    @property
+    def paid_user_count(self) -> int:
+        """How many users have paid for procurement service?"""
+        return self.procurement_service_requests.filter(
+            status__in=['pending', 'active', 'success']
+        ).count()
+    
+    def get_search_params(self) -> dict:
+        """Get search parameters for bot"""
+        return {
+            'method': self.search_method,
+            'query': self.search_query or self.product_url,
+            'sku': self.sku,
+        }
+
+
+class ProcurementServiceRequest(models.Model):
+    """
+    User PAYS Pop Up Shop to attempt procurement (PAID SERVICE).
+    
+    When user is interested in a product and it becomes available for procurement,
+    they pay a fee and this record is created.
+    
+    At release_date, the bot runs for this user.
+    
+    Example:
+    1. User marked "interested" in LeBron NXXT via PopUpCustomerProfile
+    2. Item is scheduled for release (ScheduledRelease created)
+    3. Pop Up Shop notifies user: "Pay $15 and we'll secure it for you"
+    4. User pays → ProcurementServiceRequest created
+    5. June 2, 10:00 AM → Bot runs
+    6. If success: Item in user's cart with 48-hour hold
+    7. If failure: User refunded
+    """
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending - User paid, waiting for release'),
+        ('active', 'Active - Release time has arrived, bot running'),
+        ('success', 'Success - Bot secured item'),
+        ('failed', 'Failed - Bot could not secure'),
+        ('abandoned', 'Abandoned - User cancelled before release'),
+        ('expired', 'Expired - Release window closed without success'),
+    ]
+    
+    STRATEGY_CHOICES = [
+        ('fastest', 'Fastest - Use fastest strategy available'),
+        ('cheapest', 'Cheapest - Try to find lowest price'),
+        ('standard', 'Standard - Sequential attempts'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Who and what release?
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='procurement_service_requests'
+    )
+    
+    scheduled_release = models.ForeignKey(
+        ScheduledRelease,
+        on_delete=models.CASCADE,
+        related_name='procurement_service_requests',
+        help_text="The release this user paid for"
+    )
+    
+    # Size and color preferences
+    size = models.CharField(
+        max_length=50,
+        help_text="Size they want (e.g., US 10)"
+    )
+    
+    color = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="Preferred color if available"
+    )
+    
+    max_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Max price they'll pay (optional)"
+    )
+    
+    # Procurement settings
+    strategy = models.CharField(
+        max_length=20,
+        choices=STRATEGY_CHOICES,
+        default='fastest',
+        help_text="Which strategy to use"
+    )
+    
+    # Payment tracking
+    service_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Amount user paid for this service"
+    )
+    
+    fee_paid_at = models.DateTimeField(
+        help_text="When user paid the fee"
+    )
+    
+    # Status
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        db_index=True,
+    )
+    
+    # Links to actual procurement
+    procurement_request = models.OneToOneField(
+        ProcurementRequest,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='service_request',
+        help_text="The ProcurementRequest created at release time"
+    )
+    
+    procurement_execution = models.OneToOneField(
+        ProcurementExecution,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='service_request',
+        help_text="The execution result (if successful)"
+    )
+    
+    # Tracking
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    procurement_request_created_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When ProcurementRequest was created (at release time)"
+    )
+    
+    class Meta:
+        unique_together = ('user', 'scheduled_release', 'size')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['scheduled_release', 'status']),
+        ]
+        verbose_name = 'Procurement Service Request'
+        verbose_name_plural = 'Procurement Service Requests'
+    
+    def __str__(self):
+        return f"{self.user.email} → {self.scheduled_release.product.product_title} (Size {self.size})"
+    
+    @property
+    def was_successful(self) -> bool:
+        """Did bot succeed?"""
+        return self.status == 'success' and self.procurement_execution is not None
+    
+    @property
+    def time_until_release(self) -> timedelta:
+        """Time remaining until release"""
+        return self.scheduled_release.release_date - django_timezone.now()
+    
+    def create_procurement_request(self) -> 'ProcurementRequest':
+        """
+        Create a ProcurementRequest at release time.
+        
+        Called by Celery task when release_date arrives.
+        
+        Returns:
+            ProcurementRequest instance
+        """
+        from pop_up_bot.models import ProcurementRequest
+        
+        # Create the request
+        request = ProcurementRequest.objects.create(
+            user=self.user,
+            product=self.scheduled_release.product,
+            product_name=self.scheduled_release.product.product_title,
+            target_size=self.size,
+            target_color=self.color or '',
+            max_price=self.max_price or self.scheduled_release.retail_price,
+            procurement_type='inventory',
+            status='pending',
+        )
+        
+        # Link back
+        self.procurement_request = request
+        self.procurement_request_created_at = django_timezone.now()
+        self.status = 'active'
+        self.save()
+        
+        return request
+ 
+ 
+class ReleaseExecutionBatch(models.Model):
+    """
+    Groups all executions that ran for a single ScheduledRelease.
+    
+    Example:
+    - Release: LeBron NXXT at 10:00 AM
+    - 5 users paid for service
+    - Bot ran 5 times
+    - This model groups all 5 together for reporting
+    
+    Used for:
+    - Analytics: "How many releases have we attempted?"
+    - Reporting: "5 paid, 3 succeeded, 2 failed"
+    - Debugging: "What happened on release day?"
+    """
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    scheduled_release = models.ForeignKey(
+        ScheduledRelease,
+        on_delete=models.CASCADE,
+        related_name='execution_batches',
+        help_text="The release this batch was for"
+    )
+    
+    # Stats
+    total_attempts = models.PositiveIntegerField(
+        default=0,
+        help_text="Total executions attempted"
+    )
+    
+    successful_count = models.PositiveIntegerField(
+        default=0,
+        help_text="How many succeeded"
+    )
+    
+    failed_count = models.PositiveIntegerField(
+        default=0,
+        help_text="How many failed"
+    )
+    
+    # Timing
+    started_at = models.DateTimeField(
+        help_text="When we started executing"
+    )
+    
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When all executions finished"
+    )
+    
+    # All executions in this batch
+    executions = models.ManyToManyField(
+        ProcurementExecution,
+        related_name='release_batch',
+        help_text="All executions in this batch"
+    )
+    
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Any notes about this release (e.g., 'Nike was slow')"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-started_at']
+        verbose_name = 'Release Execution Batch'
+        verbose_name_plural = 'Release Execution Batches'
+    
+    def __str__(self):
+        return f"{self.scheduled_release} - {self.successful_count}/{self.total_attempts} succeeded"
+    
+    @property
+    def success_rate(self) -> float:
+        """Success percentage"""
+        if self.total_attempts == 0:
+            return 0
+        return (self.successful_count / self.total_attempts) * 100
+    
+    @property
+    def duration_seconds(self) -> int:
+        """How long did batch take?"""
+        if not self.completed_at:
+            return 0
+        return int((self.completed_at - self.started_at).total_seconds())
+ 
+ 
+# ============================================================================
+# USAGE WORKFLOW
+# ============================================================================
+ 
+"""
+STEP-BY-STEP:
+ 
+1. INTEREST TRACKING (Existing in PopUpCustomerProfile)
+   - User clicks "Interested" on LeBron NXXT
+   - Stored in: product.interested_users (ManyToMany)
+   - Admin can see: product.interested_users.count() = 15
+ 
+2. ADMIN DECISION
+   - Admin checks: "LeBron has 15 interested users"
+   - Admin checks Nike SNKR: "Releases June 2 at 10:00 AM EST"
+   - Admin decides: "Worth it, let's create ScheduledRelease"
+   - Creates ScheduledRelease:
+     * product = LeBron NXXT
+     * sku = IQ8495-002
+     * release_date = 2026-06-02 10:00:00 EST
+     * product_url = https://www.nike.com/t/...
+     * search_method = 'direct_url'
+ 
+3. USER PAYS FOR SERVICE
+   - Pop Up Shop notifies interested users
+   - User sees: "Secure this shoe for $15"
+   - User pays → ProcurementServiceRequest created:
+     * user = john
+     * scheduled_release = LeBron NXXT release
+     * size = US 10
+     * service_fee = 15.00
+     * status = 'pending'
+ 
+4. RELEASE TIME ARRIVES
+   - June 2, 10:00 AM
+   - Celery task finds ScheduledRelease with is_active=True
+   - Gets all ProcurementServiceRequest with status='pending'
+   - For each request:
+     a. Calls request.create_procurement_request()
+     b. Runs BotOrchestrator with NikeSiteHandler
+     c. Updates status: 'success' or 'failed'
+   - Creates ReleaseExecutionBatch to group all executions
+ 
+5. REPORTING
+   - Admin dashboard shows:
+     * "LeBron NXXT release: 5 users paid"
+     * "Results: 3 succeeded, 2 failed"
+     * "Success rate: 60%"
+     * "Execution batch details: times, errors, etc"
+ 
+6. USER FULFILLMENT
+   - Success: Item in user's cart with 48-hour hold
+   - Failed: User gets refund + notification
+   - User has 48 hours to complete purchase
+   - If not purchased: Item becomes "buy now" listing
+"""
 
 # class Procurement
 # tRequest(models.Model):
