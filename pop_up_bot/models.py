@@ -1195,6 +1195,14 @@ class ProcurementServiceRequest(models.Model):
             ProcurementRequest instance
         """
         from pop_up_bot.models import ProcurementRequest
+        # Determine max price - use service request's max_price, 
+        # fall back to release's retail_price, 
+        # or use a high default (essentially no limit)
+        max_price = (
+            self.max_price 
+            or self.scheduled_release.retail_price 
+            or 9999.99  # Default high value if neither is set
+        )
         
         # Create the request
         request = ProcurementRequest.objects.create(

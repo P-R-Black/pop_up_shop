@@ -1219,7 +1219,6 @@ class TestScheduledModelsRelationships(TestCase):
             product_url='https://www.nike.com/t/test',
         )
         
-        # self.user = User.objects.create_user('user', 'user@test.com', 'pass')
         self.user, self.user_profile = create_test_user(
             "test@test.com", "testpass!23", "Test", "User", "10", "male"
         )
