@@ -254,13 +254,11 @@ class NikeSiteHandler(BaseSiteHandler):
             
             # Try to find matching size by value or label text
             for radio in size_radios:
-                print('for radio', radio)
                 # Get the radio's value (e.g., "3.5", "10.5")
                 radio_value = await self.engine.evaluate(
                     '(el) => el.value',
                     radio
                 )
-                print('radio_value', radio_value)
                 # Get the radio's value (e
                 
                 # Get the associated label text (e.g., "M 3.5 / W 5", "US 10")
@@ -268,7 +266,6 @@ class NikeSiteHandler(BaseSiteHandler):
                     '(el) => el.id',
                     radio
                 )
-                print('radio_id:', radio_id)
                 
                 label_text = ""
                 if radio_id:

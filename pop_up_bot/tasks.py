@@ -127,6 +127,7 @@ def process_release(release: ScheduledRelease) -> dict:
             'errors': [str],
         }
     """
+    print('DEBUG: Processing release called' )
     logger.info(f"Processing release: {release.sku}")
     
     results = {
@@ -173,9 +174,9 @@ def process_release(release: ScheduledRelease) -> dict:
                 
                 # Queue the actual execution (can be async)
                 task = execute_procurement_request.delay(
-                    proc_request.id,
-                    service_request.id,
-                    batch.id,
+                    str(proc_request.id),
+                    str(service_request.id),
+                    str(batch.id),
                 )
                 
                 execution_tasks.append({
