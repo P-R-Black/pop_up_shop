@@ -6,9 +6,123 @@ from django.utils.timezone import now
 from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
+from decimal import Decimal
+from pop_up_bot.models import ProcurementServiceRequest
+
 
 
 # Create your models here.
+class ServicePayment(models.Model):
+    """
+    Track payments for procurement service requests.
+    
+    Different from PopUpPayment which is for item purchases.
+    This is specifically for the $15 procurement service fee.
+    """
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
+    ]
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('stripe', 'Stripe'),
+        ('paypal', 'PayPal'),
+        ('venmo', 'Venmo'),
+    ]
+    
+    # Link to procurement service request
+    service_request = models.OneToOneField(
+        'pop_up_bot.ProcurementServiceRequest',
+        on_delete=models.CASCADE,
+        related_name='service_payment'
+    )
+    
+    # Payment details
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('15.00')  # Standard service fee
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHOD_CHOICES
+    )
+    
+    # References for payment processors
+    payment_reference = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Stripe PaymentIntent ID, PayPal transaction ID, or Braintree transaction ID"
+    )
+    
+    refund_reference = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Refund transaction ID from payment processor"
+    )
+    
+    # Metadata
+    error_message = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Error message if payment failed"
+    )
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(auto_now_add=True)
+    refunded_at = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ('-created_at',)
+        verbose_name = _("Service Payment")
+        verbose_name_plural = _("Service Payments")
+    
+    def __str__(self):
+        return f"ServicePayment {self.id} - {self.service_request.user.email} - ${self.amount} ({self.status})"
+    
+    def mark_paid(self, payment_reference: str):
+        """Mark payment as paid"""
+        self.status = 'paid'
+        self.payment_reference = payment_reference
+        self.paid_at = timezone.now()
+        self.save()
+    
+    def mark_failed(self, error_message: str):
+        """Mark payment as failed"""
+        self.status = 'failed'
+        self.error_message = error_message
+        self.save()
+    
+    def mark_refunded(self, refund_reference: str):
+        """Mark payment as refunded"""
+        self.status = 'refunded'
+        self.refund_reference = refund_reference
+        self.refunded_at = timezone.now()
+        self.save()
+    
+    @property
+    def is_paid(self):
+        return self.status == 'paid'
+    
+    @property
+    def is_refunded(self):
+        return self.status == 'refunded'
+    
+
+
 class CryptoPayment(models.Model):
     PAYMENT_STATUS_CHOICES = [
         ('waiting', 'Waiting'),

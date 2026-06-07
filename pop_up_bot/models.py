@@ -276,6 +276,32 @@ class ProcurementExecution(models.Model):
         ('retail_only', 'Retail Only'),
     ]
 
+    ERROR_TYPE_CHOICES = [
+        # Refundable (CODE/BOT issues - we refund)
+        ('bot_crash', 'Bot Crashed'),
+        ('rate_limited', 'Rate Limited'),
+        ('site_structure_changed', 'Site Structure Changed'),
+        ('exception', 'Unhandled Exception'),
+        ('unknown_error', 'Unknown Error'),
+        
+        # Non-refundable (USER/MARKET issues - we keep fee)
+        ('out_of_stock', 'Out of Stock'),
+        ('lost_to_bots', 'Lost to Other Bots'),
+        ('item_not_found', 'Item Not Found'),
+        ('sold_out', 'Sold Out'),
+        ('coming_soon', 'Coming Soon'),
+        ('payment_already_exists', 'Payment Already Exists'),
+        ('success', 'Success'),
+    ]
+
+    error_type = models.CharField(
+        max_length=30,
+        choices=ERROR_TYPE_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Type of error - determines if refund should be issued"
+    )
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     procurement_request = models.ForeignKey(

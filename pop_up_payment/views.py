@@ -9,7 +9,9 @@ from pop_accounts.models import  PopUpCustomerAddress, PopUpBid
 from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
 from pop_accounts.utils.pop_accounts_utils import  add_specs_to_products
 from pop_up_cart.models import PopUpCartItem
-from pop_up_payment.models import PopUpPayment
+from pop_up_payment.models import PopUpPayment, ServicePayment
+from pop_up_payment.handlers.service_fee_handler import ServiceFeePaymentHandler
+from pop_up_bot.models import ProcurementServiceRequest
 from pop_up_order.models import PopUpCustomerOrder
 import stripe
 from django.conf import settings
@@ -26,6 +28,7 @@ from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
 from django.views import View
 from decimal import Decimal
 from django.utils.timezone import now
+from django.utils import timezone
 from datetime import timedelta
 from dateutil.parser import parse as parse_datetime
 from pop_up_payment.utils.tax_utils import get_state_tax_rate
@@ -36,6 +39,7 @@ import logging
 import requests
 import hmac
 import hashlib
+
 
 
 """
@@ -96,7 +100,8 @@ class OptionalLoginMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
         # Dont redirect
         return super().dispatch(request, *args, **kwargs)
-    
+
+
 
 class ProductBuyView(OptionalLoginMixin, View):
     # 🟢 View Test Completed
@@ -1153,3 +1158,317 @@ def placed_order(request):
     return render(request, 'payment/placed_order.html', {'user': user, 'order_id':order_id, 'product': product})
 
 
+
+# =====================================================================
+# STRIPE SERVICE FEE PAYMENT
+# =====================================================================
+ 
+@method_decorator(csrf_exempt, name='dispatch')
+class CreateServiceFeePaymentIntentView(View):
+    """
+    Create Stripe PaymentIntent for $15 service fee.
+    
+    Called from procurement request page when user selects Stripe.
+    """
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            user = request.user
+            data = json.loads(request.body)
+            service_request_id = data.get('service_request_id')
+            
+            if not service_request_id:
+                return JsonResponse({"error": "Missing service_request_id"}, status=400)
+            
+            # Get the service request
+            service_request = get_object_or_404(
+                ProcurementServiceRequest,
+                id=service_request_id,
+                user=user
+            )
+            
+            # Check if payment already exists
+            if hasattr(service_request, 'service_payment'):
+                if service_request.service_payment.is_paid:
+                    return JsonResponse({
+                        "error": "Payment already completed"
+                    }, status=400)
+            
+            # Create PaymentIntent
+            handler = ServiceFeePaymentHandler()
+            result = handler.create_stripe_payment_intent(service_request)
+            
+            if result['success']:
+                # Create ServicePayment record
+                service_payment = ServicePayment.objects.create(
+                    service_request=service_request,
+                    amount=Decimal('15.00'),
+                    payment_method='stripe',
+                    status='processing',
+                    payment_reference=result['payment_intent_id']
+                )
+                
+                logger.info(
+                    f"ServicePayment {service_payment.id} created for "
+                    f"{user.email} - Stripe"
+                )
+                
+                return JsonResponse({
+                    'clientSecret': result['client_secret'],
+                    'paymentIntentId': result['payment_intent_id'],
+                    'amount': str(result['amount'])
+                })
+            else:
+                return JsonResponse({
+                    'error': result['error']
+                }, status=400)
+        
+        except Exception as e:
+            logger.error(f"Failed to create service fee intent: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=400)
+ 
+ 
+@method_decorator(csrf_exempt, name='dispatch')
+class ServiceFeeStripeWebhookView(View):
+    """
+    Handle Stripe webhooks for service fee payments.
+    
+    Listens for payment_intent.succeeded and payment_intent.payment_failed
+    """
+    
+    def post(self, request):
+        payload = request.body
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        endpoint_secret = 'whsec_...'  # TODO: Add service fee webhook secret
+        
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+        except (ValueError, stripe.error.SignatureVerificationError):
+            return HttpResponse(status=400)
+        
+        # Handle payment succeeded
+        if event['type'] == 'payment_intent.succeeded':
+            intent = event['data']['object']
+            payment_intent_id = intent['id']
+            
+            try:
+                # Find ServicePayment by payment_reference
+                service_payment = ServicePayment.objects.get(
+                    payment_reference=payment_intent_id
+                )
+                
+                # Mark as paid
+                service_payment.mark_paid(payment_intent_id)
+                
+                # Update service request
+                service_request = service_payment.service_request
+                service_request.fee_paid_at = timezone.now()
+                service_request.save()
+                
+                logger.info(
+                    f"Service fee payment {service_payment.id} confirmed "
+                    f"for {service_request.user.email}"
+                )
+            
+            except ServicePayment.DoesNotExist:
+                logger.warning(
+                    f"Received webhook for unknown ServicePayment: {payment_intent_id}"
+                )
+        
+        # Handle payment failed
+        elif event['type'] == 'payment_intent.payment_failed':
+            intent = event['data']['object']
+            payment_intent_id = intent['id']
+            
+            try:
+                service_payment = ServicePayment.objects.get(
+                    payment_reference=payment_intent_id
+                )
+                
+                error_msg = intent.get('last_payment_error', {}).get('message', 'Unknown error')
+                service_payment.mark_failed(error_msg)
+                
+                logger.error(
+                    f"Service fee payment {service_payment.id} failed: {error_msg}"
+                )
+            
+            except ServicePayment.DoesNotExist:
+                logger.warning(
+                    f"Received webhook for unknown ServicePayment: {payment_intent_id}"
+                )
+        
+        return HttpResponse(status=200)
+ 
+ 
+# =====================================================================
+# VENMO SERVICE FEE PAYMENT
+# =====================================================================
+ 
+@method_decorator(csrf_exempt, name='dispatch')
+class ProcessServiceFeeVenmoView(View):
+    """
+    Process Venmo payment for service fee.
+    
+    Receives nonce from Braintree frontend SDK.
+    """
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            user = request.user
+            data = json.loads(request.body)
+            
+            nonce = data.get('payment_method_nonce')
+            service_request_id = data.get('service_request_id')
+            
+            if not nonce or not service_request_id:
+                return JsonResponse({
+                    "error": "Missing nonce or service_request_id"
+                }, status=400)
+            
+            # Get service request
+            service_request = get_object_or_404(
+                ProcurementServiceRequest,
+                id=service_request_id,
+                user=user
+            )
+            
+            # Process payment
+            handler = ServiceFeePaymentHandler()
+            success, transaction_id, error = handler.process_venmo_payment(
+                service_request,
+                nonce
+            )
+            
+            if success:
+                # Create ServicePayment record
+                service_payment = ServicePayment.objects.create(
+                    service_request=service_request,
+                    amount=Decimal('15.00'),
+                    payment_method='venmo',
+                    status='paid',
+                    payment_reference=transaction_id
+                )
+                
+                # Update service request
+                service_request.fee_paid_at = timezone.now()
+                service_request.save()
+                
+                logger.info(
+                    f"Venmo service fee payment {service_payment.id} processed "
+                    f"for {user.email}"
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'transaction_id': transaction_id,
+                    'message': 'Payment processed successfully'
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': error
+                }, status=400)
+        
+        except Exception as e:
+            logger.error(f"Venmo payment error: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=400)
+ 
+ 
+# =====================================================================
+# SERVICE FEE REFUND
+# =====================================================================
+ 
+@method_decorator(csrf_exempt, name='dispatch')
+class RefundServiceFeeView(View):
+    """
+    Refund service fee payment.
+    
+    Called automatically when:
+    - Bot execution fails (out of stock, rate limited, etc.)
+    - User explicitly requests refund
+    
+    This endpoint is for manual/admin refunds.
+    Auto-refunds are handled by tasks.py
+    """
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            service_payment_id = data.get('service_payment_id')
+            reason = data.get('reason', 'Automatic refund - execution failed')
+            
+            service_payment = get_object_or_404(
+                ServicePayment,
+                id=service_payment_id
+            )
+            
+            # Check if already refunded
+            if service_payment.is_refunded:
+                return JsonResponse({
+                    'error': 'Payment already refunded'
+                }, status=400)
+            
+            # Process refund
+            handler = ServiceFeePaymentHandler()
+            success, refund_id = handler.refund_payment(service_payment)
+            
+            if success:
+                service_payment.mark_refunded(refund_id)
+                
+                logger.info(
+                    f"Service fee refund {refund_id} issued for "
+                    f"{service_payment.service_request.user.email} - {reason}"
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'refund_id': refund_id,
+                    'message': 'Refund processed successfully'
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': refund_id  # error message returned as second value
+                }, status=400)
+        
+        except Exception as e:
+            logger.error(f"Refund processing error: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=400)
+ 
+ 
+# =====================================================================
+# SERVICE FEE STATUS
+# =====================================================================
+ 
+@login_required
+def get_service_fee_status(request, service_request_id):
+    """
+    Get payment status for a service request.
+    
+    Returns payment status, method, and amount.
+    """
+    try:
+        service_request = get_object_or_404(
+            ProcurementServiceRequest,
+            id=service_request_id,
+            user=request.user
+        )
+        
+        if hasattr(service_request, 'service_payment'):
+            payment = service_request.service_payment
+            return JsonResponse({
+                'status': payment.status,
+                'method': payment.payment_method,
+                'amount': str(payment.amount),
+                'paid_at': payment.paid_at.isoformat() if payment.paid_at else None,
+                'is_paid': payment.is_paid
+            })
+        else:
+            return JsonResponse({
+                'status': 'not_initiated',
+                'is_paid': False
+            })
+    
+    except Exception as e:
+        logger.error(f"Error fetching service fee status: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=400)
