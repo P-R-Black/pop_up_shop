@@ -678,3 +678,115 @@ def execute_procurement_request(proc_request_id, service_request_id, batch_id):
             service_request.status = 'failed'
         service_request.save()
 """
+
+
+"""
+Daily Health Check Task
+Runs Nike health check daily to verify bot still works.
+"""
+ 
+import logging
+from celery import shared_task
+from django.utils import timezone
+ 
+from pop_up_bot.health.nike_health_check import NikeHealthCheckHandler
+from pop_up_bot.models import DailyHealthCheck
+ 
+logger = logging.getLogger(__name__)
+ 
+ 
+@shared_task(bind=True, max_retries=3)
+def run_nike_health_check(self):
+    """
+    Daily Celery task to run Nike health check.
+    
+    Runs daily at 2 AM to verify bot functionality.
+    
+    Celery Beat Schedule (add to settings.py):
+    
+        CELERY_BEAT_SCHEDULE = {
+            'run-nike-health-check': {
+                'task': 'pop_up_bot.tasks.run_nike_health_check',
+                'schedule': crontab(hour=2, minute=0),  # Daily at 2 AM
+            },
+        }
+    """
+    
+    try:
+        logger.info("=" * 60)
+        logger.info("Running Nike Daily Health Check Task")
+        logger.info("=" * 60)
+        
+        # Initialize handler
+        handler = NikeHealthCheckHandler()
+        
+        # Run health check
+        health_check = handler.run_health_check()
+        
+        # Log summary
+        summary = handler.get_health_check_summary()
+        logger.info(f"Health check completed: {summary}")
+        
+        # Notify admin if failed
+        if health_check.is_failed:
+            handler.notify_admin_if_failed()
+        
+        return {
+            'status': 'completed',
+            'health_check_id': str(health_check.id),
+            'result': summary,
+        }
+    
+    except Exception as e:
+        logger.error(f"Health check task failed: {str(e)}", exc_info=True)
+        
+        # Retry with exponential backoff
+        try:
+            raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+        except self.MaxRetriesExceededError:
+            logger.error("Health check task max retries exceeded")
+            return {
+                'status': 'failed',
+                'error': str(e),
+            }
+ 
+ 
+@shared_task
+def cleanup_old_health_checks(days=30):
+    """
+    Clean up old health check records.
+    
+    Keeps last N days of health checks to save space.
+    
+    Args:
+        days: How many days of history to keep
+    
+    Celery Beat Schedule (add to settings.py):
+    
+        'cleanup-old-health-checks': {
+            'task': 'pop_up_bot.tasks.cleanup_old_health_checks',
+            'schedule': crontab(hour=3, minute=0),  # Daily at 3 AM
+        }
+    """
+    
+    try:
+        cutoff_date = timezone.now() - timezone.timedelta(days=days)
+        
+        deleted_count, _ = DailyHealthCheck.objects.filter(
+            created_at__lt=cutoff_date
+        ).delete()
+        
+        logger.info(f"Deleted {deleted_count} old health check records")
+        
+        return {
+            'status': 'completed',
+            'deleted_count': deleted_count,
+        }
+    
+    except Exception as e:
+        logger.error(f"Cleanup task failed: {str(e)}")
+        return {
+            'status': 'failed',
+            'error': str(e),
+        }
+ 

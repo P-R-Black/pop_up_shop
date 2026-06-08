@@ -20,7 +20,6 @@ from pop_up_bot.models import (
 from pop_up_auction.models import PopUpProduct, PopUpBrand, PopUpCategory, PopUpProductType
 from pop_up_auction.tests.conftest import (create_test_user)
 
-
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -61,23 +60,6 @@ class ProcurementExecutionModelTestCase(TestCase):
             is_active=True
         )
 
-        # Create user
-        # self.user = User.objects.create_user(
-        #     'test@example.com',
-        #     'test@example.com',
-        #     'testpass123'
-        # )
-        
-        # # Create product
-        # self.brand = PopUpBrand.objects.create(name='Nike')
-        # self.category = PopUpCategory.objects.create(name='Shoes')
-        # self.product = PopUpProduct.objects.create(
-        #     product_title='Air Jordan 1 Low',
-        #     retail_price=Decimal('170.00'),
-        #     brand=self.brand,
-        #     category=self.category,
-        #     is_active=True,
-        # )
         
         # Create procurement request
         self.proc_request = ProcurementRequest.objects.create(

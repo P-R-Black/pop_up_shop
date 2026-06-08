@@ -1398,6 +1398,344 @@ STEP-BY-STEP:
    - If not purchased: Item becomes "buy now" listing
 """
 
+
+class DailyHealthCheck(models.Model):
+    """
+    Daily health check run for a specific site.
+    
+    Tests bot functionality: navigate → search → add to cart → remove from cart
+    """
+    
+    SITE_CHOICES = [
+        ('nike', 'Nike'),
+        ('footlocker', 'Footlocker'),
+        ('adidas', 'Adidas'),
+        ('other', 'Other'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+    ]
+    
+    site = models.CharField(
+        max_length=20,
+        choices=SITE_CHOICES,
+        help_text="Which site to test"
+    )
+    
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        help_text="Health check status"
+    )
+    
+    # Test product (fixed SKU for consistent testing)
+    product_sku = models.CharField(
+        max_length=100,
+        help_text="Test product SKU (e.g., DJ0646-610 for Nike)"
+    )
+    
+    product_name = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Name of test product"
+    )
+    
+    # Results
+    steps_completed = models.JSONField(
+        default=list,
+        help_text="List of completed steps: ['navigate', 'search', 'add_to_cart', 'remove_from_cart']"
+    )
+    
+    error_step = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Which step failed (if any)"
+    )
+    
+    error_message = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Error message if health check failed"
+    )
+    
+    # Timing
+    started_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="When health check started"
+    )
+    
+    completed_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="When health check completed"
+    )
+    
+    duration_seconds = models.IntegerField(
+        blank=True,
+        null=True,
+        help_text="How long the health check took"
+    )
+    
+    # Notifications
+    admin_notified = models.BooleanField(
+        default=False,
+        help_text="Whether admin was notified of failure"
+    )
+    
+    admin_notification_sent_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="When notification was sent"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ('-created_at',)
+        verbose_name = "Daily Health Check"
+        verbose_name_plural = "Daily Health Checks"
+        indexes = [
+            models.Index(fields=['site', '-created_at']),
+            models.Index(fields=['status', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"HealthCheck {self.site.upper()} - {self.status} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+    
+    @property
+    def is_success(self):
+        return self.status == 'success'
+    
+    @property
+    def is_failed(self):
+        return self.status == 'failed'
+    
+    @property
+    def all_steps_completed(self):
+        """Check if all required steps were completed"""
+        required_steps = ['navigate', 'search', 'add_to_cart', 'remove_from_cart']
+        return all(step in self.steps_completed for step in required_steps)
+    
+    def mark_running(self):
+        """Mark health check as running"""
+        self.status = 'running'
+        self.started_at = django_timezone.now()
+        self.save()
+    
+    def mark_success(self):
+        """Mark health check as successful"""
+        self.status = 'success'
+        self.completed_at = django_timezone.now()
+        if self.started_at:
+            delta = self.completed_at - self.started_at
+            self.duration_seconds = int(delta.total_seconds())
+        self.save()
+    
+    def mark_failed(self, error_step: str, error_message: str):
+        """Mark health check as failed"""
+        self.status = 'failed'
+        self.error_step = error_step
+        self.error_message = error_message
+        self.completed_at = django_timezone.now()
+        if self.started_at:
+            delta = self.completed_at - self.started_at
+            self.duration_seconds = int(delta.total_seconds())
+        self.save()
+    
+    def mark_admin_notified(self):
+        """Mark that admin was notified"""
+        self.admin_notified = True
+        self.admin_notification_sent_at = django_timezone.now()
+        self.save()
+    
+    def add_step(self, step_name: str):
+        """Record a completed step"""
+        if step_name not in self.steps_completed:
+            self.steps_completed.append(step_name)
+            self.save()
+ 
+ 
+class HealthCheckStep(models.Model):
+    """
+    Detailed log of each step in a health check.
+    
+    Helps debug which exact step failed and why.
+    """
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('running', 'Running'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+    ]
+    
+    health_check = models.ForeignKey(
+        DailyHealthCheck,
+        on_delete=models.CASCADE,
+        related_name='steps',
+        help_text="Parent health check"
+    )
+    
+    step_number = models.IntegerField(
+        help_text="Order of execution (1, 2, 3, etc)"
+    )
+    
+    step_name = models.CharField(
+        max_length=100,
+        help_text="Step description (navigate, search, add_to_cart, etc)"
+    )
+    
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    
+    description = models.TextField(
+        blank=True,
+        help_text="What this step does"
+    )
+    
+    error_message = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Error if step failed"
+    )
+    
+    # Timing
+    started_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+    
+    completed_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+    
+    duration_ms = models.IntegerField(
+        blank=True,
+        null=True,
+        help_text="Duration in milliseconds"
+    )
+    
+    # Details
+    url = models.URLField(
+        blank=True,
+        help_text="URL being tested"
+    )
+    
+    selector_used = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="CSS selector that was used"
+    )
+    
+    element_found = models.BooleanField(
+        default=False,
+        help_text="Whether element was found"
+    )
+    
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Additional metadata about step"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ('step_number',)
+        verbose_name = "Health Check Step"
+        verbose_name_plural = "Health Check Steps"
+    
+    def __str__(self):
+        return f"Step {self.step_number}: {self.step_name} ({self.status})"
+    
+    def mark_running(self):
+        """Mark step as running"""
+        self.status = 'running'
+        self.started_at = django_timezone.now()
+        self.save()
+    
+    def mark_success(self, duration_ms: int = None):
+        """Mark step as successful"""
+        self.status = 'success'
+        self.completed_at = django_timezone.now()
+        self.duration_ms = duration_ms
+        self.save()
+    
+    def mark_failed(self, error_message: str, duration_ms: int = None):
+        """Mark step as failed"""
+        self.status = 'failed'
+        self.error_message = error_message
+        self.completed_at = django_timezone.now()
+        self.duration_ms = duration_ms
+        self.save()
+ 
+ 
+class HealthCheckNotification(models.Model):
+    """
+    Track notifications sent to admins about health check failures.
+    """
+    
+    NOTIFICATION_TYPE_CHOICES = [
+        ('email', 'Email'),
+        ('slack', 'Slack'),
+        ('sms', 'SMS'),
+        ('in_app', 'In App'),
+    ]
+    
+    health_check = models.ForeignKey(
+        DailyHealthCheck,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    
+    notification_type = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_TYPE_CHOICES,
+    )
+    
+    recipient = models.CharField(
+        max_length=255,
+        help_text="Email, phone, Slack ID, etc"
+    )
+    
+    subject = models.CharField(max_length=255)
+    
+    message = models.TextField()
+    
+    sent_at = models.DateTimeField(auto_now_add=True)
+    
+    success = models.BooleanField(
+        default=False,
+        help_text="Whether notification was successfully sent"
+    )
+    
+    error_message = models.TextField(
+        blank=True,
+        help_text="Error if notification failed to send"
+    )
+    
+    class Meta:
+        ordering = ('-sent_at',)
+        verbose_name = "Health Check Notification"
+        verbose_name_plural = "Health Check Notifications"
+    
+    def __str__(self):
+        return f"{self.notification_type.upper()} to {self.recipient} - {self.sent_at}"
+    
+
+
 # class Procurement
 # tRequest(models.Model):
 #     STATUS_CHOICES = [
