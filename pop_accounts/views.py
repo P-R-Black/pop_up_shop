@@ -18,6 +18,7 @@ from django.http import JsonResponse, HttpResponse
 from .models import PopUpCustomerProfile, PopUpPasswordResetRequestLog, PopUpCustomerAddress, PopUpCustomerIP, PopUpBid
 from pop_up_auction.models import (PopUpProduct, PopUpProductSpecification, PopUpProductSpecificationValue, 
                                    PopUpProductType)
+from pop_up_bot.models import ProcurementServiceRequest, ProcurementExecution
 from pop_up_auction.utils.utils import get_customer_bid_history_context
 from django.views.decorators.http import require_http_methods
 from pop_up_payment.models import PopUpPayment
@@ -101,39 +102,42 @@ All Views
 15. PastPurchaseView
 16. ShippingTrackingView
 17. UserOrderPager
+18. ProcurementStatusPageView
+19. ProcurementStatusAPIView
 
 // Admin views
-18. AdminDashboardView
-19. AdminInventoryView
-20. EnRouteView
-21. SalesView
-22. MostOnNotice
-23. MostInterested
-24. TotalOpenBidsView
-25. TotalAccountsView
-26. AccountSizesView
-27. PendingOkayToShipView
-28. PendingOrderShippingDetailView
-29. UpdateShippingView
-30. GetOrderShippingDetail
-31. UpdateShippingPostView
-32. ViewShipmentsView
-33. UpdateProductView
-34. AddProductsView
-35. AddProductsGetView
+20. AdminDashboardView
+21. AdminInventoryView
+22. EnRouteView
+23. SalesView
+24. MostOnNotice
+25. MostInterested
+26. TotalOpenBidsView
+27. TotalAccountsView
+28. AccountSizesView
+29. PendingOkayToShipView
+30. PendingOrderShippingDetailView
+31. UpdateShippingView
+32. GetOrderShippingDetail
+33. UpdateShippingPostView
+34. ViewShipmentsView
+35. UpdateProductView
+36. AddProductsView
+37. AddProductsGetView
+
 
 // Registration / Login Views
-36. EmailCheckView
-37. RegisterView
-38. Login2FAView
-39. Verify2FACodeView
-40. Resend2FACodeView
-41. SendPasswordResetLink
-42. UserPasswordResetConfirmView
-43. VerifyEmailView
-44. CompleteProfileView
-45. SocialLoginCompleteView
-46. RestoreAccountView
+38. EmailCheckView
+39. RegisterView
+40. Login2FAView
+41. Verify2FACodeView
+42. Resend2FACodeView
+43. SendPasswordResetLink
+44. UserPasswordResetConfirmView
+45. VerifyEmailView
+46. CompleteProfileView
+47. SocialLoginCompleteView
+48. RestoreAccountView
 """
 
 # 🟢 View Test Completed
@@ -168,6 +172,7 @@ class UserDashboardView(LoginRequiredMixin, View):
     - Recent orders
     - Recent shipments
     - Bid history and related statistics
+    - Procurement Requests
 
     Attributes:
         template_name (str): Template used to render the dashboard page.
@@ -239,7 +244,6 @@ class UserDashboardView(LoginRequiredMixin, View):
 
         # past bids
         bid_data = get_customer_bid_history_context(user.id)
-        print('bid_data', bid_data)
     
        
 
@@ -262,13 +266,38 @@ class UserDashboardView(LoginRequiredMixin, View):
                 
                 })
 
-    
+
+        procurement_requests = (
+            ProcurementServiceRequest.objects
+            .filter(
+                user=user,
+                status__in=['pending_payment', 'pending', 'active']
+            )
+            .select_related('scheduled_release__product', 'procurement_execution')
+            .order_by('-created_at')[:5]   # show max 5 in the dashboard card
+        )
+ 
+        # Annotate with labels for the template
+        active_procurement_requests = [
+            {
+                'psr': psr,
+                'scheduled_release': psr.scheduled_release,
+                'status_label': _status_label(psr),
+                'status_css': _status_css(psr),
+            }
+            for psr in procurement_requests
+        ]
+        
+        # Add to context dict:
+        # context['active_procurement_requests'] = active_procurement_requests
+
         quick_bid_increments = [10, 20, 30]
         context = {'user': user, 'addresses': addresses, 'prod_interested_in': prod_interested_in, 
                    'prods_on_notice_for': prods_on_notice_for, 'highest_bid_objects': highest_bid_objects, 
                    'quick_bid_increments':quick_bid_increments, 'open_bids':enriched_data, 'orders': orders,
                    'shipments': shipments, 'bid_history': bid_data['bid_history'],
-                   'statistics': bid_data['statistics'], "user_dashboard_copy": self.user_dashboard_copy
+                   'statistics': bid_data['statistics'], "user_dashboard_copy": self.user_dashboard_copy,
+                   'active_procurement_requests': active_procurement_requests
                    }
         return render(request, self.template_name, context)
 
@@ -961,7 +990,6 @@ class PastBidView(LoginRequiredMixin, View):
         user = request.user
         user_id = user.id
         bid_data = get_customer_bid_history_context(user_id)
-        print('DEBUG bid_data', bid_data)
         context= {'bid_history': bid_data['bid_history'], 'statistics': bid_data['statistics'], 
                   'user_past_bids_copy':self.user_past_bids_copy}
         
@@ -1115,6 +1143,185 @@ class UserOrderPager(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
         
 
+
+class ProcurementStatusPageView(LoginRequiredMixin, View):
+    """
+    Full-page view showing all of a user's procurement requests
+    and their current status. Follows the same pattern as past_bids.html.
+ 
+    URL: /accounts/procurement-status/
+    Name: pop_accounts:procurement_status
+    """
+    template_name = 'pop_accounts/user_accounts/dashboard_pages/procurement_status.html'
+ 
+    def get(self, request):
+        user = request.user
+ 
+        procurement_requests = (
+            ProcurementServiceRequest.objects
+            .filter(user=user)
+            .select_related(
+                'scheduled_release__product',
+                'procurement_execution',
+            )
+            .order_by('-created_at')
+        )
+ 
+        # Annotate each request with a human-readable status label and
+        # the latest execution step if the bot is currently running
+        enriched = []
+        for psr in procurement_requests:
+            enriched.append({
+                'psr': psr,
+                'product': psr.scheduled_release.product,
+                'release_date': psr.scheduled_release.release_date,
+                'size': psr.size,
+                'sex': psr.sex,
+                'status': psr.status,
+                'status_label': _status_label(psr),
+                'status_css': _status_css(psr),
+                'execution': psr.procurement_execution,
+                'is_live': psr.status in ('active',),
+            })
+ 
+        context = {
+            'procurement_requests': enriched,
+            'active_count': sum(1 for r in enriched if r['is_live']),
+        }
+        return render(request, self.template_name, context)
+ 
+ 
+
+class ProcurementStatusAPIView(LoginRequiredMixin, View):
+    """
+    JSON polling endpoint — called every 3 seconds by the dashboard JS.
+ 
+    Returns current status for all of the user's active procurement requests.
+ 
+    URL: /accounts/procurement-status/api/
+    Name: pop_accounts:procurement_status_api
+ 
+    Response shape:
+    {
+        "requests": [
+            {
+                "id": "uuid",
+                "product_title": "Air Jordan 1",
+                "size": "10",
+                "sex": "Mens",
+                "status": "active",
+                "status_label": "🤖 Bot Running...",
+                "status_css": "status_active",
+                "execution_status": "running",
+                "winning_site": null,
+                "order_id": null,
+                "updated_at": "2026-06-20T10:01:47Z"
+            }
+        ],
+        "has_active": true
+    }
+    """
+ 
+    def get(self, request):
+        user = request.user
+ 
+        procurement_requests = (
+            ProcurementServiceRequest.objects
+            .filter(user=user)
+            .select_related(
+                'scheduled_release__product',
+                'procurement_execution',
+            )
+            .order_by('-created_at')
+        )
+ 
+        data = []
+        for psr in procurement_requests:
+            execution = psr.procurement_execution
+            data.append({
+                'id': str(psr.id),
+                'product_title': psr.scheduled_release.product.product_title,
+                'secondary_title': psr.scheduled_release.product.secondary_product_title,
+                'size': psr.size,
+                'sex': psr.sex or '',
+                'status': psr.status,
+                'status_label': _status_label(psr),
+                'status_css': _status_css(psr),
+                'execution_status': execution.status if execution else None,
+                'winning_site': execution.winning_site if execution else None,
+                'order_id': execution.order_id if execution else None,
+                'updated_at': psr.updated_at.isoformat(),
+            })
+ 
+        has_active = any(r['status'] in ('pending', 'active') for r in data)
+ 
+        return JsonResponse({
+            'requests': data,
+            'has_active': has_active,
+        })
+ 
+ 
+# ------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------
+ 
+def _status_label(psr: ProcurementServiceRequest) -> str:
+    """Human-readable status label shown in the UI."""
+    execution = psr.procurement_execution
+ 
+    status_map = {
+        'pending_payment': '💳 Awaiting Payment',
+        'pending':         '🕐 In Queue — Release Pending',
+        'active':          '🤖 Bot Running...',
+        'success':         '✅ Secured!',
+        'failed':          '❌ Could Not Secure',
+        'abandoned':       '🚫 Cancelled',
+        'expired':         '⏰ Expired',
+    }
+ 
+    label = status_map.get(psr.status, psr.status)
+ 
+    # Add execution detail when bot is running
+    if psr.status == 'active' and execution:
+        if execution.status == 'running':
+            label = '🤖 Bot Running — Checking Nike...'
+        elif execution.status == 'success':
+            label = f'✅ Secured on {execution.winning_site or "Nike"}!'
+        elif execution.status == 'failed':
+            label = f'❌ {_error_label(execution.error_type)}'
+ 
+    return label
+ 
+ 
+def _error_label(error_type: str) -> str:
+    """Human-readable error description."""
+    error_map = {
+        'out_of_stock':            'Sold out before bot could secure',
+        'lost_to_bots':            'Lost to other bots',
+        'item_not_found':          'Item not found on site',
+        'sold_out':                'Sold out',
+        'coming_soon':             'Not yet available',
+        'rate_limited':            'Site rate limited — refund issued',
+        'bot_crash':               'Bot error — refund issued',
+        'site_structure_changed':  'Site updated — refund issued',
+        'exception':               'Unexpected error — refund issued',
+        'unknown_error':           'Unknown error — refund issued',
+    }
+    return error_map.get(error_type or '', 'Failed')
+ 
+ 
+def _status_css(psr: ProcurementServiceRequest) -> str:
+    """CSS class for status badge styling."""
+    css_map = {
+        'pending_payment': 'status_pending_payment',
+        'pending':         'status_pending',
+        'active':          'status_active',
+        'success':         'status_success',
+        'failed':          'status_failed',
+        'abandoned':       'status_abandoned',
+        'expired':         'status_expired',
+    }
+    return css_map.get(psr.status, 'status_unknown')
 
 
 class AdminDashboardView(UserPassesTestMixin, TemplateView):
@@ -2061,9 +2268,7 @@ class GetOrderShippingDetail(UserPassesTestMixin, DetailView):
         shipment = get_object_or_404(PopUpShipment, pk=shipment_id)
         context['shipment'] = shipment
         context['order_item'] = PopUpOrderItem.objects.filter(order=shipment.order)
-        print("DEBUG context['order_item']", context['order_item'])
         context['form'] = ThePopUpShippingForm(instance=shipment)
-        print("DEBUG context['form']", context['order_item'])
 
         return context
 
@@ -2697,7 +2902,7 @@ class EmailCheckView(View):
             
         # except User.DoesNotExist:
         #     # Email not found - new user, show registration form
-        #     print("DEBUG EMAILCHECK, User does not exists")
+
         #     return JsonResponse({'status': True})  # New user
     
         
@@ -3769,27 +3974,22 @@ class SocialLoginCompleteView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET Requests - return JSON for AJAX, template otherwise"""
-        # print('DEBUG: socialLoginCompleteView get hit')
         if self.is_ajax_request():
             return self.get_ajax_response()
         return super().get(request, *args, **kwargs)
     
 
     def post(self, request, *args, **kwargs):
-        # print('DEBUG: socialLoginCompleteView post hit')
         if self.is_ajax_request():
             return self.get_ajax_response()
         return super().get(request, *args, **kwargs)
     
     def is_ajax_request(self):
-        # print('DEBUG: socialLoginCompleteView is_ajax_request hit')
         return self.request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
     def get_ajax_response(self):
         """Return JSON response with user auth status"""
-        # print('DEBUG: socialLoginCompleteView get_ajax_response hit')
         user = self.request.user
-        print('DEBUG: socialLoginCompleteView get_ajax_response user:', user)
         return JsonResponse({
             'authenticated': user.is_authenticated,
             'firstName': user.first_name if user.is_authenticated else '',
@@ -3855,9 +4055,7 @@ class RestoreAccountView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            print('DEBUG data', data)
             email = data.get("email")
-            print('DEBUG email', email)
         except json.JSONDecodeError:
             return JsonResponse({"status": False}, status=400)
 

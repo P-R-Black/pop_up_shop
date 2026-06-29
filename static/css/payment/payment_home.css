@@ -521,6 +521,7 @@ select#suffix {
 
 .subtotalExpand {
     border: none;
+    color: var(--chevron-color);
     cursor: pointer;
     outline: none;
     transition: var(--tran-02);
@@ -638,6 +639,7 @@ select#suffix {
     display: flex;
     flex-direction: column;
     gap: .25rem;
+
 }
 
 .checkout_product_desc_container h3 {
@@ -647,6 +649,15 @@ select#suffix {
     text-align: center;
     text-shadow: .25px .25px 0px rgba(0, 0, 0, 0.6);
 }
+
+.checkout_product_desc_container p {
+    color: var(--text-color);
+    font-size: clamp(.75rem, 1rem, 2vw);
+    font-weight: 200;
+    text-align: center;
+    text-shadow: .25px .25px 0px rgba(0, 0, 0, 0.6);
+}
+
 
 .checkout_product_details_container {
     color: var(--text-color);

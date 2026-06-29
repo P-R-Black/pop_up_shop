@@ -539,10 +539,12 @@ Payment
                                 </div>
                                 {% endwith %}
                                 {% endfor %}
+                                <p id="procurementSubtotal" style="display:none">{{ procurement_subtotal }}</p>
                                 <div class="purchase_details_item_price_container">
                                     <p>Quantity</p>
-                                    <p id="purchaseQuantity">{{ cart_length }}</p>
+                                    <p id="purchaseQuantity">{{ all_items_in_cart }}</p>
                                 </div>
+                                <p id="physicalQuantity" style="display:none">{{ cart_length }}</p>
                                 <div class="purchase_details_item_price_container">
                                     <p>Processing Fee</p>
                                     <p id="processingFee">${{ processing_fee }}</p>
@@ -613,7 +615,6 @@ Payment
                                     {% endif %}
                                 </div>
                             </section>
-
                         </div>
                     </section>
                 </div>
@@ -623,65 +624,104 @@ Payment
                 <div class="checkbout_container_title">
                     <h2 id="cart-heading">Cart</h2>
                 </div>
-
                 {% for c in cart %}
-                {% with product=c.product %}
-
-                <div class="checkout_product_container product_item" data-index="{{ product.id }}">
+                {% with test_prod=c.test_prod %}
+                <div class="checkout_product_container product_item" data-index="{{ test_prod.id }}">
                     <div class="checkout_img_title_container">
-                        {% for image in c.product.product_image.all %}
+                        {% for image in c.test_prod.product_image.all %}
                         {% if image.is_feature %}
-                        <img class="checkout_img_fluid"
+                        <img class="checkout_img_fluid" alt="{{ image.alt_text }}"
                             src="{% if image.get_image_url  %} {{ image.get_image_url  }} {% else %} {{ image.image }}{% endif %}"
-                            alt="{{ image.alt_text }}" />
+                            alt="{{ image.alt_text }}" loading="lazy" />
                         {% endif %}
                         {% endfor %}
+
                         <div class="checkout_product_desc_container">
-                            {% for spec in c.product.popupproductspecificationvalue_set.all|slice:"2:3" %}
-                            <h3>{{ spec }}</h3>
-                            {% endfor %}
-                            <h3>{{ c.product }}</h3>
-                            <h3>{{ c.product.secondary_product_title }}</h3>
+                            <h3>{{ c.test_prod.specs.model_year }} </h3>
+                            <h3>{{ c.test_prod }}</h3>
+                            <h3>{{ c.test_prod.secondary_product_title }}</h3>
                         </div>
                     </div>
 
                     <div class="checkout_product_details_container">
                         <div class="checkout_details_size_container">
-                            <p>Size</p>
-                            {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"5:6" %}
-                            {% if gen.value == "Male" %}
-                            <p>U.S. {{"Men's"}}
-                                <span>
-                                    {% for h in c.product.popupproductspecificationvalue_set.all|slice:"4:5" %}
-                                    {{ h }}
-                                    {% endfor %}
-                                </span>
-                            </p>
+                            <p>Size:</p>
+                            {% if c.test_prod.specs.product_sex == "Male" %}
+                            <p>US {{"Men's"}} {{ c.test_prod.specs.size }}</p>
+                            {% elif c.test_prod.specs.product_sex == "Female" %}
+                            <p>US {{"Women's"}} {{ c.test_prod.specs.size }}</p>
+                            {% else %}
+                            <p>N/A</p>
                             {% endif %}
-                            {% endfor %}
                         </div>
                         <div class="checkout_details_condition_container">
-                            <p>Condition</p>
-                            {% for gen in c.product.popupproductspecificationvalue_set.all|slice:"6:7" %}
-                            <p class="checkout_databox_assign_left">{{ gen }}</p>
-                            {% endfor %}
+                            <p>Condition:</p>
+                            <p class="checkout_databox_assign_left">{{ c.test_prod.specs.condition|capfirst }}</p>
                         </div>
                         <div class="checkout_details_condition_container">
                             <p>Quantity</p>
                             <p class="checkout_databox_assign_left">1</p>
                         </div>
                         <div class="checkout_details_condition_button_container">
-                            <button class="button_small" id="remove_button" data-index="{{ product.id }}">Remove
+                            <button class="button_small" id="remove_button" data-index="{{ c.test_prod.id }}">Remove
                                 <span class="spinner" style="display:none; margin-left: 5px">
                                     <i class="fa-thin fa-spinner"></i>
                                 </span>
-
                             </button>
+                            {% comment %}
                             <p>${{ c.price|intcomma }}</p>
+                            {% endcomment %}
+                            <p>${{ c.test_prod.buy_now_price|intcomma }}</p>
                         </div>
                     </div>
                 </div>
                 {% endwith %}
+                {% endfor %}
+                <!-- Procurement cart addition -->
+                {% for p in procurement_cart_items %}
+                <div class="checkout_product_container procurement_item" data-procurement-id="{{ p.id }}">
+                    <div class="checkout_img_title_container">
+                        <div class="checkout_img_title_container">
+                            {% with product=p.procurement_service_request.scheduled_release.product %}
+                            {% for image in product.product_image.all %}
+                            {% if image.is_feature %}
+                            <img class="checkout_img_fluid"
+                                src="{% if image.get_image_url %}{{ image.get_image_url }}{% else %}{{ image.image }}{% endif %}"
+                                alt="{{ image.alt_text }}" loading="lazy" />
+                            {% endif %}
+                            {% endfor %}
+                            {% endwith %}
+
+                            <div class="checkout_product_desc_container">
+                                <h3>{{ p.display_title }}</h3>
+                                <p>{{ p.display_subtitle }}</p>
+                            </div>
+                        </div>
+                        {% comment %}
+                        <div class="procurement_icon_container">
+                            🤖
+                        </div>
+                        <div class="checkout_product_desc_container">
+                            <h3>{{ p.display_title }}</h3>
+                            <p class="procurement_subtitle">{{ p.display_subtitle }}</p>
+                        </div>
+                        {% endcomment %}
+                    </div>
+                    <div class="checkout_product_details_container">
+                        <div class="checkout_details_condition_container">
+                            <p>Type</p>
+                            <p class="checkout_databox_assign_left">Procurement Service</p>
+                        </div>
+                        <div class="checkout_details_condition_container">
+                            <p>Qty</p>
+                            <p class="checkout_databox_assign_left">1</p>
+                        </div>
+                        <div class="checkout_details_condition_button_container">
+                            <button class="button_small" onclick="removeProcurementItem('{{ p.id }}')">Remove</button>
+                            <p>${{ p.fee_amount }}</p>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
             </aside>
         </div>
@@ -769,6 +809,7 @@ Payment
 
                             {% for c in cart %}
                             {% with product=c.product %}
+
                             <div class="purchase_details_item_price_container" data-index="{{ product.id }}">
 
                                 <p>{{ c.product.product_title }} {{ c.product.secondary_product_title }}</p>
@@ -780,7 +821,7 @@ Payment
 
                             <div class="purchase_details_item_price_container">
                                 <p>Quantity</p>
-                                <p id="purchaseQuantity">{{ cart_length }}</p>
+                                <p id="purchaseQuantity">{{ all_items_in_cart }}</p>
 
                             </div>
                             <div class="purchase_details_item_price_container">
@@ -984,6 +1025,70 @@ Payment
             }
         });
     });
+
+    // Delete Procurement Item From Cart
+    function removeProcurementItem(itemId) {
+
+        if (!confirm('Remove this procurement service from your cart?')) return;
+
+        fetch("{% url 'pop_up_cart:procurement_cart_delete' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `procurement_item_id=${itemId}`
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove card from right-side cart
+                    document.querySelector(`.procurement_item[data-procurement-id="${itemId}"]`)?.remove();
+
+                    // Remove price row from left-side summary
+                    document.querySelector(`.procurement_detail_row[data-procurement-id="${itemId}"]`)?.remove();
+
+                    // Update procurement subtotal display
+                    const procSubtotalEl = document.getElementById('procurementSubtotal');
+                    if (procSubtotalEl) {
+                        procSubtotalEl.innerHTML = `$${parseFloat(data.procurement_subtotal).toFixed(2)}`;
+                    }
+
+                    // Update physical quantity display and recalculate totals
+                    const physicalQty = parseInt(document.getElementById('physicalQuantity')?.innerHTML) || 0;
+                    const remainingProcurement = parseFloat(data.procurement_subtotal) || 0;
+                    const taxRate = document.getElementById('taxRate')?.innerHTML || 0;
+                    const processFee = document.getElementById('processingFee')?.innerHTML.replace('$', '').replace(',', '') || 0;
+                    const currentShipping = document.getElementById('shippingCost')?.innerHTML.replace('$', '').replace(',', '') || 0;
+
+                    // Update total quantity display
+                    const allItemsEl = document.getElementById('purchaseQuantity');
+                    if (allItemsEl) {
+                        const currentTotal = parseInt(allItemsEl.innerHTML);
+                        allItemsEl.innerHTML = currentTotal - 1;
+                    }
+
+                    // Recalculate grand total
+                    const physicalSubtotal = parseFloat(
+                        document.getElementById('purchaseSubtotal')?.innerHTML.replace('$', '').replace(',', '')
+                    ) || 0;
+                    const tax = parseFloat(taxRate) * physicalSubtotal;
+                    const grandTotal = physicalSubtotal + parseFloat(processFee) + tax +
+                        parseFloat(currentShipping) + remainingProcurement;
+
+                    document.getElementById('purchaseTotal').innerHTML =
+                        `$${grandTotal.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })}`;
+
+                } else {
+                    alert(data.error || 'Could not remove item. Please try again.');
+                }
+            })
+            .catch(() => alert('Network error. Please try again.'));
+    }
+
 </script>
 <script>
     var STRIPE_PUBLISHABLE_KEY = '{{ STRIPE_PUBLISHABLE_KEY }}'

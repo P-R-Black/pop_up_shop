@@ -9,7 +9,10 @@ from django.conf import settings
 from pop_accounts.models import PopUpCustomerProfile
 from pop_up_auction.models import PopUpProduct, WinnerReservation
 from django.db.models import Q
+from pop_up_bot.models import ProcurementServiceRequest
+import logging
 
+logger = logging.getLogger(__name__)
 
 
 """ 
@@ -27,6 +30,8 @@ from django.db.models import Q
 10. get_admin_users
 11. interested_in_products_update_and_notify_me_products_update
 12. send_interested_in_and_coming_soon_product_update_to_users
+13. send_success_notification
+14. send_failure_notification
 """
 
 
@@ -101,7 +106,6 @@ def send_24_hour_reminder_email(user, product):
     now_time = now()
     subject = "24 Hours Left to Purchase Your Auction Item"
 
-    print('DEBUG send_24_hour_remainer', subject)
     # Get the reservation to pass expires_at to template
     reservation = WinnerReservation.objects.get(user=user, product=product)
 
@@ -343,3 +347,129 @@ def send_interested_in_and_coming_soon_product_update_to_users(
             html_message=html_message,
             fail_silently=False
         )
+
+
+REFUNDABLE_ERRORS = {
+    'bot_crash', 'rate_limited', 'site_structure_changed',
+    'exception', 'unknown_error',
+}
+ 
+ 
+def send_success_notification(service_request: ProcurementServiceRequest, execution):
+    """Send HTML email when bot successfully secures item."""
+    user = service_request.user
+    product = service_request.scheduled_release.product
+ 
+    subject = f"The Pop Up | ✅ We secured {product.product_title}!"
+    html_message = render_to_string('pop_up_email/procurement_success_email.html', {
+        'user': user,
+        'product': product,
+        'service_request': service_request,
+        'execution': execution,
+        'site_url': settings.SITE_URL,
+    })
+ 
+    try:
+        send_mail(
+            subject=subject,
+            message='',          # plain text fallback — empty is fine
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        logger.info(f"Success notification sent to {user.email}")
+    except Exception as e:
+        logger.error(f"Failed to send success email to {user.email}: {str(e)}")
+ 
+ 
+def send_failure_notification(
+    service_request: ProcurementServiceRequest,
+    error: str,
+    error_type: str = None,
+):
+    """
+    Send HTML email when bot fails to secure item.
+ 
+    The email content adapts based on whether the error is refundable:
+    - Refundable (bot crash, rate limited): yellow banner, confirms refund
+    - Non-refundable (sold out, lost to bots): red banner, explains policy
+    """
+    user = service_request.user
+    product = service_request.scheduled_release.product
+    is_refundable = error_type in REFUNDABLE_ERRORS if error_type else False
+ 
+    # Human-readable reason for the failure
+    reason = _failure_reason(error_type, error)
+ 
+    subject = f"The Pop Up | Procurement Update — {product.product_title}"
+ 
+    html_message = render_to_string('pop_up_email/procurement_failure_email.html', {
+        'user': user,
+        'product': product,
+        'service_request': service_request,
+        'reason': reason,
+        'is_refundable': is_refundable,
+        'site_url': settings.SITE_URL,
+    })
+ 
+    try:
+        send_mail(
+            subject=subject,
+            message='',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        logger.info(f"Failure notification sent to {user.email}")
+    except Exception as e:
+        logger.error(f"Failed to send failure email to {user.email}: {str(e)}")
+ 
+ 
+def _failure_reason(error_type: str, raw_error: str = None) -> str:
+    """
+    Convert an error_type into a user-friendly explanation.
+    Avoids exposing technical stack traces to users.
+    """
+    reason_map = {
+        'out_of_stock':           (
+            'The item sold out before our bot could complete the purchase. '
+            'High-demand releases often sell out in seconds.'
+        ),
+        'lost_to_bots':           (
+            'The item was available but other bots were faster this time. '
+            'We competed but were unable to complete the purchase in time.'
+        ),
+        'item_not_found':         (
+            'Our bot could not locate the item on the retailer\'s site at release time. '
+            'This may mean the product URL or SKU has changed.'
+        ),
+        'sold_out':               (
+            'The item was listed as sold out when our bot attempted to purchase it.'
+        ),
+        'coming_soon':            (
+            'The item was marked as "Coming Soon" and was not available for purchase '
+            'during the procurement window.'
+        ),
+        'rate_limited':           (
+            'The retailer\'s site temporarily blocked our bot due to high traffic. '
+            'This is a technical issue on our end and your fee has been refunded.'
+        ),
+        'bot_crash':              (
+            'Our bot encountered an unexpected technical error during the procurement attempt. '
+            'This is a technical issue on our end and your fee has been refunded.'
+        ),
+        'site_structure_changed': (
+            'The retailer updated their website layout, which prevented our bot from '
+            'completing the purchase. Your fee has been refunded while we update our system.'
+        ),
+        'exception':              (
+            'An unexpected error occurred during the procurement attempt. '
+            'Your fee has been refunded.'
+        ),
+        'unknown_error':          (
+            'An unexpected error occurred. Your fee has been refunded.'
+        ),
+    }
+    return reason_map.get(error_type or '', raw_error or 'The procurement attempt was unsuccessful.')

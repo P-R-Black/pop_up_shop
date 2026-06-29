@@ -9,7 +9,7 @@
 {% block main %}
 <div class="section_container">
     <div class="page_title">
-        <h2>{{ user_dashboard_copy.page_title }}</h2>
+        <h1>{{ user_dashboard_copy.page_title }}</h1>
     </div>
     <div class="the_dashboard_container">
         <div class="personal_interest_notice_container">
@@ -35,11 +35,13 @@
                     {% endfor %}
                     <a href="#" id="dashboardLocationEditBtn">Edit</a>
                 </div>
+                {% comment %}
                 <div class="dashboard_payment_container">
                     <p>{{ user_dashboard_copy.personal_box_attributes_payment }}</p>
-                    <p class="dashboard_databox_assign_left">Mastercard ...5404</p>
+                    <p class="dashboard_databox_assign_left">Mastercard</p>
                     <a href="#" id="dashboardPaymentEditBtn">Edit</a>
                 </div>
+                {% endcomment %}
                 <div class="dashboard_more_container">
                     <a href="{% url 'pop_accounts:'|add:user_dashboard_copy.personal_box_more_url %}">
                         {{user_dashboard_copy.box_more_title}}
@@ -325,7 +327,7 @@
             <div class="dashboard_databox_large">
                 <div class="dashboard_databox_title">
                     <div class="blank_div"></div>
-                    <h2>{{ user_dashboard_copy.past_purchase_box_title}}</h2>
+                    <h2>{{ user_dashboard_copy.past_purchase_box_title }}</h2>
                     <div class="blank_div"></div>
                 </div>
                 <div class="dashboard_past_bids_container">
@@ -361,6 +363,53 @@
                 </div>
                 <div class="dashboard_more_container">
                     <a href="{% url 'pop_accounts:'|add:user_dashboard_copy.past_purchasses_more_url %}">
+                        {{ user_dashboard_copy.box_more_title }}
+                    </a>
+                </div>
+            </div>
+            <div class="dashboard_databox_large">
+                <div class="dashboard_databox_title">
+                    <div class="blank_div"></div>
+                    <h2>{{ user_dashboard_copy.procurement_box_title }}</h2>
+                    <div class="blank_div"></div>
+                </div>
+                <div class="dashboard_past_bids_container">
+                    <div class="dashboard_databox_past_bids_headers">
+                        {% if user_dashboard_copy.procurement_elements %}
+                        {% for i in user_dashboard_copy.procurement_elements %}
+                        <h3>{{ i.element }}</h3>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="dashboard_open_bids">
+                        {% if active_procurement_requests %}
+                        {% for apr in active_procurement_requests %}
+                        <div class="indi_past_bids">
+                            <div class="indi_past_bid_items">
+                                <a href="{% url 'pop_up_bot:procure_product' apr.scheduled_release.product.id %}">
+                                    <p>{{ apr.scheduled_release.product.product_title }}</p>
+                                </a>
+
+                            </div>
+
+                            <div class="indi_past_bid_last_bid">
+                                <p>{{ apr.scheduled_release.release_date|date:"M d, Y g:i A" }}</p>
+                            </div>
+
+                            <div class="indi_past_bid_bid_status">
+                                <span class="procurement_status_badge {{ apr.status_css }}">
+                                    {{ apr.status_label }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p>No Active Procurement Requests</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="dashboard_more_container">
+                    <a href="{% url 'pop_accounts:'|add:user_dashboard_copy.procurement_more_url %}">
                         {{ user_dashboard_copy.box_more_title }}
                     </a>
                 </div>

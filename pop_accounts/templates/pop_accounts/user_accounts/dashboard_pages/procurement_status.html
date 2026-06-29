@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Procurement Status{% endblock %}
+
+{% block main %}
+<div class="section_container">
+    <div class="page_title">
+        <h1>Procurement Status</h1>
+    </div>
+
+    <div class="interested_in_container">
+        <div class="interested_in_open_bids_container">
+
+            {% if not procurement_requests %}
+            <p style="padding: 2rem; color: #666;">
+                You haven't submitted any procurement requests yet.
+                <a href="{% url 'pop_up_auction:future_releases' %}">Browse future releases</a>
+                to get started.
+            </p>
+
+            {% else %}
+
+            <!-- Column headers -->
+            <div class="interested_in_databox_headers">
+                <h3>Product</h3>
+                <h3>Size</h3>
+                <h3>Release Date</h3>
+                <h3>Status</h3>
+            </div>
+
+            <!-- Request rows -->
+            <div class="interested_in_open_bids" id="procurementStatusList">
+                {% for r in procurement_requests %}
+                <div class="interested_in_items_container procurement_status_row" data-request-id="{{ r.psr.id }}">
+
+                    <!-- Product -->
+                    <div class="interested_in_item">
+                        <p>{{ r.product.product_title }}</p>
+                        <p style="font-size: 0.85rem; color: #999;">
+                            {{ r.product.secondary_product_title }}
+                        </p>
+                    </div>
+
+                    <!-- Size -->
+                    <div class="interested_in_size">
+                        {% if r.sex %}
+                        <p>{{ r.sex }} {{ r.size }}</p>
+                        {% else %}
+                        <p>{{ r.size }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Release date -->
+                    <div class="interested_in_year">
+                        <p>{{ r.release_date|date:"M d, Y" }}</p>
+                        <p style="font-size: 0.85rem; color: #999;">
+                            {{ r.release_date|date:"g:i A" }} ET
+                        </p>
+                    </div>
+
+                    <!-- Status badge -->
+                    <div class="interested_in_condition">
+                        <span class="procurement_status_badge {{ r.status_css }}" id="status-{{ r.psr.id }}">
+                            {{ r.status_label }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+{% if active_count > 0 %}
+<!-- Live polling — only runs when there are active requests -->
+<script>
+    (function () {
+        const POLL_INTERVAL_MS = 3000;
+        const API_URL = "{% url 'pop_accounts:procurement_status_api' %}";
+
+        function updateStatuses() {
+            fetch(API_URL, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    data.requests.forEach(function (r) {
+                        const badge = document.getElementById('status-' + r.id);
+                        if (badge) {
+                            badge.textContent = r.status_label;
+                            // Swap CSS class for colour
+                            badge.className = 'procurement_status_badge ' + r.status_css;
+                        }
+                    });
+
+                    // Stop polling once nothing is active anymore
+                    if (!data.has_active) {
+                        clearInterval(poller);
+                    }
+                })
+                .catch(function (err) {
+                    console.warn('Procurement status poll error:', err);
+                });
+        }
+
+        // Poll immediately, then on interval
+        updateStatuses();
+        const poller = setInterval(updateStatuses, POLL_INTERVAL_MS);
+    })();
+</script>
+{% endif %}
+
+{% endblock %}

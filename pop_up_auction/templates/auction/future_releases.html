@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 {% load static %}
+{% load date_filters %}
 
 
 {% block title %}
@@ -77,6 +78,9 @@ Auction
                     <button class="button_medium interestedPrompt interested_btn" data-product-id="{{ prod.id }}"
                         aria-label="Sign in if you're interested in {{ prod.product_title }} {{ prod.secondary_product_title }}">Interested
                     </button>
+                    {% endif %}
+                    {% if prod.specs.release_date|is_within_days:10 %}
+                    <a href="{% url 'pop_up_bot:procure_product' prod.id %}" class="button_medium">Procure For Me</a>
                     {% endif %}
                 </div>
             </div>

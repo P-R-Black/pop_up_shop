@@ -4,6 +4,11 @@ from django.shortcuts import get_object_or_404
 from pop_up_auction.models import PopUpProduct
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from pop_up_cart.models import ProcurementCartItem
+from decimal import Decimal
+
 
 
 # Create your views here.
@@ -98,3 +103,42 @@ def cart_update(request):
         return JsonResponse({'qty': cart_qty, 'subtotal': cart_total})
     
     return JsonResponse({'error': 'Invalid Action'}, status=400)
+
+
+
+
+class ProcurementCartDeleteView(LoginRequiredMixin, View):
+
+    def post(self, request):
+        item_id = request.POST.get('procurement_item_id')
+
+        if not item_id:
+            return JsonResponse({'success': False, 'error': 'No item ID provided.'}, status=400)
+
+        try:
+            item = ProcurementCartItem.objects.get(id=item_id, user=request.user)
+        except ProcurementCartItem.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Item not found.'}, status=404)
+
+        # Also mark the ProcurementServiceRequest as abandoned
+        # so the bot won't run for a cancelled/unpaid request
+        psr = item.procurement_service_request
+        if psr.status == 'pending':
+            psr.status = 'abandoned'
+            psr.save(update_fields=['status'])
+
+        item.delete()
+
+        # Recalculate procurement subtotal for this user
+        remaining = ProcurementCartItem.objects.filter(user=request.user)
+        procurement_subtotal = sum(i.fee_amount for i in remaining)
+
+        # Return updated totals so JS can refresh the UI without a page reload.
+        # Grand total recalculation is simplified here — the full calculation
+        # lives in ProductBuyView; JS can use this to patch the displayed value.
+        return JsonResponse({
+            'success': True,
+            'procurement_subtotal': float(procurement_subtotal),
+            # grand_total is omitted here intentionally — a full reload gives
+            # the accurate number including tax/shipping. JS snippet above handles it.
+        })

@@ -14,10 +14,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     const processingFee = document.getElementById('processingFee').innerHTML
     const salesTax = document.getElementById('purchaseTax').innerHTML
     let orderQuantity;
+    let physicalQuantity = 0;
 
     if (document.getElementById('purchaseQuantity')) {
-        orderQuantity = document.getElementById('purchaseQuantity').innerHTML
+        orderQuantity = parseInt(document.getElementById('purchaseQuantity').innerHTML)
+        console.log('orderQuantity', orderQuantity)
     }
+
+    if (document.getElementById('physicalQuantity')) {
+        physicalQuantity = parseInt(document.getElementById('physicalQuantity').innerHTML);
+        console.log('physicalQuantity', physicalQuantity)
+    }
+
+
+
 
     // Message Div
     const messagesDiv = document.getElementById('payment-messages');
@@ -165,8 +175,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // shipping button options
     shippingButtons.forEach((button) => {
-        shippingMath = 1499 * Number(orderQuantity)
-        shippingCost.innerText = `$${shippingMath / 100}`
+        console.log('orderQuantity in shippingButtons')
+        if (physicalQuantity > 0) {
+            shippingMath = 1499 * physicalQuantity;
+            shippingCost.innerText = `$${shippingMath / 100}`;
+        } else {
+            shippingCost.innerText = `$0.00`;
+        }
+
+        // if (orderQuantity > 0) {
+        //     shippingMath = 1499 * Number(orderQuantity)
+        //     console.log('DEBUG: ShippingMath:', shippingMath)
+        //     shippingCost.innerText = `$${shippingMath / 100}`
+        // } else {
+        //     shippingCost.innerText = `$0.00`
+        // }
 
         button.addEventListener("click", function (e) {
             e.preventDefault();
@@ -183,17 +206,39 @@ window.addEventListener('DOMContentLoaded', async () => {
             let tax = salesTax.replace("$", "").replace(",", "")
             let taxRate = document.getElementById('taxRate').innerHTML;
 
-            if (button.name == "standard" && orderQuantity > 0) {
-                shippingMath = 1499 * Number(orderQuantity)
+            // if (button.name == "standard" && orderQuantity > 0) {
+            //     shippingMath = 1499 * Number(orderQuantity)
+            //     console.log('DEBUG shippingMath standard test', shipping)
+            //     shippingCost.innerText = `$${shippingMath / 100}`
+            //     shipping = shippingCost.innerText.replace("$", "").replace(",", "")
+            //     console.log('DEBUG shipping express test', shipping)
+            //     calculateSubtotal(processFee, shipping, taxRate)
+            // }
+
+            if (button.name == "standard" && physicalQuantity > 0) {
+                shippingMath = 1499 * Number(physicalQuantity)
+                console.log('DEBUG shippingMath standard test', shipping)
                 shippingCost.innerText = `$${shippingMath / 100}`
                 shipping = shippingCost.innerText.replace("$", "").replace(",", "")
+                console.log('DEBUG shipping express test', shipping)
                 calculateSubtotal(processFee, shipping, taxRate)
             }
 
-            if (button.name == "express" && orderQuantity > 0) {
-                shippingMath = 2499 * Number(orderQuantity)
+            // if (button.name == "express" && orderQuantity > 0) {
+            //     shippingMath = 2499 * Number(orderQuantity)
+            //     console.log('DEBUG shippingMath express test', shipping)
+            //     shippingCost.innerText = `$${shippingMath / 100}`
+            //     shipping = shippingCost.innerText.replace("$", "").replace(",", "")
+            //     console.log('DEBUG shipping express test', shipping)
+            //     calculateSubtotal(processFee, shipping, taxRate)
+            // }
+
+            if (button.name == "express" && physicalQuantity > 0) {
+                shippingMath = 2499 * Number(physicalQuantity)
+                console.log('DEBUG shippingMath express test', shipping)
                 shippingCost.innerText = `$${shippingMath / 100}`
                 shipping = shippingCost.innerText.replace("$", "").replace(",", "")
+                console.log('DEBUG shipping express test', shipping)
                 calculateSubtotal(processFee, shipping, taxRate)
             }
             buttonUnMount()
@@ -205,7 +250,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     // get subtotal and total
     const calculateSubtotal = (proccessFee, shippingCost, taxRate) => {
 
-        const purchaseSubtotal = document.getElementById('purchaseSubtotal').innerHTML.replace('$', '').replace(',', '')
+        const procurementSubtotal = parseFloat(
+            document.getElementById('procurementSubtotal').innerHTML.replace('$', '').replace(',', '')
+        ) || 0;
+        console.log('procurementSubtotal:', procurementSubtotal)
+
+        // const purchaseSubtotal = document.getElementById('purchaseSubtotal').innerHTML.replace('$', '').replace(',', '')
+        const purchaseSubtotal = parseFloat(
+            document.getElementById('purchaseSubtotal').innerHTML.replace('$', '').replace(',', '')
+        ) || 0;
+        console.log('purchaseSubtotal:', purchaseSubtotal)
         let tax = parseFloat(taxRate) * parseFloat(purchaseSubtotal);
         const purchaseTotal = document.getElementById('purchaseTotal')
         let totalCalculation = parseFloat(purchaseSubtotal) + parseFloat(proccessFee) + parseFloat(tax) + parseFloat(shippingCost)

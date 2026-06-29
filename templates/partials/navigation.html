@@ -200,7 +200,7 @@
                         type="button" role="button">
                         <i class='bx bx-cart icon' aria-hidden="true"></i>
                         <span class="text nav-text">Cart</span>
-                        {% with total_qty=cart|length %}
+                        {% with total_qty=cart|length|add:procurement_cart_length %}
                         <div class="cart_qty" id="cart_qty" aria-live="polite" aria-atomic="true"
                             aria-label="Imtes in cart">
                             {% if total_qty > 0 %}

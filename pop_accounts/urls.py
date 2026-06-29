@@ -10,7 +10,8 @@ from .views import (EmailCheckView, RegisterView, Login2FAView, VerifyEmailView,
                     MostInterested, TotalOpenBidsView, TotalAccountsView, AccountSizesView, 
                     PendingOkayToShipView, PendingOrderShippingDetailView, UpdateShippingView, 
                     GetOrderShippingDetail, UpdateShippingPostView, ViewShipmentsView, AddProductsGetView,
-                    Resend2FACodeView, SendPasswordResetLink, SocialLoginCompleteView, RestoreAccountView)
+                    Resend2FACodeView, SendPasswordResetLink, SocialLoginCompleteView, RestoreAccountView,
+                    ProcurementStatusPageView, ProcurementStatusAPIView)
 
 app_name = 'pop_accounts'
 urlpatterns = [
@@ -54,6 +55,8 @@ urlpatterns = [
     path('purchase-history/', PastPurchaseView.as_view(), name='past_purchases'),
     path('shipping-tracking/', ShippingTrackingView.as_view(), name='shipping_tracking'),
     path('customer-order/<uuid:order_id>/', UserOrderPager.as_view(), name='customer_order'),
+    path('procurement-status/', ProcurementStatusPageView.as_view(), name='procurement_status'),
+    path('procurement-status/api/', ProcurementStatusAPIView.as_view(), name='procurement_status_api'),
 
     # admin dashboard
     path('dashboard-admin/', AdminDashboardView.as_view(), name='dashboard_admin'),

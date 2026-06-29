@@ -115,8 +115,33 @@ class TestPopUpFinanceModel(TestCase):
         self.assertFalse(finance.is_disputed)
         self.assertFalse(finance.is_refunded)
 
-    def test_one_to_one_relationship_with_order(self):
-        """Test that one order can only have one finance record"""
+    def test_finance_record_linked_to_order(self):
+        """Test that a finance record can be created for an order"""
+        finance = PopUpFinance.objects.create(
+            order=self.order,
+            product=self.product,
+            reserve_price=Decimal('200.00'),
+            final_price=Decimal('215.00'),
+            payment_method='stripe'
+        )
+        self.assertEqual(finance.order, self.order)
+        self.assertEqual(self.order.finance_records.count(), 1)
+
+
+    def test_multiple_finance_records_per_order(self):
+        """Test that one order can have multiple finance records (one per item)"""
+        product2 = PopUpProduct.objects.create(
+            product_type=self.sneakers_type,
+            category=self.basketball_category,
+            brand=self.jordan_brand,
+            product_title='Air Jordan 1',
+            slug='jordan-1-chicago',
+            buy_now_price=Decimal('180.00'),
+            retail_price=Decimal('180.00'),
+            inventory_status='in_inventory',
+            is_active=True
+        )
+
         PopUpFinance.objects.create(
             order=self.order,
             product=self.product,
@@ -124,16 +149,17 @@ class TestPopUpFinanceModel(TestCase):
             final_price=Decimal('215.00'),
             payment_method='stripe'
         )
-        
-        # Attempting to create another finance record for same order should fail
-        with self.assertRaises(IntegrityError):
-            PopUpFinance.objects.create(
-                order=self.order,
-                product=self.product,
-                reserve_price=Decimal('200.00'),
-                final_price=Decimal('220.00'),
-                payment_method='paypal'
-            )
+        PopUpFinance.objects.create(
+            order=self.order,
+            product=product2,
+            reserve_price=Decimal('170.00'),
+            final_price=Decimal('180.00'),
+            payment_method='stripe'
+        )
+
+        self.assertEqual(self.order.finance_records.count(), 2)
+        total = sum(r.final_price for r in self.order.finance_records.all())
+        self.assertEqual(total, Decimal('395.00'))
 
     def test_calculate_revenue_no_refund(self):
         """Test revenue calculation without refunds"""

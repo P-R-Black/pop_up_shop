@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>We Secured It!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
+
+        .logo-font {
+            font-family: 'Birthstone', cursive;
+            color: #CB3A60;
+            font-size: 3.5rem;
+            font-weight: 500;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+                padding: 0 10px !important;
+            }
+        }
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f4">
+        <tr>
+            <td align="center" style="padding: 20px">
+                <table class="container" role="presentation" width="700" cellpadding="0" cellspacing="0" border="0"
+                    bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 700px; max-width: 700px">
+
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="background-color: #000; padding: 20px;">
+                            <div class="logo-font"
+                                style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                The Pop Up
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Success banner -->
+                    <tr>
+                        <td align="center" style="background-color: #d4edda; padding: 16px 30px;">
+                            <h2 style="margin: 0; color: #155724; font-size: 20px;">
+                                ✅ We Secured It!
+                            </h2>
+                        </td>
+                    </tr>
+
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding: 24px 30px 0 30px;">
+                            <p style="color: #333; margin: 0 0 15px 0; font-size: 16px; line-height: 1.5;">
+                                Hi {{ user.first_name }},
+                            </p>
+                            <p style="color: #333; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
+                                Great news — we successfully secured
+                                <strong>{{ product.product_title }}</strong>
+                                {% if product.secondary_product_title %}
+                                ({{ product.secondary_product_title }})
+                                {% endif %}
+                                for you.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Product details card -->
+                    <tr>
+                        <td style="padding: 0 30px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                style="background-color: #F3F2F2; padding: 16px; margin-bottom: 16px;">
+                                <tr>
+                                    <!-- Product image -->
+                                    <td width="120" valign="top" align="center">
+                                        {% for image in product.product_image.all %}
+                                        {% if image.is_feature %}
+                                        <img src="{% if image.get_image_url %}{{ image.get_image_url }}{% else %}{{ image.image }}{% endif %}"
+                                            alt="{{ image.alt_text }}" width="90" style="border-radius: 4px;">
+                                        {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <!-- Product info -->
+                                    <td valign="top" style="padding-left: 16px;">
+                                        <h3 style="margin: 0 0 8px 0; color: #333; font-size: 16px;">
+                                            {{ product.product_title }}
+                                        </h3>
+                                        {% if product.secondary_product_title %}
+                                        <p style="margin: 0 0 6px 0; color: #666; font-size: 14px;">
+                                            {{ product.secondary_product_title }}
+                                        </p>
+                                        {% endif %}
+                                        <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">
+                                            <strong>Size:</strong>
+                                            {% if service_request.sex %}{{ service_request.sex }} {% endif %}{{
+                                            service_request.size }}
+                                        </p>
+                                        {% if execution.item_price %}
+                                        <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">
+                                            <strong>Price Paid:</strong> ${{ execution.item_price }}
+                                        </p>
+                                        {% endif %}
+                                        {% if execution.winning_site %}
+                                        <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">
+                                            <strong>Secured From:</strong> {{ execution.winning_site|title }}
+                                        </p>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Next steps -->
+                    <tr>
+                        <td style="padding: 16px 30px 8px 30px;">
+                            <p style="color: #333; font-size: 15px; line-height: 1.6; margin: 0 0 12px 0;">
+                                The item has been added to your Pop Up Shop cart and will be available
+                                for purchase in your account shortly.
+                            </p>
+                            <p style="color: #333; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
+                                <a href="{{ site_url }}/accounts/procurement-status/" style="background-color: #CB3A60; color: #fff; padding: 10px 20px;
+                                           text-decoration: none; border-radius: 4px; font-size: 15px;">
+                                    View Procurement Status
+                                </a>
+                            </p>
+                        </td>
+                    </tr>
+                    {% comment %}
+                    <tr>
+                        <td style="padding: 0 30px 24px 30px;">
+                            <hr style="border: 0; height: 1px; background: #ddd;">
+                            <p style="color: #CB3A60; margin: 16px 0 0 0; font-size: 14px;">
+                                Service Fee Paid: ${{ service_request.service_fee }}
+                            </p>
+                        </td>
+                    </tr>
+                    {% endcomment %}
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center"
+                            style="background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #999;">
+                            You're receiving this email because you used the procurement service at
+                            <a href="{{ site_url }}" style="color: #999;">The Pop Up</a>.<br>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

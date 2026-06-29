@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 class PopUpFinance(models.Model):
-    order = models.OneToOneField(PopUpCustomerOrder, on_delete=models.CASCADE)
+    order = models.ForeignKey(PopUpCustomerOrder, on_delete=models.CASCADE, related_name='finance_records')
     product = models.ForeignKey(PopUpProduct, on_delete=models.CASCADE)
     reserve_price = models.DecimalField(max_digits=10, decimal_places=2) #COST product reserve price which is retail + shipping
     final_price = models.DecimalField(max_digits=10, decimal_places=2)

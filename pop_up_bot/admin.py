@@ -13,6 +13,8 @@ from .models import (
     ProcurementEvent,
     BotLog,
     SiteAttempt,
+    ScheduledRelease,
+    ProcurementServiceRequest
 )
 
 
@@ -39,6 +41,14 @@ class CookieModelAdmin(admin.ModelAdmin):
         }),
     )
 
+
+@admin.register(ScheduledRelease)
+class ScheduledReleaseAdmin(admin.ModelAdmin):
+    list_display = ('product', 'sku', 'release_date', 'status')
+    list_filter = ('status', 'release_date')
+    search_fields = ('sku', 'product__name')
+    readonly_fields = ('id', 'created_at', 'updated_at')
+    
 
 @admin.register(ProcurementRequest)
 class ProcurementRequestAdmin(admin.ModelAdmin):
@@ -73,6 +83,16 @@ class ProcurementRequestAdmin(admin.ModelAdmin):
     def price_range(self, obj):
         """Display price range"""
         return f"${0} - ${obj.max_price}"
+
+
+
+@admin.register(ProcurementServiceRequest)
+class ProcurementServiceRequestAdmin(admin.ModelAdmin):
+    list_display = ['user', 'scheduled_release', 'size', 'sex', 'status', 'service_fee', 'fee_paid_at', 'created_at']
+    list_filter = ['status', 'strategy']
+    search_fields = ['user__email', 'scheduled_release__product__product_title']
+    readonly_fields = ['created_at', 'updated_at', 'fee_paid_at']
+    ordering = ['-created_at']
 
 
 @admin.register(ProcurementExecution)

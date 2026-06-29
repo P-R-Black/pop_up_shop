@@ -204,15 +204,12 @@ def send_reservation_reminders():
 
     for res in reservations:
         try:
-            print('DEBUG res.expires_at', res.expires_at)
             time_left = res.expires_at - now_time
-            print('DEBUG time_left', time_left)
 
             if timedelta(hours=23, minutes=30) <= time_left <= timedelta(hours=24, minutes=30) and not res.reminder_24hr_sent:
                 try:
                     # send 24 hour reminder
                     send_24_hour_reminder_email(res.user, res.product)
-                    print('DEBUG 24 hour email sent', res.user, res.product)
                     res.reminder_24hr_sent = True
                     res.save()
                     logger.info(f"24-hour reminder sent for reservation {res.id}")
@@ -224,7 +221,6 @@ def send_reservation_reminders():
                 try:
                     # send 1 hour reminder
                     send_1_hour_reminder_email(res.user, res.product)
-                    print('DEBUG 1 hour email sent', res.user, res.product)
                     res.reminder_1hr_sent = True
                     res.save()
                     logger.info(f"1-hour reminder sent for reservation {res.id}")

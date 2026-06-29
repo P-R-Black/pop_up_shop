@@ -173,6 +173,29 @@ class TestCreateOrderAfterPaymentView(TestCase):
             specification=self.product_sex_spec,
             value='Male'
         )
+
+        service_type, _ = PopUpProductType.objects.get_or_create(
+        slug='service', defaults={'name': 'Service', 'is_active': True}
+        )
+
+        service_category, _ = PopUpCategory.objects.get_or_create(
+            slug='service', defaults={'name': 'Service'}
+        )
+
+        service_brand, _ = PopUpBrand.objects.get_or_create(
+            slug='pop-up-shop', defaults={'name': 'Pop Up Shop'}
+        )
+        self.procurement_product = PopUpProduct.objects.create(
+            product_type=service_type,
+            category=service_category,
+            brand=service_brand,
+            product_title='Procurement Service Fee',
+            slug='procurement-service-fee',
+            retail_price=Decimal('15.00'),
+            buy_now_price=Decimal('15.00'),
+            inventory_status='in_inventory',
+            is_active=False,
+        )
         
         # Login user
         self.client.force_login(self.user)
@@ -376,6 +399,12 @@ class TestCreateOrderAfterPaymentView(TestCase):
             is_paid=False
         )
         
+        print('test reservation:', reservation)
+        print(f'r.user:', reservation.user)
+        print(f'r.product:', reservation.product)
+        print(f'r.expires_at:', reservation.expires_at)
+        print(f'r.is_paid:', reservation.is_paid)
+
         self._add_product_to_cart()
         
         response = self.client.post(
@@ -566,7 +595,7 @@ class TestCreateOrderAfterPaymentView(TestCase):
             auction_locked=False,
             buy_now=True
         )
-        
+
         
         payload = self._get_valid_payload()
         payload['total_paid'] = '395.00'
@@ -577,7 +606,7 @@ class TestCreateOrderAfterPaymentView(TestCase):
             content_type='application/json'
         )
 
-        print('response.json()', response)
+        print('response.json()', response.json())
         
         self.assertEqual(response.status_code, 200)
         
@@ -725,8 +754,6 @@ class TestAdminOrderDetailView(TestCase):
     # def test_staff_user_can_access(self):
     #     """Test that staff users can access the view"""
     #     self.client.force_login(self.staff_user)
-    #     print('DEBUG test_staff_user_can_access self.order_item1.id', self.order_item1.id)
-    #     print('DEBUG test_staff_user_can_access self.orde', self.order.id)
     #     url = reverse('pop_up_order:admin_order_detail', kwargs={'order_id': self.order_item1.id})
         
     #     response = self.client.get(url)

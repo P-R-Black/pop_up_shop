@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Procurement Update</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Birthstone&display=swap');
+
+        .logo-font {
+            font-family: 'Birthstone', cursive;
+            color: #CB3A60;
+            font-size: 3.5rem;
+            font-weight: 500;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+                padding: 0 10px !important;
+            }
+        }
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f4f4f4">
+        <tr>
+            <td align="center" style="padding: 20px">
+                <table class="container" role="presentation" width="700" cellpadding="0" cellspacing="0" border="0"
+                    bgcolor="#ffffff" style="border-radius: 0px; overflow: hidden; width: 700px; max-width: 700px">
+
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="background-color: #000; padding: 20px;">
+                            <div class="logo-font"
+                                style="font-family: 'Birthstone', cursive, sans-serif; font-size: 3.5rem; color: #CB3A60;">
+                                The Pop Up
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Status banner — colour varies by refund eligibility -->
+                    <tr>
+                        <td align="center"
+                            style="background-color: {% if is_refundable %}#fff3cd{% else %}#f8d7da{% endif %}; padding: 16px 30px;">
+                            <h2
+                                style="margin: 0; color: {% if is_refundable %}#856404{% else %}#721c24{% endif %}; font-size: 20px;">
+                                {% if is_refundable %}
+                                ⚠️ We couldn't secure your item — refund issued
+                                {% else %}
+                                ❌ We couldn't secure your item
+                                {% endif %}
+                            </h2>
+                        </td>
+                    </tr>
+
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding: 24px 30px 0 30px;">
+                            <p style="color: #333; margin: 0 0 15px 0; font-size: 16px; line-height: 1.5;">
+                                Hi {{ user.first_name }},
+                            </p>
+                            <p style="color: #333; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
+                                Unfortunately, we weren't unable to secure
+                                <strong>{{ product.product_title }}</strong>
+                                {% if product.secondary_product_title %}
+                                ({{ product.secondary_product_title }})
+                                {% endif %}
+                                in
+                                {% if service_request.sex %}{{ service_request.sex }} {% endif %}size {{
+                                service_request.size }}.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Reason card -->
+                    <tr>
+                        <td style="padding: 0 30px 16px 30px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                style="background-color: #F3F2F2; padding: 16px;">
+                                <tr>
+                                    <td>
+                                        <p style="margin: 0 0 8px 0; color: #333; font-size: 15px;">
+                                            <strong>What happened:</strong>
+                                        </p>
+                                        <p style="margin: 0; color: #555; font-size: 15px; line-height: 1.5;">
+                                            {{ reason }}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Refund section -->
+                    <tr>
+                        <td style="padding: 0 30px 16px 30px;">
+                            {% if is_refundable %}
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                style="background-color: #d4edda; padding: 16px;">
+                                <tr>
+                                    <td>
+                                        <p
+                                            style="margin: 0 0 6px 0; color: #155724; font-size: 15px; font-weight: bold;">
+                                            💰 Refund Issued
+                                        </p>
+                                        <p style="margin: 0; color: #155724; font-size: 14px; line-height: 1.5;">
+                                            Your ${{ service_request.service_fee }} service fee has been refunded.
+                                            Please allow 3–5 business days for it to appear on your statement.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% else %}
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                style="background-color: #F3F2F2; padding: 16px;">
+                                <tr>
+                                    <td>
+                                        <p style="margin: 0 0 6px 0; color: #333; font-size: 15px; font-weight: bold;">
+                                            Service Fee
+                                        </p>
+                                        <p style="margin: 0; color: #555; font-size: 14px; line-height: 1.5;">
+                                            The ${{ service_request.service_fee }} service fee is non-refundable
+                                            when the item sells out or is lost to other services — our service
+                                            competed but was unable to complete the purchase in time.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <!-- CTA -->
+                    <tr>
+                        <td style="padding: 8px 30px 24px 30px;">
+                            <p style="color: #333; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">
+                                Keep an eye on future releases — we'll notify you when this item
+                                or something similar becomes available again.
+                            </p>
+                            <a href="{% url 'pop_up_auction:future_releases' %}" style="background-color: #CB3A60; color: #fff; padding: 10px 20px;
+                                       text-decoration: none; border-radius: 4px; font-size: 15px;">
+                                Browse Future Releases
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 0 30px 24px 30px;">
+                            <hr style="border: 0; height: 1px; background: #ddd;">
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center"
+                            style="background-color: #f9f9f9; padding: 30px; font-size: 12px; color: #999;">
+                            You're receiving this email because you used the procurement service at
+                            <a href="{{ site_url }}" style="color: #999;">The Pop Up</a>.<br>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

@@ -26,14 +26,76 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.http import JsonResponse
 from pop_up_payment.views import CreatePaymentIntentView
+from pop_up_bot.models import ScheduledRelease, ProcurementServiceRequest
+from pop_up_cart.models import PopUpCartItem, ProcurementCartItem
 
-from pop_up_auction.tests.conftest import (
-    create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
-    create_product_type, create_category, create_brand, create_test_address)
+from pop_up_auction.tests.conftest import (create_test_user, create_test_address)
 
 User = get_user_model()
 
-    
+"""
+ 1. TestProtectedView
+ 2. TestProductBuyViewGet
+ 3. TestProductBuyViewPost
+ 4. TestProductBuyViewProcurement
+ 4. TestShippingAddressViewGet
+ 5. TestShippingAddressViewPost
+ 6. BillingAddressViewGetTestCase
+ 7. TestBillingAddressViewPost
+ 8. BuyNowAddToCartViewTestCase
+ 9. TestCreatePaymentIntentView
+10. TestProcessVenmoPaymentView
+11. TestPlacedOrderView
+12. TestProductBuyViewProcurement
+"""
+
+
+def make_product(product_type, category, brand, title, slug,
+                 price=Decimal('180.00'), status='anticipated'):
+    return PopUpProduct.objects.create(
+        product_type=product_type,
+        category=category,
+        brand=brand,
+        product_title=title,
+        slug=slug,
+        retail_price=price,
+        buy_now_price=price,
+        inventory_status=status,
+        is_active=True,
+    )
+ 
+ 
+def make_scheduled_release(product, sku='TEST-001'):
+    return ScheduledRelease.objects.create(
+        product=product,
+        sku=sku,
+        release_date=django_timezone.now() + django_timezone.timedelta(days=7),
+        retail_price=Decimal('180.00'),
+        search_method='direct_url',
+        status='scheduled',
+    )
+ 
+ 
+def make_psr(user, release, size="Men's 10"):
+    return ProcurementServiceRequest.objects.create(
+        user=user,
+        scheduled_release=release,
+        size=size,
+        service_fee=Decimal('15.00'),
+        fee_paid_at=django_timezone.now(),
+        status='pending',
+        strategy='fastest',
+    )
+ 
+ 
+def make_procurement_cart_item(user, psr, fee=Decimal('15.00')):
+    return ProcurementCartItem.objects.create(
+        user=user,
+        procurement_service_request=psr,
+        fee_amount=fee,
+    )
+
+
 # Create a test view that uses the mixin
 class TestProtectedView(AjaxLoginRequiredMixin, View):
     """Test view that uses AjaxLoginRequiredMixin"""
@@ -828,6 +890,194 @@ class TestProductBuyViewPost(TestCase):
         self.assertEqual(response.status_code, 200)
         mock_gateway.assert_called_once()
 
+
+class TestProductBuyViewProcurement(TestCase):
+    """
+    Tests that ProductBuyView correctly includes ProcurementCartItems
+    in the checkout context and folds the fees into the grand total.
+    """
+ 
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_up_payment:payment_home')
+ 
+        self.user, _ = create_test_user(
+            'procure@example.com', 'testpass!23', 'Sam', 'Buyer', '10', 'male'
+        )
+ 
+        self.product_type = PopUpProductType.objects.create(name='Shoe', slug='shoe')
+        self.category = PopUpCategory.objects.create(name='Basketball', slug='basketball')
+        self.brand = PopUpBrand.objects.create(name='Nike', slug='nike')
+ 
+        # A future-release product (not yet in inventory — anticipated)
+        self.future_product = make_product(
+            self.product_type, self.category, self.brand,
+            'Air Jordan 1', 'aj1-future', status='anticipated'
+        )
+        self.release = make_scheduled_release(self.future_product)
+        self.psr = make_psr(self.user, self.release)
+ 
+    # ------------------------------------------------------------------
+    # Context keys
+    # ------------------------------------------------------------------
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_procurement_cart_items_in_context(self, *_):
+        self.client.force_login(self.user)
+        make_procurement_cart_item(self.user, self.psr)
+ 
+        response = self.client.get(self.url)
+ 
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('procurement_cart_items', response.context)
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_procurement_subtotal_in_context(self, *_):
+        self.client.force_login(self.user)
+        make_procurement_cart_item(self.user, self.psr)
+ 
+        response = self.client.get(self.url)
+ 
+        self.assertIn('procurement_subtotal', response.context)
+        self.assertEqual(response.context['procurement_subtotal'], Decimal('15.00'))
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_procurement_subtotal_zero_when_no_items(self, *_):
+        self.client.force_login(self.user)
+        # No procurement cart items created
+ 
+        response = self.client.get(self.url)
+ 
+        self.assertEqual(response.context['procurement_subtotal'], Decimal('0.00'))
+ 
+    # ------------------------------------------------------------------
+    # Grand total includes procurement fee
+    # ------------------------------------------------------------------
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.00'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_grand_total_includes_procurement_fee(self, *_):
+        """
+        With no regular cart items, no tax, no shipping:
+        grand_total = $0 subtotal + $0.00 processing fee + $15.00 procurement fee = $15.00
+        """
+        self.client.force_login(self.user)
+        make_procurement_cart_item(self.user, self.psr)
+ 
+        response = self.client.get(self.url)
+ 
+        grand_total = Decimal(response.context['grand_total'])
+        # processing_fee ($2.50) + procurement ($15.00)
+        self.assertEqual(grand_total, Decimal('15.00'))
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_grand_total_includes_procurement_fee_alongside_regular_cart(self, *_):
+        """
+        Regular item ($180) + tax (7%) + shipping ($14.99) + processing ($2.50)
+        + procurement ($15.00) = expected grand total.
+        """
+        self.client.force_login(self.user)
+ 
+        # Add a regular in-inventory item to the cart
+        regular_product = make_product(
+            self.product_type, self.category, self.brand,
+            'Air Jordan 4', 'aj4-regular',
+            price=Decimal('180.00'), status='in_inventory'
+        )
+        PopUpCartItem.objects.create(user=self.user, product=regular_product, quantity=1)
+ 
+        # Add a procurement cart item
+        make_procurement_cart_item(self.user, self.psr)
+ 
+        response = self.client.get(self.url)
+ 
+        subtotal = Decimal('180.00')
+        tax = subtotal * Decimal('0.07')           # 12.60
+        shipping = Decimal('14.99') * 1            # 14.99
+        processing = Decimal('2.50')
+        procurement = Decimal('15.00')
+        expected = subtotal + tax + shipping + processing + procurement
+ 
+        grand_total = Decimal(response.context['grand_total'])
+        self.assertAlmostEqual(grand_total, expected, places=2)
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_multiple_procurement_items_summed_correctly(self, *_):
+        self.client.force_login(self.user)
+ 
+        # Second procurement item for a different release
+        product2 = make_product(
+            self.product_type, self.category, self.brand,
+            'Air Jordan 3', 'aj3-future', status='anticipated'
+        )
+        release2 = make_scheduled_release(product2, sku='AJ3-002')
+        psr2 = make_psr(self.user, release2, size="Men's 11")
+ 
+        make_procurement_cart_item(self.user, self.psr)
+        make_procurement_cart_item(self.user, psr2)
+ 
+        response = self.client.get(self.url)
+ 
+        self.assertEqual(response.context['procurement_subtotal'], Decimal('30.00'))
+ 
+    # ------------------------------------------------------------------
+    # Template rendering
+    # ------------------------------------------------------------------
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_procurement_item_display_title_rendered_in_template(self, *_):
+        self.client.force_login(self.user)
+        make_procurement_cart_item(self.user, self.psr)
+        
+        response = self.client.get(self.url)
+ 
+        # display_title = "Procurement: Air Jordan 1"
+        self.assertContains(response, 'Air Jordan 1')
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_no_procurement_items_renders_cleanly(self, *_):
+        """Checkout page should load fine even with zero procurement items."""
+        self.client.force_login(self.user)
+ 
+        response = self.client.get(self.url)
+ 
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'payment/payment_home.html')
+ 
+    # ------------------------------------------------------------------
+    # Processing fee logic with only procurement items (no regular cart)
+    # ------------------------------------------------------------------
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_processing_fee_applied_when_only_procurement_item_in_cart(self, *_):
+        """
+        Processing fee should be $2.50 when the cart has only a procurement
+        item (cart_length == 0 for regular items, but procurement exists).
+        """
+        self.client.force_login(self.user)
+        make_procurement_cart_item(self.user, self.psr)
+ 
+        response = self.client.get(self.url)
+ 
+        self.assertEqual(response.context['processing_fee'], '0.00')
+ 
+    @patch('pop_up_payment.views.get_state_tax_rate', return_value=Decimal('0.07'))
+    @patch('pop_up_payment.views.gateway.client_token.generate', return_value='fake_token')
+    def test_processing_fee_zero_when_completely_empty_cart(self, *_):
+        """No regular items, no procurement items → processing fee is $0."""
+        self.client.force_login(self.user)
+ 
+        response = self.client.get(self.url)
+ 
+        self.assertEqual(response.context['processing_fee'], '0.00')
 
 class TestShippingAddressViewGet(TestCase):
     """Test suite for ShippingAddressView GET method"""
@@ -2053,8 +2303,7 @@ class TestCreatePaymentIntentView(TestCase):
             data=json.dumps({'amount': 21500}),
             content_type='application/json'
         )
-        print("response.status_code", response.status_code)
-        print(f"Response body: {response.json()}")
+ 
         self.assertEqual(response.status_code, 200)
         
         # Verify Customer.create was called with correct params
@@ -2868,5 +3117,5 @@ class TestPlacedOrderView(TestCase):
 
 # """
 # Run Test
-# python3 manage.py test accounts/tests
+# python3 manage.py test accounts/tests/TestProductBuyViewGet
 # """

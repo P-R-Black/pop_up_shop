@@ -9,6 +9,25 @@ from django.utils.timezone import now
 from django.utils import timezone as django_timezone
 from datetime import timezone as dt_timezone, datetime, timedelta
 from typing import Dict, List, Optional
+from decimal import Decimal
+
+"""
+All Models
+ 1. CookieModel
+ 2. ProcurementRequest
+ 3. ProcurementExecution
+ 4. ExternalProductReference
+ 5. InventoryLock
+ 6. ProcurementEvent
+ 7. BotLog
+ 8. SiteAttempt
+ 9. ScheduledRelease
+10. ProcurementServiceRequest
+11. ReleaseExecutionBatch
+12. DailyHealthCheck
+13. HealthCheckStep
+14. HealthCheckNotification
+"""
 
 class CookieModel(models.Model):
     """
@@ -172,6 +191,13 @@ class ProcurementRequest(models.Model):
     target_size = models.CharField(
         max_length=50,
         help_text="Size to find (e.g., 'US 10')"
+    )
+
+    target_sex = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        help_text="Gender sizing (Mens/Womens) — for shoes only"
     )
 
     target_color = models.CharField(
@@ -1083,6 +1109,7 @@ class ProcurementServiceRequest(models.Model):
     
     STATUS_CHOICES = [
         ('pending', 'Pending - User paid, waiting for release'),
+        ('pending_payment', 'Pending Payment - Awaiting service fee payment'),
         ('active', 'Active - Release time has arrived, bot running'),
         ('success', 'Success - Bot secured item'),
         ('failed', 'Failed - Bot could not secure'),
@@ -1116,6 +1143,13 @@ class ProcurementServiceRequest(models.Model):
     size = models.CharField(
         max_length=50,
         help_text="Size they want (e.g., US 10)"
+    )
+    
+    sex = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        help_text="Gender sizing (Mens/Womens) - applicable for shoes or sneakers only"
     )
     
     color = models.CharField(
@@ -1189,7 +1223,9 @@ class ProcurementServiceRequest(models.Model):
     )
     
     class Meta:
-        unique_together = ('user', 'scheduled_release', 'size')
+        # A user can have one request per product/size/sex combination.
+        # Mens 10 and Womens 10 are different requests.
+        unique_together = ('user', 'scheduled_release', 'size', 'sex')
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['user', 'status']),
@@ -1197,6 +1233,7 @@ class ProcurementServiceRequest(models.Model):
         ]
         verbose_name = 'Procurement Service Request'
         verbose_name_plural = 'Procurement Service Requests'
+ 
     
     def __str__(self):
         return f"{self.user.email} → {self.scheduled_release.product.product_title} (Size {self.size})"
@@ -1214,41 +1251,35 @@ class ProcurementServiceRequest(models.Model):
     def create_procurement_request(self) -> 'ProcurementRequest':
         """
         Create a ProcurementRequest at release time.
-        
         Called by Celery task when release_date arrives.
-        
-        Returns:
-            ProcurementRequest instance
         """
         from pop_up_bot.models import ProcurementRequest
-        # Determine max price - use service request's max_price, 
-        # fall back to release's retail_price, 
-        # or use a high default (essentially no limit)
+    
         max_price = (
-            self.max_price 
-            or self.scheduled_release.retail_price 
-            or 9999.99  # Default high value if neither is set
+            self.max_price
+            or self.scheduled_release.retail_price
+            or Decimal('9999.99')
         )
-        
-        # Create the request
+    
         request = ProcurementRequest.objects.create(
             user=self.user,
             product=self.scheduled_release.product,
             product_name=self.scheduled_release.product.product_title,
             target_size=self.size,
+            target_sex=self.sex,          # ← NEW: pass sex through
             target_color=self.color or '',
-            max_price=self.max_price or self.scheduled_release.retail_price,
+            max_price=max_price,
             procurement_type='inventory',
             status='pending',
         )
-        
-        # Link back
+    
         self.procurement_request = request
         self.procurement_request_created_at = django_timezone.now()
         self.status = 'active'
         self.save()
-        
+    
         return request
+ 
  
  
 class ReleaseExecutionBatch(models.Model):

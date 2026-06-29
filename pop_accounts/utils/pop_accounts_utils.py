@@ -76,7 +76,6 @@ def send_verification_email(request, user):
 def handle_password_reset_request(request, email: str):
     """Utility to handle sending a password reset link with rate limiting"""
     now_time = now()
-    print('DEBUG handle_password_reset_request called')
 
     # Validate email
     if not email:
@@ -106,7 +105,6 @@ def handle_password_reset_request(request, email: str):
     # Check if user exists
     try:
         user = User.objects.get(email__iexact=email, is_active=True)
-        print('DEBUG try block user', user)
         user_exists = True
     except User.DoesNotExist:
         user_exists = False
@@ -123,22 +121,14 @@ def handle_password_reset_request(request, email: str):
             'message': 'If this email is registered, you will receive a password reset link shortly.'
         })
     
-    # ✅ DEBUG: Check user-specific rate limiting
-    print(f"DEBUG: Checking user.last_password_reset")
-    print(f"DEBUG: user.last_password_reset = {user.last_password_reset}")
-    print(f"DEBUG: now_time = {now_time}")
 
     if user.last_password_reset:
         time_diff = now_time - user.last_password_reset
-        print(f"DEBUG: Time difference = {time_diff}")
-        print(f"DEBUG: RESET_EMAIL_COOLDOWN = {RESET_EMAIL_COOLDOWN}")
-        print(f"DEBUG: time_diff < RESET_EMAIL_COOLDOWN? {time_diff < RESET_EMAIL_COOLDOWN}")
     else:
         print(f"DEBUG: user.last_password_reset is None or False")
 
     # User exists - check user-specific rate limiting
     if user.last_password_reset and now_time - user.last_password_reset < RESET_EMAIL_COOLDOWN:
-        print(f"DEBUG: BLOCKING - last_password_reset check failed")
         time.sleep(1)  # Still add delay
         return JsonResponse({
             'success': False, 
@@ -147,7 +137,7 @@ def handle_password_reset_request(request, email: str):
     
     # Check cache to prevent duplicate sends within 5 minutes
     cache_key = f"password_reset_requested:{email}".replace(' ', '_')
-    print(f"DEBUG: Checking cache with key: {cache_key}")
+    
 
     cache_value = cache.get(cache_key)
     print(f"DEBUG: Cache value: {cache_value}")
@@ -177,7 +167,6 @@ def handle_password_reset_request(request, email: str):
 
     # Send email
     try:
-        print('DEBUG trying to send email now')
         send_mail(
             subject="Reset Your Password",
             message=f"Click the link below to reset your password:\n\n{reset_link}\n\nThis link expires in 1 hour.",
@@ -362,9 +351,7 @@ def increment_rate_limit(ip_address, action_type, window_seconds=3600):
         window_seconds (int): Time window in seconds
     """
     cache_key = f"{action_type}_attempt_{ip_address}".replace(' ', '_')
-    print('cache_key', cache_key)
     attempts = cache.get(cache_key, 0)
-    print('attempts', attempts)
     cache.set(cache_key, attempts + 1, window_seconds)
    
 

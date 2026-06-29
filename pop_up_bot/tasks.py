@@ -25,13 +25,20 @@ from pop_up_bot.models import (
     ProcurementServiceRequest,
     ProcurementRequest,
     ReleaseExecutionBatch,
+    ProcurementExecution
 )
+
+from pop_up_email.utils import (send_success_notification, send_failure_notification)
 from pop_up_payment.models import ServicePayment
 from pop_up_payment.handlers.service_fee_handler import ServiceFeePaymentHandler
 from pop_up_bot.orchestrator import BotOrchestrator
 from pop_up_bot.handlers.nike_handler import NikeSiteHandler
 from pop_up_bot.engines.scraper_engine import PlaywrightScraperEngine
 from pop_up_bot.managers.session_manager import SessionManager
+from pop_up_bot.orchestrator import BotOrchestrator
+from pop_up_bot.strategies.factory import StrategyFactory
+from pop_up_bot.managers.session_manager import SessionManager
+from pop_up_bot.managers.procurement_lock import ProcurementLock
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +136,6 @@ def process_release(release: ScheduledRelease) -> dict:
             'errors': [str],
         }
     """
-    print('DEBUG: Processing release called' )
     logger.info(f"Processing release: {release.sku}")
     
     results = {
@@ -217,189 +223,251 @@ def process_release(release: ScheduledRelease) -> dict:
 
 
 @shared_task(bind=True, max_retries=2)
-def execute_procurement_request(self, proc_request_id: str, service_request_id: str, batch_id: str):
+def execute_procurement_request( self, proc_request_id: str, service_request_id: str, batch_id: str):
     """
-    Execute a single procurement request.
-    
-    This runs the bot for one user. Can be run in parallel.
-    
+    Execute a single procurement request — runs the bot for one user.
+ 
     Args:
         proc_request_id: UUID of ProcurementRequest
         service_request_id: UUID of ProcurementServiceRequest
         batch_id: UUID of ReleaseExecutionBatch
     """
     logger.info(f"Starting execution for request {proc_request_id}")
-    
+ 
+    proc_request = None
+    service_request = None
+    execution = None
+ 
     try:
-        # Fetch objects
         proc_request = ProcurementRequest.objects.get(id=proc_request_id)
         service_request = ProcurementServiceRequest.objects.get(id=service_request_id)
         batch = ReleaseExecutionBatch.objects.get(id=batch_id)
-        
-        # Initialize bot components
+ 
+        # --- 1. Create ProcurementExecution record ---
+        execution = ProcurementExecution.objects.create(
+            procurement_request=proc_request,
+            status='running',
+            strategy_used=service_request.strategy or 'sequential',
+            started_at=timezone.now(),
+            task_id=self.request.id,
+        )
+ 
+        logger.info(
+            f"ProcurementExecution {execution.id} created for "
+            f"{service_request.user.email} — "
+            f"{proc_request.product_name} size {proc_request.target_size}"
+        )
+ 
+        # --- 2. Initialize bot components ---
         session_manager = SessionManager()
-        scraper_engine = PlaywrightScraperEngine(
-            headless=True,
-            disable_images=True,
-            user_agent='Nike Bot'
-        )
-        
+        procurement_lock = ProcurementLock()
+        strategy_factory = StrategyFactory()
+ 
         orchestrator = BotOrchestrator(
+            execution_id=str(execution.id),
+            strategy_factory=strategy_factory,
             session_manager=session_manager,
-            event_logger=None,  # TODO: Add event logger
+            procurement_lock=procurement_lock,
+            event_logger=None,  # TODO: wire up EventLogger
         )
-        
-        # Run procurement
+ 
+        # --- 3. Run the bot ---
+        # asyncio.run() is safe here because Celery workers are not async
         result = asyncio.run(
             orchestrator.run(
                 product_name=proc_request.product_name,
                 size=proc_request.target_size,
-                color=proc_request.target_color,
-                strategy_name=service_request.strategy,
-                price_range=(0, service_request.max_price or 10000),
+                sex=service_request.sex,           # "Mens" / "Womens" / None
+                color=proc_request.target_color or None,
+                strategy_name=service_request.strategy or 'sequential',
+                price_range=(0, float(proc_request.max_price or 9999)),
                 site_name='nike',
             )
         )
-        
-        # Handle results
-        execution = result.get('execution')
-        
-        if result.get('status') == 'success' and execution:
-            logger.info(f"Success! Order {execution.order_id} for {service_request.user.email}")
-            
+
+ 
+        # --- 4. Handle result ---
+        error_type = result.error_type or 'unknown_error'
+ 
+        if result.status.value == 'success':
+            logger.info(
+                f"Success for {service_request.user.email} — "
+                f"order: {result.order_id}"
+            )
+ 
+            # Update execution
+            execution.status = 'success'
+            execution.winning_site = result.site
+            execution.order_id = result.order_id
+            execution.item_price = result.item_price
+            execution.error_type = 'success'
+            execution.completed_at = timezone.now()
+            execution.save()
+ 
             # Update service request
             service_request.procurement_execution = execution
             service_request.status = 'success'
             service_request.save()
-            
-            # Update request
+ 
+            # Update procurement request
             proc_request.status = 'fulfilled'
             proc_request.fulfilled_at = timezone.now()
             proc_request.save()
-            
+ 
             # Update batch
             batch.successful_count += 1
             batch.executions.add(execution)
             batch.save()
-            
-            # Send success email
+ 
             send_success_notification(service_request, execution)
-        
+ 
         else:
-            logger.warning(f"Failed to secure item for {service_request.user.email}")
-            
+            logger.warning(
+                f"Failed for {service_request.user.email} — "
+                f"error_type: {error_type}, error: {result.error}"
+            )
+ 
+            # Update execution
+            execution.status = 'failed'
+            execution.error_type = error_type
+            execution.error_message = result.error
+            execution.completed_at = timezone.now()
+            execution.save()
+ 
             # Update service request
             service_request.status = 'failed'
             service_request.save()
-            
-            # Update request
+ 
+            # Update procurement request
             proc_request.status = 'cancelled'
             proc_request.save()
-            
+ 
             # Update batch
             batch.failed_count += 1
+            batch.executions.add(execution)
             batch.save()
-            
-            # Send failure email
-            send_failure_notification(service_request, result.get('error'))
-        
+ 
+            # Auto-refund if it's a code/bot issue
+            auto_refund_service_fee(
+                proc_request,
+                error_type=error_type,
+                reason=result.error,
+            )
+ 
+            send_failure_notification(service_request, result.error, error_type=error_type)
+ 
         # Update batch completion
         batch.completed_at = timezone.now()
         batch.save()
-        
+ 
         logger.info(f"Execution complete for request {proc_request_id}")
         return {
-            'status': 'success' if result.get('status') == 'success' else 'failed',
-            'order_id': execution.order_id if execution else None,
+            'status': result.status.value,
+            'order_id': result.order_id,
+            'error_type': error_type,
         }
-    
+ 
     except Exception as e:
-        error_msg = f"Execution failed for {proc_request_id}: {str(e)}"
+        error_msg = f"Execution task crashed for {proc_request_id}: {str(e)}"
         logger.error(error_msg, exc_info=True)
-        
-        # Retry
+ 
+        # Update execution record if it was created
+        if execution:
+            try:
+                execution.status = 'failed'
+                execution.error_type = 'bot_crash'
+                execution.error_message = str(e)
+                execution.completed_at = timezone.now()
+                execution.save()
+            except Exception:
+                pass
+ 
+        # Retry with backoff
         try:
             self.retry(exc=e, countdown=60)
-        except Exception:
-            # Max retries exceeded
-            service_request = ProcurementServiceRequest.objects.get(id=service_request_id)
-            service_request.status = 'failed'
-            service_request.save()
-            
-            batch = ReleaseExecutionBatch.objects.get(id=batch_id)
-            batch.failed_count += 1
-            batch.save()
-            
-            send_failure_notification(service_request, error_msg)
-        
+        except self.MaxRetriesExceededError:
+            logger.error(f"Max retries exceeded for {proc_request_id}")
+ 
+            if service_request:
+                service_request.status = 'failed'
+                service_request.save()
+ 
+            if proc_request:
+                auto_refund_service_fee(
+                    proc_request,
+                    error_type='bot_crash',
+                    reason=f'Bot crashed after max retries: {str(e)}'
+                )
+                send_failure_notification(service_request, error_msg)
+ 
         raise
 
 
-def send_success_notification(service_request: ProcurementServiceRequest, execution):
-    """Send email when bot successfully secures item"""
-    user = service_request.user
-    product = service_request.scheduled_release.product
+# def send_success_notification(service_request: ProcurementServiceRequest, execution):
+#     """Send email when bot successfully secures item"""
+#     user = service_request.user
+#     product = service_request.scheduled_release.product
     
-    subject = f"✅ We secured {product.product_title}!"
-    message = f"""
-    Hi {user.first_name},
+#     subject = f"✅ We secured {product.product_title}!"
+#     message = f"""
+#     Hi {user.first_name},
     
-    Great news! We successfully secured the {product.product_title} in size {service_request.size}.
+#     Great news! We successfully secured the {product.product_title} in size {service_request.size}.
     
-    Order ID: {execution.order_id}
-    Price: ${execution.item_price}
+#     Order ID: {execution.order_id}
+#     Price: ${execution.item_price}
     
-    The item is in your cart and reserved for 48 hours. 
-    Please complete your purchase at: {settings.SITE_URL}/cart
+#     The item is in your cart and reserved for 48 hours. 
+#     Please complete your purchase at: {settings.SITE_URL}/cart
     
-    Best,
-    Pop Up Shop Bot
-    """
+#     Best,
+#     Pop Up Shop Bot
+#     """
     
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
-        logger.info(f"Success notification sent to {user.email}")
-    except Exception as e:
-        logger.error(f"Failed to send success email to {user.email}: {str(e)}")
+#     try:
+#         send_mail(
+#             subject,
+#             message,
+#             settings.DEFAULT_FROM_EMAIL,
+#             [user.email],
+#             fail_silently=False,
+#         )
+#         logger.info(f"Success notification sent to {user.email}")
+#     except Exception as e:
+#         logger.error(f"Failed to send success email to {user.email}: {str(e)}")
 
 
-def send_failure_notification(service_request: ProcurementServiceRequest, error: str):
-    """Send email when bot fails to secure item"""
-    user = service_request.user
-    product = service_request.scheduled_release.product
+# def send_failure_notification(service_request: ProcurementServiceRequest, error: str):
+#     """Send email when bot fails to secure item"""
+#     user = service_request.user
+#     product = service_request.scheduled_release.product
     
-    subject = f"❌ We couldn't secure {product.product_title}"
-    message = f"""
-    Hi {user.first_name},
+#     subject = f"❌ We couldn't secure {product.product_title}"
+#     message = f"""
+#     Hi {user.first_name},
     
-    Unfortunately, we were unable to secure the {product.product_title} in size {service_request.size}.
+#     Unfortunately, we were unable to secure the {product.product_title} in size {service_request.size}.
     
-    Reason: {error or 'Item went out of stock'}
+#     Reason: {error or 'Item went out of stock'}
     
-    Your ${service_request.service_fee} fee has been refunded to your account.
+#     Your ${service_request.service_fee} fee has been refunded to your account.
     
-    Better luck next time!
+#     Better luck next time!
     
-    Pop Up Shop Bot
-    """
+#     Pop Up Shop Bot
+#     """
     
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
-        )
-        logger.info(f"Failure notification sent to {user.email}")
-    except Exception as e:
-        logger.error(f"Failed to send failure email to {user.email}: {str(e)}")
+#     try:
+#         send_mail(
+#             subject,
+#             message,
+#             settings.DEFAULT_FROM_EMAIL,
+#             [user.email],
+#             fail_silently=False,
+#         )
+#         logger.info(f"Failure notification sent to {user.email}")
+#     except Exception as e:
+#         logger.error(f"Failed to send failure email to {user.email}: {str(e)}")
 
 
 # ============================================================================

@@ -70,7 +70,7 @@ Products
                 </div>
                 <div class="products_button_container">
                     {% if request.user.is_authenticated %}
-                    <a class="button_medium" href="{% url 'pop_up_payment:buy_now' p.slug %}"
+                    <a class="button_medium" href="{% url 'pop_up_payment:buy_now' p.slug %}" data-index="{{ p.id }}"
                         aria-label="Purchase {{ p.product_title }} {{ p.secondary_product_title }} while supplies last">
                         Buy Now
                     </a>
@@ -97,7 +97,7 @@ Products
         $('.add_to_cart_button').on('click', function (e) {
             e.preventDefault();
 
-            let productId = $(this).data('product-id');
+            let productId = $(this).data('index');
             let productQty = 1;  // Default quantity to add. You can modify if you allow qty selection.
 
             $.ajax({

@@ -242,7 +242,7 @@ class TestBotOrchestrator(TestCase):
         mock_procurement_lock = AsyncMock()
         mock_event_logger = AsyncMock()
         mock_event_logger.emit = AsyncMock()
-        
+
         orchestrator = BotOrchestrator(
             execution_id=123,
             strategy_factory=mock_strategy_factory,
@@ -250,21 +250,56 @@ class TestBotOrchestrator(TestCase):
             procurement_lock=mock_procurement_lock,
             event_logger=mock_event_logger,
         )
-        
-        # Set search parameters first
+
         orchestrator.search_params = SearchParameters(
             product_name='Air Jordan 1',
             size='US 10',
             color='Red',
         )
-        
-        result = await orchestrator._attempt_site(site='nike')
-        
+
+        # Mock _attempt_nike so we don't launch a real browser
+        mock_nike_result = {
+            'success': True,
+            'site': 'nike',
+            'product_name': 'Air Jordan 1',
+            'size': 'US 10',
+            'order_id': None,
+            'price': 170.00,
+            'error_type': 'success',
+        }
+
+        with patch.object(orchestrator, '_attempt_nike', return_value=mock_nike_result):
+            result = await orchestrator._attempt_site(site='nike')
+
         assert result is not None
         assert result['site'] == 'nike'
+        assert result['success'] is True
         assert result['product_name'] == 'Air Jordan 1'
         assert result['size'] == 'US 10'
     
+
+    @pytest.mark.asyncio
+    async def test_attempt_site_unimplemented_handler(self):
+        """Non-Nike sites return graceful failure until handlers are built."""
+        orchestrator = BotOrchestrator(
+            execution_id=123,
+            strategy_factory=MagicMock(),
+            session_manager=AsyncMock(),
+            procurement_lock=AsyncMock(),
+            event_logger=AsyncMock(),
+        )
+        orchestrator.search_params = SearchParameters(
+            product_name='Air Jordan 1',
+            size='US 10',
+        )
+
+        result = await orchestrator._attempt_site(site='footlocker')
+
+        assert result['success'] is False
+        assert result['site'] == 'footlocker'
+        assert 'not yet implemented' in result['error']
+
+
     @pytest.mark.asyncio
     async def test_try_acquire_lock_success(self):
         """Test successfully acquiring lock"""

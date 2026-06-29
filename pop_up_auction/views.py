@@ -18,6 +18,7 @@ from django.db import transaction
 from pop_accounts.utils.pop_accounts_utils import  add_specs_to_products
 from pop_up_order.models import PopUpOrderItem
 from django.http import Http404
+from datetime import timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -448,6 +449,7 @@ class FutureReleases(ListView):
 
         # Apply add_specs_to_products utility function
         context['product'] = add_specs_to_products(context['product'])
+
 
         # Always include all product types
         context['product_types'] = PopUpProductType.objects.all()

@@ -541,6 +541,7 @@ class TestFullEndToEndWorkflow(EndToEndTestCase):
             fee_paid_at=timezone.now(),
             status='pending',
         )
+
         
         # Verify initial state
         self.assertEqual(ProcurementServiceRequest.objects.filter(status='pending').count(), 2)

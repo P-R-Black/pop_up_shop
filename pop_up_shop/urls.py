@@ -34,7 +34,7 @@ urlpatterns = [
     path('pop_up_coupon/', include('pop_up_coupon.urls')),
     path('pop_up_reward/', include('pop_up_reward.urls')),
     path('pop_up_payment/', include('pop_up_payment.urls')),
-    # path('pop_up_bot/', include('pop_up_bot.urls')),
+    path('pop_up_bot/', include('pop_up_bot.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
    

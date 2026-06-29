@@ -447,7 +447,7 @@ class TestPopUpUserDashboardView(TestCase):
         html = response.content.decode('utf-8')
         self.assertIn('<title>Dashboard</title>', html)
 
-        self.assertIn('<h2>Dashboard</h2>', html)
+        self.assertIn('<h1>Dashboard</h1>', html)
 
 
     def test_dashboard_redirects_if_not_logged_in(self):
@@ -7832,7 +7832,7 @@ class TestUpdateShippingView(TestCase):
         self.client.force_login(self.staff_user)
         
         # Use assertNumQueries to ensure efficient querying
-        with self.assertNumQueries(15):  # Adjust based on your actual query count
+        with self.assertNumQueries(16):  # Adjust based on your actual query count
             response = self.client.get(self.url)
             pending_shipments = list(response.context['pending_shipments'])
             

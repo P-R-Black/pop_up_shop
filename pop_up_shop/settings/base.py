@@ -228,6 +228,7 @@ TEMPLATES = [
                 'pop_accounts.context_processors.auth_forms',
                 'pop_accounts.context_processors.admin_status',
                 'pop_up_cart.context_processors.cart',
+                'pop_up_cart.context_processors.procurement_cart',
                 'pop_up_home.context_processors.footer_links',
             ],
         },

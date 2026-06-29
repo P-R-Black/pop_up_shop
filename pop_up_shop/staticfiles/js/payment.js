@@ -204,14 +204,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // get subtotal and total
     const calculateSubtotal = (proccessFee, shippingCost, taxRate) => {
-
+        console.log('calculateSubtotal called with', proccessFee, shippingCost, taxRate)
         const purchaseSubtotal = document.getElementById('purchaseSubtotal').innerHTML.replace('$', '').replace(',', '')
         let tax = parseFloat(taxRate) * parseFloat(purchaseSubtotal);
         const purchaseTotal = document.getElementById('purchaseTotal')
         let totalCalculation = parseFloat(purchaseSubtotal) + parseFloat(proccessFee) + parseFloat(tax) + parseFloat(shippingCost)
         let purchaseTotalCalc = totalCalculation.toFixed(2)
 
-        console.log('purchaseTotalCalc', purchaseTotalCalc)
+        console.log('DEBUG purchaseTotalCalc', purchaseTotalCalc)
         purchaseTotal.innerHTML = `$${parseFloat(purchaseTotalCalc).toLocaleString()}`
 
     }

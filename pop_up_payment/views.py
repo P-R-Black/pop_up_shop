@@ -8,7 +8,7 @@ from pop_up_auction.models import PopUpProduct, PopUpProductSpecificationValue, 
 from pop_accounts.models import  PopUpCustomerAddress, PopUpBid
 from pop_accounts.forms import ThePopUpUserAddressForm, PopUpUpdateShippingInformationForm
 from pop_accounts.utils.pop_accounts_utils import  add_specs_to_products
-from pop_up_cart.models import PopUpCartItem
+from pop_up_cart.models import PopUpCartItem, ProcurementCartItem
 from pop_up_payment.models import PopUpPayment, ServicePayment
 from pop_up_payment.handlers.service_fee_handler import ServiceFeePaymentHandler
 from pop_up_bot.models import ProcurementServiceRequest
@@ -114,18 +114,25 @@ class ProductBuyView(OptionalLoginMixin, View):
         if not request.user.is_authenticated:
             cart = Cart(request)
             session_cart = getattr(cart, "session_cart", {})
+
            
             # 1. Collect product IDs in the cart
             # ids_in_cart = [int(pid) for pid in cart.session_cart.keys()]
             ids_in_cart = cart.get_product_ids()
 
             # 2 Fetch products ounce with needed data
-            products = (
-                PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status='in_inventory')
-                .prefetch_related('popupproductspecificationvalue_set')
-            )
+            # products = (
+            #     PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status='in_inventory')
+            #     .prefetch_related('popupproductspecificationvalue_set')
+            # )
 
-            product_map = {p.id: p for p in products}
+            test_prod = add_specs_to_products(PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status__in=['in_inventory', 'reserved']))
+
+                        
+
+            # product_map = {p.id: p for p in products}
+            product_map = {p.id: p for p in test_prod}
+            
 
             # 3 Build "enriched" cart rows
             enriched_cart = []
@@ -173,6 +180,150 @@ class ProductBuyView(OptionalLoginMixin, View):
         
 
         """ Cart view for user who is signed in"""
+        if request.user.is_authenticated:
+            user = request.user
+            cart = Cart(request)
+            session_cart = getattr(cart, "session_cart", {})
+
+            saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
+            default_address = saved_addresses.filter(default=True).first()
+            billing_address_id = request.session.get("selected_billing_address_id")
+            billing_address = PopUpCustomerAddress.objects.filter(id=billing_address_id, customer=user).first()
+        
+            use_billing_as_shipping = request.session.get('use_billing_as_shipping', False)
+        
+            selected_address = None
+            selected_address_id = request.session.get('selected_address_id')
+            if selected_address_id:
+                try:
+                    selected_address = PopUpCustomerAddress.objects.get(id=selected_address_id, customer=user)
+                except PopUpCustomerAddress.DoesNotExist:
+                    selected_address = None
+        
+            user_state = (selected_address or default_address).state if (selected_address or default_address) else "FL"
+            tax_rate = get_state_tax_rate(user_state)
+        
+            # --- Regular cart items ---
+            ids_in_cart = cart.get_product_ids()
+
+            # products = (
+            #     PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status='in_inventory')
+            #     .prefetch_related('popupproductspecificationvalue_set')
+            # )
+
+            test_prod = add_specs_to_products(PopUpProduct.objects.filter(id__in=ids_in_cart, is_active=True, inventory_status__in=['in_inventory', 'reserved']))
+
+            
+            # product_map = {p.id: p for p in products}
+
+            product_map = {p.id: p for p in test_prod}
+        
+            enriched_cart = []
+            for pid, item in cart.get_items():
+                pid_int = int(pid)
+                # product = product_map.get(pid_int)
+                test_prod = product_map.get(pid_int)
+                # if not product:
+                if not test_prod:
+                    continue
+                enriched_cart.append({
+                    # "product": product,
+                    "test_prod": test_prod,
+                    # "specs": list(product.popupproductspecificationvalue_set.all()),
+                    "specs": list(test_prod.popupproductspecificationvalue_set.all()),
+                    "qty": item["qty"],
+                    "unit_price": Decimal(item["price"]),
+                    "line_total": Decimal(item["price"]) * item["qty"],
+                })
+                   
+        
+            # --- Procurement cart items ---
+            procurement_cart_items = ProcurementCartItem.objects.filter(
+                user=user
+            ).select_related(
+                'procurement_service_request__scheduled_release__product'
+            )
+
+            # print('procurement_cart_items:', procurement_cart_items)
+
+            # print('procurement_cart_items length', len(procurement_cart_items))
+
+            
+            
+
+            # procurement_subtotal = sum(item.fee_amount for item in procurement_cart_items)
+              
+            # physical_item_total = cart.get_subtotal_price()
+         
+            # subtotal =  physical_item_total  + procurement_subtotal
+
+            # # --- Totals (regular + procurement) ---
+            # standard_shipping = 1499 if cart_length > 0 else 0
+       
+            # processing_fee = Decimal('2.50') if (cart_length > 0 or procurement_cart_items.exists()) else Decimal('0.00')
+            # sales_tax = physical_item_total * Decimal(tax_rate)   # tax only on physical goods
+            # order_shipping_chart = Decimal(standard_shipping / 100) * cart_length
+        
+            # grand_total = subtotal + sales_tax + order_shipping_chart + processing_fee
+
+            # ALL PHYSICAL GOOD ITEMS
+
+            # Physical goods subtotal
+            physical_subtotal = cart.get_subtotal_price()
+            cart_length = len(cart)
+
+            # Tax and shipping only apply to physical goods
+            sales_tax = physical_subtotal * Decimal(tax_rate)
+            standard_shipping = 1499 if cart_length > 0 else 0
+            shipping = Decimal(standard_shipping / 100) * cart_length
+            processing_fee = Decimal('2.50') if cart_length > 0  else Decimal('0.00')
+
+
+            # ALL PROCUREMENT REQUEST ITEMS
+            # Procurement fees — flat, no tax, no shipping
+            procurement_subtotal = sum(item.fee_amount for item in procurement_cart_items)
+
+            procurement_cart_length = len(procurement_cart_items)            
+
+            subtotal =  physical_subtotal  + procurement_subtotal
+
+            # Grand total
+            grand_total = physical_subtotal + sales_tax + shipping + processing_fee + procurement_subtotal
+
+            all_items_in_cart = cart_length + procurement_cart_length
+
+            client_token = gateway.client_token.generate()
+        
+            context = {
+                "user": user,
+                "cart": enriched_cart,                          # regular products
+                "procurement_cart_items": procurement_cart_items,  # procurement fees
+                "cart_subtotal": subtotal,
+                "procurement_subtotal": procurement_subtotal,
+                "shipping_cost": standard_shipping,
+                "cart_total": grand_total,
+                "cart_length": cart_length,
+                "procurement_cart_length": procurement_cart_length,
+                "all_items_in_cart": all_items_in_cart,
+                "sales_tax": f'{sales_tax:.2f}',
+                "processing_fee": f'{processing_fee:.2f}',
+                "grand_total": f"{grand_total:.2f}",
+                "address": default_address,
+                "billing": billing_address,
+                "saved_addresses": saved_addresses,
+                "selected_address": selected_address,
+                "tax_rate": tax_rate,
+                "STRIPE_PUBLISHABLE_KEY": os.environ.get('STRIPE_PUBLISHABLE_KEY'),
+                "PAYPAL_CLIENT_ID": os.environ.get('PAYPAL_CLIENT_ID'),
+                "USER": user,
+                "USER_EMAIL": user.email,
+                "client_token": client_token,
+                'braintree_public_key': settings.BRAINTREE_PUBLIC_KEY,
+            }
+            return render(request, self.template_name, context)
+        
+        """
+        # OLD CODE That Works
         if request.user.is_authenticated:
             user = request.user
             cart = Cart(request)
@@ -280,6 +431,7 @@ class ProductBuyView(OptionalLoginMixin, View):
             
             
             return render(request, self.template_name, context)
+        """
     
 
     def post(self, request):
@@ -509,7 +661,6 @@ class BillingAddressView(LoginRequiredMixin, View):
         edit_address_form = PopUpUpdateShippingInformationForm(instance=updated_address if address_id else None)
 
         use_billing_as_shipping = request.POST.get('use_billing_as_shipping') == "true"
-        print('DEBUG use_billing_as_shipping', use_billing_as_shipping)
         request.session['use_billing_as_shipping'] = use_billing_as_shipping
         
 
@@ -532,7 +683,6 @@ class BillingAddressView(LoginRequiredMixin, View):
 
     def get(self, request):
         user = request.user
-        print('DEBUG Get hit')
         saved_addresses = PopUpCustomerAddress.objects.filter(customer=user)
         default_address = saved_addresses.filter(default=True).first()
         billing_address_id = request.session.get("selected_billing_address_id")

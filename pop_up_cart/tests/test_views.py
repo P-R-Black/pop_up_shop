@@ -24,12 +24,57 @@ from pop_up_cart.views import cart_summary, cart_add, cart_delete, cart_update
 from pop_up_cart.cart import Cart
 from pop_up_auction.models import PopUpProduct, PopUpCategory, PopUpProductType, PopUpBrand
 
+from pop_up_bot.models import ScheduledRelease, ProcurementServiceRequest
+from pop_up_cart.models import ProcurementCartItem
 from pop_up_auction.tests.conftest import (
     create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
     create_product_type, create_category, create_brand)
 
+
 User = get_user_model()
 
+def make_product(product_type, category, brand, title, slug):
+    return PopUpProduct.objects.create(
+        product_type=product_type,
+        category=category,
+        brand=brand,
+        product_title=title,
+        slug=slug,
+        retail_price=Decimal('180.00'),
+        inventory_status='anticipated',
+        is_active=True,
+    )
+ 
+ 
+def make_scheduled_release(product, sku='AJ1-001'):
+    return ScheduledRelease.objects.create(
+        product=product,
+        sku=sku,
+        release_date=django_timezone.now() + django_timezone.timedelta(days=10),
+        retail_price=Decimal('180.00'),
+        search_method='direct_url',
+        status='scheduled',
+    )
+ 
+ 
+def make_psr(user, scheduled_release, size="Men's 10"):
+    return ProcurementServiceRequest.objects.create(
+        user=user,
+        scheduled_release=scheduled_release,
+        size=size,
+        service_fee=Decimal('15.00'),
+        fee_paid_at=django_timezone.now(),
+        status='pending',
+        strategy='fastest',
+    )
+ 
+ 
+def make_cart_item(user, psr, fee=Decimal('15.00')):
+    return ProcurementCartItem.objects.create(
+        user=user,
+        procurement_service_request=psr,
+        fee_amount=fee,
+    )
 
 
 class TestCartSummaryView(TestCase):
@@ -2452,3 +2497,162 @@ class CartUpdateViewTestCase(TestCase):
             self.assertEqual(response['Content-Type'], 'application/json')
         except AttributeError:
             pass
+
+
+class TestProcurementCartDeleteView(TestCase):
+    """Tests for ProcurementCartDeleteView"""
+ 
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('pop_up_cart:procurement_cart_delete')
+ 
+        self.user, _ = create_test_user(
+            'shopper@example.com', 'testpass!23', 'Alex', 'Shop', '10', 'male'
+        )
+ 
+        self.product_type = PopUpProductType.objects.create(name='Shoe', slug='shoe')
+        self.category = PopUpCategory.objects.create(name='Basketball', slug='basketball')
+        self.brand = PopUpBrand.objects.create(name='Nike', slug='nike')
+ 
+        self.product = make_product(
+            self.product_type, self.category, self.brand,
+            'Air Jordan 1', 'aj1-test'
+        )
+        self.release = make_scheduled_release(self.product)
+        self.psr = make_psr(self.user, self.release)
+        self.cart_item = make_cart_item(self.user, self.psr)
+ 
+    # ------------------------------------------------------------------
+    # Auth guard
+    # ------------------------------------------------------------------
+ 
+    def test_unauthenticated_user_redirected(self):
+        response = self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        self.assertIn(response.status_code, [302, 403])
+        # Cart item must NOT be deleted
+        self.assertTrue(ProcurementCartItem.objects.filter(id=self.cart_item.id).exists())
+ 
+    # ------------------------------------------------------------------
+    # Happy path
+    # ------------------------------------------------------------------
+ 
+    def test_successful_delete_returns_200_and_success_true(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+ 
+    def test_successful_delete_removes_cart_item_from_db(self):
+        self.client.force_login(self.user)
+        self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        self.assertFalse(ProcurementCartItem.objects.filter(id=self.cart_item.id).exists())
+ 
+    def test_successful_delete_marks_psr_as_abandoned(self):
+        self.client.force_login(self.user)
+        self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        self.psr.refresh_from_db()
+        self.assertEqual(self.psr.status, 'abandoned')
+ 
+    def test_response_includes_updated_procurement_subtotal(self):
+        # Give user a second cart item so subtotal > 0 after first is removed
+        product2 = make_product(
+            self.product_type, self.category, self.brand,
+            'Air Jordan 4', 'aj4-test'
+        )
+        release2 = make_scheduled_release(product2, sku='AJ4-001')
+        psr2 = make_psr(self.user, release2, size="Men's 11")
+        make_cart_item(self.user, psr2)
+ 
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        data = json.loads(response.content)
+        self.assertIn('procurement_subtotal', data)
+        # One item at $15 remains
+        self.assertAlmostEqual(float(data['procurement_subtotal']), 15.00, places=2)
+ 
+    def test_procurement_subtotal_is_zero_when_last_item_removed(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        data = json.loads(response.content)
+        self.assertAlmostEqual(float(data['procurement_subtotal']), 0.00, places=2)
+ 
+    # ------------------------------------------------------------------
+    # PSR status edge cases
+    # ------------------------------------------------------------------
+ 
+    def test_does_not_abandon_psr_that_is_already_active(self):
+        """Bot has already started running — don't roll back its status."""
+        self.psr.status = 'active'
+        self.psr.save()
+ 
+        self.client.force_login(self.user)
+        self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        self.psr.refresh_from_db()
+        # Status should remain 'active', not flipped to 'abandoned'
+        self.assertEqual(self.psr.status, 'active')
+ 
+    def test_does_not_abandon_psr_that_already_succeeded(self):
+        self.psr.status = 'success'
+        self.psr.save()
+ 
+        self.client.force_login(self.user)
+        self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        self.psr.refresh_from_db()
+        self.assertEqual(self.psr.status, 'success')
+ 
+    # ------------------------------------------------------------------
+    # Error cases
+    # ------------------------------------------------------------------
+ 
+    def test_missing_item_id_returns_400(self):
+        self.client.force_login(self.user)
+        response = self.client.post(self.url, {})
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertFalse(data['success'])
+ 
+    def test_nonexistent_item_id_returns_404(self):
+        self.client.force_login(self.user)
+        fake_id = '00000000-0000-0000-0000-000000000000'
+        response = self.client.post(self.url, {'procurement_item_id': fake_id})
+        self.assertEqual(response.status_code, 404)
+        data = json.loads(response.content)
+        self.assertFalse(data['success'])
+ 
+    def test_cannot_delete_another_users_cart_item(self):
+        """User B cannot delete User A's procurement cart item."""
+        other_user, _ = create_test_user(
+            'other@example.com', 'testpass!23', 'Other', 'User', '9', 'male'
+        )
+        self.client.force_login(other_user)
+        response = self.client.post(
+            self.url, {'procurement_item_id': str(self.cart_item.id)}
+        )
+        # Should 404 (item not found for this user) not 200
+        self.assertEqual(response.status_code, 404)
+        # Original item must still exist
+        self.assertTrue(ProcurementCartItem.objects.filter(id=self.cart_item.id).exists())
+ 
+    def test_get_request_not_allowed(self):
+        """View only accepts POST."""
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
+ 

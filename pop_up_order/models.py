@@ -68,7 +68,7 @@ class PopUpOrderItem(models.Model):
     # Denormalize fields to preserve snapshot at time of purchase
     product_title = models.CharField(max_length=100)
     secondary_product_title = models.CharField(max_length=100, blank=True, null=True)
-    size = models.CharField(max_length=10, blank=True, null=True)
+    size = models.CharField(max_length=50, blank=True, null=True)
     color = models.CharField(max_length=50, blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])

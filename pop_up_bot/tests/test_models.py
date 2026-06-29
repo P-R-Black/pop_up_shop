@@ -934,6 +934,7 @@ class TestProcurementServiceRequest(TestCase):
             user=self.user,
             scheduled_release=self.release,
             size='US 10',
+            sex='Mens',
             color='Chicago Red',
             max_price=180.00,
             service_fee=15.00,
@@ -1003,10 +1004,26 @@ class TestProcurementServiceRequest(TestCase):
                 user=self.user,
                 scheduled_release=self.release,
                 size='US 10',  # Same as existing
+                sex='Mens',
                 service_fee=15.00,
                 fee_paid_at=timezone.now(),
             )
     
+    def test_different_sex_same_size_allowed(self):
+        """Mens 10 and Womens 10 are distinct procurement requests."""
+        # self.request already has sex='Mens', size='US 10'
+        # A Womens 10 should be allowed
+        womens_request = ProcurementServiceRequest.objects.create(
+            user=self.user,
+            scheduled_release=self.release,
+            size='US 10',
+            sex='Womens',     # different sex — should NOT raise
+            service_fee=15.00,
+            fee_paid_at=timezone.now(),
+        )
+        self.assertIsNotNone(womens_request.pk)
+
+        
     def test_unique_allows_different_sizes(self):
         """Test unique constraint allows different sizes for same user/release"""
         request2 = ProcurementServiceRequest.objects.create(

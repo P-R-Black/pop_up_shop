@@ -1,0 +1,230 @@
+{% extends "layout.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+Procure {{ product.product_title }}
+{% endblock %}
+
+
+{% block main %}
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<main id="main-content">
+    <div class="section_container">
+        <div class="page_title">
+            <h1>Procurement</h1>
+            <h3>{{ product.product_title }}</h3>
+            <h4>{{ product.secondary_product_title }}</h4>
+            <h4>{{ product.specs.model_year }}</h4>
+        </div>
+        <!-- HEADER -->
+        <div class="procurement_header">
+            <a href="{% url 'pop_up_auction:future_releases' %}" class="back_button">
+                ← Back to Future Releases
+            </a>
+        </div>
+        <div class="procurement_product_and_purchase_section">
+            <div class="procurement_product_left_side">
+                <div class="product_image_container">
+                    {% for image in product.product_image.all %}
+                    {% if image.is_feature %}
+                    <img src="{{ image.get_image_url }}" alt="{{ product.product_title }}"
+                        class="procurement_product_image">
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="products_desc_container">
+                    <h2 class="visually-hidden" id="product-title-{{ product.id }}">
+                        {{ product.specs.model_year }} {{ product.product_title }} {{ product.secondary_product_title }}
+                    </h2>
+                    {% if product.specs.model_year %}
+                    <h3><span class="visually-hidden">Year: </span>{{ product.specs.model_year }}</h3>
+                    {% endif %}
+                    <h3>{{ product.product_title }}</h3>
+                    <h3>{{ product.secondary_product_title }}</h3>
+                </div>
+                <!-- Disclaimer -->
+                <div class="disclaimer_box">
+                    <p class="disclaimer_text">
+                        ⚠️ <strong>Important:</strong> Procurement is <strong>NOT guaranteed</strong>.
+                        We will do our best to secure this item, but availability and market conditions
+                        may prevent us from completing your request. You will be refunded if unsuccessful.
+                    </p>
+                </div>
+            </div>
+            <div class="procurement_purchase_right_side">
+                <form method="POST" class="procurement_form">
+                    {% csrf_token %}
+
+                    <!-- ERROR MESSAGE -->
+                    {% if error %}
+                    <div class="error_message" role="alert">
+                        {{ error }}
+                    </div>
+                    {% endif %}
+
+                    <!-- SIZE SELECTION (Dynamic based on product type) -->
+                    <div class="form_group">
+                        <label for="size_select" class="procurement_form_label">
+                            {% if product_type == 'shoe' or product_type == 'sneaker' %}
+                            Select Your Size
+                            {% elif product_type == 'ticket' or product_type == 'concert' %}
+                            Select Ticket Type
+                            {% elif product_type == 'console' or product_type == 'gaming' %}
+                            Select Edition
+                            {% else %}
+                            Select Option
+                            {% endif %}
+                        </label>
+                        <select id="size_select" name="size" required class="procurement_form_select">
+                            <option value=""> - Choose - </option>
+                            {% for size in sizes %}
+                            <option value="{{ size }}">{{ size }}</option>
+                            {% endfor %}
+                        </select>
+
+                        {% if product_type == 'shoe' or product_type == 'sneaker' %}
+                        <label for="sex_select" class="procurement_form_label"
+                            style="margin-top:1rem;">Mens/Womens</label>
+                        <select id="sex_select" name="sex" required class="procurement_form_select">
+                            <option value="Sex"> - Choose - </option>
+                            {% for sex in sexes %}
+                            <option value="{{ sex }}">{{ sex }}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                    </div>
+
+                    <!-- PRICE BREAKDOWN -->
+                    <div class="procurement_price_breakdown">
+                        <div class="price_row">
+                            <span class="price_label">Retail Price</span>
+                            <span class="price_value">${{ product.retail_price }}</span>
+                        </div>
+
+                        <div class="price_row">
+                            <span class="price_label">Procurement Service Fee</span>
+                            <span class="price_value">${{ service_fee|floatformat:2 }}</span>
+                        </div>
+
+                        <div class="price_row price_total">
+                            <span class="price_label">Total Due Now</span>
+                            <span class="price_value">${{ service_fee|floatformat:2 }}</span>
+                        </div>
+                    </div>
+
+
+                    <!-- TERMS & CONDITIONS -->
+                    <div class="form_group procurement_service_checkboxes">
+                        <label class="procurement_checkbox_label">
+                            <input type="checkbox" name="understand_not_guaranteed" required>
+                            I understand that procurement is <strong>NOT guaranteed</strong>
+                        </label>
+
+                        <label class="procurement_checkbox_label">
+                            <input type="checkbox" name="agree_terms" required>
+                            I agree to the <a href="{% url 'pop_up_home:terms' %}">Terms &
+                                Conditions</a>
+                        </label>
+                        {% comment %}
+                        <label class="checkbox_label">
+                            <input type="checkbox" name="agree_refund_policy" required>
+                            I agree to the <a href="{% url 'refund_policy' %}" target="_blank">Refund Policy</a>
+                        </label>
+                        {% endcomment %}
+                    </div>
+
+                    <!-- BUTTONS -->
+                    <div class="button_group">
+                        {% if user.is_authenticated %}
+                        <button type="submit" class="button_primary" aria-controls="procurement-{{ product.id }}">
+                            Proceed to Payment
+                        </button>
+                        {% else %}
+                        <button class="button_primary"
+                            aria-label="Sign in to use procurement service {{ product.product_title }}">
+                            For Pocurement, Sign In
+                        </button>
+                        {% endif %}
+
+                        <!-- <button type="submit" class="button_primary">
+                            Proceed to Payment
+                        </button> -->
+                        <a href="{% url 'pop_up_auction:future_releases' %}" class="button_secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="lower_auction_container">
+            <div class="prod_auct_desc_container">
+                <h3>Product Description</h3>
+                <p>
+                    {{ product.description }}
+                </p>
+            </div>
+
+            <div class="prod_auct_details_container">
+
+                <div class="auct_details_style_container">
+
+                    <h4 class="prod_auct_details_title">Style</h4>
+                    <p>{{ product.specs.style_number }}</p>
+                </div>
+                <div class="auct_details_colorway_container">
+                    <h4 class="prod_auct_details_title">Colorway</h4>
+                    <p>{{ product.specs.colorway }}</p>
+                </div>
+                <div class="auct_details_release_container">
+
+                    <h4 class="prod_auct_details_title">Release Date</h4>
+                    <p>{{ product.specs.release_date }}</p>
+                </div>
+                <div class="auct_details_retail_container">
+                    <h4 class="prod_auct_details_title">Retail</h4>
+                    <p>${{ product.retail_price }}</p>
+                </div>
+
+            </div>
+
+            <div class="verified_return_container">
+                <div class="databox_medium_dark">
+                    <div class="databox_medium_dark_title_box">
+                        <i class='bx bx-award' aria-hidden="true"></i>
+                        <h3>100% Guaranteed Authentic</h3>
+                    </div>
+                    <p>
+                        Always real. Really really real! We don't use resellers. We buy it from the manufacturer and
+                        resell.
+                    </p>
+                    <a href="{% url 'pop_up_home:verification' %}"
+                        aria-label="Learn more about authenticity guarantee">Learn More</a>
+                </div>
+                <div class="databox_medium_dark">
+                    <div class="databox_medium_dark_title_box">
+                        <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+                        <h3>Return Policy</h3>
+                    </div>
+                    <p>
+                        Learn more about our return policy by clicking on the link below.
+                    </p>
+                    <a href="{% url 'pop_up_home:buying-help' %}" aria-label="Learn more about our return policy">Learn
+                        More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update total price when size changes (optional - for future variants)
+    document.getElementById('size_select').addEventListener('change', function () {
+        // Could update price if different sizes have different costs
+    });
+
+</script>
+{% endblock %}

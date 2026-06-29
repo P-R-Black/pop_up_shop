@@ -39,6 +39,13 @@ USER_DASHBOARD_COPY = {
     ],
     "past_purchasses_more_url": "past_purchases", 
 
+    "procurement_box_title": "Procurement Requests", "procurement_elements": [
+        {"element": "Item"},
+        {"element": "Release Date"},
+        {"element": "Status"},
+    ],
+    "procurement_more_url": "procurement_status", 
+
     "box_more_title": "More",
 }
 

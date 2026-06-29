@@ -156,6 +156,7 @@ class PopUpProduct(models.Model):
         help_text=_("Required"),
         max_length=255,
     )
+    
     secondary_product_title = models.CharField(
         verbose_name=_("secondary_name"),
         max_length=255,

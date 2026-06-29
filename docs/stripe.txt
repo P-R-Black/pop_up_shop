@@ -1,3 +1,13 @@
-No Auth: 4242 4242 4242 4242
+No Auth: 555 4242 4242 4242 | Visa
+No Auth: 4000 0566 5566 5556 | Visa (Debit)
 Auth: 4000 0025 0000 3155
 Error: 4000 0000 0000 9995
+
+Unknown: 5555 5555 5555 4444 | Mastercard
+Unknown: 2223 0031 2200 3222 | Mastercard (2-Series)
+Unknown: 5200 8282 8282 8210 | Mastercard (Debit)
+Unknown: 5105 1051 0510 5100 | Mastercard (Prepaid)
+Unknown: 6011 1111 1111 1117 | Discover
+Unknown: 3782 8224 6310 005 | American Express
+Unknown: 3714 4963 5398 431 | American Express
+

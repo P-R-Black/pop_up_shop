@@ -18,11 +18,15 @@ from pop_up_email.utils import (
     get_admin_users,
     interested_in_products_update_and_notify_me_products_update,
     send_interested_in_and_coming_soon_product_update_to_users,
+    send_success_notification,
+    send_failure_notification,
 )
-from pop_up_auction.tests.conftest import (
-    create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
-    create_product_type, create_category, create_brand, create_test_staff_user)
+from pop_up_auction.tests.conftest import (create_test_user,create_test_staff_user)
 
+
+from pop_up_auction.models import PopUpProduct, PopUpCategory, PopUpProductType, PopUpBrand
+from pop_up_bot.models import ScheduledRelease, ProcurementServiceRequest, ProcurementExecution, ProcurementRequest
+from pop_up_auction.tests.conftest import create_test_user
 from pop_accounts.models import PopUpCustomerProfile, PopUpBid
 from pop_up_auction.models import PopUpProduct, PopUpCategory, PopUpProductType, PopUpBrand, WinnerReservation
 from pop_up_cart.models import PopUpCartItem
@@ -629,3 +633,355 @@ class ProductNotificationTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertEqual(email.to[0], 'test1@example.com')
+
+
+""" New Test """
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    DEFAULT_FROM_EMAIL='noreply@popupshop.com',
+    SITE_URL='https://thepopup.com',
+)
+class ProcurementSuccessEmailTestCase(TestCase):
+    """Tests for send_success_notification"""
+ 
+    def setUp(self):
+        self.user, self.user_profile = create_test_user(
+            'buyer@example.com', 'testpass!23', 'Jordan', 'Buyer', '10', 'male'
+        )
+ 
+        self.product_type = PopUpProductType.objects.create(
+            name='Sneakers', slug='sneakers'
+        )
+        self.category = PopUpCategory.objects.create(
+            name='Basketball', slug='basketball'
+        )
+        self.brand = PopUpBrand.objects.create(
+            name='Nike', slug='nike'
+        )
+        self.product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title='Air Jordan 1',
+            secondary_product_title='High OG Chicago',
+            slug='aj1-chicago',
+            retail_price=Decimal('180.00'),
+            inventory_status='anticipated',
+            is_active=True,
+        )
+        self.release = ScheduledRelease.objects.create(
+            product=self.product,
+            sku='DZ5485-612',
+            release_date=django_timezone.now() + timedelta(days=1),
+            search_method='direct_url',
+            retail_price=Decimal('180.00'),
+            status='scheduled',
+        )
+        self.proc_request = ProcurementRequest.objects.create(
+            user=self.user,
+            product=self.product,
+            product_name='Air Jordan 1',
+            target_size='10',
+            max_price=Decimal('200.00'),
+            procurement_type='inventory',
+        )
+        self.service_request = ProcurementServiceRequest.objects.create(
+            user=self.user,
+            scheduled_release=self.release,
+            size='10',
+            sex='Mens',
+            service_fee=Decimal('15.00'),
+            fee_paid_at=django_timezone.now(),
+            status='success',
+            procurement_request=self.proc_request,
+        )
+        self.execution = ProcurementExecution.objects.create(
+            procurement_request=self.proc_request,
+            status='success',
+            strategy_used='fastest',
+            winning_site='nike',
+            order_id='ORD-NIKE-98765',
+            item_price=Decimal('180.00'),
+            started_at=django_timezone.now(),
+            completed_at=django_timezone.now(),
+        )
+ 
+    # ------------------------------------------------------------------
+    # Email sending
+    # ------------------------------------------------------------------
+ 
+    def test_success_email_is_sent(self):
+        """One email is sent on success."""
+        send_success_notification(self.service_request, self.execution)
+        self.assertEqual(len(mail.outbox), 1)
+ 
+    def test_success_email_recipient(self):
+        """Email goes to the user who paid for procurement."""
+        send_success_notification(self.service_request, self.execution)
+        self.assertEqual(mail.outbox[0].to, ['buyer@example.com'])
+ 
+    def test_success_email_from_address(self):
+        send_success_notification(self.service_request, self.execution)
+        self.assertEqual(mail.outbox[0].from_email, 'noreply@popupshop.com')
+ 
+    def test_success_email_subject_contains_product_title(self):
+        send_success_notification(self.service_request, self.execution)
+        self.assertIn('Air Jordan 1', mail.outbox[0].subject)
+ 
+    def test_success_email_subject_contains_checkmark(self):
+        send_success_notification(self.service_request, self.execution)
+        self.assertIn('✅', mail.outbox[0].subject)
+ 
+    # ------------------------------------------------------------------
+    # HTML content
+    # ------------------------------------------------------------------
+ 
+    def test_success_email_contains_user_first_name(self):
+        send_success_notification(self.service_request, self.execution)
+        self.assertIn('Jordan', mail.outbox[0].alternatives[0][0])
+ 
+    def test_success_email_contains_product_title(self):
+        send_success_notification(self.service_request, self.execution)
+        self.assertIn('Air Jordan 1', mail.outbox[0].alternatives[0][0])
+ 
+    def test_success_email_contains_size(self):
+        send_success_notification(self.service_request, self.execution)
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('10', html)
+ 
+    def test_success_email_contains_sex(self):
+        send_success_notification(self.service_request, self.execution)
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('Mens', html)
+ 
+    def test_success_email_contains_service_fee(self):
+        send_success_notification(self.service_request, self.execution)
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('15', html)
+ 
+    def test_success_email_is_html(self):
+        """Email must be sent as HTML (not plain text only)."""
+        send_success_notification(self.service_request, self.execution)
+        email = mail.outbox[0]
+        self.assertTrue(
+            hasattr(email, 'alternatives') and len(email.alternatives) > 0,
+            'Email should have an HTML alternative'
+        )
+ 
+    # ------------------------------------------------------------------
+    # Error handling
+    # ------------------------------------------------------------------
+ 
+    def test_success_email_does_not_raise_on_send_failure(self):
+        """Email send errors should be caught — task must not crash."""
+        from unittest.mock import patch
+        with patch('pop_up_email.utils.send_mail', side_effect=Exception('SMTP down')):
+            # Should not raise
+            send_success_notification(self.service_request, self.execution)
+ 
+ 
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    DEFAULT_FROM_EMAIL='noreply@popupshop.com',
+    SITE_URL='https://thepopup.com',
+)
+class ProcurementFailureEmailTestCase(TestCase):
+    """Tests for send_failure_notification"""
+ 
+    def setUp(self):
+        self.user, self.user_profile = create_test_user(
+            'buyer@example.com', 'testpass!23', 'Jordan', 'Buyer', '10', 'male'
+        )
+ 
+        self.product_type = PopUpProductType.objects.create(
+            name='Sneakers', slug='sneakers'
+        )
+        self.category = PopUpCategory.objects.create(
+            name='Basketball', slug='basketball'
+        )
+        self.brand = PopUpBrand.objects.create(
+            name='Nike', slug='nike'
+        )
+        self.product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title='Air Jordan 1',
+            secondary_product_title='High OG Chicago',
+            slug='aj1-chicago-fail',
+            retail_price=Decimal('180.00'),
+            inventory_status='anticipated',
+            is_active=True,
+        )
+        self.release = ScheduledRelease.objects.create(
+            product=self.product,
+            sku='DZ5485-612',
+            release_date=django_timezone.now() + timedelta(days=1),
+            search_method='direct_url',
+            retail_price=Decimal('180.00'),
+            status='scheduled',
+        )
+        self.proc_request = ProcurementRequest.objects.create(
+            user=self.user,
+            product=self.product,
+            product_name='Air Jordan 1',
+            target_size='10',
+            max_price=Decimal('200.00'),
+            procurement_type='inventory',
+        )
+        self.service_request = ProcurementServiceRequest.objects.create(
+            user=self.user,
+            scheduled_release=self.release,
+            size='10',
+            sex='Mens',
+            service_fee=Decimal('15.00'),
+            fee_paid_at=django_timezone.now(),
+            status='failed',
+            procurement_request=self.proc_request,
+        )
+ 
+    # ------------------------------------------------------------------
+    # Email sending
+    # ------------------------------------------------------------------
+ 
+    def test_failure_email_is_sent(self):
+        send_failure_notification(
+            self.service_request, 'Item sold out', error_type='out_of_stock'
+        )
+        self.assertEqual(len(mail.outbox), 1)
+ 
+    def test_failure_email_recipient(self):
+        send_failure_notification(
+            self.service_request, 'Item sold out', error_type='out_of_stock'
+        )
+        self.assertEqual(mail.outbox[0].to, ['buyer@example.com'])
+ 
+    def test_failure_email_from_address(self):
+        send_failure_notification(
+            self.service_request, 'Item sold out', error_type='out_of_stock'
+        )
+        self.assertEqual(mail.outbox[0].from_email, 'noreply@popupshop.com')
+ 
+    def test_failure_email_subject_contains_product_title(self):
+        send_failure_notification(
+            self.service_request, 'Item sold out', error_type='out_of_stock'
+        )
+        self.assertIn('Air Jordan 1', mail.outbox[0].subject)
+ 
+    # ------------------------------------------------------------------
+    # Non-refundable errors (market failures)
+    # ------------------------------------------------------------------
+ 
+    def test_non_refundable_out_of_stock_email_content(self):
+        """out_of_stock is non-refundable — email should NOT mention refund."""
+        send_failure_notification(
+            self.service_request, 'Sold out', error_type='out_of_stock'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        # Should contain non-refundable policy explanation
+        self.assertIn('non-refundable', html)
+        # Should NOT say refund was issued
+        self.assertNotIn('Refund Issued', html)
+ 
+    def test_non_refundable_lost_to_bots_email_content(self):
+        send_failure_notification(
+            self.service_request, 'Lost race', error_type='lost_to_bots'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('non-refundable', html)
+        self.assertNotIn('Refund Issued', html)
+ 
+    def test_non_refundable_item_not_found(self):
+        send_failure_notification(
+            self.service_request, 'Not found', error_type='item_not_found'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('non-refundable', html)
+ 
+    # ------------------------------------------------------------------
+    # Refundable errors (code/bot failures)
+    # ------------------------------------------------------------------
+ 
+    def test_refundable_bot_crash_email_content(self):
+        """bot_crash is refundable — email should confirm refund was issued."""
+        send_failure_notification(
+            self.service_request, 'Bot crashed', error_type='bot_crash'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('Refund Issued', html)
+        self.assertNotIn('non-refundable', html)
+ 
+    def test_refundable_rate_limited_email_content(self):
+        send_failure_notification(
+            self.service_request, 'Rate limited', error_type='rate_limited'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('Refund Issued', html)
+ 
+    def test_refundable_site_structure_changed(self):
+        send_failure_notification(
+            self.service_request,
+            'Selectors broken',
+            error_type='site_structure_changed'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('Refund Issued', html)
+ 
+    def test_refundable_unknown_error(self):
+        send_failure_notification(
+            self.service_request, 'Unknown', error_type='unknown_error'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('Refund Issued', html)
+ 
+    # ------------------------------------------------------------------
+    # Content common to all failure emails
+    # ------------------------------------------------------------------
+ 
+    def test_failure_email_contains_user_first_name(self):
+        send_failure_notification(
+            self.service_request, 'Sold out', error_type='out_of_stock'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('Jordan', html)
+ 
+    def test_failure_email_contains_product_title(self):
+        send_failure_notification(
+            self.service_request, 'Sold out', error_type='out_of_stock'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('Air Jordan 1', html)
+ 
+    def test_failure_email_contains_size(self):
+        send_failure_notification(
+            self.service_request, 'Sold out', error_type='out_of_stock'
+        )
+        html = mail.outbox[0].alternatives[0][0]
+        self.assertIn('10', html)
+ 
+    def test_failure_email_is_html(self):
+        send_failure_notification(
+            self.service_request, 'Sold out', error_type='out_of_stock'
+        )
+        email = mail.outbox[0]
+        self.assertTrue(
+            hasattr(email, 'alternatives') and len(email.alternatives) > 0,
+            'Email should have an HTML alternative'
+        )
+ 
+    def test_failure_email_no_error_type_defaults_gracefully(self):
+        """Calling without error_type should not raise."""
+        send_failure_notification(self.service_request, 'Something went wrong')
+        self.assertEqual(len(mail.outbox), 1)
+ 
+    # ------------------------------------------------------------------
+    # Error handling
+    # ------------------------------------------------------------------
+ 
+    def test_failure_email_does_not_raise_on_send_failure(self):
+        from unittest.mock import patch
+        with patch('pop_up_email.utils.send_mail', side_effect=Exception('SMTP down')):
+            send_failure_notification(
+                self.service_request, 'Sold out', error_type='out_of_stock'
+            )
+ 

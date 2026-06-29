@@ -3,12 +3,47 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.utils.timezone import now
+from django.utils import timezone as django_timezone
 from datetime import timedelta
-from pop_up_cart.models import PopUpCartItem
+from pop_up_cart.models import PopUpCartItem, ProcurementCartItem
+from pop_up_bot.models import ScheduledRelease, ProcurementServiceRequest
 from pop_up_auction.models import PopUpProduct, PopUpCategory, PopUpProductType, PopUpBrand
-from pop_up_auction.tests.conftest import (
-    create_seed_data, create_test_user, create_test_product_one, create_test_product_two, create_test_product, 
-    create_product_type, create_category, create_brand)
+from pop_up_auction.tests.conftest import (create_test_user)
+import uuid
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+
+
+def create_scheduled_release(product, sku='AJ1-001', days_from_now=10):
+    return ScheduledRelease.objects.create(
+        product=product,
+        sku=sku,
+        release_date=django_timezone.now() + django_timezone.timedelta(days=days_from_now),
+        retail_price=Decimal('180.00'),
+        search_method='direct_url',
+        status='scheduled',
+    )
+ 
+ 
+def create_procurement_service_request(user, scheduled_release, size="Men's 10"):
+    return ProcurementServiceRequest.objects.create(
+        user=user,
+        scheduled_release=scheduled_release,
+        size=size,
+        service_fee=Decimal('15.00'),
+        fee_paid_at=django_timezone.now(),
+        status='pending',
+        strategy='fastest',
+    )
+ 
+
+"""
+Tests for PopUpCartItem model
+1. TestPopUpCartItemModel
+2. ProcurementCartItemModelTest
+"""
+
 
 
 class TestPopUpCartItemModel(TestCase):
@@ -587,3 +622,200 @@ class TestPopUpCartItemModel(TestCase):
         self.assertTrue(buy_now_item.buy_now)
         
         self.assertTrue(auction_item.auction_locked)
+
+
+
+ 
+class TestProcurementCartItemModel(TestCase):
+    """Tests for ProcurementCartItem model"""
+ 
+    def setUp(self):
+        self.user, self.profile = create_test_user(
+            'buyer@example.com', 'testpass!23', 'Jane', 'Buyer', '10', 'female'
+        )
+ 
+        self.product_type = PopUpProductType.objects.create(
+            name='Shoe', slug='shoe'
+        )
+        self.category = PopUpCategory.objects.create(
+            name='Basketball', slug='basketball'
+        )
+        self.brand = PopUpBrand.objects.create(
+            name='Nike', slug='nike'
+        )
+        self.product = PopUpProduct.objects.create(
+            product_type=self.product_type,
+            category=self.category,
+            brand=self.brand,
+            product_title='Air Jordan 1',
+            secondary_product_title='High OG Chicago',
+            slug='aj1-chicago',
+            retail_price=Decimal('180.00'),
+            inventory_status='anticipated',
+            is_active=True,
+        )
+        self.scheduled_release = create_scheduled_release(self.product)
+        self.psr = create_procurement_service_request(self.user, self.scheduled_release)
+ 
+    # ------------------------------------------------------------------
+    # Creation
+    # ------------------------------------------------------------------
+ 
+    def test_can_create_procurement_cart_item(self):
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+            fee_amount=Decimal('15.00'),
+        )
+        self.assertIsNotNone(item.pk)
+        self.assertEqual(ProcurementCartItem.objects.count(), 1)
+ 
+    def test_id_is_uuid(self):
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        self.assertIsInstance(item.id, uuid.UUID)
+ 
+    def test_default_fee_amount_is_fifteen(self):
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        self.assertEqual(item.fee_amount, Decimal('15.00'))
+ 
+    def test_added_at_set_automatically(self):
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        self.assertIsNotNone(item.added_at)
+ 
+    # ------------------------------------------------------------------
+    # OneToOne constraint
+    # ------------------------------------------------------------------
+ 
+    def test_one_to_one_with_procurement_service_request(self):
+        """Each ProcurementServiceRequest can only have one cart item."""
+        ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        from django.db import IntegrityError
+        with self.assertRaises(IntegrityError):
+            ProcurementCartItem.objects.create(
+                user=self.user,
+                procurement_service_request=self.psr,
+            )
+ 
+    # ------------------------------------------------------------------
+    # Cascade delete
+    # ------------------------------------------------------------------
+ 
+    def test_deleting_psr_deletes_cart_item(self):
+        """Primary cascade path: PSR deleted → cart item deleted."""
+        ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        self.psr.delete()
+        self.assertEqual(ProcurementCartItem.objects.count(), 0)
+    
+    def test_soft_deleting_user_does_not_delete_cart_item(self):
+        """
+        User.delete() is a soft delete (sets deleted_at, keeps the DB row).
+        The cart item must survive so the order history stays intact.
+        """
+        ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        self.user.delete()  # soft delete — row stays, deleted_at is set
+    
+        self.user.refresh_from_db()
+        self.assertIsNotNone(self.user.deleted_at)           # user is soft-deleted
+        self.assertEqual(ProcurementCartItem.objects.count(), 1)  # cart item survives
+    
+    def test_hard_deleting_user_requires_profile_deletion_first(self):
+        """
+        Hard deletion of a user is blocked by PopUpCustomerProfile (PROTECT).
+        This test documents that constraint so future devs don't hit it by surprise.
+        """
+        from django.db.models.deletion import ProtectedError
+    
+        ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        with self.assertRaises(ProtectedError):
+            self.user.hard_delete()
+ 
+ 
+    # ------------------------------------------------------------------
+    # Properties
+    # ------------------------------------------------------------------
+ 
+    def test_display_title_contains_product_title(self):
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        self.assertIn('Air Jordan 1', item.display_title)
+        self.assertIn('Procurement', item.display_title)
+ 
+    def test_display_subtitle_contains_size(self):
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        self.assertIn("Men's 10", item.display_subtitle)
+ 
+    def test_price_property_equals_fee_amount(self):
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+            fee_amount=Decimal('15.00'),
+        )
+        self.assertEqual(item.price, Decimal('15.00'))
+ 
+    def test_total_price_property_equals_fee_amount(self):
+        """Qty is always 1 for procurement items, so total == fee."""
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+            fee_amount=Decimal('15.00'),
+        )
+        self.assertEqual(item.total_price, Decimal('15.00'))
+ 
+    # ------------------------------------------------------------------
+    # __str__
+    # ------------------------------------------------------------------
+ 
+    def test_str_contains_user_and_product(self):
+        item = ProcurementCartItem.objects.create(
+            user=self.user,
+            procurement_service_request=self.psr,
+        )
+        result = str(item)
+        self.assertIn('Air Jordan 1', result)
+        self.assertIn(self.user.email, result)
+ 
+    # ------------------------------------------------------------------
+    # Multiple users / same release
+    # ------------------------------------------------------------------
+ 
+    def test_multiple_users_can_have_cart_item_for_same_release(self):
+        user2, _ = create_test_user(
+            'buyer2@example.com', 'testpass!23', 'John', 'Smith', '11', 'male'
+        )
+        psr2 = create_procurement_service_request(
+            user2, self.scheduled_release, size="Men's 11"
+        )
+        item1 = ProcurementCartItem.objects.create(
+            user=self.user, procurement_service_request=self.psr
+        )
+        item2 = ProcurementCartItem.objects.create(
+            user=user2, procurement_service_request=psr2
+        )
+        self.assertEqual(ProcurementCartItem.objects.count(), 2)
+        self.assertNotEqual(item1.pk, item2.pk)

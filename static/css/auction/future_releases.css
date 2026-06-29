@@ -45,16 +45,16 @@
 
 .fr_display_container {
     align-items: center;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    height: 22rem;
+    height: 26rem;
     justify-content: center;
-
-
-    border: 2px solid var(--text-color);
-    border-radius: 5px;
     width: 20rem;
+
+
 
 }
 
@@ -104,5 +104,6 @@
 
 .fr_button_container {
     display: flex;
-    gap: 1rem;
+    flex-direction: column;
+    gap: .5rem;
 }

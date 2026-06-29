@@ -1,0 +1,323 @@
+/* pop_up_bot/static/css/procurement.css */
+
+.procurement_product_and_purchase_section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 1rem;
+}
+
+
+.procurement_product_left_side {}
+
+.procurement_purchase_right_side {
+    background-color: var(--databox-color);
+    border-radius: 8px;
+    padding: 30px;
+
+}
+
+.procurement_form_label {
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+.procurement_form_select {
+    background-color: transparent;
+    border: 2px solid var(--text-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-size: 1rem;
+    height: 2rem;
+    padding-left: .5rem;
+    width: 100%;
+}
+
+.procurement_service_checkboxes {
+    color: var(--text-color);
+    margin-right: 4rem;
+}
+
+.procurement_checkbox_label input {
+    cursor: pointer;
+    margin-top: 4px;
+}
+
+.procurement_service_checkboxes a {
+    color: var(--light-blue-links);
+}
+
+
+.procurement_price_breakdown {
+    background: var(--text-color);
+    padding: 20px;
+    border-radius: 4px;
+    /* border: 1px solid #eee; */
+}
+
+
+.procurement_container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.procurement_header {
+    margin-bottom: 40px;
+}
+
+.back_button {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #666;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.back_button:hover {
+    color: #000;
+}
+
+.procurement_main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.product_image_container {
+    /* position: sticky; */
+    top: 20px;
+}
+
+.procurement_product_image {
+    background-color: var(--databox-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--text-color);
+    max-width: 600px;
+    width: 100%;
+}
+
+.product_details h2 {
+    font-size: 24px;
+    margin: 0 0 8px 0;
+}
+
+.secondary_title {
+    font-size: 18px;
+    color: #666;
+    margin: 0 0 20px 0;
+}
+
+.product_specs {
+    margin: 30px 0;
+    padding: 20px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.spec_row {
+    display: flex;
+    justify-content: space-between;
+    margin: 12px 0;
+}
+
+.spec_label {
+    font-weight: 600;
+    color: #333;
+}
+
+.spec_value {
+    color: #666;
+}
+
+.disclaimer_box {
+    background: #fff3cd;
+    border-left: 4px solid #ff9800;
+    padding: 16px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.disclaimer_text {
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.procurement_form_section {
+    background: #f9f9f9;
+
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.procurement_form {
+
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.form_group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form_label {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.form_select {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.form_select:focus {
+    outline: none;
+    border-color: #000;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.price_breakdown {
+    background: white;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}
+
+.price_row {
+    display: flex;
+    justify-content: space-between;
+    margin: 12px 0;
+    font-size: 16px;
+}
+
+.price_row.price_total {
+    border-top: 2px solid #2e2e2e;
+    padding-top: 12px;
+    margin-top: 12px;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.payment_options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment_option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.payment_option:hover {
+    background: #f0f0f0;
+    border-color: #000;
+}
+
+.payment_option input {
+    cursor: pointer;
+}
+
+.checkboxes {
+    gap: 12px;
+}
+
+.checkbox_label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.checkbox_label input {
+    cursor: pointer;
+    margin-top: 4px;
+}
+
+.checkbox_label a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+.checkbox_label a:hover {
+    text-decoration: underline;
+}
+
+.button_group {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.button_primary,
+.button_secondary {
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 14px 24px;
+    transition: all 0.2s;
+}
+
+.button_primary {
+    background: var(--text-color);
+    color: var(--primary-color-light);
+    flex: 1;
+}
+
+.button_primary:hover {
+    background: #333;
+    color: var(--text-color);
+}
+
+.button_secondary {
+    background: var(--primary-color-light);
+    color: var(--primary-light-grey);
+    flex: 0;
+}
+
+.button_secondary:hover {
+    background: #ddd;
+}
+
+.error_message {
+    background: #fee;
+    border: 1px solid #fcc;
+    color: #c33;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .procurement_main {
+        grid-template-columns: 1fr;
+    }
+
+    .product_image_container {
+        position: relative;
+        top: 0;
+    }
+
+    .button_group {
+        flex-direction: column;
+    }
+}
