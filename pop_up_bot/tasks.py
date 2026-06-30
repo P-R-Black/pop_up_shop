@@ -28,6 +28,8 @@ from pop_up_bot.models import (
     ProcurementExecution
 )
 
+from pop_up_bot.managers.event_logger import EventLogger
+
 from pop_up_email.utils import (send_success_notification, send_failure_notification)
 from pop_up_payment.models import ServicePayment
 from pop_up_payment.handlers.service_fee_handler import ServiceFeePaymentHandler
@@ -251,12 +253,15 @@ def execute_procurement_request( self, proc_request_id: str, service_request_id:
             started_at=timezone.now(),
             task_id=self.request.id,
         )
+
+
+        event_logger = EventLogger(execution_id=execution.id)
  
-        logger.info(
-            f"ProcurementExecution {execution.id} created for "
-            f"{service_request.user.email} — "
-            f"{proc_request.product_name} size {proc_request.target_size}"
-        )
+        # logger.info(
+        #     f"ProcurementExecution {execution.id} created for "
+        #     f"{service_request.user.email} — "
+        #     f"{proc_request.product_name} size {proc_request.target_size}"
+        # )
  
         # --- 2. Initialize bot components ---
         session_manager = SessionManager()
@@ -268,7 +273,7 @@ def execute_procurement_request( self, proc_request_id: str, service_request_id:
             strategy_factory=strategy_factory,
             session_manager=session_manager,
             procurement_lock=procurement_lock,
-            event_logger=None,  # TODO: wire up EventLogger
+            event_logger=event_logger,
         )
  
         # --- 3. Run the bot ---
