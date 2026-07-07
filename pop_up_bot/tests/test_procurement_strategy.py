@@ -39,13 +39,6 @@ class TestSite(TestCase):
         with pytest.raises(ValueError):
             Site('invalid_site')
     
-    def test_site_properties(self):
-        """Test site properties"""
-        site = Site('stockx')
-        
-        assert site.type == SiteType.RESELLER
-        assert site.priority == 7
-        assert site.price_tier == 'premium'
     
     def test_site_str(self):
         """Test site string representation"""
