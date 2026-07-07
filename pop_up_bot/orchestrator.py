@@ -13,6 +13,7 @@ from enum import Enum
 from playwright.async_api import async_playwright
 
 from pop_up_bot.handlers.nike_handler import NikeSiteHandler
+from pop_up_bot.handlers.shoe_palace_handler import ShoePalaceSiteHandler
 from pop_up_bot.engines.scraper_engine import PlaywrightScraperEngine
 
 logger = logging.getLogger(__name__)
@@ -238,7 +239,16 @@ class BotOrchestrator:
                 f"(size: {self.search_params.size}, sex: {self.search_params.sex})"
             )
 
-            if site != 'nike':
+
+
+
+            if site == 'nike':
+                return await self._attempt_nike()
+
+            elif site == 'shoe_palace':
+                return await self._attempt_shoe_palace()
+
+            else:
                 logger.warning(f"Handler for '{site}' not yet implemented — skipping")
                 return {
                     'success': False,
@@ -246,8 +256,7 @@ class BotOrchestrator:
                     'error': f'Handler for {site} not yet implemented',
                     'error_type': 'item_not_found',
                 }
-
-            return await self._attempt_nike()
+            
 
         except Exception as e:
             logger.error(f"Attempt failed for {site}: {e}", exc_info=True)
@@ -402,6 +411,154 @@ class BotOrchestrator:
                 return {
                     'success': False,
                     'site': 'nike',
+                    'error': str(e),
+                    'error_type': 'bot_crash',
+                }
+
+            finally:
+                await browser.close()
+    
+
+    async def _attempt_shoe_palace(self) -> Dict[str, Any]:
+        """
+        Run the full Shoe Palace procurement flow using Playwright.
+
+        Flow:
+        1. Launch browser
+        2. Create PlaywrightScraperEngine
+        3. Validate Shoe Palace connection
+        4. Find product
+        5. Add to cart (includes size selection)
+        6. Proceed to checkout
+        7. Return result
+        """
+        async with async_playwright() as playwright:
+            # Launch browser — headless=False is harder to detect
+            browser = await playwright.chromium.launch(
+                headless=False,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--no-sandbox',
+                ]
+            )
+
+            context = await browser.new_context(
+                viewport={'width': 1280, 'height': 800},
+                user_agent=(
+                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                    'AppleWebKit/537.36 (KHTML, like Gecko) '
+                    'Chrome/120.0.0.0 Safari/537.36'
+                ),
+            )
+
+            page = await context.new_page()
+
+            try:
+                engine = PlaywrightScraperEngine(page=page)
+
+                handler = ShoePalaceSiteHandler(
+                    engine=engine,
+                    session_manager=self.session_manager,
+                    cookie_manager=self.cookie_manager,
+                    event_logger=self.event_logger,
+                )
+
+                # 1. Validate connection
+                await self._emit_event('SITE_SELECTED', site_name='shoe_palace')
+                connected = await handler.validate_site_connection()
+                if not connected:
+                    return {
+                        'success': False,
+                        'site': 'shoe_palace',
+                        'error': 'Shoe Palace site not accessible',
+                        'error_type': 'rate_limited',
+                    }
+                
+                # Build search query with sex for better results
+                search_query = self.search_params.product_name
+                if self.search_params.sex:
+                    search_query = f"{self.search_params.sex} {search_query}"
+
+                # 2. Find product
+                product = await handler.find_product(
+                    product_name=search_query,
+                    size=self.search_params.size,
+                    color=self.search_params.color,
+                )
+
+                if not product:
+                    return {
+                        'success': False,
+                        'site': 'shoe_palace',
+                        'error': 'Product not found',
+                        'error_type': 'item_not_found',
+                    }
+
+                await self._emit_event('PRODUCT_FOUND', site_name='shoe_palace',
+                    metadata={'product': product.name, 'price': product.price})
+
+                # 3. Build size string for Shoe Palace
+                size_to_select = self.search_params.size # plain "10", "10.5" etc.
+                
+
+                await self._emit_event('SIZE_SELECTED', site_name='shoe_palace',
+                    metadata={'size': size_to_select})
+
+                # 4. Add to cart (select_size is called inside add_to_cart)
+                added = await handler.add_to_cart(
+                    product_id=product.product_id,
+                    size=self.search_params.size,
+                    quantity=1,
+                )
+
+                if not added:
+                    # Determine error type from handler's error log
+                    error_type = self._classify_handler_error(handler)
+                    return {
+                        'success': False,
+                        'site': 'shoe_palace',
+                        'error': 'Failed to add to cart',
+                        'error_type': error_type,
+                    }
+
+                await self._emit_event('CART_SUCCESS', site_name='shoe_palace')
+
+                # 5. Proceed to checkout
+                at_checkout = await handler.proceed_to_checkout()
+
+                if not at_checkout:
+                    return {
+                        'success': False,
+                        'site': 'shoe_palace',
+                        'error': 'Failed to reach checkout',
+                        'error_type': 'checkout_error',
+                    }
+
+                await self._emit_event('CHECKOUT_STARTED', site_name='shoe_palace')
+
+                # 6. Return success
+                # Note: We stop at checkout — payment is handled separately
+                # (Pop Up Shop pays Nike directly, user pays Pop Up Shop)
+                logger.info(
+                    f"Shoe Palace: item in cart and at checkout — "
+                    f"{self.search_params.product_name} size {size_to_select}"
+                )
+
+                return {
+                    'success': True,
+                    'site': 'shoe_palace',
+                    'product_name': product.name,
+                    'size': size_to_select,
+                    'order_id': None,       # populated after payment
+                    'price': product.price,
+                    'error_type': 'success',
+                }
+
+            except Exception as e:
+                logger.error(f"Shoe Palace attempt error: {e}", exc_info=True)
+                return {
+                    'success': False,
+                    'site': 'shoe_palace',
                     'error': str(e),
                     'error_type': 'bot_crash',
                 }

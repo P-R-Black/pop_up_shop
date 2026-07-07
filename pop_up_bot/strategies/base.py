@@ -25,42 +25,37 @@ class Site:
             'price_tier': 'retail',
             'timeout': 30,
         },
-        'footlocker': {
+        'shoe_palace': {
             'type': SiteType.OFFICIAL_RETAIL,
             'priority': 2,
             'price_tier': 'retail',
             'timeout': 30,
         },
-        'adidas': {
+        'footlocker': {
             'type': SiteType.OFFICIAL_RETAIL,
             'priority': 3,
             'price_tier': 'retail',
             'timeout': 30,
         },
-        'new_balance': {
+        'adidas': {
             'type': SiteType.OFFICIAL_RETAIL,
             'priority': 4,
             'price_tier': 'retail',
             'timeout': 30,
         },
-        'supreme': {
+        'new_balance': {
             'type': SiteType.OFFICIAL_RETAIL,
             'priority': 5,
             'price_tier': 'retail',
             'timeout': 30,
         },
-        'grailed': {
-            'type': SiteType.RESELLER,
+        'supreme': {
+            'type': SiteType.OFFICIAL_RETAIL,
             'priority': 6,
-            'price_tier': 'premium',
-            'timeout': 45,
+            'price_tier': 'retail',
+            'timeout': 30,
         },
-        'stockx': {
-            'type': SiteType.RESELLER,
-            'priority': 7,
-            'price_tier': 'premium',
-            'timeout': 45,
-        },
+        
     }
     
     def __init__(self, name: str):
