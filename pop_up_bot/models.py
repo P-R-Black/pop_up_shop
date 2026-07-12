@@ -11,6 +11,9 @@ from datetime import timezone as dt_timezone, datetime, timedelta
 from typing import Dict, List, Optional
 from decimal import Decimal
 
+from cryptography.fernet import Fernet
+import uuid
+
 """
 All Models
  1. CookieModel
@@ -27,6 +30,7 @@ All Models
 12. DailyHealthCheck
 13. HealthCheckStep
 14. HealthCheckNotification
+15. BotPaymentMethod
 """
 
 class CookieModel(models.Model):
@@ -1766,6 +1770,263 @@ class HealthCheckNotification(models.Model):
         return f"{self.notification_type.upper()} to {self.recipient} - {self.sent_at}"
     
 
+
+
+# ============================================================
+# Add ENCRYPTION_KEY to settings.py and .env:
+#   ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')  # Fernet key
+#
+# Generate a key once:
+#   from cryptography.fernet import Fernet
+#   print(Fernet.generate_key().decode())
+# ============================================================
+
+
+class BotPaymentMethod(models.Model):
+    """
+    Encrypted payment method for bot use at retailers.
+
+    Stores credit cards and gift cards used by the bot to pay
+    retailers (Nike, Shoe Palace, etc.) during procurement.
+
+    Security:
+    - Card numbers, CVV, expiry encrypted with AES-256 (Fernet)
+    - Only last four digits stored in plaintext (for display)
+    - Decrypted in memory only during checkout, never persisted
+    - One card locked to one active procurement at a time
+    """
+
+    METHOD_CHOICES = [
+        ('credit_card', 'Credit Card'),
+        ('gift_card',   'Gift Card'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    label = models.CharField(
+        max_length=100,
+        help_text="Human-readable label e.g. 'Nike Visa ending 4242' or 'Nike Gift Card #3'"
+    )
+
+    method_type = models.CharField(
+        max_length=20,
+        choices=METHOD_CHOICES,
+        default='credit_card',
+    )
+
+    # ------------------------------------------------------------------
+    # Encrypted fields (stored as base64 Fernet tokens)
+    # ------------------------------------------------------------------
+    encrypted_number = models.TextField(
+        help_text="Encrypted card number or gift card number"
+    )
+    encrypted_cvv = models.TextField(
+        null=True, blank=True,
+        help_text="Encrypted CVV (credit cards only)"
+    )
+    encrypted_expiry = models.TextField(
+        null=True, blank=True,
+        help_text="Encrypted expiry MM/YY (credit cards only)"
+    )
+    encrypted_pin = models.TextField(
+        null=True, blank=True,
+        help_text="Encrypted PIN (gift cards only)"
+    )
+
+    # ------------------------------------------------------------------
+    # Plaintext metadata (safe to store)
+    # ------------------------------------------------------------------
+    last_four = models.CharField(
+        max_length=4,
+        help_text="Last 4 digits — for display only"
+    )
+
+    # Balance tracking — updated manually or after each purchase
+    available_balance = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Known available balance. Null = unknown (credit cards). Required for gift cards."
+    )
+
+    # Billing address — linked to admin's existing address
+    billing_address = models.ForeignKey(
+        'pop_accounts.PopUpCustomerAddress',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text="Billing address on file for this card"
+    )
+
+    # Locking — prevents two bots using the same card simultaneously
+    is_locked = models.BooleanField(
+        default=False,
+        help_text="True while a bot is actively using this card"
+    )
+    locked_by_execution = models.ForeignKey(
+        'ProcurementExecution',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='locked_payment_method',
+        help_text="Which execution currently holds this card"
+    )
+    locked_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When the lock was acquired"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Inactive cards are never selected by the bot"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Bot Payment Method'
+        verbose_name_plural = 'Bot Payment Methods'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.label} (···{self.last_four})"
+
+    # ------------------------------------------------------------------
+    # Encryption helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _cipher():
+        key = settings.ENCRYPTION_KEY
+        if not key:
+            raise ValueError("ENCRYPTION_KEY not set in settings")
+        return Fernet(key.encode() if isinstance(key, str) else key)
+
+    @classmethod
+    def encrypt(cls, value: str) -> str:
+        """Encrypt a plaintext string, return base64 token."""
+        return cls._cipher().encrypt(value.encode()).decode()
+
+    @classmethod
+    def decrypt(cls, token: str) -> str:
+        """Decrypt a Fernet token, return plaintext string."""
+        return cls._cipher().decrypt(token.encode()).decode()
+
+    # ------------------------------------------------------------------
+    # Convenience accessors (decrypt on demand, never stored)
+    # ------------------------------------------------------------------
+
+    @property
+    def card_number(self) -> str:
+        return self.decrypt(self.encrypted_number)
+
+    @property
+    def cvv(self) -> str:
+        return self.decrypt(self.encrypted_cvv) if self.encrypted_cvv else ''
+
+    @property
+    def expiry(self) -> str:
+        return self.decrypt(self.encrypted_expiry) if self.encrypted_expiry else ''
+
+    @property
+    def pin(self) -> str:
+        return self.decrypt(self.encrypted_pin) if self.encrypted_pin else ''
+
+    # ------------------------------------------------------------------
+    # Balance check
+    # ------------------------------------------------------------------
+
+    def has_sufficient_balance(self, amount) -> bool:
+        """
+        Returns True if the card can cover the purchase amount.
+        Credit cards with no balance set are assumed sufficient.
+        Gift cards must have a known balance.
+        """
+        from decimal import Decimal
+        if self.available_balance is None:
+            # Credit card with unknown balance — assume OK
+            return self.method_type == 'credit_card'
+        return self.available_balance >= Decimal(str(amount))
+
+    def deduct_balance(self, amount):
+        """Subtract purchase amount from known balance and save."""
+        from decimal import Decimal
+        if self.available_balance is not None:
+            self.available_balance = max(
+                Decimal('0.00'),
+                self.available_balance - Decimal(str(amount))
+            )
+            self.save(update_fields=['available_balance', 'updated_at'])
+
+    # ------------------------------------------------------------------
+    # Locking
+    # ------------------------------------------------------------------
+
+    def acquire_lock(self, execution) -> bool:
+        """
+        Atomically acquire the lock for an execution.
+        Returns True if lock was acquired, False if already locked.
+        """
+        from django.db import transaction
+        from django.utils import timezone
+
+        with transaction.atomic():
+            # Re-fetch with SELECT FOR UPDATE to prevent race conditions
+            refreshed = BotPaymentMethod.objects.select_for_update().get(
+                pk=self.pk
+            )
+            if refreshed.is_locked:
+                return False
+
+            refreshed.is_locked = True
+            refreshed.locked_by_execution = execution
+            refreshed.locked_at = timezone.now()
+            refreshed.save(update_fields=[
+                'is_locked', 'locked_by_execution', 'locked_at', 'updated_at'
+            ])
+            return True
+
+    def release_lock(self):
+        """Release the lock after procurement completes or fails."""
+        self.is_locked = False
+        self.locked_by_execution = None
+        self.locked_at = None
+        self.save(update_fields=[
+            'is_locked', 'locked_by_execution', 'locked_at', 'updated_at'
+        ])
+
+    # ------------------------------------------------------------------
+    # Class-level card selection
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def get_available_card(cls, required_amount=None):
+        """
+        Find an unlocked, active card with sufficient balance.
+
+        Args:
+            required_amount: Decimal purchase amount. If None, skips balance check.
+
+        Returns:
+            BotPaymentMethod instance or None if none available.
+        """
+        from decimal import Decimal
+
+        candidates = cls.objects.filter(
+            is_active=True,
+            is_locked=False,
+        ).select_related('billing_address')
+
+        for card in candidates:
+            if required_amount is None or card.has_sufficient_balance(required_amount):
+                return card
+
+        return None
+    
+
+    
 
 # class Procurement
 # tRequest(models.Model):

@@ -18,6 +18,10 @@ from .models import (
 )
 
 
+from django import forms
+from pop_up_bot.models import BotPaymentMethod
+
+
 @admin.register(CookieModel)
 class CookieModelAdmin(admin.ModelAdmin):
     list_display = ('site_name', 'name', 'domain', 'is_expired', 'updated_at')
@@ -320,3 +324,140 @@ class SiteAttemptAdmin(admin.ModelAdmin):
         url = reverse('admin:pop_up_bot_procurementexecution_change', args=[obj.execution.id])
         return format_html('<a href="{}">{}</a>', url, str(obj.execution.id)[:8])
     execution_link.short_description = 'Execution'
+
+
+
+
+class BotPaymentMethodAdminForm(forms.ModelForm):
+    """
+    Custom form for adding/editing payment methods in Django admin.
+
+    Accepts plaintext card details and encrypts them on save.
+    Plain fields are write-only — they never display existing values
+    to avoid accidentally exposing decrypted data.
+    """
+
+    # Write-only plaintext fields — not model fields
+    card_number_plain = forms.CharField(
+        label='Card / Gift Card Number',
+        required=True,
+        widget=forms.PasswordInput(render_value=False),
+        help_text='Enter full card number. Will be encrypted on save.'
+    )
+    cvv_plain = forms.CharField(
+        label='CVV',
+        required=False,
+        widget=forms.PasswordInput(render_value=False),
+        help_text='Credit cards only. Leave blank for gift cards.'
+    )
+    expiry_plain = forms.CharField(
+        label='Expiry (MM/YY)',
+        required=False,
+        max_length=5,
+        help_text='Credit cards only e.g. 09/27. Leave blank for gift cards.'
+    )
+    pin_plain = forms.CharField(
+        label='PIN',
+        required=False,
+        widget=forms.PasswordInput(render_value=False),
+        help_text='Gift cards only. Leave blank for credit cards.'
+    )
+
+    class Meta:
+        model = BotPaymentMethod
+        fields = [
+            'label', 'method_type', 'last_four',
+            'available_balance', 'billing_address',
+            'is_active',
+        ]
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Encrypt card number
+        number = self.cleaned_data.get('card_number_plain', '').strip()
+        if number:
+            instance.encrypted_number = BotPaymentMethod.encrypt(number)
+            instance.last_four = number[-4:]
+
+        # Encrypt CVV
+        cvv = self.cleaned_data.get('cvv_plain', '').strip()
+        if cvv:
+            instance.encrypted_cvv = BotPaymentMethod.encrypt(cvv)
+
+        # Encrypt expiry
+        expiry = self.cleaned_data.get('expiry_plain', '').strip()
+        if expiry:
+            instance.encrypted_expiry = BotPaymentMethod.encrypt(expiry)
+
+        # Encrypt PIN
+        pin = self.cleaned_data.get('pin_plain', '').strip()
+        if pin:
+            instance.encrypted_pin = BotPaymentMethod.encrypt(pin)
+
+        if commit:
+            instance.save()
+        return instance
+
+
+@admin.register(BotPaymentMethod)
+class BotPaymentMethodAdmin(admin.ModelAdmin):
+    form = BotPaymentMethodAdminForm
+
+    list_display = [
+        'label', 'method_type', 'last_four',
+        'available_balance', 'is_active', 'is_locked',
+        'locked_by_execution', 'updated_at',
+    ]
+    list_filter  = ['method_type', 'is_active', 'is_locked']
+    search_fields = ['label', 'last_four']
+    readonly_fields = [
+        'is_locked', 'locked_by_execution', 'locked_at',
+        'created_at', 'updated_at',
+    ]
+
+    fieldsets = (
+        ('Card Details', {
+            'fields': (
+                'label', 'method_type',
+                'card_number_plain', 'cvv_plain',
+                'expiry_plain', 'pin_plain',
+                'last_four',
+            ),
+            'description': (
+                'Card number and sensitive fields are encrypted on save. '
+                'Leave a field blank to keep the existing encrypted value.'
+            ),
+        }),
+        ('Balance & Address', {
+            'fields': ('available_balance', 'billing_address'),
+        }),
+        ('Status', {
+            'fields': ('is_active', 'is_locked', 'locked_by_execution', 'locked_at'),
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    actions = ['force_release_lock', 'deactivate_cards', 'activate_cards']
+
+    def force_release_lock(self, request, queryset):
+        """Admin action to force-release stuck card locks."""
+        released = 0
+        for card in queryset.filter(is_locked=True):
+            card.release_lock()
+            released += 1
+        self.message_user(request, f"Released {released} card lock(s).")
+    force_release_lock.short_description = "Force release lock on selected cards"
+
+    def deactivate_cards(self, request, queryset):
+        queryset.update(is_active=False)
+        self.message_user(request, f"Deactivated {queryset.count()} card(s).")
+    deactivate_cards.short_description = "Deactivate selected cards"
+
+    def activate_cards(self, request, queryset):
+        queryset.update(is_active=True)
+        self.message_user(request, f"Activated {queryset.count()} card(s).")
+    activate_cards.short_description = "Activate selected cards"

@@ -49,6 +49,8 @@ GEOIP_COUNTRY = 'GeoLite2-Country.mmdb'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY=os.environ.get('SECRET_KEY', 'ci-insecure-secret-key')
 
+# SECURITY WARNING: keep the encryption key used in production secret!
+ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY') 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG=True 
