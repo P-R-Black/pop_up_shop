@@ -60,6 +60,8 @@ List of Payment Views
 14. nowpayments_webhook
 15. test_nowpayments_connection
 16. placed_order
+17. CreateServiceFeePaymentIntentView
+18. ServiceFeeStripeWebhookView
 """
 
 logger = logging.getLogger(__name__)

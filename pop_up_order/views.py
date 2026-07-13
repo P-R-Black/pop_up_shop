@@ -9,7 +9,7 @@ from pop_up_auction.models import PopUpProduct, WinnerReservation
 from pop_up_shipping.models import PopUpShipment
 from pop_accounts.utils.pop_accounts_utils import add_specs_to_products
 from pop_up_coupon.models import PopUpCoupon
-from pop_up_payment.models import PopUpPayment
+from pop_up_payment.models import PopUpPayment, ServicePayment
 from pop_up_shipping.models import PopUpShipment
 from pop_up_finance.models import PopUpFinance
 from pop_up_order.models import PopUpOrderItem
@@ -244,6 +244,18 @@ class CreateOrderAfterPaymentView(View):
                         )
                     except Exception as e:
                         print(f'PopUpFinance Error: {e}')
+
+                    
+                    # ← NEW: Create ServicePayment so refunds can be processed if bot fails
+                    ServicePayment.objects.get_or_create(
+                        service_request=psr,
+                        defaults={
+                            'amount': item.fee_amount,
+                            'status': 'paid',
+                            'payment_method': payment_method,   # 'stripe', 'venmo', etc.
+                            'payment_reference': payment_data_id,  # Stripe PaymentIntent ID
+                        }
+                    )
  
                     psr.status = 'pending'
                     psr.fee_paid_at = timezone.now()
